@@ -1,0 +1,3057 @@
+# Cloudblocks M1 — Implementation Plan
+
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Build a read-only Electron desktop app that connects to AWS, scans core resources, and renders them on a hybrid topology/graph canvas with live status dots.
+
+**Architecture:** Electron main process handles all AWS SDK calls and CLI subprocess execution; renderer process is a React UI communicating via typed IPC channels. Resource Scanner polls AWS on a 30s interval, diffs against Zustand state, and pushes deltas to the renderer. React Flow powers both the topology map and free-form graph views.
+
+**Tech Stack:** Electron 32, electron-vite, React 18, TypeScript, React Flow, Zustand, AWS SDK v3, Tailwind CSS, Vitest, React Testing Library.
+
+---
+
+## File Structure
+
+```
+cloudblocks/
+├── package.json
+├── electron.vite.config.ts
+├── tsconfig.json
+├── tsconfig.node.json
+├── tsconfig.web.json
+├── tailwind.config.ts
+├── postcss.config.js
+│
+├── src/
+│   ├── main/                              # Electron main process (Node.js)
+│   │   ├── index.ts                       # Entry: creates BrowserWindow, registers IPC
+│   │   ├── ipc/
+│   │   │   ├── channels.ts                # Typed IPC channel name constants + payload types
+│   │   │   └── handlers.ts                # Registers all ipcMain handlers
+│   │   ├── aws/
+│   │   │   ├── credentials.ts             # Reads ~/.aws/credentials + config, lists profiles
+│   │   │   ├── client.ts                  # AWS SDK client factory (EC2Client, RDSClient, etc.)
+│   │   │   ├── scanner.ts                 # Polls AWS, diffs state, pushes IPC delta
+│   │   │   └── services/
+│   │   │       ├── ec2.ts                 # describeInstances, describeVpcs, describeSubnets, describeSGs
+│   │   │       ├── rds.ts                 # describeDBInstances
+│   │   │       ├── s3.ts                  # listBuckets
+│   │   │       ├── lambda.ts              # listFunctions
+│   │   │       └── alb.ts                 # describeLoadBalancers
+│   │
+│   ├── preload/
+│   │   └── index.ts                       # contextBridge: exposes typed ipcRenderer to renderer
+│   │
+│   └── renderer/
+│       ├── index.html
+│       ├── main.tsx                       # React root, mounts <App />
+│       ├── App.tsx                        # Shell layout: TitleBar + Sidebar + Canvas + Inspector + CommandDrawer
+│       ├── types/
+│       │   └── cloud.ts                   # CloudNode, CloudEdge, ScanDelta, AwsProfile types
+│       ├── store/
+│       │   └── cloud.ts                   # Zustand store: nodes, edges, profile, region, scanStatus
+│       ├── hooks/
+│       │   ├── useIpc.ts                  # Subscribe to IPC events from main process
+│       │   └── useScanner.ts              # Trigger scan, receive delta updates
+│       ├── utils/
+│       │   └── describeCommand.ts         # Builds AWS CLI describe command string per resource type
+│       └── components/
+│           ├── TitleBar.tsx               # Profile selector, region selector, connection indicator
+│           ├── Sidebar.tsx                # Service palette list + view toggle
+│           ├── Inspector.tsx              # Selected node detail panel
+│           ├── CommandDrawer.tsx          # CLI command preview strip (read-only in M1)
+│           ├── ErrorBanner.tsx            # Credential/connection error banner
+│           ├── Onboarding.tsx             # No-credentials setup screen
+│           └── canvas/
+│               ├── CloudCanvas.tsx        # React Flow provider, view toggle, toolbar
+│               ├── TopologyView.tsx       # Nested Region→VPC→Subnet→Resource layout
+│               ├── GraphView.tsx          # Free-form node graph with step edges
+│               └── nodes/
+│                   ├── ResourceNode.tsx   # Generic AWS resource node (EC2, RDS, Lambda, etc.)
+│                   ├── VpcNode.tsx        # VPC container node (topology view)
+│                   └── SubnetNode.tsx     # Subnet container node (topology view)
+│
+└── tests/
+    ├── main/
+    │   └── aws/
+    │       ├── credentials.test.ts
+    │       ├── scanner.test.ts
+    │       └── services/
+    │           ├── ec2.test.ts
+    │           ├── rds.test.ts
+    │           ├── s3.test.ts
+    │           ├── lambda.test.ts
+    │           └── alb.test.ts
+    └── renderer/
+        ├── store/
+        │   └── cloud.test.ts
+        └── components/
+            ├── TitleBar.test.tsx
+            └── canvas/
+                └── nodes/
+                    └── ResourceNode.test.tsx
+```
+
+---
+
+## Chunk 1: Project Scaffold, Types, IPC Contract, Preload, Credentials
+
+### Task 1: Scaffold Electron + Vite + React + TypeScript project
+
+**Files:**
+- Create: `package.json`, `electron.vite.config.ts`, `tsconfig.json`, `tsconfig.node.json`, `tsconfig.web.json`, `vitest.config.ts`, `tests/setup.ts`
+
+- [ ] **Step 1: Scaffold the project using electron-vite**
+
+```bash
+cd /Users/julius/AI/proj1
+npm create @quick-start/electron cloudblocks -- --template react-ts
+cd cloudblocks
+npm install
+```
+
+Expected: Project directory created with `src/main/index.ts`, `src/renderer/`, `src/preload/index.ts`.
+
+- [ ] **Step 2: Install runtime dependencies**
+
+```bash
+npm install \
+  @aws-sdk/client-ec2 \
+  @aws-sdk/client-rds \
+  @aws-sdk/client-s3 \
+  @aws-sdk/client-lambda \
+  @aws-sdk/client-elastic-load-balancing-v2 \
+  @xyflow/react \
+  zustand \
+  ini
+```
+
+- [ ] **Step 3: Install dev dependencies**
+
+```bash
+npm install -D \
+  tailwindcss \
+  postcss \
+  autoprefixer \
+  @tailwindcss/vite \
+  vitest \
+  @vitest/ui \
+  @testing-library/react \
+  @testing-library/jest-dom \
+  jsdom \
+  @types/ini
+```
+
+- [ ] **Step 4: Initialize Tailwind**
+
+```bash
+npx tailwindcss init -p
+```
+
+- [ ] **Step 5: Replace `tailwind.config.ts` content**
+
+```ts
+import type { Config } from 'tailwindcss'
+
+export default {
+  content: ['./src/renderer/**/*.{ts,tsx,html}'],
+  theme: { extend: {} },
+  plugins: [],
+} satisfies Config
+```
+
+- [ ] **Step 6: Add Tailwind directives to `src/renderer/assets/main.css` (or create it)**
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+Import it in `src/renderer/main.tsx`:
+```tsx
+import './assets/main.css'
+```
+
+- [ ] **Step 7: Update `electron.vite.config.ts` and create `vitest.config.ts`**
+
+Replace `electron.vite.config.ts` with:
+```ts
+import { defineConfig } from 'electron-vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  main: {
+    build: { lib: { entry: 'src/main/index.ts' } },
+  },
+  preload: {
+    build: { lib: { entry: 'src/preload/index.ts' } },
+  },
+  renderer: {
+    plugins: [react(), tailwindcss()],
+  },
+})
+```
+
+Add a separate `vitest.config.ts`:
+```ts
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./tests/setup.ts'],
+  },
+})
+```
+
+- [ ] **Step 8: Create `tests/setup.ts`**
+
+```ts
+import '@testing-library/jest-dom'
+```
+
+- [ ] **Step 9: Add test script to `package.json`**
+
+In the `"scripts"` section:
+```json
+"test": "vitest run",
+"test:watch": "vitest",
+"test:ui": "vitest --ui"
+```
+
+- [ ] **Step 10: Verify dev build starts**
+
+```bash
+npm run dev
+```
+
+Expected: Electron window opens with the default electron-vite React template. No errors in terminal.
+
+- [ ] **Step 11: Commit**
+
+```bash
+git add .
+git commit -m "feat: scaffold Electron + Vite + React + TypeScript project"
+```
+
+---
+
+### Task 2: Define shared types
+
+**Files:**
+- Create: `src/renderer/types/cloud.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `tests/renderer/types/cloud.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import type { CloudNode, CloudEdge, ScanDelta, AwsProfile } from '../../../src/renderer/types/cloud'
+
+describe('CloudNode type', () => {
+  it('accepts a valid CloudNode object', () => {
+    const node: CloudNode = {
+      id: 'arn:aws:ec2:us-east-1:123456789012:instance/i-0abc',
+      type: 'ec2',
+      label: 'i-0abc',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { InstanceType: 't3.micro' },
+    }
+    expect(node.id).toBe('arn:aws:ec2:us-east-1:123456789012:instance/i-0abc')
+    expect(node.status).toBe('running')
+  })
+
+  it('accepts a CloudNode with parentId', () => {
+    const node: CloudNode = {
+      id: 'i-0abc',
+      type: 'ec2',
+      label: 'i-0abc',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: {},
+      parentId: 'subnet-0abc',
+    }
+    expect(node.parentId).toBe('subnet-0abc')
+  })
+})
+
+describe('ScanDelta type', () => {
+  it('accepts a valid ScanDelta', () => {
+    const delta: ScanDelta = {
+      added: [],
+      changed: [],
+      removed: [],
+    }
+    expect(delta.added).toHaveLength(0)
+    expect(delta.changed).toHaveLength(0)
+    expect(delta.removed).toHaveLength(0)
+  })
+
+  it('removed field holds string ids', () => {
+    const delta: ScanDelta = {
+      added: [],
+      changed: [],
+      removed: ['i-001', 'i-002'],
+    }
+    expect(delta.removed[0]).toBe('i-001')
+    expect(typeof delta.removed[0]).toBe('string')
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+npm test -- tests/renderer/types/cloud.test.ts
+```
+
+Expected: FAIL — `Cannot find module '../../../src/renderer/types/cloud'`
+
+- [ ] **Step 3: Create `src/renderer/types/cloud.ts`**
+
+```ts
+export type NodeStatus = 'running' | 'stopped' | 'pending' | 'error' | 'unknown'
+
+export type NodeType =
+  | 'ec2'
+  | 'vpc'
+  | 'subnet'
+  | 'rds'
+  | 's3'
+  | 'lambda'
+  | 'alb'
+  | 'security-group'
+  | 'igw'
+
+export interface CloudNode {
+  id: string
+  type: NodeType
+  label: string
+  status: NodeStatus
+  region: string
+  metadata: Record<string, unknown>
+  parentId?: string  // subnet-id or vpc-id for topology nesting
+}
+
+export interface CloudEdge {
+  id: string
+  source: string   // CloudNode id
+  target: string   // CloudNode id
+  label?: string   // e.g. "port 3306"
+}
+
+export interface ScanDelta {
+  added: CloudNode[]
+  changed: CloudNode[]
+  removed: string[]  // ids of removed nodes
+}
+
+export interface AwsProfile {
+  name: string
+  region?: string
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+```bash
+npm test -- tests/renderer/types/cloud.test.ts
+```
+
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/renderer/types/cloud.ts tests/renderer/types/cloud.test.ts
+git commit -m "feat: add shared CloudNode, CloudEdge, ScanDelta, AwsProfile types"
+```
+
+---
+
+### Task 3: Define typed IPC channels
+
+**Files:**
+- Create: `src/main/ipc/channels.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `tests/main/ipc/channels.test.ts`:
+```ts
+import { describe, it, expect } from 'vitest'
+import { IPC } from '../../../src/main/ipc/channels'
+
+describe('IPC channel constants', () => {
+  it('has required channel names', () => {
+    expect(IPC.PROFILES_LIST).toBe('profiles:list')
+    expect(IPC.SCAN_START).toBe('scan:start')
+    expect(IPC.SCAN_DELTA).toBe('scan:delta')
+    expect(IPC.SCAN_STATUS).toBe('scan:status')
+    expect(IPC.PROFILE_SELECT).toBe('profile:select')
+    expect(IPC.REGION_SELECT).toBe('region:select')
+    expect(IPC.CONN_STATUS).toBe('conn:status')
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+npm test -- tests/main/ipc/channels.test.ts
+```
+
+Expected: FAIL — `Cannot find module '../../../src/main/ipc/channels'`
+
+- [ ] **Step 3: Create `src/main/ipc/channels.ts`**
+
+```ts
+// IPC channel name constants. Import in both main (handlers) and preload (contextBridge).
+export const IPC = {
+  // Renderer → Main
+  PROFILES_LIST:  'profiles:list',    // request: void → response: AwsProfile[]
+  PROFILE_SELECT: 'profile:select',   // request: string (profile name) → response: void
+  REGION_SELECT:  'region:select',    // request: string (region) → response: void
+  SCAN_START:     'scan:start',       // request: void → response: void (starts manual scan)
+
+  // Main → Renderer (events pushed from main)
+  SCAN_DELTA:     'scan:delta',       // payload: ScanDelta
+  SCAN_STATUS:    'scan:status',      // payload: 'idle' | 'scanning' | 'error'
+  CONN_STATUS:    'conn:status',      // payload: 'connected' | 'disconnected' | 'error'
+} as const
+
+export type IpcChannel = typeof IPC[keyof typeof IPC]
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+```bash
+npm test -- tests/main/ipc/channels.test.ts
+```
+
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/main/ipc/channels.ts tests/main/ipc/channels.test.ts
+git commit -m "feat: add typed IPC channel constants"
+```
+
+---
+
+### Task 4: Preload — expose IPC bridge to renderer
+
+**Files:**
+- Modify: `src/preload/index.ts`
+- Create: `tests/main/preload.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `tests/main/preload.test.ts`:
+```ts
+import { describe, it, expect, vi } from 'vitest'
+
+// Mock electron before importing preload
+vi.mock('electron', () => ({
+  contextBridge: { exposeInMainWorld: vi.fn() },
+  ipcRenderer: {
+    invoke: vi.fn(),
+    on: vi.fn(),
+    removeAllListeners: vi.fn(),
+  },
+}))
+
+import { contextBridge } from 'electron'
+
+describe('preload bridge', () => {
+  it('exposes cloudblocks API to main world', async () => {
+    await import('../../src/preload/index')
+    expect(contextBridge.exposeInMainWorld).toHaveBeenCalledWith(
+      'cloudblocks',
+      expect.objectContaining({
+        listProfiles:   expect.any(Function),
+        selectProfile:  expect.any(Function),
+        selectRegion:   expect.any(Function),
+        startScan:      expect.any(Function),
+        onScanDelta:    expect.any(Function),
+        onScanStatus:   expect.any(Function),
+        onConnStatus:   expect.any(Function),
+      }),
+    )
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+npm test -- tests/main/preload.test.ts
+```
+
+Expected: FAIL — module not found or `exposeInMainWorld` not called.
+
+- [ ] **Step 3: Replace `src/preload/index.ts`**
+
+```ts
+import { contextBridge, ipcRenderer } from 'electron'
+import { IPC } from '../main/ipc/channels'
+import type { AwsProfile, ScanDelta } from '../renderer/types/cloud'
+
+// Expose a typed `window.cloudblocks` API to the renderer.
+// The renderer never imports from 'electron' directly.
+contextBridge.exposeInMainWorld('cloudblocks', {
+  listProfiles: (): Promise<AwsProfile[]> =>
+    ipcRenderer.invoke(IPC.PROFILES_LIST),
+
+  selectProfile: (name: string): Promise<void> =>
+    ipcRenderer.invoke(IPC.PROFILE_SELECT, name),
+
+  selectRegion: (region: string): Promise<void> =>
+    ipcRenderer.invoke(IPC.REGION_SELECT, region),
+
+  startScan: (): Promise<void> =>
+    ipcRenderer.invoke(IPC.SCAN_START),
+
+  onScanDelta: (cb: (delta: ScanDelta) => void) => {
+    ipcRenderer.on(IPC.SCAN_DELTA, (_event, delta) => cb(delta))
+    return () => ipcRenderer.removeAllListeners(IPC.SCAN_DELTA)
+  },
+
+  onScanStatus: (cb: (status: string) => void) => {
+    ipcRenderer.on(IPC.SCAN_STATUS, (_event, status) => cb(status))
+    return () => ipcRenderer.removeAllListeners(IPC.SCAN_STATUS)
+  },
+
+  onConnStatus: (cb: (status: string) => void) => {
+    ipcRenderer.on(IPC.CONN_STATUS, (_event, status) => cb(status))
+    return () => ipcRenderer.removeAllListeners(IPC.CONN_STATUS)
+  },
+})
+
+// Extend the global Window type so the renderer has type safety.
+declare global {
+  interface Window {
+    cloudblocks: {
+      listProfiles: () => Promise<AwsProfile[]>
+      selectProfile: (name: string) => Promise<void>
+      selectRegion: (region: string) => Promise<void>
+      startScan: () => Promise<void>
+      onScanDelta: (cb: (delta: ScanDelta) => void) => () => void
+      onScanStatus: (cb: (status: string) => void) => () => void
+      onConnStatus: (cb: (status: string) => void) => () => void
+    }
+  }
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+```bash
+npm test -- tests/main/preload.test.ts
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Verify TypeScript compiles cleanly**
+
+```bash
+npx tsc --noEmit
+```
+
+Expected: No errors.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/preload/index.ts tests/main/preload.test.ts
+git commit -m "feat: expose typed cloudblocks IPC bridge via contextBridge"
+```
+
+---
+
+### Task 5: AWS credentials reader
+
+**Files:**
+- Create: `src/main/aws/credentials.ts`
+- Create: `tests/main/aws/credentials.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `tests/main/aws/credentials.test.ts`:
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
+import { listProfiles, getDefaultRegion } from '../../../src/main/aws/credentials'
+
+vi.mock('node:fs')
+vi.mock('node:os')
+
+describe('listProfiles', () => {
+  beforeEach(() => {
+    vi.mocked(os.homedir).mockReturnValue('/home/testuser')
+  })
+
+  it('returns profiles parsed from credentials file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(`
+[default]
+aws_access_key_id = AKIA...
+aws_secret_access_key = secret
+
+[staging]
+aws_access_key_id = AKIA...
+aws_secret_access_key = secret
+`)
+    const profiles = listProfiles()
+    expect(profiles.map((p) => p.name)).toEqual(['default', 'staging'])
+  })
+
+  it('returns empty array when credentials file does not exist', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false)
+    const profiles = listProfiles()
+    expect(profiles).toEqual([])
+  })
+})
+
+describe('getDefaultRegion', () => {
+  beforeEach(() => {
+    vi.mocked(os.homedir).mockReturnValue('/home/testuser')
+  })
+
+  it('reads region for the default profile', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(`
+[default]
+region = us-east-1
+`)
+    expect(getDefaultRegion('default')).toBe('us-east-1')
+  })
+
+  it('reads region for a named profile using [profile <name>] key', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+    vi.mocked(fs.readFileSync).mockReturnValue(`
+[profile staging]
+region = eu-west-1
+`)
+    expect(getDefaultRegion('staging')).toBe('eu-west-1')
+  })
+
+  it('returns us-east-1 as fallback when config missing', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false)
+    expect(getDefaultRegion('default')).toBe('us-east-1')
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+npm test -- tests/main/aws/credentials.test.ts
+```
+
+Expected: FAIL — module not found.
+
+- [ ] **Step 3: Create `src/main/aws/credentials.ts`**
+
+```ts
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
+import { parse } from 'ini'
+import type { AwsProfile } from '../../renderer/types/cloud'
+
+function credentialsPath(): string {
+  return path.join(os.homedir(), '.aws', 'credentials')
+}
+
+function configPath(): string {
+  return path.join(os.homedir(), '.aws', 'config')
+}
+
+export function listProfiles(): AwsProfile[] {
+  const credPath = credentialsPath()
+  if (!fs.existsSync(credPath)) return []
+
+  const raw = fs.readFileSync(credPath, 'utf-8')
+  const parsed = parse(raw)
+  return Object.keys(parsed).map((name) => ({ name }))
+}
+
+export function getDefaultRegion(profileName: string): string {
+  const cfgPath = configPath()
+  if (!fs.existsSync(cfgPath)) return 'us-east-1'
+
+  const raw = fs.readFileSync(cfgPath, 'utf-8')
+  const parsed = parse(raw)
+
+  // config file uses [default] for the default profile, [profile name] for others
+  const key = profileName === 'default' ? 'default' : `profile ${profileName}`
+  return (parsed[key]?.region as string) ?? 'us-east-1'
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+```bash
+npm test -- tests/main/aws/credentials.test.ts
+```
+
+Expected: PASS — all 4 tests pass.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/main/aws/credentials.ts tests/main/aws/credentials.test.ts
+git commit -m "feat: add AWS credentials reader (profiles + region from ~/.aws/)"
+```
+
+---
+
+## Chunk 2: AWS SDK Client, Service Calls, Resource Scanner
+
+### Task 6: AWS SDK client factory
+
+**Files:**
+- Create: `src/main/aws/client.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `tests/main/aws/client.test.ts`:
+```ts
+import { describe, it, expect, vi } from 'vitest'
+
+// Mock all AWS SDK clients before importing client.ts
+vi.mock('@aws-sdk/client-ec2', () => ({ EC2Client: vi.fn(() => ({ send: vi.fn() })) }))
+vi.mock('@aws-sdk/client-rds', () => ({ RDSClient: vi.fn(() => ({ send: vi.fn() })) }))
+vi.mock('@aws-sdk/client-s3', () => ({ S3Client: vi.fn(() => ({ send: vi.fn() })) }))
+vi.mock('@aws-sdk/client-lambda', () => ({ LambdaClient: vi.fn(() => ({ send: vi.fn() })) }))
+vi.mock('@aws-sdk/client-elastic-load-balancing-v2', () => ({ ElasticLoadBalancingV2Client: vi.fn(() => ({ send: vi.fn() })) }))
+
+import { createClients, type AwsClients } from '../../../src/main/aws/client'
+
+describe('createClients', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns all required SDK client types', () => {
+    const clients: AwsClients = createClients('default', 'us-east-1')
+    expect(clients.ec2).toBeDefined()
+    expect(clients.rds).toBeDefined()
+    expect(clients.s3).toBeDefined()
+    expect(clients.lambda).toBeDefined()
+    expect(clients.alb).toBeDefined()
+  })
+
+  it('creates clients with the given region', async () => {
+    const { EC2Client } = await import('@aws-sdk/client-ec2')
+    createClients('default', 'eu-west-1')
+    expect(EC2Client).toHaveBeenCalledWith(expect.objectContaining({ region: 'eu-west-1' }))
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+npm test -- tests/main/aws/client.test.ts
+```
+
+Expected: FAIL — module not found.
+
+- [ ] **Step 3: Create `src/main/aws/client.ts`**
+
+```ts
+import { EC2Client } from '@aws-sdk/client-ec2'
+import { RDSClient } from '@aws-sdk/client-rds'
+import { S3Client } from '@aws-sdk/client-s3'
+import { LambdaClient } from '@aws-sdk/client-lambda'
+import { ElasticLoadBalancingV2Client } from '@aws-sdk/client-elastic-load-balancing-v2'
+
+export interface AwsClients {
+  ec2: EC2Client
+  rds: RDSClient
+  s3: S3Client
+  lambda: LambdaClient
+  alb: ElasticLoadBalancingV2Client
+}
+
+// Creates a fresh set of AWS SDK clients for the given profile + region.
+// The main process calls this on profile/region change and passes the
+// clients to service functions and the scanner.
+export function createClients(profile: string, region: string): AwsClients {
+  // Set AWS_PROFILE before constructing clients — the SDK credential provider
+  // chain will pick up the correct profile from ~/.aws/credentials automatically.
+  const config = { region }
+
+  // Set AWS_PROFILE so the SDK credential provider picks up the right profile.
+  process.env.AWS_PROFILE = profile
+  process.env.AWS_REGION = region
+
+  return {
+    ec2:    new EC2Client(config),
+    rds:    new RDSClient(config),
+    s3:     new S3Client(config),
+    lambda: new LambdaClient(config),
+    alb:    new ElasticLoadBalancingV2Client(config),
+  }
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+```bash
+npm test -- tests/main/aws/client.test.ts
+```
+
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/main/aws/client.ts tests/main/aws/client.test.ts
+git commit -m "feat: add AWS SDK client factory"
+```
+
+---
+
+### Task 7: EC2 service — describe instances, VPCs, subnets, security groups
+
+**Files:**
+- Create: `src/main/aws/services/ec2.ts`
+- Create: `tests/main/aws/services/ec2.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `tests/main/aws/services/ec2.test.ts`:
+```ts
+import { describe, it, expect, vi } from 'vitest'
+import { EC2Client, DescribeInstancesCommand, DescribeVpcsCommand, DescribeSubnetsCommand, DescribeSecurityGroupsCommand } from '@aws-sdk/client-ec2'
+import { describeInstances, describeVpcs, describeSubnets, describeSecurityGroups } from '../../../../src/main/aws/services/ec2'
+import type { CloudNode } from '../../../../src/renderer/types/cloud'
+
+const mockSend = vi.fn()
+const mockClient = { send: mockSend } as unknown as EC2Client
+
+describe('describeInstances', () => {
+  it('maps EC2 instances to CloudNodes', async () => {
+    mockSend.mockResolvedValueOnce({
+      Reservations: [{
+        Instances: [{
+          InstanceId: 'i-0abc123',
+          InstanceType: 't3.micro',
+          State: { Name: 'running' },
+          VpcId: 'vpc-0abc',
+          SubnetId: 'subnet-0abc',
+          Tags: [{ Key: 'Name', Value: 'web-server' }],
+        }],
+      }],
+    })
+
+    const nodes: CloudNode[] = await describeInstances(mockClient, 'us-east-1')
+    expect(nodes).toHaveLength(1)
+    expect(nodes[0].id).toBe('i-0abc123')
+    expect(nodes[0].type).toBe('ec2')
+    expect(nodes[0].label).toBe('web-server')
+    expect(nodes[0].status).toBe('running')
+    expect(nodes[0].parentId).toBe('subnet-0abc')
+  })
+
+  it('uses InstanceId as label when no Name tag', async () => {
+    mockSend.mockResolvedValueOnce({
+      Reservations: [{ Instances: [{ InstanceId: 'i-0xyz', State: { Name: 'stopped' }, Tags: [] }] }],
+    })
+    const nodes = await describeInstances(mockClient, 'us-east-1')
+    expect(nodes[0].label).toBe('i-0xyz')
+    expect(nodes[0].status).toBe('stopped')
+  })
+
+  it('returns empty array on SDK error', async () => {
+    mockSend.mockRejectedValueOnce(new Error('AccessDenied'))
+    const nodes = await describeInstances(mockClient, 'us-east-1')
+    expect(nodes).toEqual([])
+  })
+})
+
+describe('describeVpcs', () => {
+  it('maps VPCs to CloudNodes', async () => {
+    mockSend.mockResolvedValueOnce({
+      Vpcs: [{ VpcId: 'vpc-0abc', State: 'available', CidrBlock: '10.0.0.0/16', Tags: [{ Key: 'Name', Value: 'main-vpc' }] }],
+    })
+    const nodes = await describeVpcs(mockClient, 'us-east-1')
+    expect(nodes[0].type).toBe('vpc')
+    expect(nodes[0].label).toBe('main-vpc')
+    expect(nodes[0].status).toBe('running')
+  })
+
+  it('returns empty array on error', async () => {
+    mockSend.mockRejectedValueOnce(new Error('AccessDenied'))
+    expect(await describeVpcs(mockClient, 'us-east-1')).toEqual([])
+  })
+})
+
+describe('describeSubnets', () => {
+  it('maps subnets to CloudNodes with parentId=VpcId', async () => {
+    mockSend.mockResolvedValueOnce({
+      Subnets: [{ SubnetId: 'subnet-0abc', State: 'available', VpcId: 'vpc-0abc', CidrBlock: '10.0.1.0/24', Tags: [{ Key: 'Name', Value: 'public-1' }] }],
+    })
+    const nodes = await describeSubnets(mockClient, 'us-east-1')
+    expect(nodes[0].type).toBe('subnet')
+    expect(nodes[0].label).toBe('public-1')
+    expect(nodes[0].parentId).toBe('vpc-0abc')
+  })
+
+  it('returns empty array on error', async () => {
+    mockSend.mockRejectedValueOnce(new Error('err'))
+    expect(await describeSubnets(mockClient, 'us-east-1')).toEqual([])
+  })
+})
+
+describe('describeSecurityGroups', () => {
+  it('maps security groups to CloudNodes', async () => {
+    mockSend.mockResolvedValueOnce({
+      SecurityGroups: [{ GroupId: 'sg-0abc', GroupName: 'sg-web', VpcId: 'vpc-0abc', Description: 'web sg' }],
+    })
+    const nodes = await describeSecurityGroups(mockClient, 'us-east-1')
+    expect(nodes[0].type).toBe('security-group')
+    expect(nodes[0].label).toBe('sg-web')
+    expect(nodes[0].parentId).toBe('vpc-0abc')
+  })
+
+  it('returns empty array on error', async () => {
+    mockSend.mockRejectedValueOnce(new Error('err'))
+    expect(await describeSecurityGroups(mockClient, 'us-east-1')).toEqual([])
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+npm test -- tests/main/aws/services/ec2.test.ts
+```
+
+Expected: FAIL — module not found.
+
+- [ ] **Step 3: Create `src/main/aws/services/ec2.ts`**
+
+```ts
+import {
+  EC2Client,
+  DescribeInstancesCommand,
+  DescribeVpcsCommand,
+  DescribeSubnetsCommand,
+  DescribeSecurityGroupsCommand,
+  type Instance,
+  type Vpc,
+  type Subnet,
+  type SecurityGroup,
+} from '@aws-sdk/client-ec2'
+import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+
+function nameTag(tags: { Key?: string; Value?: string }[] | undefined): string | undefined {
+  return tags?.find((t) => t.Key === 'Name')?.Value
+}
+
+function ec2StatusToNodeStatus(state: string | undefined): NodeStatus {
+  switch (state) {
+    case 'running':   return 'running'
+    case 'stopped':   return 'stopped'
+    case 'pending':
+    case 'stopping':  return 'pending'
+    default:          return 'unknown'
+  }
+}
+
+export async function describeInstances(client: EC2Client, region: string): Promise<CloudNode[]> {
+  try {
+    const res = await client.send(new DescribeInstancesCommand({}))
+    const instances: Instance[] = res.Reservations?.flatMap((r) => r.Instances ?? []) ?? []
+    return instances.map((i): CloudNode => ({
+      id:       i.InstanceId ?? 'unknown',
+      type:     'ec2',
+      label:    nameTag(i.Tags) ?? i.InstanceId ?? 'EC2',
+      status:   ec2StatusToNodeStatus(i.State?.Name),
+      region,
+      metadata: { instanceType: i.InstanceType, vpcId: i.VpcId, subnetId: i.SubnetId },
+      parentId: i.SubnetId,
+    }))
+  } catch {
+    return []
+  }
+}
+
+export async function describeVpcs(client: EC2Client, region: string): Promise<CloudNode[]> {
+  try {
+    const res = await client.send(new DescribeVpcsCommand({}))
+    return (res.Vpcs ?? []).map((v): CloudNode => ({
+      id:       v.VpcId ?? 'unknown',
+      type:     'vpc',
+      label:    nameTag(v.Tags) ?? v.VpcId ?? 'VPC',
+      status:   v.State === 'available' ? 'running' : 'pending',
+      region,
+      metadata: { cidrBlock: v.CidrBlock, isDefault: v.IsDefault },
+    }))
+  } catch {
+    return []
+  }
+}
+
+export async function describeSubnets(client: EC2Client, region: string): Promise<CloudNode[]> {
+  try {
+    const res = await client.send(new DescribeSubnetsCommand({}))
+    return (res.Subnets ?? []).map((s): CloudNode => ({
+      id:       s.SubnetId ?? 'unknown',
+      type:     'subnet',
+      label:    nameTag(s.Tags) ?? s.SubnetId ?? 'Subnet',
+      status:   s.State === 'available' ? 'running' : 'pending',
+      region,
+      metadata: { cidrBlock: s.CidrBlock, availabilityZone: s.AvailabilityZone, mapPublicIp: s.MapPublicIpOnLaunch },
+      parentId: s.VpcId,
+    }))
+  } catch {
+    return []
+  }
+}
+
+export async function describeSecurityGroups(client: EC2Client, region: string): Promise<CloudNode[]> {
+  try {
+    const res = await client.send(new DescribeSecurityGroupsCommand({}))
+    return (res.SecurityGroups ?? []).map((sg): CloudNode => ({
+      id:       sg.GroupId ?? 'unknown',
+      type:     'security-group',
+      label:    sg.GroupName ?? sg.GroupId ?? 'SG',
+      status:   'running',
+      region,
+      metadata: { description: sg.Description, vpcId: sg.VpcId },
+      parentId: sg.VpcId,
+    }))
+  } catch {
+    return []
+  }
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+```bash
+npm test -- tests/main/aws/services/ec2.test.ts
+```
+
+Expected: PASS — all tests green.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/main/aws/services/ec2.ts tests/main/aws/services/ec2.test.ts
+git commit -m "feat: add EC2 service functions (instances, VPCs, subnets, security groups)"
+```
+
+---
+
+### Task 8: RDS, S3, Lambda, ALB service functions
+
+**Files:**
+- Create: `src/main/aws/services/rds.ts`
+- Create: `src/main/aws/services/s3.ts`
+- Create: `src/main/aws/services/lambda.ts`
+- Create: `src/main/aws/services/alb.ts`
+- Create: `tests/main/aws/services/rds.test.ts`
+- Create: `tests/main/aws/services/s3.test.ts`
+- Create: `tests/main/aws/services/lambda.test.ts`
+- Create: `tests/main/aws/services/alb.test.ts`
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `tests/main/aws/services/rds.test.ts`:
+```ts
+import { describe, it, expect, vi } from 'vitest'
+import { RDSClient } from '@aws-sdk/client-rds'
+import { describeDBInstances } from '../../../../src/main/aws/services/rds'
+
+const mockSend = vi.fn()
+const mockClient = { send: mockSend } as unknown as RDSClient
+
+describe('describeDBInstances', () => {
+  it('maps RDS instances to CloudNodes', async () => {
+    mockSend.mockResolvedValueOnce({
+      DBInstances: [{
+        DBInstanceIdentifier: 'prod-db',
+        DBInstanceStatus: 'available',
+        Engine: 'mysql',
+        DBSubnetGroup: { VpcId: 'vpc-0abc' },
+      }],
+    })
+    const nodes = await describeDBInstances(mockClient, 'us-east-1')
+    expect(nodes[0].id).toBe('prod-db')
+    expect(nodes[0].type).toBe('rds')
+    expect(nodes[0].status).toBe('running')
+    expect(nodes[0].parentId).toBe('vpc-0abc')
+  })
+
+  it('returns empty array on error', async () => {
+    mockSend.mockRejectedValueOnce(new Error('AccessDenied'))
+    expect(await describeDBInstances(mockClient, 'us-east-1')).toEqual([])
+  })
+})
+```
+
+Create `tests/main/aws/services/s3.test.ts`:
+```ts
+import { describe, it, expect, vi } from 'vitest'
+import { S3Client } from '@aws-sdk/client-s3'
+import { listBuckets } from '../../../../src/main/aws/services/s3'
+
+const mockSend = vi.fn()
+const mockClient = { send: mockSend } as unknown as S3Client
+
+describe('listBuckets', () => {
+  it('maps S3 buckets to CloudNodes', async () => {
+    mockSend.mockResolvedValueOnce({ Buckets: [{ Name: 'my-bucket' }] })
+    const nodes = await listBuckets(mockClient, 'us-east-1')
+    expect(nodes[0].id).toBe('my-bucket')
+    expect(nodes[0].type).toBe('s3')
+    expect(nodes[0].status).toBe('running')
+  })
+
+  it('returns empty array on error', async () => {
+    mockSend.mockRejectedValueOnce(new Error('AccessDenied'))
+    expect(await listBuckets(mockClient, 'us-east-1')).toEqual([])
+  })
+})
+```
+
+Create `tests/main/aws/services/lambda.test.ts`:
+```ts
+import { describe, it, expect, vi } from 'vitest'
+import { LambdaClient } from '@aws-sdk/client-lambda'
+import { listFunctions } from '../../../../src/main/aws/services/lambda'
+
+const mockSend = vi.fn()
+const mockClient = { send: mockSend } as unknown as LambdaClient
+
+describe('listFunctions', () => {
+  it('maps Lambda functions to CloudNodes', async () => {
+    mockSend.mockResolvedValueOnce({
+      Functions: [{
+        FunctionName: 'my-fn',
+        FunctionArn: 'arn:aws:lambda:us-east-1:123:function:my-fn',
+        State: 'Active',
+        VpcConfig: { VpcId: 'vpc-0abc' },
+      }],
+    })
+    const nodes = await listFunctions(mockClient, 'us-east-1')
+    expect(nodes[0].id).toBe('arn:aws:lambda:us-east-1:123:function:my-fn')
+    expect(nodes[0].type).toBe('lambda')
+    expect(nodes[0].label).toBe('my-fn')
+    expect(nodes[0].status).toBe('running')
+  })
+
+  it('returns empty array on error', async () => {
+    mockSend.mockRejectedValueOnce(new Error('err'))
+    expect(await listFunctions(mockClient, 'us-east-1')).toEqual([])
+  })
+})
+```
+
+Create `tests/main/aws/services/alb.test.ts`:
+```ts
+import { describe, it, expect, vi } from 'vitest'
+import { ElasticLoadBalancingV2Client } from '@aws-sdk/client-elastic-load-balancing-v2'
+import { describeLoadBalancers } from '../../../../src/main/aws/services/alb'
+
+const mockSend = vi.fn()
+const mockClient = { send: mockSend } as unknown as ElasticLoadBalancingV2Client
+
+describe('describeLoadBalancers', () => {
+  it('maps ALBs to CloudNodes', async () => {
+    mockSend.mockResolvedValueOnce({
+      LoadBalancers: [{
+        LoadBalancerName: 'prod-alb',
+        LoadBalancerArn: 'arn:aws:elasticloadbalancing:us-east-1:123:loadbalancer/app/prod-alb/abc',
+        State: { Code: 'active' },
+        VpcId: 'vpc-0abc',
+      }],
+    })
+    const nodes = await describeLoadBalancers(mockClient, 'us-east-1')
+    expect(nodes[0].label).toBe('prod-alb')
+    expect(nodes[0].type).toBe('alb')
+    expect(nodes[0].status).toBe('running')
+    expect(nodes[0].parentId).toBe('vpc-0abc')
+  })
+
+  it('returns empty array on error', async () => {
+    mockSend.mockRejectedValueOnce(new Error('err'))
+    expect(await describeLoadBalancers(mockClient, 'us-east-1')).toEqual([])
+  })
+})
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+```bash
+npm test -- tests/main/aws/services/rds.test.ts tests/main/aws/services/s3.test.ts tests/main/aws/services/lambda.test.ts tests/main/aws/services/alb.test.ts
+```
+
+Expected: FAIL — modules not found.
+
+- [ ] **Step 3: Create `src/main/aws/services/rds.ts`**
+
+```ts
+import { RDSClient, DescribeDBInstancesCommand } from '@aws-sdk/client-rds'
+import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+
+function rdsStatusToNodeStatus(status: string | undefined): NodeStatus {
+  if (status === 'available') return 'running'
+  if (status === 'stopped')   return 'stopped'
+  if (!status)                return 'unknown'
+  return 'pending'
+}
+
+export async function describeDBInstances(client: RDSClient, region: string): Promise<CloudNode[]> {
+  try {
+    const res = await client.send(new DescribeDBInstancesCommand({}))
+    return (res.DBInstances ?? []).map((db): CloudNode => ({
+      id:       db.DBInstanceIdentifier ?? 'unknown',
+      type:     'rds',
+      label:    db.DBInstanceIdentifier ?? 'RDS',
+      status:   rdsStatusToNodeStatus(db.DBInstanceStatus),
+      region,
+      metadata: { engine: db.Engine, instanceClass: db.DBInstanceClass },
+      parentId: db.DBSubnetGroup?.VpcId,
+    }))
+  } catch {
+    return []
+  }
+}
+```
+
+- [ ] **Step 4: Create `src/main/aws/services/s3.ts`**
+
+```ts
+import { S3Client, ListBucketsCommand } from '@aws-sdk/client-s3'
+import type { CloudNode } from '../../../renderer/types/cloud'
+
+export async function listBuckets(client: S3Client, region: string): Promise<CloudNode[]> {
+  try {
+    const res = await client.send(new ListBucketsCommand({}))
+    return (res.Buckets ?? []).map((b): CloudNode => ({
+      id:       b.Name ?? 'unknown',
+      type:     's3',
+      label:    b.Name ?? 'Bucket',
+      status:   'running',
+      region,
+      metadata: { creationDate: b.CreationDate },
+    }))
+  } catch {
+    return []
+  }
+}
+```
+
+- [ ] **Step 5: Create `src/main/aws/services/lambda.ts`**
+
+```ts
+import { LambdaClient, ListFunctionsCommand } from '@aws-sdk/client-lambda'
+import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+
+function lambdaStatusToNodeStatus(state: string | undefined): NodeStatus {
+  if (state === 'Active') return 'running'
+  if (state === 'Inactive') return 'stopped'
+  if (!state) return 'unknown'
+  return 'pending'
+}
+
+export async function listFunctions(client: LambdaClient, region: string): Promise<CloudNode[]> {
+  try {
+    const res = await client.send(new ListFunctionsCommand({}))
+    return (res.Functions ?? []).map((fn): CloudNode => ({
+      id:       fn.FunctionArn ?? fn.FunctionName ?? 'unknown',
+      type:     'lambda',
+      label:    fn.FunctionName ?? 'Lambda',
+      status:   lambdaStatusToNodeStatus(fn.State),
+      region,
+      metadata: { runtime: fn.Runtime, handler: fn.Handler },
+      parentId: fn.VpcConfig?.VpcId,
+    }))
+  } catch {
+    return []
+  }
+}
+```
+
+- [ ] **Step 6: Create `src/main/aws/services/alb.ts`**
+
+```ts
+import { ElasticLoadBalancingV2Client, DescribeLoadBalancersCommand } from '@aws-sdk/client-elastic-load-balancing-v2'
+import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+
+function albStatusToNodeStatus(code: string | undefined): NodeStatus {
+  if (code === 'active')       return 'running'
+  if (code === 'provisioning') return 'pending'
+  if (code === 'failed')       return 'error'
+  return 'unknown'
+}
+
+export async function describeLoadBalancers(
+  client: ElasticLoadBalancingV2Client,
+  region: string,
+): Promise<CloudNode[]> {
+  try {
+    const res = await client.send(new DescribeLoadBalancersCommand({}))
+    return (res.LoadBalancers ?? []).map((lb): CloudNode => ({
+      id:       lb.LoadBalancerArn ?? lb.LoadBalancerName ?? 'unknown',
+      type:     'alb',
+      label:    lb.LoadBalancerName ?? 'ALB',
+      status:   albStatusToNodeStatus(lb.State?.Code),
+      region,
+      metadata: { dnsName: lb.DNSName, scheme: lb.Scheme, type: lb.Type },
+      parentId: lb.VpcId,
+    }))
+  } catch {
+    return []
+  }
+}
+```
+
+- [ ] **Step 7: Run all service tests to verify they pass**
+
+```bash
+npm test -- tests/main/aws/services/
+```
+
+Expected: PASS — all 8 tests pass.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add src/main/aws/services/ tests/main/aws/services/
+git commit -m "feat: add RDS, S3, Lambda, ALB service describe functions"
+```
+
+---
+
+### Task 9: Resource Scanner (poll, diff, push delta)
+
+**Files:**
+- Create: `src/main/aws/scanner.ts`
+- Create: `tests/main/aws/scanner.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `tests/main/aws/scanner.test.ts`:
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { computeDelta } from '../../../src/main/aws/scanner'
+import type { CloudNode, ScanDelta } from '../../../src/renderer/types/cloud'
+
+const makeNode = (id: string, status = 'running', label = id): CloudNode => ({
+  id, type: 'ec2', label, status: status as any, region: 'us-east-1', metadata: {},
+})
+
+describe('computeDelta', () => {
+  it('detects added nodes', () => {
+    const prev: CloudNode[] = []
+    const next: CloudNode[] = [makeNode('i-001')]
+    const delta = computeDelta(prev, next)
+    expect(delta.added).toHaveLength(1)
+    expect(delta.added[0].id).toBe('i-001')
+    expect(delta.changed).toHaveLength(0)
+    expect(delta.removed).toHaveLength(0)
+  })
+
+  it('detects removed nodes', () => {
+    const prev = [makeNode('i-001')]
+    const next: CloudNode[] = []
+    const delta = computeDelta(prev, next)
+    expect(delta.removed).toEqual(['i-001'])
+    expect(delta.added).toHaveLength(0)
+  })
+
+  it('detects changed nodes (status change)', () => {
+    const prev = [makeNode('i-001', 'running')]
+    const next = [makeNode('i-001', 'stopped')]
+    const delta = computeDelta(prev, next)
+    expect(delta.changed).toHaveLength(1)
+    expect(delta.changed[0].status).toBe('stopped')
+  })
+
+  it('returns empty delta when nothing changed', () => {
+    const nodes = [makeNode('i-001')]
+    const delta = computeDelta(nodes, nodes)
+    expect(delta.added).toHaveLength(0)
+    expect(delta.changed).toHaveLength(0)
+    expect(delta.removed).toHaveLength(0)
+  })
+
+  it('detects changed nodes (label change)', () => {
+    const prev = [makeNode('i-001', 'running', 'old-name')]
+    const next = [makeNode('i-001', 'running', 'new-name')]
+    const delta = computeDelta(prev, next)
+    expect(delta.changed).toHaveLength(1)
+    expect(delta.changed[0].label).toBe('new-name')
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+npm test -- tests/main/aws/scanner.test.ts
+```
+
+Expected: FAIL — module not found.
+
+- [ ] **Step 3: Create `src/main/aws/scanner.ts`**
+
+```ts
+import { BrowserWindow } from 'electron'
+import { IPC } from '../ipc/channels'
+import type { AwsClients } from './client'
+import type { CloudNode, ScanDelta } from '../../renderer/types/cloud'
+import { describeInstances, describeVpcs, describeSubnets, describeSecurityGroups } from './services/ec2'
+import { describeDBInstances } from './services/rds'
+import { listBuckets } from './services/s3'
+import { listFunctions } from './services/lambda'
+import { describeLoadBalancers } from './services/alb'
+
+const POLL_INTERVAL_MS = 30_000
+
+// Computes the diff between previous and next resource snapshots.
+// Exported for unit testing — scanner.ts is the only caller in production.
+export function computeDelta(prev: CloudNode[], next: CloudNode[]): ScanDelta {
+  const prevMap = new Map(prev.map((n) => [n.id, n]))
+  const nextMap = new Map(next.map((n) => [n.id, n]))
+
+  const added:   CloudNode[] = []
+  const changed: CloudNode[] = []
+  const removed: string[]    = []
+
+  for (const [id, node] of nextMap) {
+    if (!prevMap.has(id)) {
+      added.push(node)
+    } else {
+      const p = prevMap.get(id)!
+      if (p.status !== node.status || p.label !== node.label) {
+        changed.push(node)
+      }
+    }
+  }
+
+  for (const id of prevMap.keys()) {
+    if (!nextMap.has(id)) removed.push(id)
+  }
+
+  return { added, changed, removed }
+}
+
+export class ResourceScanner {
+  private timer: NodeJS.Timeout | null = null
+  private currentNodes: CloudNode[] = []
+
+  constructor(
+    private clients: AwsClients,
+    private region: string,
+    private window: BrowserWindow,
+  ) {}
+
+  start(): void {
+    this.scan()
+    this.timer = setInterval(() => this.scan(), POLL_INTERVAL_MS)
+  }
+
+  stop(): void {
+    if (this.timer) {
+      clearInterval(this.timer)
+      this.timer = null
+    }
+  }
+
+  triggerManualScan(): void {
+    this.scan()
+  }
+
+  private async scan(): Promise<void> {
+    this.window.webContents.send(IPC.SCAN_STATUS, 'scanning')
+
+    const [instances, vpcs, subnets, sgs, dbs, buckets, fns, lbs] = await Promise.all([
+      describeInstances(this.clients.ec2, this.region),
+      describeVpcs(this.clients.ec2, this.region),
+      describeSubnets(this.clients.ec2, this.region),
+      describeSecurityGroups(this.clients.ec2, this.region),
+      describeDBInstances(this.clients.rds, this.region),
+      listBuckets(this.clients.s3, this.region),
+      listFunctions(this.clients.lambda, this.region),
+      describeLoadBalancers(this.clients.alb, this.region),
+    ])
+
+    const nextNodes = [...instances, ...vpcs, ...subnets, ...sgs, ...dbs, ...buckets, ...fns, ...lbs]
+    const delta = computeDelta(this.currentNodes, nextNodes)
+
+    this.currentNodes = nextNodes
+    this.window.webContents.send(IPC.SCAN_DELTA, delta)
+    this.window.webContents.send(IPC.SCAN_STATUS, 'idle')
+  }
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+```bash
+npm test -- tests/main/aws/scanner.test.ts
+```
+
+Expected: PASS — all 5 tests pass.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/main/aws/scanner.ts tests/main/aws/scanner.test.ts
+git commit -m "feat: add ResourceScanner with computeDelta diff and 30s polling"
+```
+
+---
+
+### Task 10: IPC handlers + main process wiring
+
+**Files:**
+- Create: `src/main/ipc/handlers.ts`
+- Modify: `src/main/index.ts` (created by the electron-vite scaffold in Task 1)
+- Create: `tests/main/ipc/handlers.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `tests/main/ipc/handlers.test.ts`:
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('electron', () => ({
+  ipcMain: { handle: vi.fn() },
+  BrowserWindow: vi.fn(),
+}))
+vi.mock('../../../src/main/aws/credentials', () => ({
+  listProfiles: vi.fn().mockReturnValue([{ name: 'default' }]),
+  getDefaultRegion: vi.fn().mockReturnValue('us-east-1'),
+}))
+vi.mock('../../../src/main/aws/client', () => ({
+  createClients: vi.fn().mockReturnValue({}),
+}))
+vi.mock('../../../src/main/aws/scanner', () => ({
+  ResourceScanner: vi.fn().mockImplementation(() => ({ start: vi.fn(), stop: vi.fn(), triggerManualScan: vi.fn() })),
+}))
+
+import { ipcMain } from 'electron'
+import { registerHandlers } from '../../../src/main/ipc/handlers'
+
+describe('registerHandlers', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('registers all required IPC handlers', () => {
+    const mockWin = { webContents: { send: vi.fn() } } as any
+    registerHandlers(mockWin)
+    const registeredChannels = vi.mocked(ipcMain.handle).mock.calls.map((c) => c[0])
+    expect(registeredChannels).toContain('profiles:list')
+    expect(registeredChannels).toContain('profile:select')
+    expect(registeredChannels).toContain('region:select')
+    expect(registeredChannels).toContain('scan:start')
+  })
+
+  it('profiles:list handler returns listProfiles result', async () => {
+    const mockWin = { webContents: { send: vi.fn() } } as any
+    registerHandlers(mockWin)
+    const handler = vi.mocked(ipcMain.handle).mock.calls.find((c) => c[0] === 'profiles:list')?.[1]
+    expect(handler).toBeDefined()
+    const result = await handler!({} as any)
+    expect(result).toEqual([{ name: 'default' }])
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+npm test -- tests/main/ipc/handlers.test.ts
+```
+
+Expected: FAIL — module not found.
+
+- [ ] **Step 3: Create `src/main/ipc/handlers.ts`**
+
+```ts
+import { ipcMain, BrowserWindow } from 'electron'
+import { IPC } from './channels'
+import { listProfiles, getDefaultRegion } from '../aws/credentials'
+import { createClients } from '../aws/client'
+import { ResourceScanner } from '../aws/scanner'
+
+let scanner: ResourceScanner | null = null
+
+export function registerHandlers(win: BrowserWindow): void {
+  // List available AWS profiles
+  ipcMain.handle(IPC.PROFILES_LIST, () => listProfiles())
+
+  // Select a profile — recreates clients + restarts scanner
+  ipcMain.handle(IPC.PROFILE_SELECT, (_event, profileName: string) => {
+    const region = getDefaultRegion(profileName)
+    restartScanner(win, profileName, region)
+  })
+
+  // Select a region — recreates clients + restarts scanner with current profile
+  ipcMain.handle(IPC.REGION_SELECT, (_event, region: string) => {
+    const profile = process.env.AWS_PROFILE ?? 'default'
+    restartScanner(win, profile, region)
+  })
+
+  // Manual scan trigger
+  ipcMain.handle(IPC.SCAN_START, () => {
+    scanner?.triggerManualScan()
+  })
+}
+
+function restartScanner(win: BrowserWindow, profile: string, region: string): void {
+  scanner?.stop()
+  const clients = createClients(profile, region)
+  scanner = new ResourceScanner(clients, region, win)
+  scanner.start()
+}
+```
+
+- [ ] **Step 4: Run handler test to verify it passes**
+
+```bash
+npm test -- tests/main/ipc/handlers.test.ts
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Update `src/main/index.ts` to register handlers and boot scanner**
+
+`src/main/index.ts` was created by the electron-vite scaffold in Task 1. Replace its contents entirely:
+```ts
+import { app, BrowserWindow, shell } from 'electron'
+import { join } from 'node:path'
+import { registerHandlers } from './ipc/handlers'
+
+function createWindow(): BrowserWindow {
+  const win = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    titleBarStyle: 'hiddenInset',
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: false,
+    },
+  })
+
+  registerHandlers(win)
+
+  if (process.env['ELECTRON_RENDERER_URL']) {
+    win.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  } else {
+    win.loadFile(join(__dirname, '../renderer/index.html'))
+  }
+
+  return win
+}
+
+app.whenReady().then(() => {
+  createWindow()
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+```
+
+- [ ] **Step 6: Run all main process tests to confirm nothing broken**
+
+```bash
+npm test -- tests/main/
+```
+
+Expected: All tests PASS.
+
+- [ ] **Step 7: Smoke test — start the app**
+
+```bash
+npm run dev
+```
+
+Expected: Electron window opens. No errors in terminal. (Canvas will be empty at this stage — renderer not built yet.)
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add src/main/ipc/handlers.ts tests/main/ipc/handlers.test.ts src/main/index.ts
+git commit -m "feat: register IPC handlers, wire ResourceScanner into main process"
+```
+
+---
+
+## Chunk 3a: Renderer — Store, Hooks, Canvas Nodes, Views
+
+### Task 11: Zustand store
+
+**Files:**
+- Create: `src/renderer/store/cloud.ts`
+- Create: `tests/renderer/store/cloud.test.ts`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `tests/renderer/store/cloud.test.ts`:
+```ts
+import { describe, it, expect, beforeEach } from 'vitest'
+import { useCloudStore } from '../../../src/renderer/store/cloud'
+import type { CloudNode, ScanDelta } from '../../../src/renderer/types/cloud'
+
+const makeNode = (id: string): CloudNode => ({
+  id, type: 'ec2', label: id, status: 'running', region: 'us-east-1', metadata: {},
+})
+
+describe('useCloudStore', () => {
+  beforeEach(() => {
+    useCloudStore.setState({ nodes: [], selectedNodeId: null, scanStatus: 'idle', profile: 'default', region: 'us-east-1' })
+  })
+
+  it('applies added nodes from delta', () => {
+    useCloudStore.getState().applyDelta({ added: [makeNode('i-001')], changed: [], removed: [] })
+    expect(useCloudStore.getState().nodes).toHaveLength(1)
+    expect(useCloudStore.getState().nodes[0].id).toBe('i-001')
+  })
+
+  it('applies removed nodes from delta', () => {
+    useCloudStore.setState({ nodes: [makeNode('i-001'), makeNode('i-002')] })
+    useCloudStore.getState().applyDelta({ added: [], changed: [], removed: ['i-001'] })
+    expect(useCloudStore.getState().nodes).toHaveLength(1)
+    expect(useCloudStore.getState().nodes[0].id).toBe('i-002')
+  })
+
+  it('applies changed nodes from delta', () => {
+    useCloudStore.setState({ nodes: [makeNode('i-001')] })
+    const changed = { ...makeNode('i-001'), status: 'stopped' as const }
+    useCloudStore.getState().applyDelta({ added: [], changed: [changed], removed: [] })
+    expect(useCloudStore.getState().nodes[0].status).toBe('stopped')
+  })
+
+  it('sets selected node', () => {
+    useCloudStore.getState().selectNode('i-001')
+    expect(useCloudStore.getState().selectedNodeId).toBe('i-001')
+  })
+
+  it('sets scan status', () => {
+    useCloudStore.getState().setScanStatus('scanning')
+    expect(useCloudStore.getState().scanStatus).toBe('scanning')
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+npm test -- tests/renderer/store/cloud.test.ts
+```
+
+Expected: FAIL — module not found.
+
+- [ ] **Step 3: Create `src/renderer/store/cloud.ts`**
+
+```ts
+import { create } from 'zustand'
+import type { CloudNode, ScanDelta } from '../types/cloud'
+
+interface CloudState {
+  nodes:          CloudNode[]
+  selectedNodeId: string | null
+  scanStatus:     'idle' | 'scanning' | 'error'
+  profile:        string
+  region:         string
+  view:           'topology' | 'graph'
+
+  applyDelta:     (delta: ScanDelta) => void
+  selectNode:     (id: string | null) => void
+  setScanStatus:  (status: 'idle' | 'scanning' | 'error') => void
+  setProfile:     (profile: string) => void
+  setRegion:      (region: string) => void
+  setView:        (view: 'topology' | 'graph') => void
+}
+
+export const useCloudStore = create<CloudState>((set) => ({
+  nodes:          [],
+  selectedNodeId: null,
+  scanStatus:     'idle',
+  profile:        'default',
+  region:         'us-east-1',
+  view:           'topology',
+
+  applyDelta: (delta) =>
+    set((state) => {
+      const nodeMap = new Map(state.nodes.map((n) => [n.id, n]))
+      for (const n of delta.added)   nodeMap.set(n.id, n)
+      for (const n of delta.changed) nodeMap.set(n.id, n)
+      for (const id of delta.removed) nodeMap.delete(id)
+      return { nodes: Array.from(nodeMap.values()) }
+    }),
+
+  selectNode:    (id)      => set({ selectedNodeId: id }),
+  setScanStatus: (status)  => set({ scanStatus: status }),
+  setProfile:    (profile) => set({ profile }),
+  setRegion:     (region)  => set({ region }),
+  setView:       (view)    => set({ view }),
+}))
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+```bash
+npm test -- tests/renderer/store/cloud.test.ts
+```
+
+Expected: PASS — all 5 tests pass.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/renderer/store/cloud.ts tests/renderer/store/cloud.test.ts
+git commit -m "feat: add Zustand cloud store with applyDelta, selectNode, status actions"
+```
+
+---
+
+### Task 12: IPC hooks (connect renderer to main process)
+
+**Files:**
+- Create: `src/renderer/hooks/useIpc.ts`
+- Create: `src/renderer/hooks/useScanner.ts`
+- Create: `tests/renderer/hooks/useIpc.test.ts`
+- Create: `tests/renderer/hooks/useScanner.test.ts`
+
+- [ ] **Step 1: Write failing tests**
+
+Create `tests/renderer/hooks/useIpc.test.ts`:
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { renderHook } from '@testing-library/react'
+import { useIpc } from '../../../src/renderer/hooks/useIpc'
+import { useCloudStore } from '../../../src/renderer/store/cloud'
+
+const unsubDelta  = vi.fn()
+const unsubStatus = vi.fn()
+
+beforeEach(() => {
+  window.cloudblocks = {
+    listProfiles:  vi.fn().mockResolvedValue([]),
+    selectProfile: vi.fn().mockResolvedValue(undefined),
+    selectRegion:  vi.fn().mockResolvedValue(undefined),
+    startScan:     vi.fn().mockResolvedValue(undefined),
+    onScanDelta:   vi.fn().mockReturnValue(unsubDelta),
+    onScanStatus:  vi.fn().mockReturnValue(unsubStatus),
+    onConnStatus:  vi.fn().mockReturnValue(vi.fn()),
+  }
+  useCloudStore.setState({ nodes: [], selectedNodeId: null, scanStatus: 'idle', profile: 'default', region: 'us-east-1', view: 'topology' })
+})
+
+describe('useIpc', () => {
+  it('subscribes to onScanDelta and onScanStatus on mount', () => {
+    renderHook(() => useIpc())
+    expect(window.cloudblocks.onScanDelta).toHaveBeenCalled()
+    expect(window.cloudblocks.onScanStatus).toHaveBeenCalled()
+  })
+
+  it('unsubscribes on unmount', () => {
+    const { unmount } = renderHook(() => useIpc())
+    unmount()
+    expect(unsubDelta).toHaveBeenCalled()
+    expect(unsubStatus).toHaveBeenCalled()
+  })
+})
+```
+
+Create `tests/renderer/hooks/useScanner.test.ts`:
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { renderHook, waitFor } from '@testing-library/react'
+import { useScanner } from '../../../src/renderer/hooks/useScanner'
+import { useCloudStore } from '../../../src/renderer/store/cloud'
+
+beforeEach(() => {
+  window.cloudblocks = {
+    listProfiles:  vi.fn().mockResolvedValue([{ name: 'default' }]),
+    selectProfile: vi.fn().mockResolvedValue(undefined),
+    selectRegion:  vi.fn().mockResolvedValue(undefined),
+    startScan:     vi.fn().mockResolvedValue(undefined),
+    onScanDelta:   vi.fn().mockReturnValue(vi.fn()),
+    onScanStatus:  vi.fn().mockReturnValue(vi.fn()),
+    onConnStatus:  vi.fn().mockReturnValue(vi.fn()),
+  }
+  useCloudStore.setState({ nodes: [], selectedNodeId: null, scanStatus: 'idle', profile: 'default', region: 'us-east-1', view: 'topology' })
+})
+
+describe('useScanner', () => {
+  it('calls selectProfile with first profile on mount', async () => {
+    renderHook(() => useScanner())
+    await waitFor(() => expect(window.cloudblocks.selectProfile).toHaveBeenCalledWith('default'))
+  })
+
+  it('triggerScan calls startScan', () => {
+    const { result } = renderHook(() => useScanner())
+    result.current.triggerScan()
+    expect(window.cloudblocks.startScan).toHaveBeenCalled()
+  })
+})
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+```bash
+npm test -- tests/renderer/hooks/
+```
+
+Expected: FAIL — modules not found.
+
+- [ ] **Step 3: Create `src/renderer/hooks/useIpc.ts`**
+
+```ts
+import { useEffect } from 'react'
+import { useCloudStore } from '../store/cloud'
+
+// Subscribes to IPC events pushed from the main process and wires them
+// into the Zustand store. Call once at the app root.
+export function useIpc(): void {
+  const applyDelta  = useCloudStore((s) => s.applyDelta)
+  const setScanStatus = useCloudStore((s) => s.setScanStatus)
+
+  useEffect(() => {
+    const unsubDelta  = window.cloudblocks.onScanDelta((delta) => applyDelta(delta))
+    const unsubStatus = window.cloudblocks.onScanStatus((status) => {
+      setScanStatus(status as 'idle' | 'scanning' | 'error')
+    })
+    return () => { unsubDelta(); unsubStatus() }
+  }, [applyDelta, setScanStatus])
+}
+```
+
+- [ ] **Step 4: Create `src/renderer/hooks/useScanner.ts`**
+
+```ts
+import { useEffect, useRef } from 'react'
+import { useCloudStore } from '../store/cloud'
+
+// On mount: loads profiles, selects first profile + its default region
+// (which starts the scanner in main). Zero-profiles case is handled by
+// the Onboarding screen in App.tsx — useScanner is never called when profiles=[].
+export function useScanner(): { triggerScan: () => void } {
+  const setProfile  = useCloudStore((s) => s.setProfile)
+  const setRegion   = useCloudStore((s) => s.setRegion)
+  const initialized = useRef(false)
+
+  useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
+
+    window.cloudblocks.listProfiles().then((profiles) => {
+      if (profiles.length === 0) return
+      const first = profiles[0]
+      setProfile(first.name)
+      // selectProfile in main reads the default region and starts the scanner
+      window.cloudblocks.selectProfile(first.name)
+      // Sync the region selector in the renderer with what main will use
+      if (first.region) {
+        setRegion(first.region)
+        window.cloudblocks.selectRegion(first.region)
+      }
+    })
+  }, [setProfile, setRegion])
+
+  return {
+    triggerScan: () => window.cloudblocks.startScan(),
+  }
+}
+```
+
+- [ ] **Step 5: Run tests to verify they pass**
+
+```bash
+npm test -- tests/renderer/hooks/
+```
+
+Expected: PASS.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/renderer/hooks/useIpc.ts src/renderer/hooks/useScanner.ts tests/renderer/hooks/
+git commit -m "feat: add useIpc and useScanner hooks to wire renderer to main process"
+```
+
+---
+
+### Task 13: ResourceNode, VpcNode, SubnetNode components
+
+**Files:**
+- Create: `src/renderer/components/canvas/nodes/ResourceNode.tsx`
+- Create: `src/renderer/components/canvas/nodes/VpcNode.tsx`
+- Create: `src/renderer/components/canvas/nodes/SubnetNode.tsx`
+- Create: `tests/renderer/components/canvas/nodes/ResourceNode.test.tsx`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `tests/renderer/components/canvas/nodes/ResourceNode.test.tsx`:
+```tsx
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { ResourceNode } from '../../../../../src/renderer/components/canvas/nodes/ResourceNode'
+import type { NodeProps } from '@xyflow/react'
+
+const props = {
+  id: 'i-001',
+  data: { label: 'web-server', nodeType: 'ec2', status: 'running' },
+  selected: false,
+} as unknown as NodeProps
+
+describe('ResourceNode', () => {
+  it('renders the label', () => {
+    render(<ResourceNode {...props} />)
+    expect(screen.getByText('web-server')).toBeInTheDocument()
+  })
+
+  it('renders a green status dot for running status', () => {
+    render(<ResourceNode {...props} />)
+    const dot = document.querySelector('[data-status="running"]')
+    expect(dot).toBeInTheDocument()
+  })
+
+  it('applies selected styling when selected', () => {
+    render(<ResourceNode {...{ ...props, selected: true }} />)
+    const node = document.querySelector('[data-selected="true"]')
+    expect(node).toBeInTheDocument()
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+```bash
+npm test -- tests/renderer/components/canvas/nodes/ResourceNode.test.tsx
+```
+
+Expected: FAIL — module not found.
+
+- [ ] **Step 3: Create `src/renderer/components/canvas/nodes/ResourceNode.tsx`**
+
+```tsx
+import { Handle, Position, type NodeProps } from '@xyflow/react'
+import type { NodeStatus, NodeType } from '../../../types/cloud'
+
+const STATUS_COLORS: Record<NodeStatus, string> = {
+  running: '#28c840',
+  stopped: '#ff5f57',
+  pending: '#febc2e',
+  error:   '#ff5f57',
+  unknown: '#666666',
+}
+
+const TYPE_BORDER: Record<NodeType, string> = {
+  ec2:            '#FF9900',
+  vpc:            '#1976D2',
+  subnet:         '#4CAF50',
+  rds:            '#4CAF50',
+  s3:             '#64b5f6',
+  lambda:         '#64b5f6',
+  alb:            '#FF9900',
+  'security-group': '#9c27b0',
+  igw:            '#4CAF50',
+}
+
+interface ResourceNodeData {
+  label:    string
+  nodeType: NodeType
+  status:   NodeStatus
+}
+
+export function ResourceNode({ data, selected }: NodeProps) {
+  const d = data as ResourceNodeData
+  const borderColor = TYPE_BORDER[d.nodeType] ?? '#555'
+  const statusColor = STATUS_COLORS[d.status] ?? '#666'
+
+  return (
+    <div
+      data-selected={selected}
+      className="relative px-3 py-1.5 rounded min-w-[80px] text-center"
+      style={{
+        background: '#0d1117',
+        border: `${selected ? '2.5px' : '1.5px'} solid ${borderColor}`,
+        boxShadow: selected ? `0 0 8px ${borderColor}66` : 'none',
+        fontFamily: 'monospace',
+      }}
+    >
+      <Handle type="target" position={Position.Top}    style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="target" position={Position.Left}   style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right}  style={{ opacity: 0 }} />
+
+      {/* Status dot */}
+      <div
+        data-status={d.status}
+        className="absolute top-1 right-1 w-2 h-2 rounded-full"
+        style={{ background: statusColor }}
+      />
+
+      <div className="text-[9px] font-bold" style={{ color: borderColor }}>
+        {d.label}
+      </div>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 4: Create `src/renderer/components/canvas/nodes/VpcNode.tsx`**
+
+```tsx
+import type { NodeProps } from '@xyflow/react'
+
+interface VpcNodeData { label: string }
+
+export function VpcNode({ data }: NodeProps) {
+  const d = data as VpcNodeData
+  return (
+    <div
+      className="rounded-lg p-2"
+      style={{
+        background: 'rgba(25, 118, 210, 0.05)',
+        border: '1px dashed #1976D2',
+        minWidth: 200,
+        minHeight: 120,
+        fontFamily: 'monospace',
+      }}
+    >
+      <div className="text-[9px] font-bold" style={{ color: '#1976D2' }}>{d.label}</div>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 5: Create `src/renderer/components/canvas/nodes/SubnetNode.tsx`**
+
+```tsx
+import type { NodeProps } from '@xyflow/react'
+
+interface SubnetNodeData { label: string; isPublic?: boolean }
+
+export function SubnetNode({ data }: NodeProps) {
+  const d = data as SubnetNodeData
+  const color = d.isPublic ? '#4CAF50' : '#f44336'
+  return (
+    <div
+      className="rounded p-2"
+      style={{
+        background: `${color}0d`,
+        border: `1px solid ${color}`,
+        minWidth: 140,
+        minHeight: 80,
+        fontFamily: 'monospace',
+      }}
+    >
+      <div className="text-[8px]" style={{ color }}>{d.label}</div>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 6: Run tests to verify they pass**
+
+```bash
+npm test -- tests/renderer/components/canvas/nodes/ResourceNode.test.tsx
+```
+
+Expected: PASS.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add src/renderer/components/canvas/nodes/ tests/renderer/components/canvas/nodes/
+git commit -m "feat: add ResourceNode, VpcNode, SubnetNode canvas components"
+```
+
+---
+
+### Task 14: GraphView component
+
+**Files:**
+- Create: `src/renderer/components/canvas/GraphView.tsx`
+
+- [ ] **Step 1: Create `src/renderer/components/canvas/GraphView.tsx`**
+
+```tsx
+import { useMemo } from 'react'
+import { ReactFlow, Background, MiniMap, type Node, type Edge } from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
+import { useCloudStore } from '../../store/cloud'
+import { ResourceNode } from './nodes/ResourceNode'
+import type { CloudNode } from '../../types/cloud'
+
+const NODE_TYPES = { resource: ResourceNode }
+
+// Derives edges from CloudNode parentId relationships and cross-service links
+function deriveEdges(nodes: CloudNode[]): Edge[] {
+  return nodes
+    .filter((n) => n.parentId)
+    .map((n) => ({
+      id:     `${n.parentId}-${n.id}`,
+      source: n.parentId!,
+      target: n.id,
+      type:   'step',   // orthogonal 90° pipe routing
+      style:  { stroke: '#333', strokeWidth: 1.5 },
+    }))
+}
+
+export function GraphView(): JSX.Element {
+  const cloudNodes = useCloudStore((s) => s.nodes)
+  const selectNode = useCloudStore((s) => s.selectNode)
+  const selectedId = useCloudStore((s) => s.selectedNodeId)
+
+  const flowNodes: Node[] = useMemo(
+    () =>
+      cloudNodes.map((n, i) => ({
+        id:       n.id,
+        type:     'resource',
+        position: { x: (i % 5) * 160 + 40, y: Math.floor(i / 5) * 100 + 60 }, // initial grid layout
+        data:     { label: n.label, nodeType: n.type, status: n.status },
+        selected: n.id === selectedId,
+      })),
+    [cloudNodes, selectedId],
+  )
+
+  const flowEdges: Edge[] = useMemo(() => deriveEdges(cloudNodes), [cloudNodes])
+
+  return (
+    <ReactFlow
+      nodes={flowNodes}
+      edges={flowEdges}
+      nodeTypes={NODE_TYPES}
+      onNodeClick={(_e, node) => selectNode(node.id)}
+      onPaneClick={() => selectNode(null)}
+      fitView
+      style={{ background: '#080c14' }}
+    >
+      <Background color="#1a1a2e" gap={20} />
+      <MiniMap
+        style={{ background: '#0d1320', border: '1px solid #1e2d40' }}
+        nodeColor="#FF9900"
+      />
+    </ReactFlow>
+  )
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add src/renderer/components/canvas/GraphView.tsx
+git commit -m "feat: add GraphView with React Flow step edges (orthogonal pipe routing)"
+```
+
+---
+
+### Task 15: TopologyView component
+
+**Files:**
+- Create: `src/renderer/components/canvas/TopologyView.tsx`
+
+- [ ] **Step 1: Create `src/renderer/components/canvas/TopologyView.tsx`**
+
+```tsx
+import { useMemo } from 'react'
+import { ReactFlow, Background, MiniMap, type Node, type Edge } from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
+import { useCloudStore } from '../../store/cloud'
+import { ResourceNode } from './nodes/ResourceNode'
+import { VpcNode } from './nodes/VpcNode'
+import { SubnetNode } from './nodes/SubnetNode'
+import type { CloudNode } from '../../types/cloud'
+
+const NODE_TYPES = { resource: ResourceNode, vpc: VpcNode, subnet: SubnetNode }
+
+const CONTAINER_TYPES = new Set(['vpc', 'subnet'])
+
+// Lays out container nodes (VPCs, subnets) as parent nodes and
+// resource nodes as children inside them.
+function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Node[] {
+  const nodes: Node[] = []
+  const containers = cloudNodes.filter((n) => CONTAINER_TYPES.has(n.type))
+  const resources   = cloudNodes.filter((n) => !CONTAINER_TYPES.has(n.type))
+
+  // Position VPCs as large containers
+  containers
+    .filter((n) => n.type === 'vpc')
+    .forEach((vpc, i) => {
+      nodes.push({
+        id:       vpc.id,
+        type:     'vpc',
+        position: { x: 40 + i * 600, y: 40 },
+        style:    { width: 560, height: 400 },
+        data:     { label: vpc.label },
+      })
+    })
+
+  // Position subnets inside their parent VPC
+  const subnetsByVpc = new Map<string, CloudNode[]>()
+  containers
+    .filter((n) => n.type === 'subnet')
+    .forEach((s) => {
+      if (!s.parentId) return
+      if (!subnetsByVpc.has(s.parentId)) subnetsByVpc.set(s.parentId, [])
+      subnetsByVpc.get(s.parentId)!.push(s)
+    })
+
+  for (const [vpcId, subnets] of subnetsByVpc) {
+    subnets.forEach((subnet, i) => {
+      nodes.push({
+        id:       subnet.id,
+        type:     'subnet',
+        parentId: vpcId,
+        extent:   'parent',
+        position: { x: 20 + i * 260, y: 40 },
+        style:    { width: 240, height: 340 },
+        data:     { label: subnet.label, isPublic: subnet.metadata.mapPublicIp },
+      })
+    })
+  }
+
+  // Position resources inside their parent subnet or vpc
+  const resourcesByParent = new Map<string, CloudNode[]>()
+  resources.forEach((r) => {
+    const pid = r.parentId ?? '__root__'
+    if (!resourcesByParent.has(pid)) resourcesByParent.set(pid, [])
+    resourcesByParent.get(pid)!.push(r)
+  })
+
+  for (const [parentId, rNodes] of resourcesByParent) {
+    if (parentId === '__root__') continue
+    rNodes.forEach((r, i) => {
+      nodes.push({
+        id:       r.id,
+        type:     'resource',
+        parentId,
+        extent:   'parent',
+        position: { x: 20 + (i % 2) * 110, y: 30 + Math.floor(i / 2) * 60 },
+        data:     { label: r.label, nodeType: r.type, status: r.status },
+        selected: r.id === selectedId,
+      })
+    })
+  }
+
+  return nodes
+}
+
+export function TopologyView(): JSX.Element {
+  const cloudNodes = useCloudStore((s) => s.nodes)
+  const selectNode = useCloudStore((s) => s.selectNode)
+  const selectedId = useCloudStore((s) => s.selectedNodeId)
+
+  const flowNodes: Node[] = useMemo(
+    () => buildFlowNodes(cloudNodes, selectedId),
+    [cloudNodes, selectedId],
+  )
+
+  const flowEdges: Edge[] = []  // Topology view uses nesting, not edges
+
+  return (
+    <ReactFlow
+      nodes={flowNodes}
+      edges={flowEdges}
+      nodeTypes={NODE_TYPES}
+      onNodeClick={(_e, node) => selectNode(node.id)}
+      onPaneClick={() => selectNode(null)}
+      fitView
+      style={{ background: '#080c14' }}
+    >
+      <Background color="#1a1a2e" gap={20} />
+      <MiniMap
+        style={{ background: '#0d1320', border: '1px solid #1e2d40' }}
+        nodeColor="#FF9900"
+      />
+    </ReactFlow>
+  )
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add src/renderer/components/canvas/TopologyView.tsx
+git commit -m "feat: add TopologyView with nested VPC/subnet/resource layout"
+```
+
+---
+
+---
+
+## Chunk 3b: Renderer — Shell UI, Utilities, Wiring, Onboarding
+
+### Task 16: CloudCanvas — view toggle + toolbar
+
+**Files:**
+- Create: `src/renderer/components/canvas/CloudCanvas.tsx`
+
+- [ ] **Step 1: Create `src/renderer/components/canvas/CloudCanvas.tsx`**
+
+```tsx
+import { useCallback, useRef } from 'react'
+import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
+import { useCloudStore } from '../../store/cloud'
+import { TopologyView } from './TopologyView'
+import { GraphView } from './GraphView'
+
+interface Props {
+  onScan: () => void
+}
+
+// Inner component has access to the ReactFlow instance for fitView / zoom.
+function CanvasInner({ onScan }: Props): JSX.Element {
+  const { fitView, zoomIn, zoomOut } = useReactFlow()
+  const view       = useCloudStore((s) => s.view)
+  const setView    = useCloudStore((s) => s.setView)
+  const scanStatus = useCloudStore((s) => s.scanStatus)
+
+  const btnBase = { fontFamily: 'monospace', fontSize: '9px', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }
+
+  return (
+    <div className="relative flex-1 h-full">
+      {/* Toolbar */}
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-md"
+           style={{ background: '#0d1320', border: '1px solid #1e2d40' }}>
+        <button
+          onClick={onScan}
+          disabled={scanStatus === 'scanning'}
+          style={{ ...btnBase, background: '#1a2332', border: '1px solid #FF9900', color: '#FF9900', opacity: scanStatus === 'scanning' ? 0.5 : 1 }}
+        >
+          {scanStatus === 'scanning' ? '⟳ Scanning…' : '⟳ Scan'}
+        </button>
+
+        <div className="w-px h-3.5 bg-gray-700" />
+
+        <button onClick={() => fitView({ duration: 300 })} style={{ ...btnBase, background: '#111', border: '1px solid #333', color: '#aaa' }}>
+          ⊞ Fit
+        </button>
+        <button onClick={() => zoomIn()}  style={{ ...btnBase, background: '#111', border: '1px solid #333', color: '#aaa' }}>+</button>
+        <button onClick={() => zoomOut()} style={{ ...btnBase, background: '#111', border: '1px solid #333', color: '#aaa' }}>−</button>
+
+        <div className="w-px h-3.5 bg-gray-700" />
+
+        {(['topology', 'graph'] as const).map((v) => (
+          <button
+            key={v}
+            onClick={() => setView(v)}
+            style={{
+              ...btnBase,
+              background: view === v ? '#1a2332' : 'transparent',
+              border: `1px solid ${view === v ? '#64b5f6' : '#333'}`,
+              color: view === v ? '#64b5f6' : '#666',
+            }}
+          >
+            {v === 'topology' ? '⊞ Topology' : '◈ Graph'}
+          </button>
+        ))}
+      </div>
+
+      {view === 'topology' ? <TopologyView /> : <GraphView />}
+    </div>
+  )
+}
+
+export function CloudCanvas(props: Props): JSX.Element {
+  return (
+    <ReactFlowProvider>
+      <CanvasInner {...props} />
+    </ReactFlowProvider>
+  )
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add src/renderer/components/canvas/CloudCanvas.tsx
+git commit -m "feat: add CloudCanvas with view toggle (topology/graph) and scan toolbar"
+```
+
+---
+
+### Task 17: TitleBar, Sidebar, Inspector, CommandDrawer
+
+**Files:**
+- Create: `src/renderer/components/TitleBar.tsx`
+- Create: `src/renderer/components/Sidebar.tsx`
+- Create: `src/renderer/components/Inspector.tsx`
+- Create: `src/renderer/components/CommandDrawer.tsx`
+
+- [ ] **Step 1: Create `src/renderer/components/TitleBar.tsx`**
+
+```tsx
+import { useEffect, useState } from 'react'
+import { useCloudStore } from '../store/cloud'
+import type { AwsProfile } from '../types/cloud'
+
+const REGIONS = [
+  'us-east-1','us-east-2','us-west-1','us-west-2',
+  'eu-west-1','eu-west-2','eu-central-1',
+  'ap-southeast-1','ap-northeast-1',
+]
+
+export function TitleBar(): JSX.Element {
+  const [profiles, setProfiles]       = useState<AwsProfile[]>([])
+  const [connStatus, setConnStatus]   = useState<'unknown' | 'connected' | 'error'>('unknown')
+  const profile    = useCloudStore((s) => s.profile)
+  const region     = useCloudStore((s) => s.region)
+  const setProfile = useCloudStore((s) => s.setProfile)
+  const setRegion  = useCloudStore((s) => s.setRegion)
+
+  useEffect(() => {
+    window.cloudblocks.listProfiles().then(setProfiles)
+    const unsub = window.cloudblocks.onConnStatus((status) => {
+      setConnStatus(status === 'connected' ? 'connected' : 'error')
+    })
+    return unsub
+  }, [])
+
+  const handleProfileChange = (name: string) => {
+    setProfile(name)
+    setConnStatus('unknown')
+    window.cloudblocks.selectProfile(name)
+  }
+
+  const handleRegionChange = (r: string) => {
+    setRegion(r)
+    setConnStatus('unknown')
+    window.cloudblocks.selectRegion(r)
+  }
+
+  const statusColor  = connStatus === 'connected' ? '#28c840' : connStatus === 'error' ? '#ff5f57' : '#febc2e'
+  const statusLabel  = connStatus === 'connected' ? 'connected' : connStatus === 'error' ? 'error' : 'connecting…'
+  const statusGlow   = connStatus === 'connected' ? '0 0 6px #28c840' : 'none'
+
+  return (
+    <div
+      className="flex items-center gap-4 px-3 h-9 flex-shrink-0"
+      style={{ background: '#0d1320', borderBottom: '1px solid #1e2d40' }}
+    >
+      {/* Traffic lights placeholder for macOS hiddenInset */}
+      <div className="flex gap-1.5 mr-2">
+        <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+        <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+        <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+      </div>
+
+      <span className="text-[11px] font-bold tracking-widest font-mono" style={{ color: '#FF9900' }}>
+        CLOUDBLOCKS
+      </span>
+
+      <div className="flex-1" />
+
+      {/* Profile selector */}
+      <select
+        value={profile}
+        onChange={(e) => handleProfileChange(e.target.value)}
+        className="text-[10px] font-mono px-2 py-0.5 rounded"
+        style={{ background: '#1a2332', border: '1px solid #FF9900', color: '#FF9900' }}
+      >
+        {profiles.map((p) => (
+          <option key={p.name} value={p.name}>{p.name}</option>
+        ))}
+      </select>
+
+      {/* Region selector */}
+      <select
+        value={region}
+        onChange={(e) => handleRegionChange(e.target.value)}
+        className="text-[10px] font-mono px-2 py-0.5 rounded"
+        style={{ background: '#1a2332', border: '1px solid #333', color: '#aaa' }}
+      >
+        {REGIONS.map((r) => (
+          <option key={r} value={r}>{r}</option>
+        ))}
+      </select>
+
+      {/* Connection status */}
+      <div className="flex items-center gap-1.5">
+        <div className="w-2 h-2 rounded-full" style={{ background: statusColor, boxShadow: statusGlow }} />
+        <span className="text-[9px] font-mono" style={{ color: statusColor }}>{statusLabel}</span>
+      </div>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Create `src/renderer/components/Sidebar.tsx`**
+
+```tsx
+import { useCloudStore } from '../store/cloud'
+import type { NodeType } from '../types/cloud'
+
+const SERVICES: { type: NodeType; label: string }[] = [
+  { type: 'vpc',            label: 'VPC' },
+  { type: 'ec2',            label: 'EC2' },
+  { type: 'rds',            label: 'RDS' },
+  { type: 's3',             label: 'S3' },
+  { type: 'lambda',         label: 'Lambda' },
+  { type: 'alb',            label: 'ALB' },
+  { type: 'security-group', label: 'Security Group' },
+  { type: 'igw',            label: 'IGW' },
+]
+
+export function Sidebar(): JSX.Element {
+  const view    = useCloudStore((s) => s.view)
+  const setView = useCloudStore((s) => s.setView)
+
+  return (
+    <div
+      className="w-36 flex-shrink-0 flex flex-col py-2 overflow-y-auto"
+      style={{ background: '#0d1117', borderRight: '1px solid #1e2d40' }}
+    >
+      <div className="px-2.5 text-[9px] uppercase tracking-widest mb-1" style={{ color: '#555', fontFamily: 'monospace' }}>
+        Services
+      </div>
+
+      {SERVICES.map((s) => (
+        <div
+          key={s.type}
+          className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
+          style={{ background: '#111', border: '1px solid #222', color: '#aaa' }}
+        >
+          ⬡ {s.label}
+        </div>
+      ))}
+
+      <div className="px-2.5 text-[9px] uppercase tracking-widest mt-3 mb-1" style={{ color: '#555', fontFamily: 'monospace' }}>
+        Views
+      </div>
+
+      {(['topology', 'graph'] as const).map((v) => (
+        <div
+          key={v}
+          onClick={() => setView(v)}
+          className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-pointer"
+          style={{
+            background: view === v ? '#1a2332' : '#111',
+            border: `1px solid ${view === v ? '#64b5f6' : '#222'}`,
+            color: view === v ? '#64b5f6' : '#aaa',
+          }}
+        >
+          {v === 'topology' ? '⊞' : '◈'} {v.charAt(0).toUpperCase() + v.slice(1)}
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+- [ ] **Step 3: Create `src/renderer/components/Inspector.tsx`**
+
+```tsx
+import { useCloudStore } from '../store/cloud'
+
+export function Inspector(): JSX.Element {
+  const selectedId = useCloudStore((s) => s.selectedNodeId)
+  const nodes      = useCloudStore((s) => s.nodes)
+  const node       = nodes.find((n) => n.id === selectedId)
+
+  const STATUS_COLORS: Record<string, string> = {
+    running: '#28c840', stopped: '#ff5f57', pending: '#febc2e', error: '#ff5f57', unknown: '#666',
+  }
+
+  return (
+    <div
+      className="w-44 flex-shrink-0 p-2 overflow-y-auto"
+      style={{ background: '#0d1117', borderLeft: '1px solid #1e2d40', fontFamily: 'monospace' }}
+    >
+      {!node ? (
+        <div className="text-[9px] text-center mt-8" style={{ color: '#555' }}>
+          Click a resource to inspect
+        </div>
+      ) : (
+        <>
+          <div className="text-[9px] font-bold mb-2 pb-1" style={{ color: '#FF9900', borderBottom: '1px solid #1e2d40' }}>
+            {node.type.toUpperCase()}  ·  Selected
+          </div>
+
+          {[
+            { key: 'ID',     val: node.id },
+            { key: 'NAME',   val: node.label },
+            { key: 'REGION', val: node.region },
+          ].map(({ key, val }) => (
+            <div key={key} className="mb-2">
+              <div className="text-[8px] mb-0.5" style={{ color: '#555' }}>{key}</div>
+              <div className="text-[9px] break-all" style={{ color: '#eee' }}>{val}</div>
+            </div>
+          ))}
+
+          <div className="mb-2">
+            <div className="text-[8px] mb-0.5" style={{ color: '#555' }}>STATE</div>
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_COLORS[node.status] ?? '#666' }} />
+              <span className="text-[9px]" style={{ color: STATUS_COLORS[node.status] ?? '#666' }}>{node.status}</span>
+            </div>
+          </div>
+
+          {Object.entries(node.metadata).length > 0 && (
+            <div>
+              <div className="text-[8px] mb-1 mt-2" style={{ color: '#555', borderTop: '1px solid #1e2d40', paddingTop: '6px' }}>
+                METADATA
+              </div>
+              {Object.entries(node.metadata).slice(0, 6).map(([k, v]) => (
+                <div key={k} className="mb-1.5">
+                  <div className="text-[7px]" style={{ color: '#555' }}>{k}</div>
+                  <div className="text-[8px] break-all" style={{ color: '#aaa' }}>{String(v ?? '—')}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+```
+
+- [ ] **Step 4: Create `src/renderer/utils/describeCommand.ts`**
+
+```ts
+// Builds the read-only AWS CLI describe command string for a given resource.
+// Used by CommandDrawer (M1) and will be reused by the CLI Engine in M2.
+export function buildDescribeCommand(type: string, id: string, region: string): string {
+  const r = `--region ${region}`
+  switch (type) {
+    case 'ec2':            return `aws ec2 describe-instances --instance-ids ${id} ${r}`
+    case 'vpc':            return `aws ec2 describe-vpcs --vpc-ids ${id} ${r}`
+    case 'subnet':         return `aws ec2 describe-subnets --subnet-ids ${id} ${r}`
+    case 'rds':            return `aws rds describe-db-instances --db-instance-identifier ${id} ${r}`
+    case 's3':             return `aws s3 ls s3://${id} ${r}`
+    case 'lambda':         return `aws lambda get-function --function-name ${id} ${r}`
+    case 'alb':            return `aws elbv2 describe-load-balancers --load-balancer-arns ${id} ${r}`
+    case 'security-group': return `aws ec2 describe-security-groups --group-ids ${id} ${r}`
+    default:               return `aws ${type} describe --id ${id} ${r}`
+  }
+}
+```
+
+- [ ] **Step 5: Create `src/renderer/components/CommandDrawer.tsx`**
+
+```tsx
+import { useCloudStore } from '../store/cloud'
+import { buildDescribeCommand } from '../utils/describeCommand'
+
+// M1: read-only. Drawer shows the describe command for the selected resource.
+// M2: will expand to full write command preview + Run/Cancel.
+export function CommandDrawer(): JSX.Element {
+  const selectedId = useCloudStore((s) => s.selectedNodeId)
+  const nodes      = useCloudStore((s) => s.nodes)
+  const node       = nodes.find((n) => n.id === selectedId)
+
+  const command = node ? buildDescribeCommand(node.type, node.id, node.region) : null
+
+  return (
+    <div
+      className="flex items-center gap-2 px-3 py-1.5 flex-shrink-0"
+      style={{ background: '#0d1117', borderTop: '1px solid #FF9900', fontFamily: 'monospace' }}
+    >
+      <span className="text-[9px]" style={{ color: '#FF9900' }}>$</span>
+      <code className="text-[9px] flex-1 truncate" style={{ color: command ? '#eee' : '#444' }}>
+        {command ?? 'Select a resource to see its CLI command'}
+      </code>
+      {command && (
+        <button
+          onClick={() => navigator.clipboard.writeText(command)}
+          className="px-2 py-0.5 rounded text-[8px] font-bold"
+          style={{ background: '#1a2332', border: '1px solid #FF9900', color: '#FF9900' }}
+        >
+          Copy
+        </button>
+      )}
+    </div>
+  )
+}
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add src/renderer/utils/describeCommand.ts src/renderer/components/TitleBar.tsx src/renderer/components/Sidebar.tsx src/renderer/components/Inspector.tsx src/renderer/components/CommandDrawer.tsx
+git commit -m "feat: add TitleBar, Sidebar, Inspector, CommandDrawer, describeCommand utility"
+```
+
+---
+
+### Task 18: App.tsx wiring — assemble the full shell
+
+**Files:**
+- Modify: `src/renderer/App.tsx`
+
+- [ ] **Step 1: Replace `src/renderer/App.tsx`**
+
+```tsx
+import { useIpc } from './hooks/useIpc'
+import { useScanner } from './hooks/useScanner'
+import { TitleBar } from './components/TitleBar'
+import { Sidebar } from './components/Sidebar'
+import { CloudCanvas } from './components/canvas/CloudCanvas'
+import { Inspector } from './components/Inspector'
+import { CommandDrawer } from './components/CommandDrawer'
+
+export default function App(): JSX.Element {
+  useIpc()                               // Subscribe to IPC events from main
+  const { triggerScan } = useScanner()   // Boot scanner on mount
+
+  return (
+    <div className="flex flex-col h-screen w-screen overflow-hidden" style={{ background: '#080c14' }}>
+      <TitleBar />
+
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <CloudCanvas onScan={triggerScan} />
+        <Inspector />
+      </div>
+
+      <CommandDrawer />
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Replace `src/renderer/main.tsx` entirely**
+```tsx
+import './assets/main.css'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+```
+
+- [ ] **Step 3: Run full test suite**
+
+```bash
+npm test
+```
+
+Expected: All tests PASS. Zero failures.
+
+- [ ] **Step 4: Start the app and do a manual smoke test**
+
+```bash
+npm run dev
+```
+
+Manual verification checklist:
+- [ ] Electron window opens with retro dark theme
+- [ ] Title bar shows profile selector and region selector
+- [ ] Profiles dropdown loads from `~/.aws/credentials`
+- [ ] Canvas renders topology view on startup
+- [ ] After 30s (or clicking Scan), resource nodes appear on canvas
+- [ ] Clicking a node populates the Inspector panel
+- [ ] CLI command appears in the Command Drawer when a node is selected
+- [ ] View toggle switches between topology and graph
+- [ ] Graph view shows nodes with step (pipe) edges
+- [ ] Status dots appear on nodes (green/amber/red)
+- [ ] Changing profile or region triggers a fresh scan
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/renderer/App.tsx src/renderer/main.tsx
+git commit -m "feat: wire App.tsx shell — full M1 read-only viewer complete"
+```
+
+---
+
+### Task 19: Credential error banner
+
+**Files:**
+- Create: `src/renderer/components/ErrorBanner.tsx`
+- Modify: `src/renderer/App.tsx`
+
+Per spec: "Credential errors → Top-of-canvas banner with AWS error message and suggested fix."
+
+- [ ] **Step 1: Create `src/renderer/components/ErrorBanner.tsx`**
+
+```tsx
+interface Props {
+  message: string
+  onDismiss: () => void
+}
+
+export function ErrorBanner({ message, onDismiss }: Props): JSX.Element {
+  return (
+    <div
+      className="flex items-center gap-3 px-3 py-2 flex-shrink-0"
+      style={{ background: '#2a0a0a', border: '1px solid #ff5f57', borderLeft: '3px solid #ff5f57', fontFamily: 'monospace' }}
+    >
+      <span className="text-[9px]" style={{ color: '#ff5f57' }}>⚠ AWS Error:</span>
+      <span className="text-[9px] flex-1" style={{ color: '#ffa0a0' }}>{message}</span>
+      <span className="text-[9px]" style={{ color: '#888' }}>Run <code style={{ color: '#FF9900' }}>aws sts get-caller-identity</code> to verify credentials.</span>
+      <button
+        onClick={onDismiss}
+        className="text-[9px] px-1"
+        style={{ color: '#666', background: 'none', border: 'none', cursor: 'pointer' }}
+      >✕</button>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Update `src/renderer/hooks/useIpc.ts` to capture error messages**
+
+Add an `errorMessage` field to the Zustand store (add `errorMessage: string | null` and `setError: (msg: string | null) => void` to `src/renderer/store/cloud.ts`), then in `useIpc.ts` subscribe to `onConnStatus` and call `setError` when status is `'error'`:
+
+In `src/renderer/store/cloud.ts`, add to the state interface and `create` call:
+```ts
+errorMessage: string | null
+setError: (msg: string | null) => void
+```
+And in the `create` body:
+```ts
+errorMessage: null,
+setError: (msg) => set({ errorMessage: msg }),
+```
+
+In `src/renderer/hooks/useIpc.ts`, add:
+```ts
+const setError = useCloudStore((s) => s.setError)
+
+// inside useEffect, alongside the other subscriptions:
+const unsubConn = window.cloudblocks.onConnStatus((status) => {
+  if (status === 'error') setError('Connection failed. Check your AWS credentials and network.')
+  else setError(null)
+})
+return () => { unsubDelta(); unsubStatus(); unsubConn() }
+```
+
+- [ ] **Step 3: Add `ErrorBanner` to `App.tsx`**
+
+Inside the shell `<div>`, render the banner between `<TitleBar />` and the main content row:
+```tsx
+{errorMessage && <ErrorBanner message={errorMessage} onDismiss={() => setError(null)} />}
+```
+
+Add to the `App` component:
+```tsx
+const errorMessage = useCloudStore((s) => s.errorMessage)
+const setError     = useCloudStore((s) => s.setError)
+```
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/renderer/components/ErrorBanner.tsx src/renderer/store/cloud.ts src/renderer/hooks/useIpc.ts src/renderer/App.tsx
+git commit -m "feat: add credential error banner (spec M1 error handling requirement)"
+```
+
+---
+
+### Task 20: No-credentials onboarding screen
+
+**Files:**
+- Create: `src/renderer/components/Onboarding.tsx`
+- Modify: `src/renderer/App.tsx`
+
+- [ ] **Step 1: Create `src/renderer/components/Onboarding.tsx`**
+
+```tsx
+export function Onboarding(): JSX.Element {
+  return (
+    <div className="flex flex-col items-center justify-center h-full gap-4 text-center" style={{ fontFamily: 'monospace' }}>
+      <div className="text-3xl font-bold tracking-tighter" style={{ color: '#FF9900' }}>CLOUDBLOCKS</div>
+      <p className="text-sm" style={{ color: '#666' }}>No AWS credentials found.</p>
+      <div className="rounded p-4 text-left max-w-sm" style={{ background: '#0d1117', border: '1px solid #1e2d40' }}>
+        <div className="text-[10px] mb-2" style={{ color: '#aaa' }}>Run the following to configure AWS credentials:</div>
+        <code className="text-[11px]" style={{ color: '#FF9900' }}>aws configure</code>
+        <div className="text-[10px] mt-3" style={{ color: '#555' }}>
+          Then restart Cloudblocks.
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Update `src/renderer/App.tsx` to show Onboarding when no profiles exist**
+
+```tsx
+import { useState, useEffect } from 'react'
+import { useIpc } from './hooks/useIpc'
+import { useScanner } from './hooks/useScanner'
+import { TitleBar } from './components/TitleBar'
+import { Sidebar } from './components/Sidebar'
+import { CloudCanvas } from './components/canvas/CloudCanvas'
+import { Inspector } from './components/Inspector'
+import { CommandDrawer } from './components/CommandDrawer'
+import { Onboarding } from './components/Onboarding'
+import type { AwsProfile } from './types/cloud'
+
+export default function App(): JSX.Element {
+  useIpc()
+  const { triggerScan } = useScanner()
+  const [profiles, setProfiles] = useState<AwsProfile[] | null>(null)
+
+  useEffect(() => {
+    window.cloudblocks.listProfiles().then(setProfiles)
+  }, [])
+
+  if (profiles === null) return <div style={{ background: '#080c14', height: '100vh' }} />
+  if (profiles.length === 0) return <Onboarding />
+
+  return (
+    <div className="flex flex-col h-screen w-screen overflow-hidden" style={{ background: '#080c14' }}>
+      <TitleBar />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <CloudCanvas onScan={triggerScan} />
+        <Inspector />
+      </div>
+      <CommandDrawer />
+    </div>
+  )
+}
+```
+
+- [ ] **Step 3: Run full test suite one final time**
+
+```bash
+npm test
+```
+
+Expected: All tests PASS.
+
+- [ ] **Step 4: Final commit**
+
+```bash
+git add src/renderer/components/Onboarding.tsx src/renderer/App.tsx
+git commit -m "feat: add no-credentials onboarding screen"
+```
+
+---
+
+## M1 Complete ✓
+
+At this point the app:
+- Connects to AWS using profiles from `~/.aws/`
+- Scans EC2, VPC, Subnet, Security Group, RDS, S3, Lambda, ALB resources every 30s
+- Renders them on a hybrid topology map / free-form graph canvas
+- Shows live status dots (green/amber/red)
+- Populates the Inspector panel on node click
+- Shows the corresponding `aws` CLI describe command in the Command Drawer
+- Handles no-credentials state with an onboarding screen
+
+**Next:** M2 — Create VPC, EC2, Security Group via GUI with smart-split CLI execution.
