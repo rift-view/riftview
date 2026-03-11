@@ -1,35 +1,40 @@
-import Versions from './components/Versions'
-import electronLogo from './assets/electron.svg'
+import { useState, useEffect } from 'react'
+import { useIpc } from '../hooks/useIpc'
+import { useScanner } from '../hooks/useScanner'
+import { TitleBar } from '../components/TitleBar'
+import { Sidebar } from '../components/Sidebar'
+import { CloudCanvas } from '../components/canvas/CloudCanvas'
+import { Inspector } from '../components/Inspector'
+import { CommandDrawer } from '../components/CommandDrawer'
+import { Onboarding } from '../components/Onboarding'
+import { ErrorBanner } from '../components/ErrorBanner'
+import { useCloudStore } from '../store/cloud'
+import type { AwsProfile } from '../types/cloud'
 
-function App(): React.JSX.Element {
-  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+export default function App(): JSX.Element {
+  useIpc()
+  const { triggerScan } = useScanner()
+  const [profiles, setProfiles] = useState<AwsProfile[] | null>(null)
+  const errorMessage = useCloudStore((s) => s.errorMessage)
+  const setError     = useCloudStore((s) => s.setError)
+
+  useEffect(() => {
+    window.cloudblocks.listProfiles().then(setProfiles)
+  }, [])
+
+  if (profiles === null) return <div style={{ background: '#080c14', height: '100vh' }} />
+  if (profiles.length === 0) return <Onboarding />
 
   return (
-    <>
-      <img alt="logo" className="logo" src={electronLogo} />
-      <div className="creator">Powered by electron-vite</div>
-      <div className="text">
-        Build an Electron app with <span className="react">React</span>
-        &nbsp;and <span className="ts">TypeScript</span>
+    <div className="flex flex-col h-screen w-screen overflow-hidden" style={{ background: '#080c14' }}>
+      <TitleBar />
+      {errorMessage && <ErrorBanner message={errorMessage} onDismiss={() => setError(null)} />}
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <CloudCanvas onScan={triggerScan} />
+        <Inspector />
       </div>
-      <p className="tip">
-        Please try pressing <code>F12</code> to open the devTool
-      </p>
-      <div className="actions">
-        <div className="action">
-          <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
-            Documentation
-          </a>
-        </div>
-        <div className="action">
-          <a target="_blank" rel="noreferrer" onClick={ipcHandle}>
-            Send IPC
-          </a>
-        </div>
-      </div>
-      <Versions></Versions>
-    </>
+      <CommandDrawer />
+    </div>
   )
 }
-
-export default App
