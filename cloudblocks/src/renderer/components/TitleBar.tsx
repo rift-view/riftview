@@ -1,0 +1,92 @@
+import { useEffect, useState } from 'react'
+import { useCloudStore } from '../store/cloud'
+import type { AwsProfile } from '../types/cloud'
+
+const REGIONS = [
+  'us-east-1','us-east-2','us-west-1','us-west-2',
+  'eu-west-1','eu-west-2','eu-central-1',
+  'ap-southeast-1','ap-northeast-1',
+]
+
+export function TitleBar(): JSX.Element {
+  const [profiles, setProfiles]       = useState<AwsProfile[]>([])
+  const [connStatus, setConnStatus]   = useState<'unknown' | 'connected' | 'error'>('unknown')
+  const profile    = useCloudStore((s) => s.profile)
+  const region     = useCloudStore((s) => s.region)
+  const setProfile = useCloudStore((s) => s.setProfile)
+  const setRegion  = useCloudStore((s) => s.setRegion)
+
+  useEffect(() => {
+    window.cloudblocks.listProfiles().then(setProfiles)
+    const unsub = window.cloudblocks.onConnStatus((status) => {
+      setConnStatus(status === 'connected' ? 'connected' : 'error')
+    })
+    return unsub
+  }, [])
+
+  const handleProfileChange = (name: string) => {
+    setProfile(name)
+    setConnStatus('unknown')
+    window.cloudblocks.selectProfile(name)
+  }
+
+  const handleRegionChange = (r: string) => {
+    setRegion(r)
+    setConnStatus('unknown')
+    window.cloudblocks.selectRegion(r)
+  }
+
+  const statusColor  = connStatus === 'connected' ? '#28c840' : connStatus === 'error' ? '#ff5f57' : '#febc2e'
+  const statusLabel  = connStatus === 'connected' ? 'connected' : connStatus === 'error' ? 'error' : 'connecting…'
+  const statusGlow   = connStatus === 'connected' ? '0 0 6px #28c840' : 'none'
+
+  return (
+    <div
+      className="flex items-center gap-4 px-3 h-9 flex-shrink-0"
+      style={{ background: '#0d1320', borderBottom: '1px solid #1e2d40' }}
+    >
+      {/* Traffic lights placeholder for macOS hiddenInset */}
+      <div className="flex gap-1.5 mr-2">
+        <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+        <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+        <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+      </div>
+
+      <span className="text-[11px] font-bold tracking-widest font-mono" style={{ color: '#FF9900' }}>
+        CLOUDBLOCKS
+      </span>
+
+      <div className="flex-1" />
+
+      {/* Profile selector */}
+      <select
+        value={profile}
+        onChange={(e) => handleProfileChange(e.target.value)}
+        className="text-[10px] font-mono px-2 py-0.5 rounded"
+        style={{ background: '#1a2332', border: '1px solid #FF9900', color: '#FF9900' }}
+      >
+        {profiles.map((p) => (
+          <option key={p.name} value={p.name}>{p.name}</option>
+        ))}
+      </select>
+
+      {/* Region selector */}
+      <select
+        value={region}
+        onChange={(e) => handleRegionChange(e.target.value)}
+        className="text-[10px] font-mono px-2 py-0.5 rounded"
+        style={{ background: '#1a2332', border: '1px solid #333', color: '#aaa' }}
+      >
+        {REGIONS.map((r) => (
+          <option key={r} value={r}>{r}</option>
+        ))}
+      </select>
+
+      {/* Connection status */}
+      <div className="flex items-center gap-1.5">
+        <div className="w-2 h-2 rounded-full" style={{ background: statusColor, boxShadow: statusGlow }} />
+        <span className="text-[9px] font-mono" style={{ color: statusColor }}>{statusLabel}</span>
+      </div>
+    </div>
+  )
+}
