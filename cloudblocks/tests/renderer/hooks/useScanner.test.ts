@@ -1,0 +1,30 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { renderHook, waitFor } from '@testing-library/react'
+import { useScanner } from '../../../src/renderer/hooks/useScanner'
+import { useCloudStore } from '../../../src/renderer/store/cloud'
+
+beforeEach(() => {
+  window.cloudblocks = {
+    listProfiles:  vi.fn().mockResolvedValue([{ name: 'default' }]),
+    selectProfile: vi.fn().mockResolvedValue(undefined),
+    selectRegion:  vi.fn().mockResolvedValue(undefined),
+    startScan:     vi.fn().mockResolvedValue(undefined),
+    onScanDelta:   vi.fn().mockReturnValue(vi.fn()),
+    onScanStatus:  vi.fn().mockReturnValue(vi.fn()),
+    onConnStatus:  vi.fn().mockReturnValue(vi.fn()),
+  }
+  useCloudStore.setState({ nodes: [], selectedNodeId: null, scanStatus: 'idle', profile: 'default', region: 'us-east-1', view: 'topology' })
+})
+
+describe('useScanner', () => {
+  it('calls selectProfile with first profile on mount', async () => {
+    renderHook(() => useScanner())
+    await waitFor(() => expect(window.cloudblocks.selectProfile).toHaveBeenCalledWith('default'))
+  })
+
+  it('triggerScan calls startScan', () => {
+    const { result } = renderHook(() => useScanner())
+    result.current.triggerScan()
+    expect(window.cloudblocks.startScan).toHaveBeenCalled()
+  })
+})
