@@ -1398,6 +1398,10 @@ describe('computeDelta', () => {
     expect(delta.changed[0].label).toBe('new-name')
   })
 })
+
+// Note: ResourceScanner class scan() lifecycle is not unit-tested here due to
+// Electron mocking complexity. The computeDelta logic above covers the core
+// diffing behavior. E2E verification is done via the manual smoke test in Task 18.
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1480,23 +1484,30 @@ export class ResourceScanner {
   private async scan(): Promise<void> {
     this.window.webContents.send(IPC.SCAN_STATUS, 'scanning')
 
-    const [instances, vpcs, subnets, sgs, dbs, buckets, fns, lbs] = await Promise.all([
-      describeInstances(this.clients.ec2, this.region),
-      describeVpcs(this.clients.ec2, this.region),
-      describeSubnets(this.clients.ec2, this.region),
-      describeSecurityGroups(this.clients.ec2, this.region),
-      describeDBInstances(this.clients.rds, this.region),
-      listBuckets(this.clients.s3, this.region),
-      listFunctions(this.clients.lambda, this.region),
-      describeLoadBalancers(this.clients.alb, this.region),
-    ])
+    try {
+      const [instances, vpcs, subnets, sgs, dbs, buckets, fns, lbs] = await Promise.all([
+        describeInstances(this.clients.ec2, this.region),
+        describeVpcs(this.clients.ec2, this.region),
+        describeSubnets(this.clients.ec2, this.region),
+        describeSecurityGroups(this.clients.ec2, this.region),
+        describeDBInstances(this.clients.rds, this.region),
+        listBuckets(this.clients.s3, this.region),
+        listFunctions(this.clients.lambda, this.region),
+        describeLoadBalancers(this.clients.alb, this.region),
+      ])
 
-    const nextNodes = [...instances, ...vpcs, ...subnets, ...sgs, ...dbs, ...buckets, ...fns, ...lbs]
-    const delta = computeDelta(this.currentNodes, nextNodes)
+      const nextNodes = [...instances, ...vpcs, ...subnets, ...sgs, ...dbs, ...buckets, ...fns, ...lbs]
+      const delta = computeDelta(this.currentNodes, nextNodes)
 
-    this.currentNodes = nextNodes
-    this.window.webContents.send(IPC.SCAN_DELTA, delta)
-    this.window.webContents.send(IPC.SCAN_STATUS, 'idle')
+      this.currentNodes = nextNodes
+      this.window.webContents.send(IPC.SCAN_DELTA, delta)
+      this.window.webContents.send(IPC.SCAN_STATUS, 'idle')
+      // Signal successful connection on the first scan that completes
+      this.window.webContents.send(IPC.CONN_STATUS, 'connected')
+    } catch (err) {
+      this.window.webContents.send(IPC.SCAN_STATUS, 'error')
+      this.window.webContents.send(IPC.CONN_STATUS, 'error')
+    }
   }
 }
 ```
