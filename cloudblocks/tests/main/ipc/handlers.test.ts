@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('electron', () => ({
-  ipcMain: { handle: vi.fn() },
+  ipcMain: { handle: vi.fn(), on: vi.fn() },
   BrowserWindow: vi.fn(),
 }))
 vi.mock('../../../src/main/aws/credentials', () => ({
@@ -13,6 +13,12 @@ vi.mock('../../../src/main/aws/client', () => ({
 }))
 vi.mock('../../../src/main/aws/scanner', () => ({
   ResourceScanner: vi.fn().mockImplementation(() => ({ start: vi.fn(), stop: vi.fn(), triggerManualScan: vi.fn() })),
+}))
+vi.mock('../../../src/main/cli/engine', () => ({
+  CliEngine: vi.fn(function () { return { execute: vi.fn(), cancel: vi.fn() } }),
+}))
+vi.mock('../../../src/renderer/utils/buildCommand', () => ({
+  buildCommands: vi.fn().mockReturnValue([]),
 }))
 
 import { ipcMain } from 'electron'
@@ -29,6 +35,9 @@ describe('registerHandlers', () => {
     expect(registeredChannels).toContain('profile:select')
     expect(registeredChannels).toContain('region:select')
     expect(registeredChannels).toContain('scan:start')
+    expect(registeredChannels).toContain('cli:run')
+    const onChannels = vi.mocked(ipcMain.on).mock.calls.map((c) => c[0])
+    expect(onChannels).toContain('cli:cancel')
   })
 
   it('profiles:list handler returns listProfiles result', async () => {
