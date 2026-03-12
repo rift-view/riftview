@@ -78,7 +78,8 @@ export function CreateModal(): JSX.Element | null {
     })
     clearCliOutput()
 
-    window.cloudblocks.runCli(paramsRef.current).then((result) => {
+    const commands = buildCommands(paramsRef.current)
+    window.cloudblocks.runCli(commands).then((result) => {
       if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
       pendingIdRef.current = null
       if (result.code === 0) {
