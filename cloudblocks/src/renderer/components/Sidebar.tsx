@@ -28,7 +28,10 @@ export function Sidebar(): JSX.Element {
       {SERVICES.map((s) => (
         <div
           key={s.type}
-          className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
+          // TODO M2-polish: wire drag-and-drop (Approach A from design spec)
+          draggable
+          onDragStart={(e) => e.dataTransfer.setData('text/plain', s.type)}
+          className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
           style={{ background: '#111', border: '1px solid #222', color: '#aaa' }}
         >
           ⬡ {s.label}
