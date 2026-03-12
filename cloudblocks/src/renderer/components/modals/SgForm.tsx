@@ -71,6 +71,7 @@ export function SgForm({ onChange }: Props): JSX.Element {
               onChange={(e) => updateRule(i, { protocol: e.target.value as Rule['protocol'] })}>
               <option value="tcp">TCP</option>
               <option value="udp">UDP</option>
+              <option value="icmp">ICMP</option>
               <option value="-1">All</option>
             </select>
             <input style={{ ...inputStyle, width: '50px' }} type="number" value={rule.fromPort}
