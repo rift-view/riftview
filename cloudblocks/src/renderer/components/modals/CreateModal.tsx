@@ -79,15 +79,20 @@ export function CreateModal(): JSX.Element | null {
     clearCliOutput()
 
     const commands = buildCommands(paramsRef.current)
-    window.cloudblocks.runCli(commands).then((result) => {
-      if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
-      pendingIdRef.current = null
-      if (result.code === 0) {
-        setCommandPreview([])
-        setActiveCreate(null)
-        window.cloudblocks.startScan()
-      }
-    })
+    window.cloudblocks.runCli(commands)
+      .then((result) => {
+        if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
+        pendingIdRef.current = null
+        if (result.code === 0) {
+          setCommandPreview([])
+          setActiveCreate(null)
+          window.cloudblocks.startScan()
+        }
+      })
+      .catch(() => {
+        if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
+        pendingIdRef.current = null
+      })
   }
 
   // Update the ref each render so the event listener always calls the latest version
