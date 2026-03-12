@@ -6,6 +6,7 @@ import { Sidebar } from '../components/Sidebar'
 import { CloudCanvas } from '../components/canvas/CloudCanvas'
 import { Inspector } from '../components/Inspector'
 import { CommandDrawer } from '../components/CommandDrawer'
+import { CreateModal } from '../components/modals/CreateModal'
 import { Onboarding } from '../components/Onboarding'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { useCloudStore } from '../store/cloud'
@@ -35,6 +36,7 @@ export default function App(): JSX.Element {
         <Inspector />
       </div>
       <CommandDrawer />
+      <CreateModal />
     </div>
   )
 }
