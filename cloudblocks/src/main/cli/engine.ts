@@ -77,6 +77,11 @@ export class CliEngine {
         }
       })
 
+      proc.on('error', () => {
+        this.currentProcess = null
+        resolve({ code: 1, stdout: stdoutBuffer })
+      })
+
       proc.on('close', (code) => {
         this.currentProcess = null
         resolve({ code: code ?? 1, stdout: stdoutBuffer })
