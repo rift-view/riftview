@@ -16,7 +16,7 @@ Object.defineProperty(window, 'cloudblocks', {
 })
 
 beforeEach(() => {
-  useCloudStore.setState({ activeCreate: null, pendingNodes: [], cliOutput: [], commandPreview: '' })
+  useCloudStore.setState({ activeCreate: null, pendingNodes: [], cliOutput: [], commandPreview: [] })
   vi.clearAllMocks()
 })
 
