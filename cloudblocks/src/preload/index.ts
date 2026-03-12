@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC } from '../main/ipc/channels'
 import type { AwsProfile, ScanDelta } from '../renderer/types/cloud'
+import type { CreateParams } from '../renderer/types/create'
 
 contextBridge.exposeInMainWorld('cloudblocks', {
   listProfiles: (): Promise<AwsProfile[]> =>
@@ -29,6 +30,22 @@ contextBridge.exposeInMainWorld('cloudblocks', {
     ipcRenderer.on(IPC.CONN_STATUS, (_event, status) => cb(status))
     return () => ipcRenderer.removeAllListeners(IPC.CONN_STATUS)
   },
+
+  runCli: (params: CreateParams): Promise<{ code: number }> =>
+    ipcRenderer.invoke(IPC.CLI_RUN, params),
+
+  cancelCli: (): void =>
+    ipcRenderer.send(IPC.CLI_CANCEL),
+
+  onCliOutput: (cb: (entry: { line: string; stream: 'stdout' | 'stderr' }) => void) => {
+    ipcRenderer.on(IPC.CLI_OUTPUT, (_event, entry) => cb(entry))
+    return () => ipcRenderer.removeAllListeners(IPC.CLI_OUTPUT)
+  },
+
+  onCliDone: (cb: (result: { code: number }) => void) => {
+    ipcRenderer.on(IPC.CLI_DONE, (_event, result) => cb(result))
+    return () => ipcRenderer.removeAllListeners(IPC.CLI_DONE)
+  },
 })
 
 declare global {
@@ -41,6 +58,10 @@ declare global {
       onScanDelta: (cb: (delta: ScanDelta) => void) => () => void
       onScanStatus: (cb: (status: string) => void) => () => void
       onConnStatus: (cb: (status: string) => void) => () => void
+      runCli:      (params: CreateParams) => Promise<{ code: number }>
+      cancelCli:   () => void
+      onCliOutput: (cb: (entry: { line: string; stream: 'stdout' | 'stderr' }) => void) => () => void
+      onCliDone:   (cb: (result: { code: number }) => void) => () => void
     }
   }
 }
