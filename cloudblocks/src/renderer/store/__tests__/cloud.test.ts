@@ -89,6 +89,14 @@ describe('keyPairs', () => {
   })
 })
 
+describe('settings', () => {
+  it('settings defaults are correct', () => {
+    const store = createCloudStore()
+    expect(store.getState().settings.deleteConfirmStyle).toBe('type-to-confirm')
+    expect(store.getState().settings.scanInterval).toBe(30)
+  })
+})
+
 describe('activeCreate', () => {
   it('setActiveCreate stores the value', () => {
     useCloudStore.getState().setActiveCreate({ resource: 'vpc', view: 'topology' })
