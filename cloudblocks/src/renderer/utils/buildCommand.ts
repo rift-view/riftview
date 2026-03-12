@@ -1,4 +1,4 @@
-import type { CreateParams, SgParams } from '../types/create'
+import type { CreateParams, SgParams, S3Params } from '../types/create'
 
 /**
  * Returns an array of argv arrays — one per aws CLI command.
@@ -62,7 +62,7 @@ function buildSgCommands(params: SgParams): string[][] {
   return [create, ...authorizes]
 }
 
-function buildS3Commands(params: { bucketName: string; region: string; blockPublicAccess: boolean }): string[][] {
+function buildS3Commands(params: S3Params): string[][] {
   const create: string[] = ['s3api', 'create-bucket', '--bucket', params.bucketName]
 
   if (params.region !== 'us-east-1') {
