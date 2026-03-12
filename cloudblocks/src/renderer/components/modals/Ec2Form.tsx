@@ -6,9 +6,24 @@ const INSTANCE_TYPES = ['t3.micro', 't3.small', 't3.medium', 't3.large', 'm5.lar
 
 interface Props {
   onChange: (params: Ec2Params) => void
+  showErrors?: boolean
 }
 
-export function Ec2Form({ onChange }: Props): JSX.Element {
+function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
+  return {
+    width: '100%',
+    background: '#060d14',
+    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : '#30363d'}`,
+    borderRadius: 3,
+    padding: '3px 6px',
+    color: '#eee',
+    fontFamily: 'monospace',
+    fontSize: 10,
+    boxSizing: 'border-box' as const,
+  }
+}
+
+export function Ec2Form({ onChange, showErrors = false }: Props): JSX.Element {
   const nodes    = useCloudStore((s) => s.nodes)
   const keyPairs = useCloudStore((s) => s.keyPairs)
   const vpcs    = nodes.filter((n) => n.type === 'vpc')
@@ -42,39 +57,35 @@ export function Ec2Form({ onChange }: Props): JSX.Element {
     update({ securityGroupIds: next })
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', background: '#060d14', border: '1px solid #30363d',
-    borderRadius: '3px', padding: '4px 6px', color: '#eee',
-    fontFamily: 'monospace', fontSize: '11px', boxSizing: 'border-box',
-  }
   const labelStyle: React.CSSProperties = { color: '#555', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
+  const nonRequiredStyle: React.CSSProperties = fieldStyle('_nonempty_', false)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       <label><span style={labelStyle}>Name</span>
-        <input style={inputStyle} value={name} onChange={(e) => update({ name: e.target.value })} placeholder="web-server" /></label>
+        <input style={fieldStyle(name, showErrors)} value={name} onChange={(e) => update({ name: e.target.value })} placeholder="web-server" /></label>
       <label><span style={labelStyle}>AMI ID</span>
-        <input style={inputStyle} value={amiId} onChange={(e) => update({ amiId: e.target.value })} placeholder="ami-0abcdef1234567890" /></label>
+        <input style={fieldStyle(amiId, showErrors)} value={amiId} onChange={(e) => update({ amiId: e.target.value })} placeholder="ami-0abcdef1234567890" /></label>
       <label><span style={labelStyle}>Instance Type</span>
-        <select style={inputStyle} value={instanceType} onChange={(e) => update({ instanceType: e.target.value })}>
+        <select style={fieldStyle(instanceType, showErrors)} value={instanceType} onChange={(e) => update({ instanceType: e.target.value })}>
           {INSTANCE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
         </select></label>
       <label><span style={labelStyle}>Key Pair</span>
         <select
           value={keyName}
           onChange={e => update({ keyName: e.target.value })}
-          style={inputStyle}
+          style={nonRequiredStyle}
         >
           <option value="">— select key pair —</option>
           {keyPairs.map(kp => <option key={kp} value={kp}>{kp}</option>)}
         </select></label>
       <label><span style={labelStyle}>VPC (for subnet filtering)</span>
-        <select style={inputStyle} value={selectedVpc} onChange={(e) => setSelectedVpc(e.target.value)}>
+        <select style={nonRequiredStyle} value={selectedVpc} onChange={(e) => setSelectedVpc(e.target.value)}>
           <option value="">— select VPC —</option>
           {vpcs.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
         </select></label>
       <label><span style={labelStyle}>Subnet</span>
-        <select style={inputStyle} value={subnetId} onChange={(e) => update({ subnetId: e.target.value })}>
+        <select style={nonRequiredStyle} value={subnetId} onChange={(e) => update({ subnetId: e.target.value })}>
           <option value="">— select subnet —</option>
           {filteredSubnets.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
         </select></label>

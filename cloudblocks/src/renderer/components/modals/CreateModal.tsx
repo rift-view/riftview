@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useCloudStore } from '../../store/cloud'
 import { buildCommands } from '../../utils/buildCommand'
 import type { CreateParams } from '../../types/create'
@@ -7,6 +7,17 @@ import { VpcForm } from './VpcForm'
 import { Ec2Form } from './Ec2Form'
 import { SgForm } from './SgForm'
 import { S3Form } from './S3Form'
+
+function validateParams(params: CreateParams | null): boolean {
+  if (!params) return false
+  switch (params.resource) {
+    case 'vpc':    return !!(params.name && params.cidr)
+    case 'ec2':    return !!(params.name && params.amiId && params.instanceType)
+    case 'sg':     return !!(params.name && params.description && params.vpcId)
+    case 's3':     return !!(params.bucketName)
+    default:       return true
+  }
+}
 
 const TITLES: Record<string, string> = {
   vpc: 'New VPC',
@@ -31,6 +42,8 @@ export function CreateModal(): JSX.Element | null {
   const clearCliOutput    = useCloudStore((s) => s.clearCliOutput)
   const addPendingNode    = useCloudStore((s) => s.addPendingNode)
   const removePendingNode = useCloudStore((s) => s.removePendingNode)
+
+  const [showErrors, setShowErrors] = useState(false)
 
   const pendingIdRef  = useRef<string | null>(null)
   const paramsRef     = useRef<CreateParams | null>(null)
@@ -65,7 +78,12 @@ export function CreateModal(): JSX.Element | null {
   }
 
   function handleRun(): void {
-    if (!paramsRef.current) return
+    const isValid = validateParams(paramsRef.current)
+    if (!isValid) {
+      setShowErrors(true)
+      return
+    }
+    setShowErrors(false)
     const id = `pending:${crypto.randomUUID()}`
     pendingIdRef.current = id
     addPendingNode({
@@ -115,10 +133,10 @@ export function CreateModal(): JSX.Element | null {
           {TITLES[activeCreate.resource] ?? 'New Resource'}
         </div>
 
-        {activeCreate.resource === 'vpc' && <VpcForm onChange={handleChange} />}
-        {activeCreate.resource === 'ec2' && <Ec2Form onChange={handleChange} />}
-        {activeCreate.resource === 'sg'  && <SgForm  onChange={handleChange} />}
-        {activeCreate.resource === 's3'  && <S3Form  onChange={handleChange} />}
+        {activeCreate.resource === 'vpc' && <VpcForm onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'ec2' && <Ec2Form onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'sg'  && <SgForm  onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 's3'  && <S3Form  onChange={handleChange} showErrors={showErrors} />}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid #1e2d40' }}>
           <button
