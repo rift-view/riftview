@@ -33,8 +33,9 @@ export function registerHandlers(win: BrowserWindow): void {
 
   // Run a write command — renderer sends CreateParams, main builds argv and executes
   ipcMain.handle(IPC.CLI_RUN, (_event, params: CreateParams) => {
+    if (!cliEngine) return { code: 1 }
     const commands = buildCommands(params)
-    return cliEngine!.execute(commands)
+    return cliEngine.execute(commands)
   })
 
   // Cancel in-flight command (fire-and-forget, no return value needed)
