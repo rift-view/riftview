@@ -46,7 +46,9 @@ describe('CliEngine', () => {
     const engine = new CliEngine(mockWin)
     await engine.execute([['ec2', 'create-vpc']])
     const outputCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:output')
-    expect(outputCalls.length).toBeGreaterThanOrEqual(1)
+    expect(outputCalls).toHaveLength(2)
+    expect(outputCalls[0][1]).toEqual({ line: 'line1', stream: 'stdout' })
+    expect(outputCalls[1][1]).toEqual({ line: 'line2', stream: 'stdout' })
   })
 
   it('sends exactly one cli:done event per execute() call', async () => {
