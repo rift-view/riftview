@@ -82,13 +82,14 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Nod
 }
 
 export function TopologyView(): JSX.Element {
-  const cloudNodes = useCloudStore((s) => s.nodes)
+  const cloudNodes   = useCloudStore((s) => s.nodes)
+  const pendingNodes = useCloudStore((s) => s.pendingNodes)
   const selectNode = useCloudStore((s) => s.selectNode)
   const selectedId = useCloudStore((s) => s.selectedNodeId)
 
   const flowNodes: Node[] = useMemo(
-    () => buildFlowNodes(cloudNodes, selectedId),
-    [cloudNodes, selectedId],
+    () => buildFlowNodes([...cloudNodes, ...pendingNodes], selectedId),
+    [cloudNodes, pendingNodes, selectedId],
   )
 
   const flowEdges: Edge[] = []  // Topology view uses nesting, not edges
