@@ -81,6 +81,14 @@ describe('commandPreview', () => {
   })
 })
 
+describe('keyPairs', () => {
+  it('setKeyPairs stores key pair names', () => {
+    const store = createCloudStore()
+    store.getState().setKeyPairs(['my-key', 'dev-key'])
+    expect(store.getState().keyPairs).toEqual(['my-key', 'dev-key'])
+  })
+})
+
 describe('activeCreate', () => {
   it('setActiveCreate stores the value', () => {
     useCloudStore.getState().setActiveCreate({ resource: 'vpc', view: 'topology' })

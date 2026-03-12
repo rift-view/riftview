@@ -12,9 +12,10 @@ beforeEach(() => {
     selectProfile: vi.fn().mockResolvedValue(undefined),
     selectRegion:  vi.fn().mockResolvedValue(undefined),
     startScan:     vi.fn().mockResolvedValue(undefined),
-    onScanDelta:   vi.fn().mockReturnValue(unsubDelta),
-    onScanStatus:  vi.fn().mockReturnValue(unsubStatus),
-    onConnStatus:  vi.fn().mockReturnValue(vi.fn()),
+    onScanDelta:    vi.fn().mockReturnValue(unsubDelta),
+    onScanStatus:   vi.fn().mockReturnValue(unsubStatus),
+    onConnStatus:   vi.fn().mockReturnValue(vi.fn()),
+    onScanKeypairs: vi.fn().mockReturnValue(vi.fn()),
   }
   useCloudStore.setState({ nodes: [], selectedNodeId: null, scanStatus: 'idle', profile: 'default', region: 'us-east-1', view: 'topology' })
 })

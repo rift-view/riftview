@@ -9,7 +9,8 @@ interface Props {
 }
 
 export function Ec2Form({ onChange }: Props): JSX.Element {
-  const nodes = useCloudStore((s) => s.nodes)
+  const nodes    = useCloudStore((s) => s.nodes)
+  const keyPairs = useCloudStore((s) => s.keyPairs)
   const vpcs    = nodes.filter((n) => n.type === 'vpc')
   const subnets = nodes.filter((n) => n.type === 'subnet')
   const sgs     = nodes.filter((n) => n.type === 'security-group')
@@ -58,8 +59,15 @@ export function Ec2Form({ onChange }: Props): JSX.Element {
         <select style={inputStyle} value={instanceType} onChange={(e) => update({ instanceType: e.target.value })}>
           {INSTANCE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
         </select></label>
-      <label><span style={labelStyle}>Key Pair Name (free text — M3 will add dropdown)</span>
-        <input style={inputStyle} value={keyName} onChange={(e) => update({ keyName: e.target.value })} placeholder="my-key-pair" /></label>
+      <label><span style={labelStyle}>Key Pair</span>
+        <select
+          value={keyName}
+          onChange={e => update({ keyName: e.target.value })}
+          style={inputStyle}
+        >
+          <option value="">— select key pair —</option>
+          {keyPairs.map(kp => <option key={kp} value={kp}>{kp}</option>)}
+        </select></label>
       <label><span style={labelStyle}>VPC (for subnet filtering)</span>
         <select style={inputStyle} value={selectedVpc} onChange={(e) => setSelectedVpc(e.target.value)}>
           <option value="">— select VPC —</option>
