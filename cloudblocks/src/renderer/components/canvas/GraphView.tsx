@@ -21,23 +21,26 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
 }
 
 export function GraphView(): JSX.Element {
-  const cloudNodes = useCloudStore((s) => s.nodes)
+  const cloudNodes   = useCloudStore((s) => s.nodes)
+  const pendingNodes = useCloudStore((s) => s.pendingNodes)
   const selectNode = useCloudStore((s) => s.selectNode)
   const selectedId = useCloudStore((s) => s.selectedNodeId)
 
+  const allNodes = [...cloudNodes, ...pendingNodes]
+
   const flowNodes: Node[] = useMemo(
     () =>
-      cloudNodes.map((n, i) => ({
+      allNodes.map((n, i) => ({
         id:       n.id,
         type:     'resource',
         position: { x: (i % 5) * 160 + 40, y: Math.floor(i / 5) * 100 + 60 }, // initial grid layout
         data:     { label: n.label, nodeType: n.type, status: n.status },
         selected: n.id === selectedId,
       })),
-    [cloudNodes, selectedId],
+    [cloudNodes, pendingNodes, selectedId],
   )
 
-  const flowEdges: Edge[] = useMemo(() => deriveEdges(cloudNodes), [cloudNodes])
+  const flowEdges: Edge[] = useMemo(() => deriveEdges(allNodes), [cloudNodes, pendingNodes])
 
   return (
     <ReactFlow
