@@ -96,6 +96,15 @@ export function CommandDrawer(): JSX.Element {
 
   return (
     <div style={{ background: '#0d1117', borderTop: '1px solid #FF9900', fontFamily: 'monospace', flexShrink: 0 }}>
+      {/* Command preview area — all lines, one per row */}
+      {commandPreview.length > 0 && !running && exitCode === null && (
+        <div style={{ padding: '6px 10px', background: '#060d14', borderBottom: '1px solid #1e2d40' }}>
+          {commandPreview.map((line, i) => (
+            <div key={i} style={{ color: '#eee', fontFamily: 'monospace', fontSize: '12px' }}>{line}</div>
+          ))}
+        </div>
+      )}
+
       {/* Expanded log area */}
       {expanded && (
         <div
