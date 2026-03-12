@@ -75,7 +75,12 @@ export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogP
           </button>
           <button
             disabled={!confirmed}
-            onClick={() => onConfirm({ skipFinalSnapshot: skipSnapshot || undefined, force: force || undefined })}
+            onClick={() => {
+              const opts: DeleteOptions = {}
+              if (skipSnapshot) opts.skipFinalSnapshot = true
+              if (force) opts.force = true
+              onConfirm(opts)
+            }}
             style={{
               background: confirmed ? '#ff5f57' : '#3a1a1a',
               border: '1px solid #ff5f57', borderRadius: 3, padding: '4px 14px',
