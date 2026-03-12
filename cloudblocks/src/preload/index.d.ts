@@ -11,8 +11,6 @@ interface Window {
     cancelCli(): void
     onCliOutput(cb: (data: { line: string; stream: 'stdout' | 'stderr' }) => void): () => void
     onCliDone(cb: (data: { code: number }) => void): () => void
-    getSettings(): Promise<unknown>
-    setSettings(s: unknown): Promise<void>
     onScanKeypairs?(cb: (pairs: string[]) => void): () => void
   }
 }
