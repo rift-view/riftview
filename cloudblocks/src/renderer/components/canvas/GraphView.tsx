@@ -26,7 +26,7 @@ export function GraphView(): JSX.Element {
   const selectNode = useCloudStore((s) => s.selectNode)
   const selectedId = useCloudStore((s) => s.selectedNodeId)
 
-  const allNodes = [...cloudNodes, ...pendingNodes]
+  const allNodes = useMemo(() => [...cloudNodes, ...pendingNodes], [cloudNodes, pendingNodes])
 
   const flowNodes: Node[] = useMemo(
     () =>
@@ -37,10 +37,10 @@ export function GraphView(): JSX.Element {
         data:     { label: n.label, nodeType: n.type, status: n.status },
         selected: n.id === selectedId,
       })),
-    [cloudNodes, pendingNodes, selectedId],
+    [allNodes, selectedId],
   )
 
-  const flowEdges: Edge[] = useMemo(() => deriveEdges(allNodes), [cloudNodes, pendingNodes])
+  const flowEdges: Edge[] = useMemo(() => deriveEdges(allNodes), [allNodes])
 
   return (
     <ReactFlow

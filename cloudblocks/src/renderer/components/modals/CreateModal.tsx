@@ -90,7 +90,7 @@ export function CreateModal(): JSX.Element | null {
   }
 
   // Update the ref each render so the event listener always calls the latest version
-  handleRunRef.current = handleRun
+  handleRunRef.current = handleRun // eslint-disable-line react-hooks/refs
 
   const overlayStyle: React.CSSProperties = {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',

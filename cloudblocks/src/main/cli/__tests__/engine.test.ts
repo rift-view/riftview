@@ -8,7 +8,9 @@ vi.mock('electron', () => ({ BrowserWindow: vi.fn() }))
 import { spawn } from 'child_process'
 import { CliEngine } from '../engine'
 
-function makeProcess(exitCode: number, stdoutLines: string[] = [], stderrLines: string[] = []) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function makeProcess(exitCode: number, stdoutLines: string[] = [], stderrLines: string[] = []): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const proc = new EventEmitter() as any
   proc.stdout = new EventEmitter()
   proc.stderr = new EventEmitter()
@@ -24,6 +26,7 @@ function makeProcess(exitCode: number, stdoutLines: string[] = [], stderrLines: 
 }
 
 describe('CliEngine', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockWin: any
   let mockSpawn: ReturnType<typeof vi.fn>
 
@@ -45,6 +48,7 @@ describe('CliEngine', () => {
     mockSpawn.mockReturnValue(makeProcess(0, ['line1', 'line2']))
     const engine = new CliEngine(mockWin)
     await engine.execute([['ec2', 'create-vpc']])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const outputCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:output')
     expect(outputCalls).toHaveLength(2)
     expect(outputCalls[0][1]).toEqual({ line: 'line1', stream: 'stdout' })
@@ -55,6 +59,7 @@ describe('CliEngine', () => {
     mockSpawn.mockReturnValue(makeProcess(0))
     const engine = new CliEngine(mockWin)
     await engine.execute([['ec2', 'create-vpc']])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const doneCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:done')
     expect(doneCalls).toHaveLength(1)
     expect(doneCalls[0][1]).toEqual({ code: 0 })
@@ -69,6 +74,7 @@ describe('CliEngine', () => {
       ['ec2', 'create-security-group', '--group-name', 'web'],
       ['ec2', 'authorize-security-group-ingress', '--group-id', '{GroupId}'],
     ])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const doneCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:done')
     expect(doneCalls).toHaveLength(1)
     expect(doneCalls[0][1]).toEqual({ code: 0 })
