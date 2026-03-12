@@ -1,0 +1,2173 @@
+# Cloudblocks M2 Implementation Plan
+
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Add GUI resource creation (VPC, EC2, Security Group, S3) to the M1 read-only viewer, with live CLI command preview and streaming output in the Command Drawer.
+
+**Architecture:** Right-click context menu on canvas opens a creation modal; as the user fills the form the Command Drawer live-updates with the generated `aws` CLI command; Run spawns the real CLI via main process, streams stdout/stderr line-by-line via IPC, places a ghost node on canvas, and triggers a rescan on success.
+
+**Tech Stack:** Electron 32 + electron-vite, React 19, TypeScript, Zustand 5, Tailwind CSS 4, Vitest + RTL, AWS SDK v3 (reads only), `child_process.spawn` (writes)
+
+---
+
+All commands run from `/Users/julius/AI/proj1/cloudblocks` unless otherwise noted.
+
+---
+
+## Chunk 1: Foundation — Types, Channels, Store, CLI Command Builder
+
+### Task 1: Add `'creating'` status to NodeStatus
+
+**Files:**
+- Modify: `src/renderer/types/cloud.ts`
+
+- [ ] **Step 1: Add `'creating'` to the `NodeStatus` union**
+
+  Open `src/renderer/types/cloud.ts`. Change:
+  ```ts
+  export type NodeStatus = 'running' | 'stopped' | 'pending' | 'error' | 'unknown'
+  ```
+  To:
+  ```ts
+  export type NodeStatus = 'running' | 'stopped' | 'pending' | 'error' | 'unknown' | 'creating'
+  ```
+
+- [ ] **Step 2: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 3: Commit**
+
+  ```bash
+  git add src/renderer/types/cloud.ts
+  git commit -m "feat(types): add 'creating' NodeStatus for ghost nodes"
+  ```
+
+---
+
+### Task 2: Add CreateParams types
+
+**Files:**
+- Create: `src/renderer/types/create.ts`
+
+These types represent the form data sent from renderer to main via `cli:run`. Note: `SgParams.resource` is `'sg'` (form identifier), which is distinct from `NodeType` `'security-group'` (canvas identifier). The mapping lives in `CreateModal` (Task 14).
+
+- [ ] **Step 1: Create the file**
+
+  ```ts
+  // src/renderer/types/create.ts
+
+  export interface VpcParams {
+    resource: 'vpc'
+    name: string
+    cidr: string
+    tenancy: 'default' | 'dedicated'
+  }
+
+  export interface Ec2Params {
+    resource: 'ec2'
+    name: string
+    amiId: string
+    instanceType: string
+    keyName: string
+    subnetId: string
+    securityGroupIds: string[]
+  }
+
+  export interface SgParams {
+    resource: 'sg'
+    name: string
+    description: string
+    vpcId: string
+    inboundRules: Array<{
+      protocol: 'tcp' | 'udp' | 'icmp' | '-1'
+      fromPort: number
+      toPort: number
+      cidr: string
+    }>
+  }
+
+  export interface S3Params {
+    resource: 's3'
+    bucketName: string
+    region: string
+    blockPublicAccess: boolean
+  }
+
+  export type CreateParams = VpcParams | Ec2Params | SgParams | S3Params
+  ```
+
+- [ ] **Step 2: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 3: Commit**
+
+  ```bash
+  git add src/renderer/types/create.ts
+  git commit -m "feat(types): add CreateParams union for resource creation forms"
+  ```
+
+---
+
+### Task 3: Add CLI IPC channels
+
+**Files:**
+- Modify: `src/main/ipc/channels.ts`
+
+- [ ] **Step 1: Add CLI channels**
+
+  Open `src/main/ipc/channels.ts`. Replace the full file contents:
+  ```ts
+  export const IPC = {
+    PROFILES_LIST:  'profiles:list',
+    PROFILE_SELECT: 'profile:select',
+    REGION_SELECT:  'region:select',
+    SCAN_START:     'scan:start',
+    SCAN_DELTA:     'scan:delta',
+    SCAN_STATUS:    'scan:status',
+    CONN_STATUS:    'conn:status',
+    CLI_RUN:        'cli:run',
+    CLI_OUTPUT:     'cli:output',
+    CLI_DONE:       'cli:done',
+    CLI_CANCEL:     'cli:cancel',
+  } as const
+
+  export type IpcChannel = typeof IPC[keyof typeof IPC]
+  ```
+
+- [ ] **Step 2: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 3: Commit**
+
+  ```bash
+  git add src/main/ipc/channels.ts
+  git commit -m "feat(ipc): add CLI channels for write operations"
+  ```
+
+---
+
+### Task 4: Extend Zustand store
+
+**Files:**
+- Modify: `src/renderer/store/cloud.ts`
+
+New state:
+- `pendingNodes` — ghost nodes (`status: 'creating'`) shown on canvas while a command runs
+- `cliOutput` — streaming log lines from the CLI subprocess (stdout/stderr)
+- `commandPreview` — the live-generated CLI command string shown in the drawer (updated as form fields change; separate from `cliOutput` which is only real subprocess output)
+- `activeCreate` — which resource type + view mode is being created (drives modal visibility)
+
+- [ ] **Step 1: Write the failing tests**
+
+  Create `src/renderer/store/__tests__/cloud.test.ts`:
+  ```ts
+  import { describe, it, expect, beforeEach } from 'vitest'
+  import { useCloudStore } from '../cloud'
+
+  beforeEach(() => {
+    useCloudStore.setState({
+      pendingNodes:   [],
+      cliOutput:      [],
+      commandPreview: '',
+      activeCreate:   null,
+    })
+  })
+
+  describe('pendingNodes', () => {
+    it('addPendingNode adds a ghost node', () => {
+      const ghost = { id: 'pending:abc', type: 'vpc' as const, label: 'New VPC',
+        status: 'creating' as const, region: 'us-east-1', metadata: {} }
+      useCloudStore.getState().addPendingNode(ghost)
+      expect(useCloudStore.getState().pendingNodes).toHaveLength(1)
+      expect(useCloudStore.getState().pendingNodes[0].id).toBe('pending:abc')
+    })
+
+    it('removePendingNode removes by id', () => {
+      const ghost = { id: 'pending:abc', type: 'vpc' as const, label: 'New VPC',
+        status: 'creating' as const, region: 'us-east-1', metadata: {} }
+      useCloudStore.getState().addPendingNode(ghost)
+      useCloudStore.getState().removePendingNode('pending:abc')
+      expect(useCloudStore.getState().pendingNodes).toHaveLength(0)
+    })
+  })
+
+  describe('cliOutput', () => {
+    it('appendCliOutput appends a line', () => {
+      useCloudStore.getState().appendCliOutput({ line: 'hello', stream: 'stdout' })
+      expect(useCloudStore.getState().cliOutput).toHaveLength(1)
+      expect(useCloudStore.getState().cliOutput[0].line).toBe('hello')
+    })
+
+    it('clearCliOutput empties the log', () => {
+      useCloudStore.getState().appendCliOutput({ line: 'hello', stream: 'stdout' })
+      useCloudStore.getState().clearCliOutput()
+      expect(useCloudStore.getState().cliOutput).toHaveLength(0)
+    })
+  })
+
+  describe('commandPreview', () => {
+    it('setCommandPreview stores the string', () => {
+      useCloudStore.getState().setCommandPreview('aws ec2 create-vpc --cidr-block 10.0.0.0/16')
+      expect(useCloudStore.getState().commandPreview).toBe('aws ec2 create-vpc --cidr-block 10.0.0.0/16')
+    })
+
+    it('setCommandPreview with empty string clears it', () => {
+      useCloudStore.getState().setCommandPreview('some command')
+      useCloudStore.getState().setCommandPreview('')
+      expect(useCloudStore.getState().commandPreview).toBe('')
+    })
+  })
+
+  describe('activeCreate', () => {
+    it('setActiveCreate stores the value', () => {
+      useCloudStore.getState().setActiveCreate({ resource: 'vpc', view: 'topology' })
+      expect(useCloudStore.getState().activeCreate?.resource).toBe('vpc')
+    })
+
+    it('setActiveCreate(null) clears it', () => {
+      useCloudStore.getState().setActiveCreate({ resource: 'vpc', view: 'topology' })
+      useCloudStore.getState().setActiveCreate(null)
+      expect(useCloudStore.getState().activeCreate).toBeNull()
+    })
+  })
+  ```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+  ```bash
+  npm test -- src/renderer/store/__tests__/cloud.test.ts
+  ```
+  Expected: FAIL — `addPendingNode is not a function` (or similar)
+
+- [ ] **Step 3: Extend the store**
+
+  Open `src/renderer/store/cloud.ts`. Add to the `CloudState` interface:
+  ```ts
+  pendingNodes:     CloudNode[]
+  cliOutput:        Array<{ line: string; stream: 'stdout' | 'stderr' }>
+  commandPreview:   string
+  activeCreate:     { resource: string; view: 'topology' | 'graph' } | null
+
+  addPendingNode:    (node: CloudNode) => void
+  removePendingNode: (id: string) => void
+  clearPendingNodes: () => void
+  appendCliOutput:   (entry: { line: string; stream: 'stdout' | 'stderr' }) => void
+  clearCliOutput:    () => void
+  setCommandPreview: (cmd: string) => void
+  setActiveCreate:   (val: { resource: string; view: 'topology' | 'graph' } | null) => void
+  ```
+
+  Add initial values in `create<CloudState>((set) => ({`:
+  ```ts
+  pendingNodes:   [],
+  cliOutput:      [],
+  commandPreview: '',
+  activeCreate:   null,
+  ```
+
+  Add action implementations:
+  ```ts
+  addPendingNode: (node) =>
+    set((state) => ({ pendingNodes: [...state.pendingNodes, node] })),
+
+  removePendingNode: (id) =>
+    set((state) => ({ pendingNodes: state.pendingNodes.filter((n) => n.id !== id) })),
+
+  clearPendingNodes: () => set({ pendingNodes: [] }),
+
+  appendCliOutput: (entry) =>
+    set((state) => ({ cliOutput: [...state.cliOutput, entry] })),
+
+  clearCliOutput: () => set({ cliOutput: [] }),
+
+  setCommandPreview: (cmd) => set({ commandPreview: cmd }),
+
+  setActiveCreate: (val) => set({ activeCreate: val }),
+  ```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+  ```bash
+  npm test -- src/renderer/store/__tests__/cloud.test.ts
+  ```
+  Expected: PASS (7 tests)
+
+- [ ] **Step 5: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 6: Commit**
+
+  ```bash
+  git add src/renderer/store/cloud.ts src/renderer/store/__tests__/cloud.test.ts
+  git commit -m "feat(store): add pendingNodes, cliOutput, commandPreview, activeCreate state"
+  ```
+
+---
+
+### Task 5: CLI command builder
+
+**Files:**
+- Create: `src/renderer/utils/buildCommand.ts`
+- Create: `src/renderer/utils/__tests__/buildCommand.test.ts`
+
+Pure function — no Node.js dependencies, no side effects. Lives in `src/renderer/utils/` so it can be imported by both the renderer (CreateModal preview) and main process (handlers.ts execution) without crossing the main↔renderer bundle boundary in the wrong direction. (Main already imports from `src/renderer/types/` — established pattern.)
+
+**Important:** `authorize-security-group-ingress` requires `--group-id` (not `--group-name`) for VPC security groups. The SG's GroupId is only known after `create-security-group` succeeds. The engine handles this by parsing `GroupId` from the create command's stdout and substituting the literal placeholder string `{GroupId}` in subsequent commands.
+
+- [ ] **Step 1: Write the failing tests**
+
+  Create `src/renderer/utils/__tests__/buildCommand.test.ts`:
+  ```ts
+  // @vitest-environment node
+  import { describe, it, expect } from 'vitest'
+  import { buildCommands } from '../buildCommand'
+  import type { VpcParams, Ec2Params, SgParams, S3Params } from '../../types/create'
+
+  describe('buildCommands: vpc', () => {
+    it('returns one command with correct args', () => {
+      const params: VpcParams = {
+        resource: 'vpc', name: 'my-vpc', cidr: '10.0.0.0/16', tenancy: 'default',
+      }
+      const cmds = buildCommands(params)
+      expect(cmds).toHaveLength(1)
+      expect(cmds[0]).toContain('create-vpc')
+      expect(cmds[0]).toContain('--cidr-block')
+      expect(cmds[0]).toContain('10.0.0.0/16')
+      expect(cmds[0]).toContain('--instance-tenancy')
+      expect(cmds[0]).toContain('default')
+    })
+
+    it('includes name tag', () => {
+      const params: VpcParams = {
+        resource: 'vpc', name: 'my-vpc', cidr: '10.0.0.0/16', tenancy: 'default',
+      }
+      const cmd = buildCommands(params)[0].join(' ')
+      expect(cmd).toContain('my-vpc')
+    })
+  })
+
+  describe('buildCommands: ec2', () => {
+    it('returns one command with run-instances', () => {
+      const params: Ec2Params = {
+        resource: 'ec2', name: 'web', amiId: 'ami-123', instanceType: 't3.micro',
+        keyName: 'mykey', subnetId: 'subnet-abc', securityGroupIds: ['sg-1', 'sg-2'],
+      }
+      const cmds = buildCommands(params)
+      expect(cmds).toHaveLength(1)
+      expect(cmds[0]).toContain('run-instances')
+      expect(cmds[0]).toContain('ami-123')
+      expect(cmds[0]).toContain('t3.micro')
+      expect(cmds[0]).toContain('sg-1')
+      expect(cmds[0]).toContain('sg-2')
+    })
+  })
+
+  describe('buildCommands: sg', () => {
+    it('returns create + one authorize per rule, using --group-id placeholder', () => {
+      const params: SgParams = {
+        resource: 'sg', name: 'web-sg', description: 'web', vpcId: 'vpc-123',
+        inboundRules: [
+          { protocol: 'tcp', fromPort: 443, toPort: 443, cidr: '0.0.0.0/0' },
+          { protocol: 'tcp', fromPort: 80,  toPort: 80,  cidr: '0.0.0.0/0' },
+        ],
+      }
+      const cmds = buildCommands(params)
+      // 1 create + 2 authorize
+      expect(cmds).toHaveLength(3)
+      expect(cmds[0]).toContain('create-security-group')
+      expect(cmds[1]).toContain('authorize-security-group-ingress')
+      expect(cmds[2]).toContain('authorize-security-group-ingress')
+      // authorize commands must use --group-id with placeholder (not --group-name)
+      expect(cmds[1]).toContain('--group-id')
+      expect(cmds[1]).toContain('{GroupId}')
+    })
+
+    it('returns just create-security-group when no rules', () => {
+      const params: SgParams = {
+        resource: 'sg', name: 'empty-sg', description: 'd', vpcId: 'vpc-123',
+        inboundRules: [],
+      }
+      const cmds = buildCommands(params)
+      expect(cmds).toHaveLength(1)
+      expect(cmds[0]).toContain('create-security-group')
+    })
+  })
+
+  describe('buildCommands: s3', () => {
+    it('returns create-bucket + put-public-access-block for non-us-east-1 with blockPublicAccess', () => {
+      const params: S3Params = {
+        resource: 's3', bucketName: 'my-bucket', region: 'eu-west-1', blockPublicAccess: true,
+      }
+      const cmds = buildCommands(params)
+      expect(cmds).toHaveLength(2)
+      expect(cmds[0]).toContain('create-bucket')
+      expect(cmds[0]).toContain('--create-bucket-configuration')
+      expect(cmds[1]).toContain('put-public-access-block')
+    })
+
+    it('returns one create-bucket for us-east-1 with no blockPublicAccess', () => {
+      const params: S3Params = {
+        resource: 's3', bucketName: 'my-bucket', region: 'us-east-1', blockPublicAccess: false,
+      }
+      const cmds = buildCommands(params)
+      expect(cmds).toHaveLength(1)
+      expect(cmds[0]).toContain('create-bucket')
+      expect(cmds[0]).not.toContain('--create-bucket-configuration')
+    })
+  })
+  ```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+  ```bash
+  npm test -- src/renderer/utils/__tests__/buildCommand.test.ts
+  ```
+  Expected: FAIL — module not found
+
+- [ ] **Step 3: Implement buildCommand**
+
+  Create `src/renderer/utils/buildCommand.ts`:
+  ```ts
+  import type { CreateParams, SgParams } from '../types/create'
+
+  /**
+   * Returns an array of argv arrays — one per aws CLI command.
+   * For multi-step resources (SG with rules, S3 with public-access-block),
+   * the engine runs them sequentially and stops on first non-zero exit.
+   *
+   * SG authorize commands use the literal placeholder `{GroupId}`.
+   * The CliEngine substitutes this with the GroupId parsed from the
+   * `create-security-group` stdout before running each authorize command.
+   */
+  export function buildCommands(params: CreateParams): string[][] {
+    switch (params.resource) {
+      case 'vpc':
+        return [[
+          'ec2', 'create-vpc',
+          '--cidr-block', params.cidr,
+          '--instance-tenancy', params.tenancy,
+          '--tag-specifications',
+          `ResourceType=vpc,Tags=[{Key=Name,Value=${params.name}}]`,
+        ]]
+
+      case 'ec2':
+        return [[
+          'ec2', 'run-instances',
+          '--image-id',       params.amiId,
+          '--instance-type',  params.instanceType,
+          '--key-name',       params.keyName,
+          '--subnet-id',      params.subnetId,
+          '--security-group-ids', ...params.securityGroupIds,
+          '--count', '1',
+          '--tag-specifications',
+          `ResourceType=instance,Tags=[{Key=Name,Value=${params.name}}]`,
+        ]]
+
+      case 'sg':
+        return buildSgCommands(params)
+
+      case 's3':
+        return buildS3Commands(params)
+    }
+  }
+
+  function buildSgCommands(params: SgParams): string[][] {
+    const create: string[] = [
+      'ec2', 'create-security-group',
+      '--group-name',  params.name,
+      '--description', params.description,
+      '--vpc-id',      params.vpcId,
+    ]
+
+    // Use --group-id with {GroupId} placeholder.
+    // The CliEngine substitutes this with the actual GroupId parsed from
+    // create-security-group stdout before running each authorize command.
+    const authorizes: string[][] = params.inboundRules.map((rule) => [
+      'ec2', 'authorize-security-group-ingress',
+      '--group-id', '{GroupId}',
+      '--ip-permissions',
+      `IpProtocol=${rule.protocol},FromPort=${rule.fromPort},ToPort=${rule.toPort},IpRanges=[{CidrIp=${rule.cidr}}]`,
+    ])
+
+    return [create, ...authorizes]
+  }
+
+  function buildS3Commands(params: { bucketName: string; region: string; blockPublicAccess: boolean }): string[][] {
+    const create: string[] = ['s3api', 'create-bucket', '--bucket', params.bucketName]
+
+    if (params.region !== 'us-east-1') {
+      create.push('--create-bucket-configuration', `LocationConstraint=${params.region}`)
+    }
+
+    const cmds: string[][] = [create]
+
+    if (params.blockPublicAccess) {
+      cmds.push([
+        's3api', 'put-public-access-block',
+        '--bucket', params.bucketName,
+        '--public-access-block-configuration',
+        'BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true',
+      ])
+    }
+
+    return cmds
+  }
+  ```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+  ```bash
+  npm test -- src/renderer/utils/__tests__/buildCommand.test.ts
+  ```
+  Expected: PASS (8 tests)
+
+- [ ] **Step 5: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 6: Commit**
+
+  ```bash
+  git add src/renderer/utils/buildCommand.ts src/renderer/utils/__tests__/buildCommand.test.ts
+  git commit -m "feat(cli): add buildCommands in renderer/utils — uses {GroupId} placeholder for SG authorize"
+  ```
+
+---
+
+### Task 6: CLI Engine
+
+**Files:**
+- Create: `src/main/cli/engine.ts`
+- Create: `src/main/cli/__tests__/engine.test.ts`
+
+Spawns the `aws` CLI, streams stdout/stderr via IPC. Handles sequential multi-command chains. For SG creation: parses `GroupId` from `create-security-group` stdout JSON and substitutes `{GroupId}` in subsequent `authorize-security-group-ingress` commands.
+
+- [ ] **Step 1: Write the failing tests**
+
+  Create `src/main/cli/__tests__/engine.test.ts`:
+  ```ts
+  // @vitest-environment node
+  import { describe, it, expect, vi, beforeEach } from 'vitest'
+  import { EventEmitter } from 'events'
+
+  vi.mock('child_process', () => ({ spawn: vi.fn() }))
+  vi.mock('electron', () => ({ BrowserWindow: vi.fn() }))
+
+  import { spawn } from 'child_process'
+  import { CliEngine } from '../engine'
+
+  function makeProcess(exitCode: number, stdoutLines: string[] = [], stderrLines: string[] = []) {
+    const proc = new EventEmitter() as any
+    proc.stdout = new EventEmitter()
+    proc.stderr = new EventEmitter()
+    proc.kill = vi.fn()
+
+    setTimeout(() => {
+      for (const line of stdoutLines) proc.stdout.emit('data', Buffer.from(line + '\n'))
+      for (const line of stderrLines) proc.stderr.emit('data', Buffer.from(line + '\n'))
+      proc.emit('close', exitCode)
+    }, 0)
+
+    return proc
+  }
+
+  describe('CliEngine', () => {
+    let mockWin: any
+    let mockSpawn: ReturnType<typeof vi.fn>
+
+    beforeEach(() => {
+      mockWin = { webContents: { send: vi.fn() } }
+      mockSpawn = vi.mocked(spawn)
+      mockSpawn.mockReset()
+    })
+
+    it('executes a single command and resolves with exit code 0', async () => {
+      mockSpawn.mockReturnValue(makeProcess(0, ['{"VpcId":"vpc-abc"}']))
+      const engine = new CliEngine(mockWin)
+      const result = await engine.execute([['ec2', 'create-vpc', '--cidr-block', '10.0.0.0/16']])
+      expect(result.code).toBe(0)
+      expect(mockSpawn).toHaveBeenCalledWith('aws', ['ec2', 'create-vpc', '--cidr-block', '10.0.0.0/16'], expect.any(Object))
+    })
+
+    it('sends cli:output IPC events for stdout lines', async () => {
+      mockSpawn.mockReturnValue(makeProcess(0, ['line1', 'line2']))
+      const engine = new CliEngine(mockWin)
+      await engine.execute([['ec2', 'create-vpc']])
+      const outputCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:output')
+      expect(outputCalls.length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('sends exactly one cli:done event per execute() call', async () => {
+      mockSpawn.mockReturnValue(makeProcess(0))
+      const engine = new CliEngine(mockWin)
+      await engine.execute([['ec2', 'create-vpc']])
+      const doneCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:done')
+      expect(doneCalls).toHaveLength(1)
+      expect(doneCalls[0][1]).toEqual({ code: 0 })
+    })
+
+    it('sends exactly one cli:done for a two-command success chain', async () => {
+      mockSpawn
+        .mockReturnValueOnce(makeProcess(0, ['{"GroupId":"sg-abc"}']))
+        .mockReturnValueOnce(makeProcess(0))
+      const engine = new CliEngine(mockWin)
+      await engine.execute([
+        ['ec2', 'create-security-group', '--group-name', 'web'],
+        ['ec2', 'authorize-security-group-ingress', '--group-id', '{GroupId}'],
+      ])
+      const doneCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:done')
+      expect(doneCalls).toHaveLength(1)
+      expect(doneCalls[0][1]).toEqual({ code: 0 })
+    })
+
+    it('stops chain on first non-zero exit', async () => {
+      mockSpawn.mockReturnValueOnce(makeProcess(1, [], ['error']))
+      const engine = new CliEngine(mockWin)
+      const result = await engine.execute([
+        ['ec2', 'create-security-group'],
+        ['ec2', 'authorize-security-group-ingress'],
+      ])
+      expect(result.code).toBe(1)
+      expect(mockSpawn).toHaveBeenCalledTimes(1)
+    })
+
+    it('substitutes {GroupId} from previous command stdout', async () => {
+      mockSpawn
+        .mockReturnValueOnce(makeProcess(0, ['{"GroupId":"sg-abc123"}']))
+        .mockReturnValueOnce(makeProcess(0))
+      const engine = new CliEngine(mockWin)
+      await engine.execute([
+        ['ec2', 'create-security-group'],
+        ['ec2', 'authorize-security-group-ingress', '--group-id', '{GroupId}'],
+      ])
+      // Second spawn call should have the real GroupId substituted
+      expect(mockSpawn).toHaveBeenNthCalledWith(
+        2,
+        'aws',
+        ['ec2', 'authorize-security-group-ingress', '--group-id', 'sg-abc123'],
+        expect.any(Object),
+      )
+    })
+
+    it('cancel() kills the in-flight process', async () => {
+      const proc = makeProcess(0)
+      proc.kill = vi.fn(() => proc.emit('close', -1))
+      mockSpawn.mockReturnValue(proc)
+      const engine = new CliEngine(mockWin)
+      const p = engine.execute([['ec2', 'create-vpc']])
+      engine.cancel()
+      await p
+      expect(proc.kill).toHaveBeenCalled()
+    })
+  })
+  ```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+  ```bash
+  npm test -- src/main/cli/__tests__/engine.test.ts
+  ```
+  Expected: FAIL — module not found
+
+- [ ] **Step 3: Implement CliEngine**
+
+  Create `src/main/cli/engine.ts`:
+  ```ts
+  import { spawn, ChildProcess } from 'child_process'
+  import type { BrowserWindow } from 'electron'
+  import { IPC } from '../ipc/channels'
+
+  export interface ExitResult {
+    code: number
+  }
+
+  // Parses "GroupId" from JSON stdout of create-security-group.
+  // Returns null if stdout is not valid JSON or has no GroupId.
+  function extractGroupId(stdout: string): string | null {
+    try {
+      const parsed = JSON.parse(stdout.trim())
+      return typeof parsed?.GroupId === 'string' ? parsed.GroupId : null
+    } catch {
+      return null
+    }
+  }
+
+  export class CliEngine {
+    private currentProcess: ChildProcess | null = null
+
+    constructor(private win: BrowserWindow) {}
+
+    /**
+     * Runs commands sequentially. Stops chain on first non-zero exit.
+     * After each command, extracts GroupId from stdout and substitutes
+     * `{GroupId}` placeholder in subsequent argv arrays (for SG authorize).
+     * Sends cli:done once when the chain ends (success or failure).
+     */
+    async execute(commandChain: string[][]): Promise<ExitResult> {
+      let groupId: string | null = null
+
+      for (const rawArgv of commandChain) {
+        const argv = groupId
+          ? rawArgv.map((arg) => (arg === '{GroupId}' ? groupId! : arg))
+          : rawArgv
+
+        const result = await this.runOne(argv)
+
+        if (result.code !== 0) {
+          this.win.webContents.send(IPC.CLI_DONE, { code: result.code })
+          return { code: result.code }
+        }
+
+        // Try to parse GroupId for use in subsequent commands
+        const parsed = extractGroupId(result.stdout)
+        if (parsed) groupId = parsed
+      }
+
+      this.win.webContents.send(IPC.CLI_DONE, { code: 0 })
+      return { code: 0 }
+    }
+
+    cancel(): void {
+      this.currentProcess?.kill()
+      this.currentProcess = null
+    }
+
+    private runOne(argv: string[]): Promise<{ code: number; stdout: string }> {
+      return new Promise((resolve) => {
+        const proc = spawn('aws', argv, { shell: false })
+        this.currentProcess = proc
+        let stdoutBuffer = ''
+
+        proc.stdout.on('data', (chunk: Buffer) => {
+          const str = chunk.toString()
+          stdoutBuffer += str
+          for (const line of str.split('\n').filter(Boolean)) {
+            this.win.webContents.send(IPC.CLI_OUTPUT, { line, stream: 'stdout' })
+          }
+        })
+
+        proc.stderr.on('data', (chunk: Buffer) => {
+          for (const line of chunk.toString().split('\n').filter(Boolean)) {
+            this.win.webContents.send(IPC.CLI_OUTPUT, { line, stream: 'stderr' })
+          }
+        })
+
+        proc.on('close', (code) => {
+          this.currentProcess = null
+          resolve({ code: code ?? 1, stdout: stdoutBuffer })
+        })
+      })
+    }
+  }
+  ```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+  ```bash
+  npm test -- src/main/cli/__tests__/engine.test.ts
+  ```
+  Expected: PASS (7 tests)
+
+- [ ] **Step 5: Run all tests**
+
+  ```bash
+  npm test
+  ```
+  Expected: all passing
+
+- [ ] **Step 6: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 7: Commit**
+
+  ```bash
+  git add src/main/cli/engine.ts src/main/cli/__tests__/engine.test.ts
+  git commit -m "feat(cli): add CliEngine with GroupId threading and streaming IPC"
+  ```
+
+---
+
+## Chunk 2: IPC Wiring — Handlers, Preload, Context Menu
+
+### Task 7: Register CLI handlers in main process
+
+**Files:**
+- Modify: `src/main/ipc/handlers.ts`
+
+- [ ] **Step 1: Add CliEngine and register handlers**
+
+  Open `src/main/ipc/handlers.ts`. Replace the full file:
+  ```ts
+  import { ipcMain, BrowserWindow } from 'electron'
+  import { IPC } from './channels'
+  import { listProfiles, getDefaultRegion } from '../aws/credentials'
+  import { createClients } from '../aws/client'
+  import { ResourceScanner } from '../aws/scanner'
+  import { CliEngine } from '../cli/engine'
+  import { buildCommands } from '../../renderer/utils/buildCommand'
+  import type { CreateParams } from '../../renderer/types/create'
+
+  let scanner:   ResourceScanner | null = null
+  let cliEngine: CliEngine       | null = null
+
+  export function registerHandlers(win: BrowserWindow): void {
+    // List available AWS profiles
+    ipcMain.handle(IPC.PROFILES_LIST, () => listProfiles())
+
+    // Select a profile — recreates clients + restarts scanner
+    ipcMain.handle(IPC.PROFILE_SELECT, (_event, profileName: string) => {
+      const region = getDefaultRegion(profileName)
+      restartScanner(win, profileName, region)
+    })
+
+    // Select a region — recreates clients + restarts scanner with current profile
+    ipcMain.handle(IPC.REGION_SELECT, (_event, region: string) => {
+      const profile = process.env.AWS_PROFILE ?? 'default'
+      restartScanner(win, profile, region)
+    })
+
+    // Manual scan trigger
+    ipcMain.handle(IPC.SCAN_START, () => {
+      scanner?.triggerManualScan()
+    })
+
+    // Run a write command — renderer sends CreateParams, main builds argv and executes
+    ipcMain.handle(IPC.CLI_RUN, (_event, params: CreateParams) => {
+      const commands = buildCommands(params)
+      return cliEngine!.execute(commands)
+    })
+
+    // Cancel in-flight command (fire-and-forget, no return value needed)
+    ipcMain.on(IPC.CLI_CANCEL, () => {
+      cliEngine?.cancel()
+    })
+
+    // Initialise engine for the default session
+    cliEngine = new CliEngine(win)
+  }
+
+  function restartScanner(win: BrowserWindow, profile: string, region: string): void {
+    scanner?.stop()
+    // Recreate engine to ensure it holds the current win reference after profile/region switch
+    cliEngine = new CliEngine(win)
+    const clients = createClients(profile, region)
+    scanner = new ResourceScanner(clients, region, win)
+    scanner.start()
+  }
+  ```
+
+- [ ] **Step 2: Run all tests**
+
+  ```bash
+  npm test
+  ```
+  Expected: all passing
+
+- [ ] **Step 3: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 4: Commit**
+
+  ```bash
+  git add src/main/ipc/handlers.ts
+  git commit -m "feat(ipc): register cli:run (handle) and cli:cancel (on) in main process"
+  ```
+
+---
+
+### Task 8: Expose CLI API in preload
+
+**Files:**
+- Modify: `src/preload/index.ts`
+
+Note: `startScan` is already exposed in the existing preload and typed in the Window interface — no change needed for it. The new CLI methods are added below.
+
+Note: `onCliOutput` and `onCliDone` use `ipcRenderer.removeAllListeners` for cleanup — the same pattern as M1's `onScanDelta`. This is a known limitation: if two components subscribe to the same channel, the first unmount removes both listeners. Acceptable for M2 where only CommandDrawer subscribes.
+
+- [ ] **Step 1: Add CLI methods to contextBridge**
+
+  Open `src/preload/index.ts`. Add the import at the top:
+  ```ts
+  import type { CreateParams } from '../renderer/types/create'
+  ```
+
+  Add to the `contextBridge.exposeInMainWorld('cloudblocks', { ... })` object (after existing methods):
+  ```ts
+  runCli: (params: CreateParams): Promise<{ code: number }> =>
+    ipcRenderer.invoke(IPC.CLI_RUN, params),
+
+  cancelCli: (): void =>
+    ipcRenderer.send(IPC.CLI_CANCEL),
+
+  onCliOutput: (cb: (entry: { line: string; stream: 'stdout' | 'stderr' }) => void) => {
+    ipcRenderer.on(IPC.CLI_OUTPUT, (_event, entry) => cb(entry))
+    return () => ipcRenderer.removeAllListeners(IPC.CLI_OUTPUT)
+  },
+
+  onCliDone: (cb: (result: { code: number }) => void) => {
+    ipcRenderer.on(IPC.CLI_DONE, (_event, result) => cb(result))
+    return () => ipcRenderer.removeAllListeners(IPC.CLI_DONE)
+  },
+  ```
+
+  Add to the `Window` interface declaration (inside `interface Window { cloudblocks: { ... } }`):
+  ```ts
+  runCli:      (params: CreateParams) => Promise<{ code: number }>
+  cancelCli:   () => void
+  onCliOutput: (cb: (entry: { line: string; stream: 'stdout' | 'stderr' }) => void) => () => void
+  onCliDone:   (cb: (result: { code: number }) => void) => () => void
+  ```
+
+- [ ] **Step 2: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 3: Commit**
+
+  ```bash
+  git add src/preload/index.ts
+  git commit -m "feat(preload): expose runCli, cancelCli, onCliOutput, onCliDone"
+  ```
+
+---
+
+### Task 9: Canvas context menu
+
+**Files:**
+- Create: `src/renderer/components/canvas/CanvasContextMenu.tsx`
+- Modify: `src/renderer/components/canvas/CloudCanvas.tsx`
+
+Right-click canvas → two-step menu: pick resource type → pick view mode → calls `setActiveCreate`. A click-away overlay closes the menu.
+
+- [ ] **Step 1: Create CanvasContextMenu**
+
+  Create `src/renderer/components/canvas/CanvasContextMenu.tsx`:
+  ```tsx
+  import { useState } from 'react'
+  import { useCloudStore } from '../../store/cloud'
+
+  interface Props {
+    x: number
+    y: number
+    onClose: () => void
+  }
+
+  const CREATABLE = [
+    { resource: 'vpc', label: 'New VPC' },
+    { resource: 'ec2', label: 'New EC2 Instance' },
+    { resource: 'sg',  label: 'New Security Group' },
+    { resource: 's3',  label: 'New S3 Bucket' },
+  ] as const
+
+  export function CanvasContextMenu({ x, y, onClose }: Props): JSX.Element {
+    const setActiveCreate = useCloudStore((s) => s.setActiveCreate)
+    const [pendingResource, setPendingResource] = useState<string | null>(null)
+
+    const menuStyle: React.CSSProperties = {
+      position: 'fixed', top: y, left: x,
+      background: '#0d1117', border: '1px solid #FF9900', borderRadius: '4px',
+      fontFamily: 'monospace', fontSize: '10px', zIndex: 1000, minWidth: '160px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+    }
+
+    function hoverOn(e: React.MouseEvent<HTMLDivElement>): void {
+      (e.currentTarget as HTMLDivElement).style.background = '#1a2332'
+      ;(e.currentTarget as HTMLDivElement).style.color = '#FF9900'
+    }
+    function hoverOff(e: React.MouseEvent<HTMLDivElement>): void {
+      (e.currentTarget as HTMLDivElement).style.background = 'transparent'
+      ;(e.currentTarget as HTMLDivElement).style.color = '#aaa'
+    }
+
+    const itemStyle: React.CSSProperties = { padding: '5px 10px', color: '#aaa', cursor: 'pointer' }
+    const sectionLabel: React.CSSProperties = { padding: '4px 10px 2px', color: '#555', fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }
+
+    function selectView(view: 'topology' | 'graph'): void {
+      if (!pendingResource) return
+      setActiveCreate({ resource: pendingResource, view })
+      onClose()
+    }
+
+    return (
+      <>
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 999 }}
+          onClick={onClose}
+          onContextMenu={(e) => { e.preventDefault(); onClose() }}
+        />
+        <div style={menuStyle}>
+          {!pendingResource ? (
+            <>
+              <div style={sectionLabel}>Create Resource</div>
+              {CREATABLE.map((item) => (
+                <div
+                  key={item.resource}
+                  style={itemStyle}
+                  onClick={() => setPendingResource(item.resource)}
+                  onMouseEnter={hoverOn}
+                  onMouseLeave={hoverOff}
+                >
+                  + {item.label}
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <div style={sectionLabel}>Add to View</div>
+              {(['topology', 'graph'] as const).map((v) => (
+                <div
+                  key={v}
+                  style={itemStyle}
+                  onClick={() => selectView(v)}
+                  onMouseEnter={hoverOn}
+                  onMouseLeave={hoverOff}
+                >
+                  {v === 'topology' ? '⊞' : '◈'} {v.charAt(0).toUpperCase() + v.slice(1)}
+                </div>
+              ))}
+              <div
+                style={{ ...itemStyle, borderTop: '1px solid #1e2d40', color: '#555' }}
+                onClick={() => setPendingResource(null)}
+                onMouseEnter={hoverOn}
+                onMouseLeave={hoverOff}
+              >
+                ← Back
+              </div>
+            </>
+          )}
+        </div>
+      </>
+    )
+  }
+  ```
+
+- [ ] **Step 2: Wire context menu into CloudCanvas**
+
+  Open `src/renderer/components/canvas/CloudCanvas.tsx`. Replace the full file:
+  ```tsx
+  import { useState } from 'react'
+  import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
+  import { useCloudStore } from '../../store/cloud'
+  import { TopologyView } from './TopologyView'
+  import { GraphView } from './GraphView'
+  import { CanvasContextMenu } from './CanvasContextMenu'
+
+  interface Props {
+    onScan: () => void
+  }
+
+  function CanvasInner({ onScan }: Props): JSX.Element {
+    const { fitView, zoomIn, zoomOut } = useReactFlow()
+    const view       = useCloudStore((s) => s.view)
+    const setView    = useCloudStore((s) => s.setView)
+    const scanStatus = useCloudStore((s) => s.scanStatus)
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+
+    const btnBase = { fontFamily: 'monospace', fontSize: '9px', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }
+
+    function handleContextMenu(e: React.MouseEvent): void {
+      e.preventDefault()
+      setContextMenu({ x: e.clientX, y: e.clientY })
+    }
+
+    return (
+      <div className="relative flex-1 h-full" onContextMenu={handleContextMenu}>
+        {/* Toolbar */}
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-md"
+             style={{ background: '#0d1320', border: '1px solid #1e2d40' }}>
+          <button
+            onClick={onScan}
+            disabled={scanStatus === 'scanning'}
+            style={{ ...btnBase, background: '#1a2332', border: '1px solid #FF9900', color: '#FF9900', opacity: scanStatus === 'scanning' ? 0.5 : 1 }}
+          >
+            {scanStatus === 'scanning' ? '⟳ Scanning…' : '⟳ Scan'}
+          </button>
+
+          <div className="w-px h-3.5 bg-gray-700" />
+
+          <button onClick={() => fitView({ duration: 300 })} style={{ ...btnBase, background: '#111', border: '1px solid #333', color: '#aaa' }}>
+            ⊞ Fit
+          </button>
+          <button onClick={() => zoomIn()}  style={{ ...btnBase, background: '#111', border: '1px solid #333', color: '#aaa' }}>+</button>
+          <button onClick={() => zoomOut()} style={{ ...btnBase, background: '#111', border: '1px solid #333', color: '#aaa' }}>−</button>
+
+          <div className="w-px h-3.5 bg-gray-700" />
+
+          {(['topology', 'graph'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              style={{
+                ...btnBase,
+                background: view === v ? '#1a2332' : 'transparent',
+                border: `1px solid ${view === v ? '#64b5f6' : '#333'}`,
+                color: view === v ? '#64b5f6' : '#666',
+              }}
+            >
+              {v === 'topology' ? '⊞ Topology' : '◈ Graph'}
+            </button>
+          ))}
+        </div>
+
+        {view === 'topology' ? <TopologyView /> : <GraphView />}
+
+        {contextMenu && (
+          <CanvasContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            onClose={() => setContextMenu(null)}
+          />
+        )}
+      </div>
+    )
+  }
+
+  export function CloudCanvas(props: Props): JSX.Element {
+    return (
+      <ReactFlowProvider>
+        <CanvasInner {...props} />
+      </ReactFlowProvider>
+    )
+  }
+  ```
+
+- [ ] **Step 3: Run all tests**
+
+  ```bash
+  npm test
+  ```
+  Expected: all passing
+
+- [ ] **Step 4: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 5: Commit**
+
+  ```bash
+  git add src/renderer/components/canvas/CanvasContextMenu.tsx src/renderer/components/canvas/CloudCanvas.tsx
+  git commit -m "feat(canvas): add right-click context menu for resource creation"
+  ```
+
+---
+
+## Chunk 3: Modal Forms, CommandDrawer, App Wiring
+
+### Task 10: VpcForm
+
+**Files:**
+- Create: `src/renderer/components/modals/VpcForm.tsx`
+
+- [ ] **Step 1: Create VpcForm**
+
+  Create `src/renderer/components/modals/VpcForm.tsx`:
+  ```tsx
+  import { useState } from 'react'
+  import type { VpcParams } from '../../types/create'
+
+  interface Props {
+    onChange: (params: VpcParams) => void
+  }
+
+  export function VpcForm({ onChange }: Props): JSX.Element {
+    const [name,    setName]    = useState('')
+    const [cidr,    setCidr]    = useState('10.0.0.0/16')
+    const [tenancy, setTenancy] = useState<'default' | 'dedicated'>('default')
+
+    function update(partial: Partial<{ name: string; cidr: string; tenancy: 'default' | 'dedicated' }>): void {
+      const next = { name, cidr, tenancy, ...partial }
+      setName(next.name); setCidr(next.cidr); setTenancy(next.tenancy)
+      onChange({ resource: 'vpc', ...next })
+    }
+
+    const inputStyle: React.CSSProperties = {
+      width: '100%', background: '#060d14', border: '1px solid #30363d',
+      borderRadius: '3px', padding: '4px 6px', color: '#eee',
+      fontFamily: 'monospace', fontSize: '11px', boxSizing: 'border-box',
+    }
+    const labelStyle: React.CSSProperties = { color: '#555', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <label>
+          <span style={labelStyle}>Name</span>
+          <input style={inputStyle} value={name} onChange={(e) => update({ name: e.target.value })} placeholder="my-vpc" />
+        </label>
+        <label>
+          <span style={labelStyle}>CIDR Block</span>
+          <input style={inputStyle} value={cidr} onChange={(e) => update({ cidr: e.target.value })} placeholder="10.0.0.0/16" />
+        </label>
+        <label>
+          <span style={labelStyle}>Tenancy</span>
+          <select style={inputStyle} value={tenancy} onChange={(e) => update({ tenancy: e.target.value as 'default' | 'dedicated' })}>
+            <option value="default">default</option>
+            <option value="dedicated">dedicated</option>
+          </select>
+        </label>
+      </div>
+    )
+  }
+  ```
+
+- [ ] **Step 2: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 3: Commit**
+
+  ```bash
+  git add src/renderer/components/modals/VpcForm.tsx
+  git commit -m "feat(modals): add VpcForm"
+  ```
+
+---
+
+### Task 11: Ec2Form
+
+**Files:**
+- Create: `src/renderer/components/modals/Ec2Form.tsx`
+
+- [ ] **Step 1: Create Ec2Form**
+
+  Create `src/renderer/components/modals/Ec2Form.tsx`:
+  ```tsx
+  import { useState } from 'react'
+  import { useCloudStore } from '../../store/cloud'
+  import type { Ec2Params } from '../../types/create'
+
+  const INSTANCE_TYPES = ['t3.micro', 't3.small', 't3.medium', 't3.large', 'm5.large', 'c5.large']
+
+  interface Props {
+    onChange: (params: Ec2Params) => void
+  }
+
+  export function Ec2Form({ onChange }: Props): JSX.Element {
+    const nodes = useCloudStore((s) => s.nodes)
+    const vpcs    = nodes.filter((n) => n.type === 'vpc')
+    const subnets = nodes.filter((n) => n.type === 'subnet')
+    const sgs     = nodes.filter((n) => n.type === 'security-group')
+
+    const [name,             setName]             = useState('')
+    const [amiId,            setAmiId]            = useState('')
+    const [instanceType,     setInstanceType]     = useState('t3.micro')
+    const [keyName,          setKeyName]          = useState('')
+    const [selectedVpc,      setSelectedVpc]      = useState('')
+    const [subnetId,         setSubnetId]         = useState('')
+    const [securityGroupIds, setSecurityGroupIds] = useState<string[]>([])
+
+    const filteredSubnets = subnets.filter((s) => !selectedVpc || s.parentId === selectedVpc)
+
+    function update(partial: Partial<{
+      name: string; amiId: string; instanceType: string; keyName: string
+      subnetId: string; securityGroupIds: string[]
+    }>): void {
+      const next = { name, amiId, instanceType, keyName, subnetId, securityGroupIds, ...partial }
+      setName(next.name); setAmiId(next.amiId); setInstanceType(next.instanceType)
+      setKeyName(next.keyName); setSubnetId(next.subnetId); setSecurityGroupIds(next.securityGroupIds)
+      onChange({ resource: 'ec2', ...next })
+    }
+
+    function toggleSg(id: string): void {
+      const next = securityGroupIds.includes(id)
+        ? securityGroupIds.filter((s) => s !== id)
+        : [...securityGroupIds, id]
+      update({ securityGroupIds: next })
+    }
+
+    const inputStyle: React.CSSProperties = {
+      width: '100%', background: '#060d14', border: '1px solid #30363d',
+      borderRadius: '3px', padding: '4px 6px', color: '#eee',
+      fontFamily: 'monospace', fontSize: '11px', boxSizing: 'border-box',
+    }
+    const labelStyle: React.CSSProperties = { color: '#555', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <label><span style={labelStyle}>Name</span>
+          <input style={inputStyle} value={name} onChange={(e) => update({ name: e.target.value })} placeholder="web-server" /></label>
+        <label><span style={labelStyle}>AMI ID</span>
+          <input style={inputStyle} value={amiId} onChange={(e) => update({ amiId: e.target.value })} placeholder="ami-0abcdef1234567890" /></label>
+        <label><span style={labelStyle}>Instance Type</span>
+          <select style={inputStyle} value={instanceType} onChange={(e) => update({ instanceType: e.target.value })}>
+            {INSTANCE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select></label>
+        <label><span style={labelStyle}>Key Pair Name (free text — M3 will add dropdown)</span>
+          <input style={inputStyle} value={keyName} onChange={(e) => update({ keyName: e.target.value })} placeholder="my-key-pair" /></label>
+        <label><span style={labelStyle}>VPC (for subnet filtering)</span>
+          <select style={inputStyle} value={selectedVpc} onChange={(e) => setSelectedVpc(e.target.value)}>
+            <option value="">— select VPC —</option>
+            {vpcs.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
+          </select></label>
+        <label><span style={labelStyle}>Subnet</span>
+          <select style={inputStyle} value={subnetId} onChange={(e) => update({ subnetId: e.target.value })}>
+            <option value="">— select subnet —</option>
+            {filteredSubnets.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+          </select></label>
+        <div><span style={labelStyle}>Security Groups</span>
+          {sgs.length === 0 ? (
+            <div style={{ color: '#555', fontSize: '10px' }}>No security groups found</div>
+          ) : sgs.map((sg) => (
+            <label key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={securityGroupIds.includes(sg.id)} onChange={() => toggleSg(sg.id)} />
+              <span style={{ color: '#aaa', fontSize: '10px', fontFamily: 'monospace' }}>{sg.label}</span>
+            </label>
+          ))}</div>
+      </div>
+    )
+  }
+  ```
+
+- [ ] **Step 2: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 3: Commit**
+
+  ```bash
+  git add src/renderer/components/modals/Ec2Form.tsx
+  git commit -m "feat(modals): add Ec2Form with VPC/subnet/SG dropdowns from store"
+  ```
+
+---
+
+### Task 12: SgForm
+
+**Files:**
+- Create: `src/renderer/components/modals/SgForm.tsx`
+
+- [ ] **Step 1: Create SgForm**
+
+  Create `src/renderer/components/modals/SgForm.tsx`:
+  ```tsx
+  import { useState } from 'react'
+  import { useCloudStore } from '../../store/cloud'
+  import type { SgParams } from '../../types/create'
+
+  type Rule = SgParams['inboundRules'][number]
+
+  interface Props {
+    onChange: (params: SgParams) => void
+  }
+
+  const BLANK_RULE: Rule = { protocol: 'tcp', fromPort: 443, toPort: 443, cidr: '0.0.0.0/0' }
+
+  export function SgForm({ onChange }: Props): JSX.Element {
+    const nodes = useCloudStore((s) => s.nodes)
+    const vpcs  = nodes.filter((n) => n.type === 'vpc')
+
+    const [name,        setName]        = useState('')
+    const [description, setDescription] = useState('')
+    const [vpcId,       setVpcId]       = useState('')
+    const [rules,       setRules]       = useState<Rule[]>([{ ...BLANK_RULE }])
+
+    function updateTop(partial: Partial<{ name: string; description: string; vpcId: string }>): void {
+      const next = { name, description, vpcId, ...partial }
+      setName(next.name); setDescription(next.description); setVpcId(next.vpcId)
+      onChange({ resource: 'sg', inboundRules: rules, ...next })
+    }
+
+    function updateRule(i: number, partial: Partial<Rule>): void {
+      const next = rules.map((r, idx) => idx === i ? { ...r, ...partial } : r)
+      setRules(next)
+      onChange({ resource: 'sg', name, description, vpcId, inboundRules: next })
+    }
+
+    function addRule(): void {
+      const next = [...rules, { ...BLANK_RULE }]
+      setRules(next)
+      onChange({ resource: 'sg', name, description, vpcId, inboundRules: next })
+    }
+
+    function removeRule(i: number): void {
+      const next = rules.filter((_, idx) => idx !== i)
+      setRules(next)
+      onChange({ resource: 'sg', name, description, vpcId, inboundRules: next })
+    }
+
+    const inputStyle: React.CSSProperties = {
+      background: '#060d14', border: '1px solid #30363d', borderRadius: '3px',
+      padding: '4px 6px', color: '#eee', fontFamily: 'monospace', fontSize: '11px',
+    }
+    const labelStyle: React.CSSProperties = { color: '#555', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <label><span style={labelStyle}>Name</span>
+          <input style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }} value={name}
+            onChange={(e) => updateTop({ name: e.target.value })} placeholder="web-sg" /></label>
+        <label><span style={labelStyle}>Description</span>
+          <input style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }} value={description}
+            onChange={(e) => updateTop({ description: e.target.value })} placeholder="Web tier security group" /></label>
+        <label><span style={labelStyle}>VPC</span>
+          <select style={{ ...inputStyle, width: '100%', boxSizing: 'border-box' }} value={vpcId}
+            onChange={(e) => updateTop({ vpcId: e.target.value })}>
+            <option value="">— select VPC —</option>
+            {vpcs.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
+          </select></label>
+        <div>
+          <span style={labelStyle}>Inbound Rules</span>
+          {rules.map((rule, i) => (
+            <div key={i} style={{ display: 'flex', gap: '4px', marginBottom: '4px', alignItems: 'center' }}>
+              <select style={{ ...inputStyle, width: '70px' }} value={rule.protocol}
+                onChange={(e) => updateRule(i, { protocol: e.target.value as Rule['protocol'] })}>
+                <option value="tcp">TCP</option>
+                <option value="udp">UDP</option>
+                <option value="-1">All</option>
+              </select>
+              <input style={{ ...inputStyle, width: '50px' }} type="number" value={rule.fromPort}
+                onChange={(e) => updateRule(i, { fromPort: Number(e.target.value) })} placeholder="from" />
+              <span style={{ color: '#555', fontSize: '10px' }}>–</span>
+              <input style={{ ...inputStyle, width: '50px' }} type="number" value={rule.toPort}
+                onChange={(e) => updateRule(i, { toPort: Number(e.target.value) })} placeholder="to" />
+              <input style={{ ...inputStyle, flex: 1 }} value={rule.cidr}
+                onChange={(e) => updateRule(i, { cidr: e.target.value })} placeholder="0.0.0.0/0" />
+              <button onClick={() => removeRule(i)}
+                style={{ background: 'transparent', border: 'none', color: '#555', cursor: 'pointer', fontSize: '12px' }}>✕</button>
+            </div>
+          ))}
+          <button onClick={addRule}
+            style={{ background: '#1a2332', border: '1px solid #30363d', borderRadius: '3px', color: '#aaa', cursor: 'pointer', fontSize: '10px', padding: '3px 8px', fontFamily: 'monospace' }}>
+            + Add Rule
+          </button>
+        </div>
+      </div>
+    )
+  }
+  ```
+
+- [ ] **Step 2: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 3: Commit**
+
+  ```bash
+  git add src/renderer/components/modals/SgForm.tsx
+  git commit -m "feat(modals): add SgForm with repeating inbound rules"
+  ```
+
+---
+
+### Task 13: S3Form
+
+**Files:**
+- Create: `src/renderer/components/modals/S3Form.tsx`
+
+- [ ] **Step 1: Create S3Form**
+
+  Create `src/renderer/components/modals/S3Form.tsx`:
+  ```tsx
+  import { useState } from 'react'
+  import { useCloudStore } from '../../store/cloud'
+  import type { S3Params } from '../../types/create'
+
+  interface Props {
+    onChange: (params: S3Params) => void
+  }
+
+  export function S3Form({ onChange }: Props): JSX.Element {
+    const currentRegion       = useCloudStore((s) => s.region)
+    const [bucketName,        setBucketName]        = useState('')
+    const [region,            setRegion]            = useState(currentRegion)
+    const [blockPublicAccess, setBlockPublicAccess] = useState(true)
+
+    function update(partial: Partial<{ bucketName: string; region: string; blockPublicAccess: boolean }>): void {
+      const next = { bucketName, region, blockPublicAccess, ...partial }
+      setBucketName(next.bucketName); setRegion(next.region); setBlockPublicAccess(next.blockPublicAccess)
+      onChange({ resource: 's3', ...next })
+    }
+
+    const inputStyle: React.CSSProperties = {
+      width: '100%', background: '#060d14', border: '1px solid #30363d',
+      borderRadius: '3px', padding: '4px 6px', color: '#eee',
+      fontFamily: 'monospace', fontSize: '11px', boxSizing: 'border-box',
+    }
+    const labelStyle: React.CSSProperties = { color: '#555', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <label><span style={labelStyle}>Bucket Name</span>
+          <input style={inputStyle} value={bucketName} onChange={(e) => update({ bucketName: e.target.value })} placeholder="my-unique-bucket-name" /></label>
+        <label><span style={labelStyle}>Region</span>
+          <input style={inputStyle} value={region} onChange={(e) => update({ region: e.target.value })} /></label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <input type="checkbox" checked={blockPublicAccess} onChange={(e) => update({ blockPublicAccess: e.target.checked })} />
+          <span style={{ color: '#aaa', fontSize: '11px', fontFamily: 'monospace' }}>Block all public access</span>
+        </label>
+      </div>
+    )
+  }
+  ```
+
+- [ ] **Step 2: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 3: Commit**
+
+  ```bash
+  git add src/renderer/components/modals/S3Form.tsx
+  git commit -m "feat(modals): add S3Form"
+  ```
+
+---
+
+### Task 14: CreateModal
+
+**Files:**
+- Create: `src/renderer/components/modals/CreateModal.tsx`
+- Create: `src/renderer/components/modals/__tests__/CreateModal.test.tsx`
+
+Modal container. Renders the correct form, calls `setCommandPreview` on every field change (the drawer reads this for live preview), and calls `window.cloudblocks.runCli` when `commanddrawer:run` event fires (dispatched by CommandDrawer's Run button). Listens for this event only while mounted.
+
+Note: `window.cloudblocks.startScan` is already exposed in the preload from M1 — no change needed.
+
+- [ ] **Step 1: Install @testing-library/user-event if not present**
+
+  ```bash
+  npm list @testing-library/user-event 2>/dev/null | grep user-event || npm install -D @testing-library/user-event
+  ```
+
+- [ ] **Step 2: Write the failing tests**
+
+  Create `src/renderer/components/modals/__tests__/CreateModal.test.tsx`:
+  ```tsx
+  import { describe, it, expect, vi, beforeEach } from 'vitest'
+  import { render, screen } from '@testing-library/react'
+  import userEvent from '@testing-library/user-event'
+  import { CreateModal } from '../CreateModal'
+  import { useCloudStore } from '../../../store/cloud'
+
+  Object.defineProperty(window, 'cloudblocks', {
+    value: {
+      runCli:      vi.fn().mockResolvedValue({ code: 0 }),
+      cancelCli:   vi.fn(),
+      onCliOutput: vi.fn().mockReturnValue(() => {}),
+      onCliDone:   vi.fn().mockReturnValue(() => {}),
+      startScan:   vi.fn().mockResolvedValue(undefined),
+    },
+    writable: true,
+  })
+
+  beforeEach(() => {
+    useCloudStore.setState({ activeCreate: null, pendingNodes: [], cliOutput: [], commandPreview: '' })
+    vi.clearAllMocks()
+  })
+
+  it('renders nothing when activeCreate is null', () => {
+    const { container } = render(<CreateModal />)
+    expect(container.firstChild).toBeNull()
+  })
+
+  it('renders VPC form title when activeCreate is vpc', () => {
+    useCloudStore.setState({ activeCreate: { resource: 'vpc', view: 'topology' } })
+    render(<CreateModal />)
+    expect(screen.getByText(/new vpc/i)).toBeInTheDocument()
+  })
+
+  it('renders S3 form title when activeCreate is s3', () => {
+    useCloudStore.setState({ activeCreate: { resource: 's3', view: 'topology' } })
+    render(<CreateModal />)
+    expect(screen.getByText(/new s3 bucket/i)).toBeInTheDocument()
+  })
+
+  it('closes when Cancel is clicked', async () => {
+    useCloudStore.setState({ activeCreate: { resource: 'vpc', view: 'topology' } })
+    render(<CreateModal />)
+    await userEvent.click(screen.getByText(/cancel/i))
+    expect(useCloudStore.getState().activeCreate).toBeNull()
+  })
+  ```
+
+- [ ] **Step 3: Run tests to verify they fail**
+
+  ```bash
+  npm test -- src/renderer/components/modals/__tests__/CreateModal.test.tsx
+  ```
+  Expected: FAIL — module not found
+
+- [ ] **Step 4: Create CreateModal**
+
+  Create `src/renderer/components/modals/CreateModal.tsx`:
+  ```tsx
+  import { useRef, useEffect } from 'react'
+  import { useCloudStore } from '../../store/cloud'
+  import { buildCommands } from '../../utils/buildCommand'
+  import type { CreateParams } from '../../types/create'
+  import type { NodeType } from '../../types/cloud'
+  import { VpcForm } from './VpcForm'
+  import { Ec2Form } from './Ec2Form'
+  import { SgForm } from './SgForm'
+  import { S3Form } from './S3Form'
+
+  const TITLES: Record<string, string> = {
+    vpc: 'New VPC',
+    ec2: 'New EC2 Instance',
+    sg:  'New Security Group',
+    s3:  'New S3 Bucket',
+  }
+
+  // Maps form resource identifier to CloudNode NodeType
+  const RESOURCE_TO_NODE_TYPE: Record<string, NodeType> = {
+    vpc: 'vpc',
+    ec2: 'ec2',
+    sg:  'security-group',
+    s3:  's3',
+  }
+
+  export function CreateModal(): JSX.Element | null {
+    const activeCreate      = useCloudStore((s) => s.activeCreate)
+    const region            = useCloudStore((s) => s.region)
+    const setActiveCreate   = useCloudStore((s) => s.setActiveCreate)
+    const setCommandPreview = useCloudStore((s) => s.setCommandPreview)
+    const clearCliOutput    = useCloudStore((s) => s.clearCliOutput)
+    const addPendingNode    = useCloudStore((s) => s.addPendingNode)
+    const removePendingNode = useCloudStore((s) => s.removePendingNode)
+
+    const pendingIdRef = useRef<string | null>(null)
+    const paramsRef    = useRef<CreateParams | null>(null)
+
+    // Listen for Run button from CommandDrawer (only while this modal is mounted)
+    useEffect(() => {
+      function onRun(): void {
+        handleRun()
+      }
+      window.addEventListener('commanddrawer:run', onRun)
+      return () => window.removeEventListener('commanddrawer:run', onRun)
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+    if (!activeCreate) return null
+
+    function handleChange(params: CreateParams): void {
+      paramsRef.current = params
+      try {
+        const cmds = buildCommands(params)
+        setCommandPreview(cmds.map((c) => 'aws ' + c.join(' ')).join('\n'))
+      } catch {
+        // incomplete form — ignore preview update
+      }
+    }
+
+    function handleCancel(): void {
+      if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
+      clearCliOutput()
+      setCommandPreview('')
+      setActiveCreate(null)
+    }
+
+    function handleRun(): void {
+      if (!paramsRef.current) return
+      const id = `pending:${crypto.randomUUID()}`
+      pendingIdRef.current = id
+      addPendingNode({
+        id,
+        type:   RESOURCE_TO_NODE_TYPE[activeCreate.resource] ?? 'ec2',
+        label:  'Creating…',
+        status: 'creating',
+        region,
+        metadata: {},
+      })
+      clearCliOutput()
+
+      window.cloudblocks.runCli(paramsRef.current).then((result) => {
+        if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
+        pendingIdRef.current = null
+        if (result.code === 0) {
+          setCommandPreview('')
+          setActiveCreate(null)
+          window.cloudblocks.startScan()
+        }
+      })
+    }
+
+    const overlayStyle: React.CSSProperties = {
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500,
+    }
+    const modalStyle: React.CSSProperties = {
+      background: '#0d1117', border: '1px solid #FF9900', borderRadius: '6px',
+      padding: '16px', width: '420px', maxHeight: '80vh', overflowY: 'auto',
+      fontFamily: 'monospace', boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+    }
+
+    return (
+      <div style={overlayStyle}>
+        <div style={modalStyle}>
+          <div style={{ color: '#FF9900', fontSize: '12px', fontWeight: 'bold', marginBottom: '14px', borderBottom: '1px solid #1e2d40', paddingBottom: '8px' }}>
+            {TITLES[activeCreate.resource] ?? 'New Resource'}
+          </div>
+
+          {activeCreate.resource === 'vpc' && <VpcForm onChange={handleChange} />}
+          {activeCreate.resource === 'ec2' && <Ec2Form onChange={handleChange} />}
+          {activeCreate.resource === 'sg'  && <SgForm  onChange={handleChange} />}
+          {activeCreate.resource === 's3'  && <S3Form  onChange={handleChange} />}
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid #1e2d40' }}>
+            <button
+              onClick={handleCancel}
+              style={{ background: '#1a2332', border: '1px solid #30363d', borderRadius: '3px', color: '#aaa', cursor: 'pointer', fontSize: '10px', padding: '4px 10px', fontFamily: 'monospace' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  ```
+
+- [ ] **Step 5: Run tests to verify they pass**
+
+  ```bash
+  npm test -- src/renderer/components/modals/__tests__/CreateModal.test.tsx
+  ```
+  Expected: PASS (4 tests)
+
+- [ ] **Step 6: Run all tests**
+
+  ```bash
+  npm test
+  ```
+  Expected: all passing
+
+- [ ] **Step 7: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 8: Commit**
+
+  ```bash
+  git add src/renderer/components/modals/
+  git commit -m "feat(modals): add CreateModal with VPC/EC2/SG/S3 forms and commanddrawer:run wiring"
+  ```
+
+---
+
+### Task 15: Rewrite CommandDrawer
+
+**Files:**
+- Modify: `src/renderer/components/CommandDrawer.tsx`
+
+Reads `commandPreview` from store for live display. Run button only appears when `commandPreview` is non-empty (form has valid data). On Run, dispatches `commanddrawer:run` event — CreateModal handles the actual execution. Subscribes to `onCliOutput`/`onCliDone` IPC events for streaming log.
+
+- [ ] **Step 1: Rewrite CommandDrawer**
+
+  Replace the full contents of `src/renderer/components/CommandDrawer.tsx`:
+  ```tsx
+  import { useState, useEffect, useRef } from 'react'
+  import { useCloudStore } from '../store/cloud'
+
+  export function CommandDrawer(): JSX.Element {
+    const cliOutput        = useCloudStore((s) => s.cliOutput)
+    const commandPreview   = useCloudStore((s) => s.commandPreview)
+    const activeCreate     = useCloudStore((s) => s.activeCreate)
+    const appendCliOutput  = useCloudStore((s) => s.appendCliOutput)
+    const clearCliOutput   = useCloudStore((s) => s.clearCliOutput)
+    const clearPendingNodes = useCloudStore((s) => s.clearPendingNodes)
+
+    const [expanded, setExpanded] = useState(false)
+    const [running,  setRunning]  = useState(false)
+    const [exitCode, setExitCode] = useState<number | null>(null)
+    const logRef = useRef<HTMLDivElement>(null)
+
+    // Auto-scroll log to bottom on new output
+    useEffect(() => {
+      if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
+    }, [cliOutput])
+
+    // Reset drawer when modal closes
+    useEffect(() => {
+      if (!activeCreate) {
+        setRunning(false)
+        setExitCode(null)
+      }
+    }, [activeCreate])
+
+    // Subscribe to IPC streaming events
+    useEffect(() => {
+      const offOutput = window.cloudblocks.onCliOutput((entry) => {
+        appendCliOutput(entry)
+        setExpanded(true)
+      })
+      const offDone = window.cloudblocks.onCliDone((result) => {
+        setRunning(false)
+        setExitCode(result.code)
+      })
+      return () => { offOutput(); offDone() }
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+    function handleRun(): void {
+      if (running || !commandPreview) return
+      setRunning(true)
+      setExitCode(null)
+      setExpanded(true)
+      clearCliOutput()
+      window.dispatchEvent(new CustomEvent('commanddrawer:run'))
+    }
+
+    function handleCancel(): void {
+      window.cloudblocks.cancelCli()
+      clearPendingNodes()
+      setRunning(false)
+      setExpanded(false)
+    }
+
+    function handleCollapse(): void {
+      setExpanded(false)
+      clearCliOutput()
+      setExitCode(null)
+    }
+
+    const showRun     = !!activeCreate && !running && exitCode === null && !!commandPreview
+    const showSuccess = exitCode === 0
+    const showError   = exitCode !== null && exitCode !== 0
+
+    const statusText = running
+      ? 'Running…'
+      : showSuccess
+      ? '[OK]'
+      : showError
+      ? `[ERR ${exitCode}]`
+      : commandPreview
+      ? commandPreview.split('\n')[0]   // show first line of multi-command preview
+      : 'Right-click canvas to create a resource'
+
+    return (
+      <div style={{ background: '#0d1117', borderTop: '1px solid #FF9900', fontFamily: 'monospace', flexShrink: 0 }}>
+        {/* Expanded log area */}
+        {expanded && (
+          <div
+            ref={logRef}
+            style={{ height: '120px', overflowY: 'auto', padding: '6px 10px', background: '#060d14', borderBottom: '1px solid #1e2d40', fontSize: '10px', lineHeight: '1.6' }}
+          >
+            {cliOutput.length === 0 ? (
+              <span style={{ color: '#555' }}>Waiting for output…</span>
+            ) : (
+              cliOutput.map((entry, i) => (
+                <div key={i} style={{ color: entry.stream === 'stderr' ? '#febc2e' : '#ccc', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                  {entry.line}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Bottom strip */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 8px', minHeight: '26px' }}>
+          <span style={{ color: '#FF9900', fontSize: '9px' }}>$</span>
+
+          <code style={{ fontSize: '9px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: commandPreview || running ? '#eee' : '#444' }}>
+            {statusText}
+          </code>
+
+          {showRun && (
+            <button
+              onClick={handleRun}
+              style={{ background: '#22c55e', borderRadius: '2px', padding: '1px 8px', color: '#000', fontSize: '9px', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontFamily: 'monospace' }}
+            >
+              Run
+            </button>
+          )}
+
+          {running && (
+            <button
+              onClick={handleCancel}
+              style={{ background: '#1a2332', border: '1px solid #ff5f57', borderRadius: '2px', padding: '1px 8px', color: '#ff5f57', fontSize: '9px', cursor: 'pointer', fontFamily: 'monospace' }}
+            >
+              Cancel
+            </button>
+          )}
+
+          {(showSuccess || showError) && (
+            <button
+              onClick={handleCollapse}
+              style={{ background: 'transparent', border: 'none', color: '#555', fontSize: '11px', cursor: 'pointer' }}
+            >
+              ✕
+            </button>
+          )}
+
+          {cliOutput.length > 0 && !expanded && (
+            <button
+              onClick={() => setExpanded(true)}
+              style={{ background: 'transparent', border: 'none', color: '#555', fontSize: '9px', cursor: 'pointer', fontFamily: 'monospace' }}
+            >
+              ▲
+            </button>
+          )}
+
+          {expanded && (
+            <button
+              onClick={() => setExpanded(false)}
+              style={{ background: 'transparent', border: 'none', color: '#555', fontSize: '9px', cursor: 'pointer', fontFamily: 'monospace' }}
+            >
+              ▼
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+  ```
+
+- [ ] **Step 2: Run all tests**
+
+  ```bash
+  npm test
+  ```
+  Expected: all passing
+
+- [ ] **Step 3: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 4: Commit**
+
+  ```bash
+  git add src/renderer/components/CommandDrawer.tsx
+  git commit -m "feat(drawer): rewrite CommandDrawer — commandPreview store field, expand/collapse log, Run/Cancel"
+  ```
+
+---
+
+### Task 16: Mount CreateModal in App and scaffold Sidebar drag handles
+
+**Files:**
+- Modify: `src/renderer/src/App.tsx`
+- Modify: `src/renderer/components/Sidebar.tsx`
+
+- [ ] **Step 1: Add CreateModal to App**
+
+  Open `src/renderer/src/App.tsx`. Add the import:
+  ```tsx
+  import { CreateModal } from '../components/modals/CreateModal'
+  ```
+
+  Add `<CreateModal />` inside the root div, after `<CommandDrawer />`:
+  ```tsx
+  <CommandDrawer />
+  <CreateModal />
+  ```
+
+- [ ] **Step 2: Scaffold drag handles in Sidebar**
+
+  Open `src/renderer/components/Sidebar.tsx`. In the SERVICES `.map()`, add drag attributes:
+  ```tsx
+  {SERVICES.map((s) => (
+    <div
+      key={s.type}
+      // TODO M2-polish: wire drag-and-drop (Approach A from design spec)
+      draggable
+      onDragStart={(e) => e.dataTransfer.setData('text/plain', s.type)}
+      className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
+      style={{ background: '#111', border: '1px solid #222', color: '#aaa' }}
+    >
+      ⬡ {s.label}
+    </div>
+  ))}
+  ```
+
+- [ ] **Step 3: Run all tests**
+
+  ```bash
+  npm test
+  ```
+  Expected: all passing
+
+- [ ] **Step 4: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 5: Commit**
+
+  ```bash
+  git add src/renderer/src/App.tsx src/renderer/components/Sidebar.tsx
+  git commit -m "feat: mount CreateModal in App, scaffold drag handles in Sidebar"
+  ```
+
+---
+
+### Task 17: Ghost node rendering in canvas views
+
+**Files:**
+- Modify: `src/renderer/components/canvas/TopologyView.tsx`
+- Modify: `src/renderer/components/canvas/GraphView.tsx`
+
+Both views currently read `nodes` from the store. They need to merge `pendingNodes` so ghost nodes appear on canvas immediately when a command is running.
+
+- [ ] **Step 1: Update TopologyView**
+
+  Open `src/renderer/components/canvas/TopologyView.tsx`. Change:
+  ```ts
+  const cloudNodes = useCloudStore((s) => s.nodes)
+  ```
+  To:
+  ```ts
+  const cloudNodes   = useCloudStore((s) => s.nodes)
+  const pendingNodes = useCloudStore((s) => s.pendingNodes)
+  ```
+
+  Change the `useMemo` call:
+  ```ts
+  const flowNodes: Node[] = useMemo(
+    () => buildFlowNodes(cloudNodes, selectedId),
+    [cloudNodes, selectedId],
+  )
+  ```
+  To:
+  ```ts
+  const flowNodes: Node[] = useMemo(
+    () => buildFlowNodes([...cloudNodes, ...pendingNodes], selectedId),
+    [cloudNodes, pendingNodes, selectedId],
+  )
+  ```
+
+- [ ] **Step 2: Update GraphView**
+
+  Open `src/renderer/components/canvas/GraphView.tsx`. Change:
+  ```ts
+  const cloudNodes = useCloudStore((s) => s.nodes)
+  ```
+  To:
+  ```ts
+  const cloudNodes   = useCloudStore((s) => s.nodes)
+  const pendingNodes = useCloudStore((s) => s.pendingNodes)
+  ```
+
+  Change the `flowNodes` useMemo:
+  ```ts
+  const flowNodes: Node[] = useMemo(
+    () =>
+      cloudNodes.map((n, i) => ({
+  ```
+  To:
+  ```ts
+  const allNodes = [...cloudNodes, ...pendingNodes]
+
+  const flowNodes: Node[] = useMemo(
+    () =>
+      allNodes.map((n, i) => ({
+  ```
+
+  And update the `[cloudNodes, selectedId]` dependency array at the end of the useMemo to `[cloudNodes, pendingNodes, selectedId]`.
+
+  Change the `flowEdges` useMemo:
+  ```ts
+  const flowEdges: Edge[] = useMemo(() => deriveEdges(cloudNodes), [cloudNodes])
+  ```
+  To:
+  ```ts
+  const flowEdges: Edge[] = useMemo(() => deriveEdges(allNodes), [cloudNodes, pendingNodes])
+  ```
+
+  Note: `allNodes` is declared outside the `useMemo` calls — declare it at the top of `GraphView()` body, before the `useMemo` blocks:
+  ```ts
+  const allNodes = [...cloudNodes, ...pendingNodes]
+  ```
+
+- [ ] **Step 3: Run all tests**
+
+  ```bash
+  npm test
+  ```
+  Expected: all passing
+
+- [ ] **Step 4: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 5: Commit**
+
+  ```bash
+  git add src/renderer/components/canvas/TopologyView.tsx src/renderer/components/canvas/GraphView.tsx
+  git commit -m "feat(canvas): merge pendingNodes into topology and graph views"
+  ```
+
+---
+
+### Task 18: Final integration check
+
+- [ ] **Step 1: Run full test suite**
+
+  ```bash
+  npm test
+  ```
+  Expected: all passing
+
+- [ ] **Step 2: Typecheck**
+
+  ```bash
+  npm run typecheck
+  ```
+  Expected: no errors
+
+- [ ] **Step 3: Lint**
+
+  ```bash
+  npm run lint
+  ```
+  Expected: no errors. If `react-hooks/exhaustive-deps` warnings appear on the `useEffect(fn, [])` calls in `CreateModal` and `CommandDrawer`, suppress with `// eslint-disable-line react-hooks/exhaustive-deps` (already included in the code above).
+
+- [ ] **Step 4: Confirm clean working tree**
+
+  ```bash
+  git status
+  ```
+  Expected: `nothing to commit, working tree clean`. All files should already be committed by their respective tasks. If any are unstaged, stage and commit them now before declaring M2 complete.
