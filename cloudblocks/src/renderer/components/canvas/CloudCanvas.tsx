@@ -9,6 +9,7 @@ interface Props {
   onScan: () => void
 }
 
+/** Inner component — must live inside ReactFlowProvider to access useReactFlow hooks. */
 function CanvasInner({ onScan }: Props): JSX.Element {
   const { fitView, zoomIn, zoomOut } = useReactFlow()
   const view       = useCloudStore((s) => s.view)
