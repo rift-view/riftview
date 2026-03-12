@@ -140,7 +140,7 @@ No silent failures — every error surfaces somewhere visible.
 | # | Name | Scope |
 |---|---|---|
 | **M1** | POC — Read-only viewer | Connect to AWS, scan resources, render hybrid canvas, live status dots, credential flow, 30s polling |
-| **M2** | Build basics | Create VPC, EC2, Security Group via GUI; smart-split CLI execution; command drawer with streaming output |
+| **M2** | Build basics | Create VPC, EC2, Security Group, S3 Bucket via GUI; smart-split CLI execution; command drawer with streaming output |
 | **M3** | Full CRUD core | Modify + delete for VPC, EC2, SG, RDS, S3, ALB, Lambda |
 | **M4** | Theme system | VS Code-style theme plugins; light/modern theme alongside retro dark default |
 | **M5** | Multi-cloud | Plugin architecture for Azure, GCP, Vercel providers |

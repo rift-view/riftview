@@ -13,11 +13,12 @@ M2 adds resource creation to the read-only M1 viewer. Users can create VPCs, EC2
 3. As the user fills the form, the Command Drawer live-updates with the generated CLI command
 4. User clicks **Run** in the drawer
 5. Modal stays open. Drawer expands with streaming stdout/stderr from the `aws` subprocess
-6. A ghost node (`status: "creating"`) appears on canvas immediately
-7. **On success:** modal closes, immediate rescan triggered, scanner replaces ghost with real node
-8. **On failure:** stderr shown in red, modal stays open for correction, ghost removed
+6. A ghost node (`status: "creating"`, `id: "pending:<uuid>"`) appears on canvas immediately
+7. **On success:** ghost removed by temp ID, modal closes, immediate rescan triggered, scanner adds real node
+8. **On failure:** ghost removed by temp ID, stderr shown in red, modal stays open for correction
+9. **On cancel (mid-execution):** ghost removed by temp ID, subprocess killed, drawer collapses
 
-Drag-and-drop from palette is scaffolded but not wired (deferred).
+Drag-and-drop from palette: add non-functional drag handles to `Sidebar.tsx` palette items with a `// TODO M2-polish: wire drag-and-drop` comment. Not wired.
 
 ## Resource Forms
 
@@ -38,7 +39,7 @@ Generates: `aws ec2 create-vpc --cidr-block <cidr> --instance-tenancy <tenancy> 
 | Name | tag |
 | AMI ID | — |
 | Instance type | dropdown, default `t3.micro` |
-| Key pair | dropdown from `aws ec2 describe-key-pairs` |
+| Key pair | free-text in M2 (dropdown in M3 once keypairs are scanned) |
 | VPC | dropdown from existing nodes |
 | Subnet | filtered by selected VPC |
 | Security Groups | multi-select from existing nodes |
@@ -74,9 +75,11 @@ New `CliEngine` in `src/main/cli/`:
 
 New IPC channels:
 
+The renderer sends `{ resource, params }` to main; main calls `buildCommand` and executes. This keeps all CLI logic in the main process.
+
 | Channel | Direction | Purpose |
 |---|---|---|
-| `cli:run` | renderer → main | send argv, start execution |
+| `cli:run` | renderer → main | send `{ resource, params }`, main builds command and starts execution |
 | `cli:output` | main → renderer | stream `{ line, stream }` |
 | `cli:done` | main → renderer | `{ code }` on exit |
 | `cli:cancel` | renderer → main | kill in-flight process |
