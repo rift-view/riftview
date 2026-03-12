@@ -1,44 +1,40 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { ScanDelta } from '../renderer/types/cloud'
+import { IPC } from '../main/ipc/channels'
 
 contextBridge.exposeInMainWorld('cloudblocks', {
-  listProfiles: () => ipcRenderer.invoke('profiles:list'),
-  selectProfile: (name: string) => ipcRenderer.invoke('profile:select', name),
-  selectRegion: (region: string) => ipcRenderer.invoke('region:select', region),
-  startScan: () => ipcRenderer.invoke('scan:start'),
+  listProfiles: () => ipcRenderer.invoke(IPC.PROFILES_LIST),
+  selectProfile: (name: string) => ipcRenderer.invoke(IPC.PROFILE_SELECT, name),
+  selectRegion: (region: string) => ipcRenderer.invoke(IPC.REGION_SELECT, region),
+  startScan: () => ipcRenderer.invoke(IPC.SCAN_START),
 
   onScanDelta: (cb: (delta: ScanDelta) => void) => {
     const handler = (_e: Electron.IpcRendererEvent, delta: ScanDelta) => cb(delta)
-    ipcRenderer.on('scan:delta', handler)
-    return () => ipcRenderer.removeListener('scan:delta', handler)
+    ipcRenderer.on(IPC.SCAN_DELTA, handler)
+    return () => ipcRenderer.removeListener(IPC.SCAN_DELTA, handler)
   },
   onScanStatus: (cb: (status: string) => void) => {
     const handler = (_e: Electron.IpcRendererEvent, s: string) => cb(s)
-    ipcRenderer.on('scan:status', handler)
-    return () => ipcRenderer.removeListener('scan:status', handler)
+    ipcRenderer.on(IPC.SCAN_STATUS, handler)
+    return () => ipcRenderer.removeListener(IPC.SCAN_STATUS, handler)
   },
   onConnStatus: (cb: (status: string) => void) => {
     const handler = (_e: Electron.IpcRendererEvent, s: string) => cb(s)
-    ipcRenderer.on('conn:status', handler)
-    return () => ipcRenderer.removeListener('conn:status', handler)
+    ipcRenderer.on(IPC.CONN_STATUS, handler)
+    return () => ipcRenderer.removeListener(IPC.CONN_STATUS, handler)
   },
 
   // CLI — renderer sends pre-built string[][] argv arrays
-  runCli: (commands: string[][]) => ipcRenderer.invoke('cli:run', commands),
-  cancelCli: () => ipcRenderer.send('cli:cancel'),
+  runCli: (commands: string[][]) => ipcRenderer.invoke(IPC.CLI_RUN, commands),
+  cancelCli: () => ipcRenderer.send(IPC.CLI_CANCEL),
   onCliOutput: (cb: (data: { line: string; stream: 'stdout' | 'stderr' }) => void) => {
     const handler = (_e: Electron.IpcRendererEvent, data: { line: string; stream: 'stdout' | 'stderr' }) => cb(data)
-    ipcRenderer.on('cli:output', handler)
-    return () => ipcRenderer.removeListener('cli:output', handler)
+    ipcRenderer.on(IPC.CLI_OUTPUT, handler)
+    return () => ipcRenderer.removeListener(IPC.CLI_OUTPUT, handler)
   },
   onCliDone: (cb: (data: { code: number }) => void) => {
     const handler = (_e: Electron.IpcRendererEvent, data: { code: number }) => cb(data)
-    ipcRenderer.on('cli:done', handler)
-    return () => ipcRenderer.removeListener('cli:done', handler)
+    ipcRenderer.on(IPC.CLI_DONE, handler)
+    return () => ipcRenderer.removeListener(IPC.CLI_DONE, handler)
   },
-
-  // Settings (used by Task 5 — adding now for type completeness)
-  getSettings: () => ipcRenderer.invoke('settings:get'),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setSettings: (s: any) => ipcRenderer.invoke('settings:set', s),
 })
