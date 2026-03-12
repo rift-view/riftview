@@ -1,9 +1,20 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import fs from 'fs'
+import path from 'path'
+import { ipcMain, BrowserWindow, app } from 'electron'
 import { IPC } from './channels'
 import { listProfiles, getDefaultRegion } from '../aws/credentials'
 import { createClients } from '../aws/client'
 import { ResourceScanner } from '../aws/scanner'
 import { CliEngine } from '../cli/engine'
+
+function settingsPath(): string {
+  return path.join(app.getPath('userData'), 'settings.json')
+}
+
+const DEFAULT_SETTINGS = {
+  deleteConfirmStyle: 'type-to-confirm' as const,
+  scanInterval: 30 as const,
+}
 
 let scanner:   ResourceScanner | null = null
 let cliEngine: CliEngine       | null = null
@@ -33,6 +44,21 @@ export function registerHandlers(win: BrowserWindow): void {
   ipcMain.handle(IPC.CLI_RUN, async (_, commands: string[][]) => {
     if (!cliEngine) return { code: 1 }
     return cliEngine.execute(commands)
+  })
+
+  // Settings — persist to userData/settings.json
+  ipcMain.handle(IPC.SETTINGS_GET, () => {
+    try {
+      const raw = fs.readFileSync(settingsPath(), 'utf-8')
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+    } catch {
+      return DEFAULT_SETTINGS
+    }
+  })
+
+  ipcMain.handle(IPC.SETTINGS_SET, (_e, settings) => {
+    fs.mkdirSync(path.dirname(settingsPath()), { recursive: true })
+    fs.writeFileSync(settingsPath(), JSON.stringify(settings, null, 2))
   })
 
   // Cancel in-flight command (fire-and-forget, no return value needed)

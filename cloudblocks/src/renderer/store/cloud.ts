@@ -1,6 +1,16 @@
 import { create, createStore } from 'zustand'
 import type { CloudNode, ScanDelta } from '../types/cloud'
 
+export interface Settings {
+  deleteConfirmStyle: 'type-to-confirm' | 'command-drawer'
+  scanInterval: 15 | 30 | 60 | 'manual'
+}
+
+const DEFAULT_SETTINGS: Settings = {
+  deleteConfirmStyle: 'type-to-confirm',
+  scanInterval: 30,
+}
+
 interface CloudState {
   nodes:          CloudNode[]
   selectedNodeId: string | null
@@ -15,6 +25,7 @@ interface CloudState {
   pendingCommand:   string[][] | null
   activeCreate:     { resource: string; view: 'topology' | 'graph' } | null
   keyPairs:         string[]
+  settings:         Settings
 
   applyDelta:     (delta: ScanDelta) => void
   selectNode:     (id: string | null) => void
@@ -32,6 +43,8 @@ interface CloudState {
   setPendingCommand: (cmds: string[][] | null) => void
   setActiveCreate:   (val: { resource: string; view: 'topology' | 'graph' } | null) => void
   setKeyPairs:       (pairs: string[]) => void
+  loadSettings:      () => Promise<void>
+  saveSettings:      (s: Settings) => Promise<void>
 }
 
 export const useCloudStore = create<CloudState>((set) => ({
@@ -48,6 +61,7 @@ export const useCloudStore = create<CloudState>((set) => ({
   pendingCommand: null,
   activeCreate:   null,
   keyPairs:       [],
+  settings:       DEFAULT_SETTINGS,
 
   applyDelta: (delta) =>
     set((state) => {
@@ -83,6 +97,15 @@ export const useCloudStore = create<CloudState>((set) => ({
 
   setActiveCreate: (val) => set({ activeCreate: val }),
   setKeyPairs: (pairs) => set({ keyPairs: pairs }),
+
+  loadSettings: async () => {
+    const s = await window.cloudblocks.getSettings()
+    set({ settings: s as Settings })
+  },
+  saveSettings: async (s: Settings) => {
+    await window.cloudblocks.setSettings(s)
+    set({ settings: s })
+  },
 }))
 
 export function createCloudStore() {
@@ -100,6 +123,7 @@ export function createCloudStore() {
     pendingCommand: null,
     activeCreate:   null,
     keyPairs:       [],
+    settings:       DEFAULT_SETTINGS,
 
     applyDelta: (delta) =>
       set((state) => {
@@ -135,5 +159,8 @@ export function createCloudStore() {
 
     setActiveCreate: (val) => set({ activeCreate: val }),
     setKeyPairs: (pairs) => set({ keyPairs: pairs }),
+
+    loadSettings: async () => {},
+    saveSettings: async () => {},
   }))
 }

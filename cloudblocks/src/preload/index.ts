@@ -30,6 +30,9 @@ contextBridge.exposeInMainWorld('cloudblocks', {
     return () => ipcRenderer.removeListener(IPC.SCAN_KEYPAIRS, handler)
   },
 
+  getSettings: () => ipcRenderer.invoke(IPC.SETTINGS_GET),
+  setSettings: (s: unknown) => ipcRenderer.invoke(IPC.SETTINGS_SET, s),
+
   // CLI — renderer sends pre-built string[][] argv arrays
   runCli: (commands: string[][]) => ipcRenderer.invoke(IPC.CLI_RUN, commands),
   cancelCli: () => ipcRenderer.send(IPC.CLI_CANCEL),
