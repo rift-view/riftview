@@ -43,3 +43,17 @@ it('closes when Cancel is clicked', async () => {
   await userEvent.click(screen.getByText(/cancel/i))
   expect(useCloudStore.getState().activeCreate).toBeNull()
 })
+
+it('blocks submission and does not call runCli when required VPC fields are empty', async () => {
+  // Set activeCreate to 'vpc' with empty form (name='', cidr='')
+  useCloudStore.getState().setActiveCreate({ resource: 'vpc', view: 'topology' })
+  const runCli = vi.fn().mockResolvedValue({ code: 0 })
+  // Override the runCli mock (use same mock pattern as existing tests in this file)
+  window.cloudblocks = { ...window.cloudblocks, runCli }
+
+  render(<CreateModal />)
+  // Trigger Run without filling fields
+  window.dispatchEvent(new CustomEvent('commanddrawer:run'))
+  await new Promise(r => setTimeout(r, 10))
+  expect(runCli).not.toHaveBeenCalled()
+})
