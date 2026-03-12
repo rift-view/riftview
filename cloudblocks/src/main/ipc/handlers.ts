@@ -57,8 +57,12 @@ export function registerHandlers(win: BrowserWindow): void {
   })
 
   ipcMain.handle(IPC.SETTINGS_SET, (_e, settings) => {
-    fs.mkdirSync(path.dirname(settingsPath()), { recursive: true })
-    fs.writeFileSync(settingsPath(), JSON.stringify(settings, null, 2))
+    try {
+      fs.mkdirSync(path.dirname(settingsPath()), { recursive: true })
+      fs.writeFileSync(settingsPath(), JSON.stringify(settings, null, 2))
+    } catch (err) {
+      console.error('Failed to write settings:', err)
+    }
   })
 
   // Cancel in-flight command (fire-and-forget, no return value needed)
