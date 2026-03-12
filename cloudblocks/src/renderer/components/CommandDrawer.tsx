@@ -2,12 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { useCloudStore } from '../store/cloud'
 
 export function CommandDrawer(): JSX.Element {
-  const cliOutput        = useCloudStore((s) => s.cliOutput)
-  const commandPreview   = useCloudStore((s) => s.commandPreview)
-  const activeCreate     = useCloudStore((s) => s.activeCreate)
-  const appendCliOutput  = useCloudStore((s) => s.appendCliOutput)
-  const clearCliOutput   = useCloudStore((s) => s.clearCliOutput)
+  const cliOutput         = useCloudStore((s) => s.cliOutput)
+  const commandPreview    = useCloudStore((s) => s.commandPreview)
+  const pendingCommand    = useCloudStore((s) => s.pendingCommand)
+  const activeCreate      = useCloudStore((s) => s.activeCreate)
+  const appendCliOutput   = useCloudStore((s) => s.appendCliOutput)
+  const clearCliOutput    = useCloudStore((s) => s.clearCliOutput)
   const clearPendingNodes = useCloudStore((s) => s.clearPendingNodes)
+  const setPendingCommand = useCloudStore((s) => s.setPendingCommand)
+  const setCommandPreview = useCloudStore((s) => s.setCommandPreview)
 
   const [expanded, setExpanded] = useState(false)
   const [running,  setRunning]  = useState(false)
@@ -40,13 +43,28 @@ export function CommandDrawer(): JSX.Element {
     return () => { offOutput(); offDone() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function handleRun(): void {
-    if (running || !commandPreview) return
-    setRunning(true)
-    setExitCode(null)
-    setExpanded(true)
-    clearCliOutput()
-    window.dispatchEvent(new CustomEvent('commanddrawer:run'))
+  const handleRunRef = useRef(handleRun)
+  useEffect(() => { handleRunRef.current = handleRun })
+
+  async function handleRun(): Promise<void> {
+    if (running || commandPreview.length === 0) return
+    if (pendingCommand) {
+      // Quick action / delete / edit — commands pre-built in store
+      setRunning(true)
+      setExitCode(null)
+      setExpanded(true)
+      clearCliOutput()
+      await window.cloudblocks.runCli(pendingCommand)
+      setPendingCommand(null)
+      setCommandPreview([])
+    } else {
+      // Create modal path — CommandDrawer signals modal to run
+      setRunning(true)
+      setExitCode(null)
+      setExpanded(true)
+      clearCliOutput()
+      window.dispatchEvent(new CustomEvent('commanddrawer:run'))
+    }
   }
 
   function handleCancel(): void {
@@ -62,7 +80,7 @@ export function CommandDrawer(): JSX.Element {
     setExitCode(null)
   }
 
-  const showRun     = !!activeCreate && !running && exitCode === null && !!commandPreview
+  const showRun     = (!!activeCreate || !!pendingCommand) && !running && exitCode === null && commandPreview.length > 0
   const showSuccess = exitCode === 0
   const showError   = exitCode !== null && exitCode !== 0
 
@@ -72,8 +90,8 @@ export function CommandDrawer(): JSX.Element {
     ? '[OK]'
     : showError
     ? `[ERR ${exitCode}]`
-    : commandPreview
-    ? commandPreview.split('\n')[0]   // show first line of multi-command preview
+    : commandPreview.length > 0
+    ? commandPreview[0]   // show first line of multi-command preview
     : 'Right-click canvas to create a resource'
 
   return (
@@ -100,7 +118,7 @@ export function CommandDrawer(): JSX.Element {
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 8px', minHeight: '26px' }}>
         <span style={{ color: '#FF9900', fontSize: '9px' }}>$</span>
 
-        <code style={{ fontSize: '9px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: commandPreview || running ? '#eee' : '#444' }}>
+        <code style={{ fontSize: '9px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: commandPreview.length > 0 || running ? '#eee' : '#444' }}>
           {statusText}
         </code>
 
