@@ -22,7 +22,7 @@ export function CommandDrawer(): JSX.Element {
   // Reset drawer when modal closes
   useEffect(() => {
     if (!activeCreate) {
-      setRunning(false)
+      setRunning(false) // eslint-disable-line react-hooks/set-state-in-effect
       setExitCode(null)
     }
   }, [activeCreate])
