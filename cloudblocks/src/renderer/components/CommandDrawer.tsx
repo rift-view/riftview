@@ -43,9 +43,6 @@ export function CommandDrawer(): JSX.Element {
     return () => { offOutput(); offDone() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleRunRef = useRef(handleRun)
-  useEffect(() => { handleRunRef.current = handleRun })
-
   async function handleRun(): Promise<void> {
     if (running || commandPreview.length === 0) return
     if (pendingCommand) {
@@ -54,9 +51,13 @@ export function CommandDrawer(): JSX.Element {
       setExitCode(null)
       setExpanded(true)
       clearCliOutput()
-      await window.cloudblocks.runCli(pendingCommand)
-      setPendingCommand(null)
-      setCommandPreview([])
+      try {
+        await window.cloudblocks.runCli(pendingCommand)
+      } finally {
+        setRunning(false)
+        setPendingCommand(null)
+        setCommandPreview([])
+      }
     } else {
       // Create modal path — CommandDrawer signals modal to run
       setRunning(true)
