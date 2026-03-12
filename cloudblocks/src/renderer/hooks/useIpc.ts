@@ -7,6 +7,7 @@ export function useIpc(): void {
   const applyDelta    = useCloudStore((s) => s.applyDelta)
   const setScanStatus = useCloudStore((s) => s.setScanStatus)
   const setError      = useCloudStore((s) => s.setError)
+  const setKeyPairs   = useCloudStore((s) => s.setKeyPairs)
 
   useEffect(() => {
     const unsubDelta  = window.cloudblocks.onScanDelta((delta) => applyDelta(delta))
@@ -18,8 +19,8 @@ export function useIpc(): void {
       else setError(null)
     })
     const unsubKeypairs = window.cloudblocks.onScanKeypairs((pairs: string[]) => {
-      useCloudStore.getState().setKeyPairs(pairs)
+      setKeyPairs(pairs)
     })
     return () => { unsubDelta(); unsubStatus(); unsubConn(); unsubKeypairs() }
-  }, [applyDelta, setScanStatus, setError])
+  }, [applyDelta, setScanStatus, setError, setKeyPairs])
 }
