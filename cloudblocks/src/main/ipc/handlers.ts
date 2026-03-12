@@ -4,8 +4,6 @@ import { listProfiles, getDefaultRegion } from '../aws/credentials'
 import { createClients } from '../aws/client'
 import { ResourceScanner } from '../aws/scanner'
 import { CliEngine } from '../cli/engine'
-import { buildCommands } from '../../renderer/utils/buildCommand'
-import type { CreateParams } from '../../renderer/types/create'
 
 let scanner:   ResourceScanner | null = null
 let cliEngine: CliEngine       | null = null
@@ -31,10 +29,9 @@ export function registerHandlers(win: BrowserWindow): void {
     scanner?.triggerManualScan()
   })
 
-  // Run a write command — renderer sends CreateParams, main builds argv and executes
-  ipcMain.handle(IPC.CLI_RUN, (_event, params: CreateParams) => {
+  // Run a write command — renderer sends pre-built string[][] argv arrays
+  ipcMain.handle(IPC.CLI_RUN, async (_, commands: string[][]) => {
     if (!cliEngine) return { code: 1 }
-    const commands = buildCommands(params)
     return cliEngine.execute(commands)
   })
 
