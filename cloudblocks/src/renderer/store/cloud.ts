@@ -9,6 +9,10 @@ interface CloudState {
   region:         string
   view:           'topology' | 'graph'
   errorMessage:   string | null
+  pendingNodes:     CloudNode[]
+  cliOutput:        Array<{ line: string; stream: 'stdout' | 'stderr' }>
+  commandPreview:   string
+  activeCreate:     { resource: string; view: 'topology' | 'graph' } | null
 
   applyDelta:     (delta: ScanDelta) => void
   selectNode:     (id: string | null) => void
@@ -17,6 +21,13 @@ interface CloudState {
   setRegion:      (region: string) => void
   setView:        (view: 'topology' | 'graph') => void
   setError:       (msg: string | null) => void
+  addPendingNode:    (node: CloudNode) => void
+  removePendingNode: (id: string) => void
+  clearPendingNodes: () => void
+  appendCliOutput:   (entry: { line: string; stream: 'stdout' | 'stderr' }) => void
+  clearCliOutput:    () => void
+  setCommandPreview: (cmd: string) => void
+  setActiveCreate:   (val: { resource: string; view: 'topology' | 'graph' } | null) => void
 }
 
 export const useCloudStore = create<CloudState>((set) => ({
@@ -27,6 +38,10 @@ export const useCloudStore = create<CloudState>((set) => ({
   region:         'us-east-1',
   view:           'topology',
   errorMessage:   null,
+  pendingNodes:   [],
+  cliOutput:      [],
+  commandPreview: '',
+  activeCreate:   null,
 
   applyDelta: (delta) =>
     set((state) => {
@@ -43,4 +58,21 @@ export const useCloudStore = create<CloudState>((set) => ({
   setRegion:     (region)  => set({ region }),
   setView:       (view)    => set({ view }),
   setError:      (msg)     => set({ errorMessage: msg }),
+
+  addPendingNode: (node) =>
+    set((state) => ({ pendingNodes: [...state.pendingNodes, node] })),
+
+  removePendingNode: (id) =>
+    set((state) => ({ pendingNodes: state.pendingNodes.filter((n) => n.id !== id) })),
+
+  clearPendingNodes: () => set({ pendingNodes: [] }),
+
+  appendCliOutput: (entry) =>
+    set((state) => ({ cliOutput: [...state.cliOutput, entry] })),
+
+  clearCliOutput: () => set({ cliOutput: [] }),
+
+  setCommandPreview: (cmd) => set({ commandPreview: cmd }),
+
+  setActiveCreate: (val) => set({ activeCreate: val }),
 }))
