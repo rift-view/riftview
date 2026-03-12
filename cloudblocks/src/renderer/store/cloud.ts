@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+import { create, createStore } from 'zustand'
 import type { CloudNode, ScanDelta } from '../types/cloud'
 
 interface CloudState {
@@ -11,7 +11,8 @@ interface CloudState {
   errorMessage:   string | null
   pendingNodes:     CloudNode[]
   cliOutput:        Array<{ line: string; stream: 'stdout' | 'stderr' }>
-  commandPreview:   string
+  commandPreview:   string[]
+  pendingCommand:   string[][] | null
   activeCreate:     { resource: string; view: 'topology' | 'graph' } | null
 
   applyDelta:     (delta: ScanDelta) => void
@@ -26,7 +27,8 @@ interface CloudState {
   clearPendingNodes: () => void
   appendCliOutput:   (entry: { line: string; stream: 'stdout' | 'stderr' }) => void
   clearCliOutput:    () => void
-  setCommandPreview: (cmd: string) => void
+  setCommandPreview: (cmd: string[]) => void
+  setPendingCommand: (cmds: string[][] | null) => void
   setActiveCreate:   (val: { resource: string; view: 'topology' | 'graph' } | null) => void
 }
 
@@ -40,7 +42,8 @@ export const useCloudStore = create<CloudState>((set) => ({
   errorMessage:   null,
   pendingNodes:   [],
   cliOutput:      [],
-  commandPreview: '',
+  commandPreview: [],
+  pendingCommand: null,
   activeCreate:   null,
 
   applyDelta: (delta) =>
@@ -73,6 +76,58 @@ export const useCloudStore = create<CloudState>((set) => ({
   clearCliOutput: () => set({ cliOutput: [] }),
 
   setCommandPreview: (cmd) => set({ commandPreview: cmd }),
+  setPendingCommand: (cmds) => set({ pendingCommand: cmds }),
 
   setActiveCreate: (val) => set({ activeCreate: val }),
 }))
+
+export function createCloudStore() {
+  return createStore<CloudState>((set) => ({
+    nodes:          [],
+    selectedNodeId: null,
+    scanStatus:     'idle',
+    profile:        'default',
+    region:         'us-east-1',
+    view:           'topology',
+    errorMessage:   null,
+    pendingNodes:   [],
+    cliOutput:      [],
+    commandPreview: [],
+    pendingCommand: null,
+    activeCreate:   null,
+
+    applyDelta: (delta) =>
+      set((state) => {
+        const nodeMap = new Map(state.nodes.map((n) => [n.id, n]))
+        for (const n of delta.added)   nodeMap.set(n.id, n)
+        for (const n of delta.changed) nodeMap.set(n.id, n)
+        for (const id of delta.removed) nodeMap.delete(id)
+        return { nodes: Array.from(nodeMap.values()) }
+      }),
+
+    selectNode:    (id)      => set({ selectedNodeId: id }),
+    setScanStatus: (status)  => set({ scanStatus: status }),
+    setProfile:    (profile) => set({ profile }),
+    setRegion:     (region)  => set({ region }),
+    setView:       (view)    => set({ view }),
+    setError:      (msg)     => set({ errorMessage: msg }),
+
+    addPendingNode: (node) =>
+      set((state) => ({ pendingNodes: [...state.pendingNodes, node] })),
+
+    removePendingNode: (id) =>
+      set((state) => ({ pendingNodes: state.pendingNodes.filter((n) => n.id !== id) })),
+
+    clearPendingNodes: () => set({ pendingNodes: [] }),
+
+    appendCliOutput: (entry) =>
+      set((state) => ({ cliOutput: [...state.cliOutput, entry] })),
+
+    clearCliOutput: () => set({ cliOutput: [] }),
+
+    setCommandPreview: (cmd) => set({ commandPreview: cmd }),
+    setPendingCommand: (cmds) => set({ pendingCommand: cmds }),
+
+    setActiveCreate: (val) => set({ activeCreate: val }),
+  }))
+}

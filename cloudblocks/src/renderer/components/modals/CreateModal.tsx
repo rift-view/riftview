@@ -50,8 +50,8 @@ export function CreateModal(): JSX.Element | null {
   function handleChange(params: CreateParams): void {
     paramsRef.current = params
     try {
-      const cmds = buildCommands(params)
-      setCommandPreview(cmds.map((c) => 'aws ' + c.join(' ')).join('\n'))
+      const preview = buildCommands(params).map(argv => 'aws ' + argv.join(' '))
+      setCommandPreview(preview)
     } catch {
       // incomplete form — ignore preview update
     }
@@ -60,7 +60,7 @@ export function CreateModal(): JSX.Element | null {
   function handleCancel(): void {
     if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
     clearCliOutput()
-    setCommandPreview('')
+    setCommandPreview([])
     setActiveCreate(null)
   }
 
@@ -83,7 +83,7 @@ export function CreateModal(): JSX.Element | null {
       if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
       pendingIdRef.current = null
       if (result.code === 0) {
-        setCommandPreview('')
+        setCommandPreview([])
         setActiveCreate(null)
         window.cloudblocks.startScan()
       }
