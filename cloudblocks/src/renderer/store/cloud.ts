@@ -100,7 +100,7 @@ export const useCloudStore = create<CloudState>((set) => ({
 
   loadSettings: async () => {
     const s = await window.cloudblocks.getSettings()
-    set({ settings: s as Settings })
+    set({ settings: s })
   },
   saveSettings: async (s: Settings) => {
     await window.cloudblocks.setSettings(s)
