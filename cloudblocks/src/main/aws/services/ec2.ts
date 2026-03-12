@@ -95,6 +95,10 @@ export async function describeSecurityGroups(client: EC2Client, region: string):
 }
 
 export async function describeKeyPairs(client: EC2Client): Promise<string[]> {
-  const { KeyPairs } = await client.send(new DescribeKeyPairsCommand({}))
-  return (KeyPairs ?? []).map(kp => kp.KeyName ?? '').filter(Boolean)
+  try {
+    const { KeyPairs } = await client.send(new DescribeKeyPairsCommand({}))
+    return (KeyPairs ?? []).map(kp => kp.KeyName ?? '').filter(Boolean)
+  } catch {
+    return []
+  }
 }
