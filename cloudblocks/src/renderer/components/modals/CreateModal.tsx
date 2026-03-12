@@ -32,13 +32,14 @@ export function CreateModal(): JSX.Element | null {
   const addPendingNode    = useCloudStore((s) => s.addPendingNode)
   const removePendingNode = useCloudStore((s) => s.removePendingNode)
 
-  const pendingIdRef = useRef<string | null>(null)
-  const paramsRef    = useRef<CreateParams | null>(null)
+  const pendingIdRef  = useRef<string | null>(null)
+  const paramsRef     = useRef<CreateParams | null>(null)
+  const handleRunRef  = useRef<() => void>(() => {})
 
   // Listen for Run button from CommandDrawer (only while this modal is mounted)
   useEffect(() => {
     function onRun(): void {
-      handleRun()
+      handleRunRef.current()
     }
     window.addEventListener('commanddrawer:run', onRun)
     return () => window.removeEventListener('commanddrawer:run', onRun)
@@ -87,6 +88,9 @@ export function CreateModal(): JSX.Element | null {
       }
     })
   }
+
+  // Update the ref each render so the event listener always calls the latest version
+  handleRunRef.current = handleRun
 
   const overlayStyle: React.CSSProperties = {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
