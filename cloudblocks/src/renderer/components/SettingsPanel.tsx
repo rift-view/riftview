@@ -15,8 +15,11 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps) {
     setLocal(prev => ({ ...prev, [key]: val }))
 
   const handleSave = async () => {
-    await saveSettings(local)
-    onClose()
+    try {
+      await saveSettings(local)
+    } finally {
+      onClose()
+    }
   }
 
   const overlay: React.CSSProperties = {
