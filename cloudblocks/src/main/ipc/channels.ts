@@ -10,6 +10,7 @@ export const IPC = {
   CLI_OUTPUT:     'cli:output',
   CLI_DONE:       'cli:done',
   CLI_CANCEL:     'cli:cancel',
+  SCAN_KEYPAIRS:  'scan:keypairs',   // on → (keyPairs: string[])
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]

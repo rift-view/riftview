@@ -14,6 +14,7 @@ interface CloudState {
   commandPreview:   string[]
   pendingCommand:   string[][] | null
   activeCreate:     { resource: string; view: 'topology' | 'graph' } | null
+  keyPairs:         string[]
 
   applyDelta:     (delta: ScanDelta) => void
   selectNode:     (id: string | null) => void
@@ -30,6 +31,7 @@ interface CloudState {
   setCommandPreview: (cmd: string[]) => void
   setPendingCommand: (cmds: string[][] | null) => void
   setActiveCreate:   (val: { resource: string; view: 'topology' | 'graph' } | null) => void
+  setKeyPairs:       (pairs: string[]) => void
 }
 
 export const useCloudStore = create<CloudState>((set) => ({
@@ -45,6 +47,7 @@ export const useCloudStore = create<CloudState>((set) => ({
   commandPreview: [],
   pendingCommand: null,
   activeCreate:   null,
+  keyPairs:       [],
 
   applyDelta: (delta) =>
     set((state) => {
@@ -79,6 +82,7 @@ export const useCloudStore = create<CloudState>((set) => ({
   setPendingCommand: (cmds) => set({ pendingCommand: cmds }),
 
   setActiveCreate: (val) => set({ activeCreate: val }),
+  setKeyPairs: (pairs) => set({ keyPairs: pairs }),
 }))
 
 export function createCloudStore() {
@@ -95,6 +99,7 @@ export function createCloudStore() {
     commandPreview: [],
     pendingCommand: null,
     activeCreate:   null,
+    keyPairs:       [],
 
     applyDelta: (delta) =>
       set((state) => {
@@ -129,5 +134,6 @@ export function createCloudStore() {
     setPendingCommand: (cmds) => set({ pendingCommand: cmds }),
 
     setActiveCreate: (val) => set({ activeCreate: val }),
+    setKeyPairs: (pairs) => set({ keyPairs: pairs }),
   }))
 }

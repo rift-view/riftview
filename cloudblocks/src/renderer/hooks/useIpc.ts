@@ -17,6 +17,9 @@ export function useIpc(): void {
       if (status === 'error') setError('Connection failed. Check your AWS credentials and network.')
       else setError(null)
     })
-    return () => { unsubDelta(); unsubStatus(); unsubConn() }
+    const unsubKeypairs = window.cloudblocks.onScanKeypairs((pairs: string[]) => {
+      useCloudStore.getState().setKeyPairs(pairs)
+    })
+    return () => { unsubDelta(); unsubStatus(); unsubConn(); unsubKeypairs() }
   }, [applyDelta, setScanStatus, setError])
 }

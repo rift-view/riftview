@@ -24,6 +24,12 @@ contextBridge.exposeInMainWorld('cloudblocks', {
     return () => ipcRenderer.removeListener(IPC.CONN_STATUS, handler)
   },
 
+  onScanKeypairs: (cb: (pairs: string[]) => void) => {
+    const handler = (_e: Electron.IpcRendererEvent, pairs: string[]) => cb(pairs)
+    ipcRenderer.on(IPC.SCAN_KEYPAIRS, handler)
+    return () => ipcRenderer.removeListener(IPC.SCAN_KEYPAIRS, handler)
+  },
+
   // CLI — renderer sends pre-built string[][] argv arrays
   runCli: (commands: string[][]) => ipcRenderer.invoke(IPC.CLI_RUN, commands),
   cancelCli: () => ipcRenderer.send(IPC.CLI_CANCEL),
