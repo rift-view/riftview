@@ -52,7 +52,10 @@ export function CommandDrawer(): JSX.Element {
       setExpanded(true)
       clearCliOutput()
       try {
-        await window.cloudblocks.runCli(pendingCommand)
+        const result = await window.cloudblocks.runCli(pendingCommand)
+        if (result.code === 0) {
+          await window.cloudblocks.startScan()
+        }
       } finally {
         setRunning(false)
         setPendingCommand(null)
