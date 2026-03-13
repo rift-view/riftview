@@ -20,7 +20,7 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
         const isRunning = node.status === 'running'
         if (isRunning) cmds.push(['ec2', 'stop-instances', '--instance-ids', node.id])
         cmds.push(['ec2', 'modify-instance-attribute', '--instance-id', node.id, '--instance-type', `Value=${params.instanceType}`])
-        cmds.push(['ec2', 'start-instances', '--instance-ids', node.id])
+        if (isRunning) cmds.push(['ec2', 'start-instances', '--instance-ids', node.id])
       }
       if (params.name) {
         cmds.push(['ec2', 'create-tags', '--resources', node.id, '--tags', `Key=Name,Value=${params.name}`])
