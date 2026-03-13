@@ -12,7 +12,7 @@ const SERVICES: { type: NodeType; label: string }[] = [
   { type: 'igw',            label: 'IGW' },
 ]
 
-export function Sidebar(): JSX.Element {
+export function Sidebar(){
   const view    = useCloudStore((s) => s.view)
   const setView = useCloudStore((s) => s.setView)
 

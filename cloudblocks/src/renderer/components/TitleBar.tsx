@@ -12,7 +12,7 @@ interface TitleBarProps {
   onSettingsOpen: () => void
 }
 
-export function TitleBar({ onSettingsOpen }: TitleBarProps): JSX.Element {
+export function TitleBar({ onSettingsOpen }: TitleBarProps){
   const [profiles, setProfiles]       = useState<AwsProfile[]>([])
   const [connStatus, setConnStatus]   = useState<'unknown' | 'connected' | 'error'>('unknown')
   const profile    = useCloudStore((s) => s.profile)

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useCloudStore } from '../store/cloud'
 
-export function CommandDrawer(): JSX.Element {
+export function CommandDrawer(){
   const cliOutput         = useCloudStore((s) => s.cliOutput)
   const commandPreview    = useCloudStore((s) => s.commandPreview)
   const pendingCommand    = useCloudStore((s) => s.pendingCommand)

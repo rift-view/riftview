@@ -18,7 +18,7 @@ import type { DeleteOptions } from '../utils/buildDeleteCommands'
 import { useCloudStore } from '../store/cloud'
 import type { AwsProfile, CloudNode } from '../types/cloud'
 
-export default function App(): JSX.Element {
+export default function App(){
   useIpc()
   const { triggerScan } = useScanner()
   const [profiles, setProfiles] = useState<AwsProfile[] | null>(null)

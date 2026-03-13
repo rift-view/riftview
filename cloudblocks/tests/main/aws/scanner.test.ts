@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { computeDelta } from '../../../src/main/aws/scanner'
-import type { CloudNode, ScanDelta } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '../../../src/renderer/types/cloud'
 
 vi.mock('electron', () => ({
   BrowserWindow: vi.fn(),
