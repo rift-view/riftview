@@ -93,3 +93,75 @@ describe('buildCommands: s3', () => {
     expect(cmds[0]).not.toContain('--create-bucket-configuration')
   })
 })
+
+describe('buildCommands — RDS', () => {
+  it('generates create-db-instance command', () => {
+    const cmds = buildCommands({
+      resource: 'rds',
+      identifier: 'mydb',
+      engine: 'mysql',
+      instanceClass: 'db.t3.micro',
+      masterUsername: 'admin',
+      masterPassword: 'secret',
+      allocatedStorage: 20,
+      multiAZ: false,
+      publiclyAccessible: false,
+    })
+    expect(cmds).toHaveLength(1)
+    expect(cmds[0]).toContain('create-db-instance')
+    expect(cmds[0]).toContain('mydb')
+    expect(cmds[0]).toContain('mysql')
+    expect(cmds[0]).toContain('--no-publicly-accessible')
+  })
+})
+
+describe('buildCommands — Lambda', () => {
+  it('generates create-function command without VPC', () => {
+    const cmds = buildCommands({
+      resource: 'lambda',
+      name: 'my-fn',
+      runtime: 'nodejs20.x',
+      handler: 'index.handler',
+      roleArn: 'arn:aws:iam::123:role/my-role',
+      memorySize: 128,
+      timeout: 3,
+    })
+    expect(cmds).toHaveLength(1)
+    expect(cmds[0]).toContain('create-function')
+    expect(cmds[0]).toContain('my-fn')
+    expect(cmds[0]).not.toContain('--vpc-config')
+  })
+
+  it('includes vpc-config when VPC is set', () => {
+    const cmds = buildCommands({
+      resource: 'lambda',
+      name: 'my-fn',
+      runtime: 'nodejs20.x',
+      handler: 'index.handler',
+      roleArn: 'arn:aws:iam::123:role/my-role',
+      memorySize: 128,
+      timeout: 3,
+      vpcId: 'vpc-123',
+      subnetIds: ['subnet-1', 'subnet-2'],
+      securityGroupIds: ['sg-1'],
+    })
+    expect(cmds[0]).toContain('--vpc-config')
+    expect(cmds[0].join(' ')).toContain('subnet-1,subnet-2')
+  })
+})
+
+describe('buildCommands — ALB', () => {
+  it('generates create-load-balancer command', () => {
+    const cmds = buildCommands({
+      resource: 'alb',
+      name: 'my-alb',
+      scheme: 'internet-facing',
+      subnetIds: ['subnet-1', 'subnet-2'],
+      securityGroupIds: ['sg-1'],
+    })
+    expect(cmds).toHaveLength(1)
+    expect(cmds[0]).toContain('create-load-balancer')
+    expect(cmds[0]).toContain('my-alb')
+    expect(cmds[0]).toContain('internet-facing')
+  })
+})
