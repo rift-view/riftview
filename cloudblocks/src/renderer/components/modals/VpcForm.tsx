@@ -20,7 +20,7 @@ function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
   }
 }
 
-export function VpcForm({ onChange, showErrors = false }: Props): JSX.Element {
+export function VpcForm({ onChange, showErrors = false }: Props){
   const [name,    setName]    = useState('')
   const [cidr,    setCidr]    = useState('10.0.0.0/16')
   const [tenancy, setTenancy] = useState<'default' | 'dedicated'>('default')

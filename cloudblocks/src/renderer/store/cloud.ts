@@ -1,10 +1,7 @@
 import { create, createStore } from 'zustand'
-import type { CloudNode, ScanDelta } from '../types/cloud'
+import type { CloudNode, ScanDelta, Settings } from '../types/cloud'
 
-export interface Settings {
-  deleteConfirmStyle: 'type-to-confirm' | 'command-drawer'
-  scanInterval: 15 | 30 | 60 | 'manual'
-}
+export type { Settings }
 
 const DEFAULT_SETTINGS: Settings = {
   deleteConfirmStyle: 'type-to-confirm',

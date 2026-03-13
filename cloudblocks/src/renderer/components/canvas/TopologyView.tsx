@@ -11,72 +11,143 @@ const NODE_TYPES = { resource: ResourceNode, vpc: VpcNode, subnet: SubnetNode }
 
 const CONTAINER_TYPES = new Set(['vpc', 'subnet'])
 
+const RES_W     = 150   // wider nodes for readable text
+const RES_H     = 66   // taller nodes: type row + label row + optional badge
+const RES_COLS  = 2
+const RES_GAP_X = 12
+const RES_GAP_Y = 12
+const SUB_PAD_X = 12
+const SUB_PAD_Y = 38  // space for subnet header
+const SUB_GAP   = 16
+const VPC_PAD   = 16
+const VPC_GAP   = 48
+const VPC_LABEL = 32  // space for VPC header bar
+
+function subnetSize(resourceCount: number): { w: number; h: number } {
+  const cols = Math.min(resourceCount || 1, RES_COLS)
+  const rows = Math.max(1, Math.ceil(resourceCount / RES_COLS))
+  return {
+    w: Math.max(200, SUB_PAD_X * 2 + cols * RES_W + (cols - 1) * RES_GAP_X),
+    h: Math.max(120, SUB_PAD_Y + rows * (RES_H + RES_GAP_Y) + RES_GAP_Y),
+  }
+}
+
 // Lays out container nodes (VPCs, subnets) as parent nodes and
-// resource nodes as children inside them.
+// resource nodes as children inside them. All sizes are computed
+// from content so nothing overflows.
 function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Node[] {
   const nodes: Node[] = []
-  const containers = cloudNodes.filter((n) => CONTAINER_TYPES.has(n.type))
-  const resources   = cloudNodes.filter((n) => !CONTAINER_TYPES.has(n.type))
 
-  // Position VPCs as large containers
-  containers
-    .filter((n) => n.type === 'vpc')
-    .forEach((vpc, i) => {
-      nodes.push({
-        id:       vpc.id,
-        type:     'vpc',
-        position: { x: 40 + i * 600, y: 40 },
-        style:    { width: 560, height: 400 },
-        data:     { label: vpc.label },
-      })
+  // Bucket nodes by role
+  const vpcs    = cloudNodes.filter((n) => n.type === 'vpc')
+  const subnets = cloudNodes.filter((n) => n.type === 'subnet')
+  const resources = cloudNodes.filter((n) => !CONTAINER_TYPES.has(n.type))
+
+  const subnetsByVpc    = new Map<string, CloudNode[]>()
+  const resourcesByParent = new Map<string, CloudNode[]>()
+  const rootResources: CloudNode[] = []
+
+  subnets.forEach((s) => {
+    if (!s.parentId) return
+    if (!subnetsByVpc.has(s.parentId)) subnetsByVpc.set(s.parentId, [])
+    subnetsByVpc.get(s.parentId)!.push(s)
+  })
+
+  resources.forEach((r) => {
+    if (!r.parentId) { rootResources.push(r); return }
+    if (!resourcesByParent.has(r.parentId)) resourcesByParent.set(r.parentId, [])
+    resourcesByParent.get(r.parentId)!.push(r)
+  })
+
+  // Place VPCs, sizing each one from its content
+  let vpcX = 40
+  vpcs.forEach((vpc) => {
+    const vpcSubnets = subnetsByVpc.get(vpc.id) ?? []
+    const subSizes   = vpcSubnets.map((s) => subnetSize((resourcesByParent.get(s.id) ?? []).length))
+    const totalSubW  = subSizes.reduce((sum, s) => sum + s.w, 0) + Math.max(0, vpcSubnets.length - 1) * SUB_GAP
+    const maxSubH    = subSizes.length > 0 ? Math.max(...subSizes.map((s) => s.h)) : 120
+    const directRes  = resourcesByParent.get(vpc.id) ?? []
+    const directSize = subnetSize(directRes.length)
+    const vpcW = Math.max(260, VPC_PAD * 2 + Math.max(totalSubW, directRes.length > 0 ? directSize.w : 0))
+    const vpcH = VPC_LABEL + VPC_PAD + maxSubH + VPC_PAD + (directRes.length > 0 ? directSize.h + SUB_GAP : 0)
+
+    nodes.push({
+      id:       vpc.id,
+      type:     'vpc',
+      position: { x: vpcX, y: 40 },
+      style:    { width: vpcW, height: Math.max(160, vpcH) },
+      data:     { label: vpc.label, cidr: vpc.metadata.cidr as string | undefined },
     })
 
-  // Position subnets inside their parent VPC
-  const subnetsByVpc = new Map<string, CloudNode[]>()
-  containers
-    .filter((n) => n.type === 'subnet')
-    .forEach((s) => {
-      if (!s.parentId) return
-      if (!subnetsByVpc.has(s.parentId)) subnetsByVpc.set(s.parentId, [])
-      subnetsByVpc.get(s.parentId)!.push(s)
-    })
-
-  for (const [vpcId, subnets] of subnetsByVpc) {
-    subnets.forEach((subnet, i) => {
+    // Subnets in a single row inside the VPC
+    let subX = VPC_PAD
+    vpcSubnets.forEach((subnet, si) => {
+      const { w: sw, h: sh } = subSizes[si]
       nodes.push({
         id:       subnet.id,
         type:     'subnet',
-        parentId: vpcId,
+        parentId: vpc.id,
         extent:   'parent',
-        position: { x: 20 + i * 260, y: 40 },
-        style:    { width: 240, height: 340 },
-        data:     { label: subnet.label, isPublic: subnet.metadata.mapPublicIp },
+        position: { x: subX, y: VPC_LABEL },
+        style:    { width: sw, height: sh },
+        data:     { label: subnet.label, isPublic: subnet.metadata.mapPublicIp, az: subnet.metadata.availabilityZone as string | undefined },
       })
+
+      // Resources inside this subnet
+      const rNodes = resourcesByParent.get(subnet.id) ?? []
+      rNodes.forEach((r, ri) => {
+        const col = ri % RES_COLS
+        const row = Math.floor(ri / RES_COLS)
+        nodes.push({
+          id:       r.id,
+          type:     'resource',
+          parentId: subnet.id,
+          extent:   'parent',
+          position: {
+            x: SUB_PAD_X + col * (RES_W + RES_GAP_X),
+            y: SUB_PAD_Y + row * (RES_H + RES_GAP_Y),
+          },
+          data:     { label: r.label, nodeType: r.type, status: r.status },
+          selected: r.id === selectedId,
+        })
+      })
+      subX += sw + SUB_GAP
     })
-  }
 
-  // Position resources inside their parent subnet or vpc
-  const resourcesByParent = new Map<string, CloudNode[]>()
-  resources.forEach((r) => {
-    const pid = r.parentId ?? '__root__'
-    if (!resourcesByParent.has(pid)) resourcesByParent.set(pid, [])
-    resourcesByParent.get(pid)!.push(r)
-  })
-
-  for (const [parentId, rNodes] of resourcesByParent) {
-    if (parentId === '__root__') continue
-    rNodes.forEach((r, i) => {
+    // Resources attached directly to the VPC (e.g. ALBs, SGs without a subnet)
+    const subnetBottom = VPC_LABEL + VPC_PAD + maxSubH + SUB_GAP
+    directRes.forEach((r, ri) => {
+      const col = ri % RES_COLS
+      const row = Math.floor(ri / RES_COLS)
       nodes.push({
         id:       r.id,
         type:     'resource',
-        parentId,
+        parentId: vpc.id,
         extent:   'parent',
-        position: { x: 20 + (i % 2) * 110, y: 30 + Math.floor(i / 2) * 60 },
+        position: {
+          x: VPC_PAD + col * (RES_W + RES_GAP_X),
+          y: subnetBottom + row * (RES_H + RES_GAP_Y),
+        },
         data:     { label: r.label, nodeType: r.type, status: r.status },
         selected: r.id === selectedId,
       })
     })
-  }
+
+    vpcX += vpcW + VPC_GAP
+  })
+
+  // Resources with no parent (S3, Lambda, ALB if not VPC-attached, etc.)
+  // rendered in a row below all VPCs
+  const ROOT_COLS = 5
+  rootResources.forEach((r, i) => {
+    nodes.push({
+      id:       r.id,
+      type:     'resource',
+      position: { x: 40 + (i % ROOT_COLS) * (RES_W + RES_GAP_X + 40), y: 520 + Math.floor(i / ROOT_COLS) * (RES_H + RES_GAP_Y + 20) },
+      data:     { label: r.label, nodeType: r.type, status: r.status },
+      selected: r.id === selectedId,
+    })
+  })
 
   return nodes
 }
@@ -85,7 +156,7 @@ interface TopologyViewProps {
   onNodeContextMenu: (node: CloudNode, x: number, y: number) => void
 }
 
-export function TopologyView({ onNodeContextMenu }: TopologyViewProps): JSX.Element {
+export function TopologyView({ onNodeContextMenu }: TopologyViewProps){
   const cloudNodes   = useCloudStore((s) => s.nodes)
   const pendingNodes = useCloudStore((s) => s.pendingNodes)
   const selectNode = useCloudStore((s) => s.selectNode)

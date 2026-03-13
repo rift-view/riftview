@@ -46,7 +46,7 @@ const RESOURCE_TO_NODE_TYPE: Record<string, NodeType> = {
   alb:    'alb',
 }
 
-export function CreateModal(): JSX.Element | null {
+export function CreateModal(){
   const activeCreate      = useCloudStore((s) => s.activeCreate)
   const region            = useCloudStore((s) => s.region)
   const setActiveCreate   = useCloudStore((s) => s.setActiveCreate)
@@ -90,6 +90,7 @@ export function CreateModal(): JSX.Element | null {
   }
 
   function handleRun(): void {
+    if (!activeCreate || !paramsRef.current) return
     const isValid = validateParams(paramsRef.current)
     if (!isValid) {
       setShowErrors(true)
@@ -108,7 +109,7 @@ export function CreateModal(): JSX.Element | null {
     })
     clearCliOutput()
 
-    const commands = buildCommands(paramsRef.current)
+    const commands = buildCommands(paramsRef.current!)
     window.cloudblocks.runCli(commands)
       .then((result) => {
         if (pendingIdRef.current) removePendingNode(pendingIdRef.current)

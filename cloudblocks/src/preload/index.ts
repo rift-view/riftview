@@ -31,7 +31,7 @@ contextBridge.exposeInMainWorld('cloudblocks', {
   },
 
   getSettings: () => ipcRenderer.invoke(IPC.SETTINGS_GET),
-  setSettings: (s: import('../renderer/store/cloud').Settings) => ipcRenderer.invoke(IPC.SETTINGS_SET, s),
+  setSettings: (s: import('../renderer/types/cloud').Settings) => ipcRenderer.invoke(IPC.SETTINGS_SET, s),
 
   // CLI — renderer sends pre-built string[][] argv arrays
   runCli: (commands: string[][]) => ipcRenderer.invoke(IPC.CLI_RUN, commands),

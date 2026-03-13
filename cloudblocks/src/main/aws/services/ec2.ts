@@ -6,9 +6,6 @@ import {
   DescribeSecurityGroupsCommand,
   DescribeKeyPairsCommand,
   type Instance,
-  type Vpc,
-  type Subnet,
-  type SecurityGroup,
 } from '@aws-sdk/client-ec2'
 import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
 

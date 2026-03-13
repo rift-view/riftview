@@ -12,7 +12,7 @@ interface Props {
 }
 
 /** Inner component — must live inside ReactFlowProvider to access useReactFlow hooks. */
-function CanvasInner({ onScan, onNodeContextMenu }: Props): JSX.Element {
+function CanvasInner({ onScan, onNodeContextMenu }: Props){
   const { fitView, zoomIn, zoomOut } = useReactFlow()
   const view       = useCloudStore((s) => s.view)
   const setView    = useCloudStore((s) => s.setView)
@@ -81,7 +81,7 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): JSX.Element {
   )
 }
 
-export function CloudCanvas(props: Props): JSX.Element {
+export function CloudCanvas(props: Props){
   return (
     <ReactFlowProvider>
       <CanvasInner {...props} />
