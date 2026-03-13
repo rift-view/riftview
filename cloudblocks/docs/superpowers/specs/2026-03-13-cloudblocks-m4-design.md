@@ -92,7 +92,7 @@ export interface Settings {
 }
 ```
 
-Default: `theme: 'dark'`.
+Default: `theme: 'dark'`. Also update `DEFAULT_SETTINGS` in `src/renderer/store/cloud.ts` to include `theme: 'dark'`.
 
 ---
 
@@ -109,8 +109,8 @@ export function applyTheme(theme: Theme): void {
 ```
 
 Called in two places:
-1. **`loadSettings`** in `src/renderer/store/cloud.ts` — immediately after the IPC response resolves, before the state is written
-2. **`SettingsPanel`** — after `saveSettings` resolves
+1. **`loadSettings`** in `src/renderer/store/cloud.ts` — modify the action to call `applyTheme(s.theme)` between the `await window.cloudblocks.getSettings()` and `set({ settings: s })`. Do not call `applyTheme` from outside the store at startup.
+2. **`SettingsPanel`** — after `await saveSettings(newSettings)` resolves, the component calls `applyTheme(newSettings.theme)`. The store action itself does NOT call `applyTheme` on save, only on load.
 
 `themes.css` is imported once at the renderer entry point (`src/renderer/src/main.tsx`).
 
@@ -153,14 +153,19 @@ ipcMain.handle(IPC.THEME_OVERRIDES, async () => {
 
 ### Preload (`src/preload/index.ts` + `index.d.ts`)
 
+In `src/preload/index.ts`, add inside `contextBridge.exposeInMainWorld`:
 ```ts
 getThemeOverrides: () => ipcRenderer.invoke(IPC.THEME_OVERRIDES)
-// returns Promise<Record<string, string>>
 ```
 
-### Renderer startup (`src/renderer/hooks/useIpc.ts`)
+In `src/preload/index.d.ts`, add to the `Window.cloudblocks` interface:
+```ts
+getThemeOverrides(): Promise<Record<string, string>>
+```
 
-After `loadSettings`, call `getThemeOverrides()`. If result is non-empty, inject:
+### Renderer startup (`src/renderer/src/App.tsx`)
+
+On mount (in the same `useEffect` that calls `loadSettings`), also call `getThemeOverrides()`. If result is non-empty, inject:
 
 ```ts
 const el = document.getElementById('cb-theme-overrides') ?? document.createElement('style')
