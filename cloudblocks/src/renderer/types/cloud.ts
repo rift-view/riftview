@@ -38,3 +38,8 @@ export interface AwsProfile {
   name: string
   region?: string
 }
+
+export interface Settings {
+  deleteConfirmStyle: 'type-to-confirm' | 'command-drawer'
+  scanInterval: 15 | 30 | 60 | 'manual'
+}

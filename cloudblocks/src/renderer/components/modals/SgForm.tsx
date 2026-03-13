@@ -25,7 +25,7 @@ function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
   }
 }
 
-export function SgForm({ onChange, showErrors = false }: Props): JSX.Element {
+export function SgForm({ onChange, showErrors = false }: Props){
   const nodes = useCloudStore((s) => s.nodes)
   const vpcs  = nodes.filter((n) => n.type === 'vpc')
 
