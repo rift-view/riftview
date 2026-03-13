@@ -44,6 +44,35 @@ it('closes when Cancel is clicked', async () => {
   expect(useCloudStore.getState().activeCreate).toBeNull()
 })
 
+it('renders RDS form title when activeCreate is rds', () => {
+  useCloudStore.setState({ activeCreate: { resource: 'rds', view: 'topology' } })
+  render(<CreateModal />)
+  expect(screen.getByText(/new rds instance/i)).toBeInTheDocument()
+})
+
+it('renders Lambda form title when activeCreate is lambda', () => {
+  useCloudStore.setState({ activeCreate: { resource: 'lambda', view: 'topology' } })
+  render(<CreateModal />)
+  expect(screen.getByText(/new lambda function/i)).toBeInTheDocument()
+})
+
+it('renders ALB form title when activeCreate is alb', () => {
+  useCloudStore.setState({ activeCreate: { resource: 'alb', view: 'topology' } })
+  render(<CreateModal />)
+  expect(screen.getByText(/new alb/i)).toBeInTheDocument()
+})
+
+it('blocks submission and does not call runCli when required ALB fields are empty', async () => {
+  useCloudStore.getState().setActiveCreate({ resource: 'alb', view: 'topology' })
+  const runCli = vi.fn().mockResolvedValue({ code: 0 })
+  window.cloudblocks = { ...window.cloudblocks, runCli }
+
+  render(<CreateModal />)
+  window.dispatchEvent(new CustomEvent('commanddrawer:run'))
+  await new Promise(r => setTimeout(r, 10))
+  expect(runCli).not.toHaveBeenCalled()
+})
+
 it('blocks submission and does not call runCli when required VPC fields are empty', async () => {
   // Set activeCreate to 'vpc' with empty form (name='', cidr='')
   useCloudStore.getState().setActiveCreate({ resource: 'vpc', view: 'topology' })
