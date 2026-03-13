@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { buildCommands } from '../buildCommand'
-import type { VpcParams, Ec2Params, SgParams, S3Params } from '../../types/create'
+import type { VpcParams, Ec2Params, SgParams, S3Params, RdsParams } from '../../types/create'
 
 describe('buildCommands: vpc', () => {
   it('returns one command with correct args', () => {
@@ -95,23 +95,32 @@ describe('buildCommands: s3', () => {
 })
 
 describe('buildCommands — RDS', () => {
+  const baseRds: RdsParams = {
+    resource: 'rds',
+    identifier: 'mydb',
+    engine: 'mysql',
+    instanceClass: 'db.t3.micro',
+    masterUsername: 'admin',
+    masterPassword: 'secret',
+    allocatedStorage: 20,
+    multiAZ: false,
+    publiclyAccessible: false,
+    vpcId: 'vpc-123',
+  }
+
   it('generates create-db-instance command', () => {
-    const cmds = buildCommands({
-      resource: 'rds',
-      identifier: 'mydb',
-      engine: 'mysql',
-      instanceClass: 'db.t3.micro',
-      masterUsername: 'admin',
-      masterPassword: 'secret',
-      allocatedStorage: 20,
-      multiAZ: false,
-      publiclyAccessible: false,
-    })
+    const cmds = buildCommands(baseRds)
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).toContain('create-db-instance')
     expect(cmds[0]).toContain('mydb')
     expect(cmds[0]).toContain('mysql')
     expect(cmds[0]).toContain('--no-publicly-accessible')
+  })
+
+  it('includes --multi-az flag when multiAZ is true', () => {
+    const cmds = buildCommands({ ...baseRds, multiAZ: true })
+    const cmd = cmds[0].join(' ')
+    expect(cmd).toContain('--multi-az')
   })
 })
 
@@ -158,6 +167,7 @@ describe('buildCommands — ALB', () => {
       scheme: 'internet-facing',
       subnetIds: ['subnet-1', 'subnet-2'],
       securityGroupIds: ['sg-1'],
+      vpcId: 'vpc-123',
     })
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).toContain('create-load-balancer')

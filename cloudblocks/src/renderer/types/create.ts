@@ -47,7 +47,7 @@ export interface RdsParams {
   allocatedStorage: number
   multiAZ: boolean
   publiclyAccessible: boolean
-  vpcId?: string
+  vpcId: string
 }
 
 export interface LambdaParams {
@@ -69,7 +69,7 @@ export interface AlbParams {
   scheme: 'internet-facing' | 'internal'
   subnetIds: string[]
   securityGroupIds: string[]
-  vpcId?: string
+  vpcId: string
 }
 
 export type CreateParams = VpcParams | Ec2Params | SgParams | S3Params | RdsParams | LambdaParams | AlbParams
