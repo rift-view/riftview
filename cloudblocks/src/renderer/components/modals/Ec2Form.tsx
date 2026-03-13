@@ -23,7 +23,7 @@ function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
   }
 }
 
-export function Ec2Form({ onChange, showErrors = false }: Props): JSX.Element {
+export function Ec2Form({ onChange, showErrors = false }: Props){
   const nodes    = useCloudStore((s) => s.nodes)
   const keyPairs = useCloudStore((s) => s.keyPairs)
   const vpcs    = nodes.filter((n) => n.type === 'vpc')

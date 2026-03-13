@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { EC2Client, DescribeInstancesCommand, DescribeVpcsCommand, DescribeSubnetsCommand, DescribeSecurityGroupsCommand } from '@aws-sdk/client-ec2'
+import { EC2Client } from '@aws-sdk/client-ec2'
 import { describeInstances, describeVpcs, describeSubnets, describeSecurityGroups } from '../../../../src/main/aws/services/ec2'
 import type { CloudNode } from '../../../../src/renderer/types/cloud'
 

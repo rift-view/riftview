@@ -7,7 +7,7 @@ interface InspectorProps {
   onQuickAction: (node: CloudNode, action: 'stop' | 'start' | 'reboot') => void
 }
 
-export function Inspector({ onDelete, onEdit, onQuickAction }: InspectorProps): JSX.Element {
+export function Inspector({ onDelete, onEdit, onQuickAction }: InspectorProps){
   const selectedId = useCloudStore((s) => s.selectedNodeId)
   const nodes      = useCloudStore((s) => s.nodes)
   const node       = nodes.find((n) => n.id === selectedId)
