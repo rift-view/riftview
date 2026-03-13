@@ -1,0 +1,23 @@
+import React, { useState } from 'react'
+import type { CloudNode } from '../../types/cloud'
+import type { AlbEditParams } from '../../types/edit'
+
+interface Props { node: CloudNode; onChange: (p: AlbEditParams) => void; showErrors?: boolean }
+
+const inputStyle = (err: boolean): React.CSSProperties => ({
+  width: '100%', background: '#060d14', border: `1px solid ${err ? '#ff5f57' : '#30363d'}`,
+  borderRadius: 3, padding: '3px 6px', color: '#eee', fontFamily: 'monospace', fontSize: 10,
+  boxSizing: 'border-box' as const,
+})
+const label: React.CSSProperties = { fontSize: 9, color: '#555', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
+
+export default function AlbEditForm({ node, onChange, showErrors }: Props) {
+  const [name, setName] = useState((node.metadata.name as string) ?? node.label)
+  const update = (v: string) => { setName(v); onChange({ resource: 'alb', name: v }) }
+  return (
+    <div>
+      <div style={label}>Name Tag</div>
+      <input style={inputStyle(!!(showErrors && !name.trim()))} value={name} onChange={e => update(e.target.value)} />
+    </div>
+  )
+}
