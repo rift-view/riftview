@@ -20,7 +20,7 @@ function validateParams(params: CreateParams | null): boolean {
     case 's3':     return !!(params.bucketName)
     case 'rds':    return !!(params.identifier && params.masterUsername && params.masterPassword)
     case 'lambda': return !!(params.name && params.roleArn && params.handler)
-    case 'alb':    return !!(params.name && params.subnetIds.length >= 2)
+    case 'alb':    return !!(params.name && params.subnetIds.length >= 2 && params.securityGroupIds.length >= 1)
     default:       return true
   }
 }
