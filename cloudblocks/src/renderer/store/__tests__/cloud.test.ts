@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useCloudStore } from '../cloud'
+import { useCloudStore, createCloudStore } from '../cloud'
 
 beforeEach(() => {
   useCloudStore.setState({
     pendingNodes:   [],
     cliOutput:      [],
-    commandPreview: '',
+    commandPreview: [],
     activeCreate:   null,
+    pendingCommand: null,
   })
 })
 
@@ -51,15 +52,48 @@ describe('cliOutput', () => {
 })
 
 describe('commandPreview', () => {
-  it('setCommandPreview stores the string', () => {
-    useCloudStore.getState().setCommandPreview('aws ec2 create-vpc --cidr-block 10.0.0.0/16')
-    expect(useCloudStore.getState().commandPreview).toBe('aws ec2 create-vpc --cidr-block 10.0.0.0/16')
+  it('setCommandPreview stores the array', () => {
+    useCloudStore.getState().setCommandPreview(['aws ec2 create-vpc --cidr-block 10.0.0.0/16'])
+    expect(useCloudStore.getState().commandPreview).toEqual(['aws ec2 create-vpc --cidr-block 10.0.0.0/16'])
   })
 
-  it('setCommandPreview with empty string clears it', () => {
-    useCloudStore.getState().setCommandPreview('some command')
-    useCloudStore.getState().setCommandPreview('')
-    expect(useCloudStore.getState().commandPreview).toBe('')
+  it('setCommandPreview with empty array clears it', () => {
+    useCloudStore.getState().setCommandPreview(['some command'])
+    useCloudStore.getState().setCommandPreview([])
+    expect(useCloudStore.getState().commandPreview).toEqual([])
+  })
+
+  it('setCommandPreview accepts string array', () => {
+    const store = createCloudStore()
+    store.getState().setCommandPreview(['aws ec2 stop-instances --instance-ids i-123', 'aws ec2 start-instances --instance-ids i-123'])
+    expect(store.getState().commandPreview).toEqual([
+      'aws ec2 stop-instances --instance-ids i-123',
+      'aws ec2 start-instances --instance-ids i-123',
+    ])
+  })
+
+  it('setPendingCommand stores command chain', () => {
+    const store = createCloudStore()
+    store.getState().setPendingCommand([['ec2', 'stop-instances', '--instance-ids', 'i-123']])
+    expect(store.getState().pendingCommand).toEqual([['ec2', 'stop-instances', '--instance-ids', 'i-123']])
+    store.getState().setPendingCommand(null)
+    expect(store.getState().pendingCommand).toBeNull()
+  })
+})
+
+describe('keyPairs', () => {
+  it('setKeyPairs stores key pair names', () => {
+    const store = createCloudStore()
+    store.getState().setKeyPairs(['my-key', 'dev-key'])
+    expect(store.getState().keyPairs).toEqual(['my-key', 'dev-key'])
+  })
+})
+
+describe('settings', () => {
+  it('settings defaults are correct', () => {
+    const store = createCloudStore()
+    expect(store.getState().settings.deleteConfirmStyle).toBe('type-to-confirm')
+    expect(store.getState().settings.scanInterval).toBe(30)
   })
 })
 

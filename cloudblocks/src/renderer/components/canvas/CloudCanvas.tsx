@@ -4,13 +4,15 @@ import { useCloudStore } from '../../store/cloud'
 import { TopologyView } from './TopologyView'
 import { GraphView } from './GraphView'
 import { CanvasContextMenu } from './CanvasContextMenu'
+import type { CloudNode } from '../../types/cloud'
 
 interface Props {
   onScan: () => void
+  onNodeContextMenu: (node: CloudNode, x: number, y: number) => void
 }
 
 /** Inner component — must live inside ReactFlowProvider to access useReactFlow hooks. */
-function CanvasInner({ onScan }: Props): JSX.Element {
+function CanvasInner({ onScan, onNodeContextMenu }: Props): JSX.Element {
   const { fitView, zoomIn, zoomOut } = useReactFlow()
   const view       = useCloudStore((s) => s.view)
   const setView    = useCloudStore((s) => s.setView)
@@ -63,7 +65,10 @@ function CanvasInner({ onScan }: Props): JSX.Element {
         ))}
       </div>
 
-      {view === 'topology' ? <TopologyView /> : <GraphView />}
+      {view === 'topology'
+        ? <TopologyView onNodeContextMenu={onNodeContextMenu} />
+        : <GraphView onNodeContextMenu={onNodeContextMenu} />
+      }
 
       {contextMenu && (
         <CanvasContextMenu

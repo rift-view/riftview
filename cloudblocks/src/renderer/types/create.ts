@@ -37,4 +37,39 @@ export interface S3Params {
   blockPublicAccess: boolean
 }
 
-export type CreateParams = VpcParams | Ec2Params | SgParams | S3Params
+export interface RdsParams {
+  resource: 'rds'
+  identifier: string
+  engine: 'mysql' | 'postgres' | 'mariadb'
+  instanceClass: string
+  masterUsername: string
+  masterPassword: string
+  allocatedStorage: number
+  multiAZ: boolean
+  publiclyAccessible: boolean
+  vpcId: string
+}
+
+export interface LambdaParams {
+  resource: 'lambda'
+  name: string
+  runtime: 'nodejs20.x' | 'python3.12' | 'java21' | 'go1.x'
+  handler: string
+  roleArn: string
+  memorySize: number
+  timeout: number
+  vpcId?: string
+  subnetIds?: string[]
+  securityGroupIds?: string[]
+}
+
+export interface AlbParams {
+  resource: 'alb'
+  name: string
+  scheme: 'internet-facing' | 'internal'
+  subnetIds: string[]
+  securityGroupIds: string[]
+  vpcId: string
+}
+
+export type CreateParams = VpcParams | Ec2Params | SgParams | S3Params | RdsParams | LambdaParams | AlbParams

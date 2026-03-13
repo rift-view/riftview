@@ -8,7 +8,11 @@ const REGIONS = [
   'ap-southeast-1','ap-northeast-1',
 ]
 
-export function TitleBar(): JSX.Element {
+interface TitleBarProps {
+  onSettingsOpen: () => void
+}
+
+export function TitleBar({ onSettingsOpen }: TitleBarProps): JSX.Element {
   const [profiles, setProfiles]       = useState<AwsProfile[]>([])
   const [connStatus, setConnStatus]   = useState<'unknown' | 'connected' | 'error'>('unknown')
   const profile    = useCloudStore((s) => s.profile)
@@ -87,6 +91,18 @@ export function TitleBar(): JSX.Element {
         <div className="w-2 h-2 rounded-full" style={{ background: statusColor, boxShadow: statusGlow }} />
         <span className="text-[9px] font-mono" style={{ color: statusColor }}>{statusLabel}</span>
       </div>
+
+      {/* Settings gear */}
+      <button
+        onClick={onSettingsOpen}
+        title="Settings"
+        style={{
+          background: 'none', border: 'none', color: '#aaa', cursor: 'pointer',
+          fontSize: 14, padding: '0 8px', marginLeft: 'auto',
+        }}
+      >
+        ⚙
+      </button>
     </div>
   )
 }

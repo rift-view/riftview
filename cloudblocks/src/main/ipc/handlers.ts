@@ -1,11 +1,20 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import fs from 'fs'
+import path from 'path'
+import { ipcMain, BrowserWindow, app } from 'electron'
 import { IPC } from './channels'
 import { listProfiles, getDefaultRegion } from '../aws/credentials'
 import { createClients } from '../aws/client'
 import { ResourceScanner } from '../aws/scanner'
 import { CliEngine } from '../cli/engine'
-import { buildCommands } from '../../renderer/utils/buildCommand'
-import type { CreateParams } from '../../renderer/types/create'
+
+function settingsPath(): string {
+  return path.join(app.getPath('userData'), 'settings.json')
+}
+
+const DEFAULT_SETTINGS = {
+  deleteConfirmStyle: 'type-to-confirm' as const,
+  scanInterval: 30 as const,
+}
 
 let scanner:   ResourceScanner | null = null
 let cliEngine: CliEngine       | null = null
@@ -31,11 +40,29 @@ export function registerHandlers(win: BrowserWindow): void {
     scanner?.triggerManualScan()
   })
 
-  // Run a write command — renderer sends CreateParams, main builds argv and executes
-  ipcMain.handle(IPC.CLI_RUN, (_event, params: CreateParams) => {
+  // Run a write command — renderer sends pre-built string[][] argv arrays
+  ipcMain.handle(IPC.CLI_RUN, async (_, commands: string[][]) => {
     if (!cliEngine) return { code: 1 }
-    const commands = buildCommands(params)
     return cliEngine.execute(commands)
+  })
+
+  // Settings — persist to userData/settings.json
+  ipcMain.handle(IPC.SETTINGS_GET, () => {
+    try {
+      const raw = fs.readFileSync(settingsPath(), 'utf-8')
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+    } catch {
+      return DEFAULT_SETTINGS
+    }
+  })
+
+  ipcMain.handle(IPC.SETTINGS_SET, (_e, settings) => {
+    try {
+      fs.mkdirSync(path.dirname(settingsPath()), { recursive: true })
+      fs.writeFileSync(settingsPath(), JSON.stringify(settings, null, 2))
+    } catch (err) {
+      console.error('Failed to write settings:', err)
+    }
   })
 
   // Cancel in-flight command (fire-and-forget, no return value needed)
