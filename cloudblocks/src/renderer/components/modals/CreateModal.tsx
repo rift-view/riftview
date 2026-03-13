@@ -7,6 +7,9 @@ import { VpcForm } from './VpcForm'
 import { Ec2Form } from './Ec2Form'
 import { SgForm } from './SgForm'
 import { S3Form } from './S3Form'
+import { RdsForm } from './RdsForm'
+import { LambdaForm } from './LambdaForm'
+import { AlbForm } from './AlbForm'
 
 function validateParams(params: CreateParams | null): boolean {
   if (!params) return false
@@ -15,23 +18,32 @@ function validateParams(params: CreateParams | null): boolean {
     case 'ec2':    return !!(params.name && params.amiId && params.instanceType)
     case 'sg':     return !!(params.name && params.description && params.vpcId)
     case 's3':     return !!(params.bucketName)
+    case 'rds':    return !!(params.identifier && params.masterUsername && params.masterPassword)
+    case 'lambda': return !!(params.name && params.roleArn && params.handler)
+    case 'alb':    return !!(params.name && params.subnetIds.length >= 2)
     default:       return true
   }
 }
 
 const TITLES: Record<string, string> = {
-  vpc: 'New VPC',
-  ec2: 'New EC2 Instance',
-  sg:  'New Security Group',
-  s3:  'New S3 Bucket',
+  vpc:    'New VPC',
+  ec2:    'New EC2 Instance',
+  sg:     'New Security Group',
+  s3:     'New S3 Bucket',
+  rds:    'New RDS Instance',
+  lambda: 'New Lambda Function',
+  alb:    'New ALB',
 }
 
 // Maps form resource identifier to CloudNode NodeType
 const RESOURCE_TO_NODE_TYPE: Record<string, NodeType> = {
-  vpc: 'vpc',
-  ec2: 'ec2',
-  sg:  'security-group',
-  s3:  's3',
+  vpc:    'vpc',
+  ec2:    'ec2',
+  sg:     'security-group',
+  s3:     's3',
+  rds:    'rds',
+  lambda: 'lambda',
+  alb:    'alb',
 }
 
 export function CreateModal(): JSX.Element | null {
@@ -133,10 +145,13 @@ export function CreateModal(): JSX.Element | null {
           {TITLES[activeCreate.resource] ?? 'New Resource'}
         </div>
 
-        {activeCreate.resource === 'vpc' && <VpcForm onChange={handleChange} showErrors={showErrors} />}
-        {activeCreate.resource === 'ec2' && <Ec2Form onChange={handleChange} showErrors={showErrors} />}
-        {activeCreate.resource === 'sg'  && <SgForm  onChange={handleChange} showErrors={showErrors} />}
-        {activeCreate.resource === 's3'  && <S3Form  onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'vpc'    && <VpcForm    onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'ec2'    && <Ec2Form    onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'sg'     && <SgForm     onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 's3'     && <S3Form     onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'rds'    && <RdsForm    onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'lambda' && <LambdaForm onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'alb'    && <AlbForm    onChange={handleChange} showErrors={showErrors} />}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid #1e2d40' }}>
           <button
