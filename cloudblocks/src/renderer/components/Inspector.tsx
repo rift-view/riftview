@@ -1,6 +1,12 @@
 import { useCloudStore } from '../store/cloud'
+import type { CloudNode } from '../types/cloud'
 
-export function Inspector(): JSX.Element {
+interface InspectorProps {
+  onDelete: (node: CloudNode) => void
+  onEdit: (node: CloudNode) => void
+}
+
+export function Inspector({ onDelete, onEdit }: InspectorProps): JSX.Element {
   const selectedId = useCloudStore((s) => s.selectedNodeId)
   const nodes      = useCloudStore((s) => s.nodes)
   const node       = nodes.find((n) => n.id === selectedId)
@@ -56,6 +62,21 @@ export function Inspector(): JSX.Element {
               ))}
             </div>
           )}
+
+          <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+            <button
+              onClick={() => onEdit(node)}
+              style={{ flex: 1, background: '#1a2332', border: '1px solid #64b5f6', borderRadius: 2, padding: '3px 0', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
+            >
+              ✎ Edit
+            </button>
+            <button
+              onClick={() => onDelete(node)}
+              style={{ flex: 1, background: '#1a2332', border: '1px solid #ff5f57', borderRadius: 2, padding: '3px 0', color: '#ff5f57', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
+            >
+              ✕ Delete
+            </button>
+          </div>
         </>
       )}
     </div>
