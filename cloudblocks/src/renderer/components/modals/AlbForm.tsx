@@ -8,7 +8,7 @@ const inp = (err: boolean): React.CSSProperties => ({ width: '100%', background:
 const sel = inp
 const lbl: React.CSSProperties = { fontSize: 9, color: '#555', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
 
-export default function AlbForm({ onChange, showErrors }: Props) {
+export function AlbForm({ onChange, showErrors }: Props) {
   const nodes   = useCloudStore((s) => s.nodes)
   const vpcs    = nodes.filter(n => n.type === 'vpc')
   const subnets = nodes.filter(n => n.type === 'subnet')
@@ -25,7 +25,8 @@ export default function AlbForm({ onChange, showErrors }: Props) {
   }
 
   const err = showErrors ?? false
-  const filteredSubnets = form.vpcId ? subnets.filter(s => s.metadata.vpcId === form.vpcId) : subnets
+  const filteredSubnets = form.vpcId ? subnets.filter(s => s.parentId === form.vpcId) : subnets
+  const filteredSgs = form.vpcId ? sgs.filter(s => s.parentId === form.vpcId) : sgs
 
   return (
     <div>
@@ -56,7 +57,7 @@ export default function AlbForm({ onChange, showErrors }: Props) {
         </label>
       ))}
       <div style={lbl}>Security groups *</div>
-      {sgs.map(sg => (
+      {filteredSgs.map(sg => (
         <label key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, fontSize: 10, color: '#aaa', cursor: 'pointer' }}>
           <input type="checkbox" checked={form.securityGroupIds.includes(sg.id)} onChange={e => {
             const ids = form.securityGroupIds

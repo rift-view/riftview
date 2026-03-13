@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { buildCommands } from '../buildCommand'
-import type { VpcParams, Ec2Params, SgParams, S3Params, RdsParams } from '../../types/create'
+import type { VpcParams, Ec2Params, SgParams, S3Params, RdsParams, LambdaParams, AlbParams } from '../../types/create'
 
 describe('buildCommands: vpc', () => {
   it('returns one command with correct args', () => {
@@ -125,16 +125,18 @@ describe('buildCommands — RDS', () => {
 })
 
 describe('buildCommands — Lambda', () => {
+  const baseLambda: LambdaParams = {
+    resource: 'lambda',
+    name: 'my-fn',
+    runtime: 'nodejs20.x',
+    handler: 'index.handler',
+    roleArn: 'arn:aws:iam::123:role/my-role',
+    memorySize: 128,
+    timeout: 3,
+  }
+
   it('generates create-function command without VPC', () => {
-    const cmds = buildCommands({
-      resource: 'lambda',
-      name: 'my-fn',
-      runtime: 'nodejs20.x',
-      handler: 'index.handler',
-      roleArn: 'arn:aws:iam::123:role/my-role',
-      memorySize: 128,
-      timeout: 3,
-    })
+    const cmds = buildCommands(baseLambda)
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).toContain('create-function')
     expect(cmds[0]).toContain('my-fn')
@@ -143,13 +145,7 @@ describe('buildCommands — Lambda', () => {
 
   it('includes vpc-config when VPC is set', () => {
     const cmds = buildCommands({
-      resource: 'lambda',
-      name: 'my-fn',
-      runtime: 'nodejs20.x',
-      handler: 'index.handler',
-      roleArn: 'arn:aws:iam::123:role/my-role',
-      memorySize: 128,
-      timeout: 3,
+      ...baseLambda,
       vpcId: 'vpc-123',
       subnetIds: ['subnet-1', 'subnet-2'],
       securityGroupIds: ['sg-1'],
@@ -160,18 +156,23 @@ describe('buildCommands — Lambda', () => {
 })
 
 describe('buildCommands — ALB', () => {
+  const baseAlb: AlbParams = {
+    resource: 'alb',
+    name: 'my-alb',
+    scheme: 'internet-facing',
+    subnetIds: ['subnet-1', 'subnet-2'],
+    securityGroupIds: ['sg-1'],
+    vpcId: 'vpc-123',
+  }
+
   it('generates create-load-balancer command', () => {
-    const cmds = buildCommands({
-      resource: 'alb',
-      name: 'my-alb',
-      scheme: 'internet-facing',
-      subnetIds: ['subnet-1', 'subnet-2'],
-      securityGroupIds: ['sg-1'],
-      vpcId: 'vpc-123',
-    })
+    const cmds = buildCommands(baseAlb)
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).toContain('create-load-balancer')
     expect(cmds[0]).toContain('my-alb')
     expect(cmds[0]).toContain('internet-facing')
+    expect(cmds[0]).toContain('subnet-1')
+    expect(cmds[0]).toContain('subnet-2')
+    expect(cmds[0]).toContain('sg-1')
   })
 })

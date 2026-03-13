@@ -9,7 +9,7 @@ const sel = (err: boolean): React.CSSProperties => ({ ...inp(err), cursor: 'poin
 const lbl: React.CSSProperties = { fontSize: 9, color: '#555', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
 const row: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }
 
-export default function RdsForm({ onChange, showErrors }: Props) {
+export function RdsForm({ onChange, showErrors }: Props) {
   const nodes = useCloudStore((s) => s.nodes)
   const vpcs  = nodes.filter(n => n.type === 'vpc')
 
