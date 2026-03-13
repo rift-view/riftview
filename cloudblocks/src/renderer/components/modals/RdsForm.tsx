@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import type { RdsParams } from '../../types/create'
+import { useCloudStore } from '../../store/cloud'
 
 interface Props { onChange: (p: RdsParams) => void; showErrors?: boolean }
 
@@ -9,10 +10,13 @@ const lbl: React.CSSProperties = { fontSize: 9, color: '#555', textTransform: 'u
 const row: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }
 
 export default function RdsForm({ onChange, showErrors }: Props) {
+  const nodes = useCloudStore((s) => s.nodes)
+  const vpcs  = nodes.filter(n => n.type === 'vpc')
+
   const [form, setForm] = useState<Omit<RdsParams, 'resource'>>({
     identifier: '', engine: 'mysql', instanceClass: 'db.t3.micro',
     masterUsername: '', masterPassword: '', allocatedStorage: 20,
-    multiAZ: false, publiclyAccessible: false,
+    multiAZ: false, publiclyAccessible: false, vpcId: '',
   })
 
   const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => {
@@ -43,6 +47,15 @@ export default function RdsForm({ onChange, showErrors }: Props) {
       <input type="password" style={inp(err && !form.masterPassword)} value={form.masterPassword} onChange={e => update('masterPassword', e.target.value)} />
       <div style={lbl}>Allocated storage (GB)</div>
       <input type="number" style={inp(false)} value={form.allocatedStorage} onChange={e => update('allocatedStorage', Number(e.target.value))} />
+      {vpcs.length > 0 && (
+        <>
+          <div style={lbl}>VPC *</div>
+          <select style={sel(err && !form.vpcId)} value={form.vpcId} onChange={e => update('vpcId', e.target.value)}>
+            <option value="">— select VPC —</option>
+            {vpcs.map(v => <option key={v.id} value={v.id}>{v.label} ({v.id})</option>)}
+          </select>
+        </>
+      )}
       <label style={row}><input type="checkbox" checked={form.multiAZ} onChange={e => update('multiAZ', e.target.checked)} /><span style={{ fontSize: 10, color: '#aaa' }}>Multi-AZ</span></label>
       <label style={row}><input type="checkbox" checked={form.publiclyAccessible} onChange={e => update('publiclyAccessible', e.target.checked)} /><span style={{ fontSize: 10, color: '#aaa' }}>Publicly accessible</span></label>
     </div>

@@ -15,7 +15,7 @@ export default function AlbForm({ onChange, showErrors }: Props) {
   const sgs     = nodes.filter(n => n.type === 'security-group')
 
   const [form, setForm] = useState<Omit<AlbParams, 'resource'>>({
-    name: '', scheme: 'internet-facing', subnetIds: [], securityGroupIds: [],
+    name: '', scheme: 'internet-facing', subnetIds: [], securityGroupIds: [], vpcId: '',
   })
 
   const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => {
@@ -39,7 +39,7 @@ export default function AlbForm({ onChange, showErrors }: Props) {
       {vpcs.length > 0 && (
         <>
           <div style={lbl}>VPC</div>
-          <select style={sel(false)} value={form.vpcId ?? ''} onChange={e => update('vpcId', e.target.value || undefined)}>
+          <select style={sel(false)} value={form.vpcId} onChange={e => update('vpcId', e.target.value)}>
             <option value="">— select VPC —</option>
             {vpcs.map(v => <option key={v.id} value={v.id}>{v.label} ({v.id})</option>)}
           </select>
