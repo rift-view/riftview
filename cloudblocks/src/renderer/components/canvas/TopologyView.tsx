@@ -11,17 +11,17 @@ const NODE_TYPES = { resource: ResourceNode, vpc: VpcNode, subnet: SubnetNode }
 
 const CONTAINER_TYPES = new Set(['vpc', 'subnet'])
 
-const RES_W     = 110
-const RES_H     = 50
+const RES_W     = 150   // wider nodes for readable text
+const RES_H     = 66   // taller nodes: type row + label row + optional badge
 const RES_COLS  = 2
-const RES_GAP_X = 10
-const RES_GAP_Y = 10
-const SUB_PAD_X = 16
-const SUB_PAD_Y = 36  // space for subnet label
+const RES_GAP_X = 12
+const RES_GAP_Y = 12
+const SUB_PAD_X = 12
+const SUB_PAD_Y = 38  // space for subnet header
 const SUB_GAP   = 16
-const VPC_PAD   = 20
-const VPC_GAP   = 40
-const VPC_LABEL = 30  // space for VPC label at top
+const VPC_PAD   = 16
+const VPC_GAP   = 48
+const VPC_LABEL = 32  // space for VPC header bar
 
 function subnetSize(resourceCount: number): { w: number; h: number } {
   const cols = Math.min(resourceCount || 1, RES_COLS)
@@ -76,7 +76,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Nod
       type:     'vpc',
       position: { x: vpcX, y: 40 },
       style:    { width: vpcW, height: Math.max(160, vpcH) },
-      data:     { label: vpc.label },
+      data:     { label: vpc.label, cidr: vpc.metadata.cidr as string | undefined },
     })
 
     // Subnets in a single row inside the VPC
@@ -90,7 +90,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Nod
         extent:   'parent',
         position: { x: subX, y: VPC_LABEL },
         style:    { width: sw, height: sh },
-        data:     { label: subnet.label, isPublic: subnet.metadata.mapPublicIp },
+        data:     { label: subnet.label, isPublic: subnet.metadata.mapPublicIp, az: subnet.metadata.availabilityZone as string | undefined },
       })
 
       // Resources inside this subnet
