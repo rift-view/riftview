@@ -12,6 +12,7 @@ import { ErrorBanner } from '../components/ErrorBanner'
 import SettingsPanel from '../components/SettingsPanel'
 import NodeContextMenu from '../components/canvas/NodeContextMenu'
 import DeleteDialog from '../components/modals/DeleteDialog'
+import EditModal from '../components/modals/EditModal'
 import { buildDeleteCommands, buildQuickActionCommand } from '../utils/buildDeleteCommands'
 import type { DeleteOptions } from '../utils/buildDeleteCommands'
 import { useCloudStore } from '../store/cloud'
@@ -100,6 +101,7 @@ export default function App(): JSX.Element {
           onConfirm={opts => handleDeleteConfirm(deleteTarget, opts)}
         />
       )}
+      <EditModal node={editTarget} onClose={() => setEditTarget(null)} />
     </div>
   )
 }
