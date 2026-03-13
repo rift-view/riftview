@@ -20,7 +20,11 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
     }))
 }
 
-export function GraphView(): JSX.Element {
+interface GraphViewProps {
+  onNodeContextMenu: (node: CloudNode, x: number, y: number) => void
+}
+
+export function GraphView({ onNodeContextMenu }: GraphViewProps): JSX.Element {
   const cloudNodes   = useCloudStore((s) => s.nodes)
   const pendingNodes = useCloudStore((s) => s.pendingNodes)
   const selectNode = useCloudStore((s) => s.selectNode)
@@ -49,6 +53,11 @@ export function GraphView(): JSX.Element {
       nodeTypes={NODE_TYPES}
       onNodeClick={(_e, node) => selectNode(node.id)}
       onPaneClick={() => selectNode(null)}
+      onNodeContextMenu={(event, rfNode) => {
+        event.preventDefault()
+        const cloudNode = allNodes.find((n) => n.id === rfNode.id)
+        if (cloudNode) onNodeContextMenu(cloudNode, event.clientX, event.clientY)
+      }}
       fitView
       style={{ background: '#080c14' }}
     >

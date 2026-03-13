@@ -4,6 +4,7 @@ import {
   DescribeVpcsCommand,
   DescribeSubnetsCommand,
   DescribeSecurityGroupsCommand,
+  DescribeKeyPairsCommand,
   type Instance,
   type Vpc,
   type Subnet,
@@ -88,6 +89,15 @@ export async function describeSecurityGroups(client: EC2Client, region: string):
       metadata: { description: sg.Description, vpcId: sg.VpcId },
       parentId: sg.VpcId,
     }))
+  } catch {
+    return []
+  }
+}
+
+export async function describeKeyPairs(client: EC2Client): Promise<string[]> {
+  try {
+    const { KeyPairs } = await client.send(new DescribeKeyPairsCommand({}))
+    return (KeyPairs ?? []).map(kp => kp.KeyName ?? '').filter(Boolean)
   } catch {
     return []
   }

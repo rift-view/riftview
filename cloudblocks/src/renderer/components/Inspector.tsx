@@ -1,6 +1,13 @@
 import { useCloudStore } from '../store/cloud'
+import type { CloudNode } from '../types/cloud'
 
-export function Inspector(): JSX.Element {
+interface InspectorProps {
+  onDelete: (node: CloudNode) => void
+  onEdit: (node: CloudNode) => void
+  onQuickAction: (node: CloudNode, action: 'stop' | 'start' | 'reboot') => void
+}
+
+export function Inspector({ onDelete, onEdit, onQuickAction }: InspectorProps): JSX.Element {
   const selectedId = useCloudStore((s) => s.selectedNodeId)
   const nodes      = useCloudStore((s) => s.nodes)
   const node       = nodes.find((n) => n.id === selectedId)
@@ -54,6 +61,45 @@ export function Inspector(): JSX.Element {
                   <div className="text-[8px] break-all" style={{ color: '#aaa' }}>{String(v ?? '—')}</div>
                 </div>
               ))}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+            <button
+              onClick={() => onEdit(node)}
+              style={{ flex: 1, background: '#1a2332', border: '1px solid #64b5f6', borderRadius: 2, padding: '3px 0', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
+            >
+              ✎ Edit
+            </button>
+            <button
+              onClick={() => onDelete(node)}
+              style={{ flex: 1, background: '#1a2332', border: '1px solid #ff5f57', borderRadius: 2, padding: '3px 0', color: '#ff5f57', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
+            >
+              ✕ Delete
+            </button>
+          </div>
+
+          {(node.type === 'ec2' || node.type === 'rds') && (
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontSize: 8, color: '#555', textTransform: 'uppercase', marginBottom: 4 }}>Quick actions</div>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                {node.status !== 'stopped' && (
+                  <button onClick={() => onQuickAction(node, 'stop')}
+                    style={{ background: '#1a2332', border: '1px solid #febc2e', borderRadius: 2, padding: '2px 8px', color: '#febc2e', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                    Stop
+                  </button>
+                )}
+                {node.status === 'stopped' && (
+                  <button onClick={() => onQuickAction(node, 'start')}
+                    style={{ background: '#1a2332', border: '1px solid #28c840', borderRadius: 2, padding: '2px 8px', color: '#28c840', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                    Start
+                  </button>
+                )}
+                <button onClick={() => onQuickAction(node, 'reboot')}
+                  style={{ background: '#1a2332', border: '1px solid #64b5f6', borderRadius: 2, padding: '2px 8px', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                  Reboot
+                </button>
+              </div>
             </div>
           )}
         </>
