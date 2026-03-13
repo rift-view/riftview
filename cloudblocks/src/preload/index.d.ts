@@ -12,7 +12,7 @@ interface Window {
     onCliOutput(cb: (data: { line: string; stream: 'stdout' | 'stderr' }) => void): () => void
     onCliDone(cb: (data: { code: number }) => void): () => void
     onScanKeypairs(cb: (pairs: string[]) => void): () => void
-    getSettings(): Promise<import('../renderer/store/cloud').Settings>
-    setSettings(s: import('../renderer/store/cloud').Settings): Promise<void>
+    getSettings(): Promise<import('../renderer/types/cloud').Settings>
+    setSettings(s: import('../renderer/types/cloud').Settings): Promise<void>
   }
 }

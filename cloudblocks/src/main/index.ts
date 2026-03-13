@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { registerHandlers } from './ipc/handlers'
 
