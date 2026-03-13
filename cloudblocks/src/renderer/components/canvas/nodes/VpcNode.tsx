@@ -3,7 +3,7 @@ import type { NodeProps } from '@xyflow/react'
 interface VpcNodeData { label: string }
 
 export function VpcNode({ data }: NodeProps) {
-  const d = data as VpcNodeData
+  const d = data as unknown as VpcNodeData
   return (
     <div
       className="rounded-lg p-2"

@@ -17,7 +17,7 @@ const CREATABLE = [
   { resource: 'alb',    label: 'New ALB' },
 ] as const
 
-export function CanvasContextMenu({ x, y, onClose }: Props): JSX.Element {
+export function CanvasContextMenu({ x, y, onClose }: Props){
   const setActiveCreate = useCloudStore((s) => s.setActiveCreate)
   const [pendingResource, setPendingResource] = useState<string | null>(null)
 

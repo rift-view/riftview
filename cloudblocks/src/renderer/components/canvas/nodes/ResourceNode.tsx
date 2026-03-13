@@ -2,11 +2,12 @@ import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { NodeStatus, NodeType } from '../../../types/cloud'
 
 const STATUS_COLORS: Record<NodeStatus, string> = {
-  running: '#28c840',
-  stopped: '#ff5f57',
-  pending: '#febc2e',
-  error:   '#ff5f57',
-  unknown: '#666666',
+  running:  '#28c840',
+  stopped:  '#ff5f57',
+  pending:  '#febc2e',
+  error:    '#ff5f57',
+  unknown:  '#666666',
+  creating: '#febc2e',
 }
 
 const TYPE_BORDER: Record<NodeType, string> = {
@@ -28,7 +29,7 @@ interface ResourceNodeData {
 }
 
 export function ResourceNode({ data, selected }: NodeProps) {
-  const d = data as ResourceNodeData
+  const d = data as unknown as ResourceNodeData
   const borderColor = TYPE_BORDER[d.nodeType] ?? '#555'
   const statusColor = STATUS_COLORS[d.status] ?? '#666'
 

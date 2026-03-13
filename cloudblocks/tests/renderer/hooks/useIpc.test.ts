@@ -16,6 +16,12 @@ beforeEach(() => {
     onScanStatus:   vi.fn().mockReturnValue(unsubStatus),
     onConnStatus:   vi.fn().mockReturnValue(vi.fn()),
     onScanKeypairs: vi.fn().mockReturnValue(vi.fn()),
+    runCli:        vi.fn().mockResolvedValue({ code: 0 }),
+    cancelCli:     vi.fn(),
+    onCliOutput:   vi.fn().mockReturnValue(vi.fn()),
+    onCliDone:     vi.fn().mockReturnValue(vi.fn()),
+    getSettings:   vi.fn().mockResolvedValue({ deleteConfirmStyle: 'type-to-confirm', scanInterval: 30 }),
+    setSettings:   vi.fn().mockResolvedValue(undefined),
   }
   useCloudStore.setState({ nodes: [], selectedNodeId: null, scanStatus: 'idle', profile: 'default', region: 'us-east-1', view: 'topology' })
 })
