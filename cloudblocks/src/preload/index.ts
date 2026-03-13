@@ -1,67 +1,49 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import type { ScanDelta } from '../renderer/types/cloud'
 import { IPC } from '../main/ipc/channels'
-import type { AwsProfile, ScanDelta } from '../renderer/types/cloud'
-import type { CreateParams } from '../renderer/types/create'
 
 contextBridge.exposeInMainWorld('cloudblocks', {
-  listProfiles: (): Promise<AwsProfile[]> =>
-    ipcRenderer.invoke(IPC.PROFILES_LIST),
-
-  selectProfile: (name: string): Promise<void> =>
-    ipcRenderer.invoke(IPC.PROFILE_SELECT, name),
-
-  selectRegion: (region: string): Promise<void> =>
-    ipcRenderer.invoke(IPC.REGION_SELECT, region),
-
-  startScan: (): Promise<void> =>
-    ipcRenderer.invoke(IPC.SCAN_START),
+  listProfiles: () => ipcRenderer.invoke(IPC.PROFILES_LIST),
+  selectProfile: (name: string) => ipcRenderer.invoke(IPC.PROFILE_SELECT, name),
+  selectRegion: (region: string) => ipcRenderer.invoke(IPC.REGION_SELECT, region),
+  startScan: () => ipcRenderer.invoke(IPC.SCAN_START),
 
   onScanDelta: (cb: (delta: ScanDelta) => void) => {
-    ipcRenderer.on(IPC.SCAN_DELTA, (_event, delta) => cb(delta))
-    return () => ipcRenderer.removeAllListeners(IPC.SCAN_DELTA)
+    const handler = (_e: Electron.IpcRendererEvent, delta: ScanDelta) => cb(delta)
+    ipcRenderer.on(IPC.SCAN_DELTA, handler)
+    return () => ipcRenderer.removeListener(IPC.SCAN_DELTA, handler)
   },
-
   onScanStatus: (cb: (status: string) => void) => {
-    ipcRenderer.on(IPC.SCAN_STATUS, (_event, status) => cb(status))
-    return () => ipcRenderer.removeAllListeners(IPC.SCAN_STATUS)
+    const handler = (_e: Electron.IpcRendererEvent, s: string) => cb(s)
+    ipcRenderer.on(IPC.SCAN_STATUS, handler)
+    return () => ipcRenderer.removeListener(IPC.SCAN_STATUS, handler)
   },
-
   onConnStatus: (cb: (status: string) => void) => {
-    ipcRenderer.on(IPC.CONN_STATUS, (_event, status) => cb(status))
-    return () => ipcRenderer.removeAllListeners(IPC.CONN_STATUS)
+    const handler = (_e: Electron.IpcRendererEvent, s: string) => cb(s)
+    ipcRenderer.on(IPC.CONN_STATUS, handler)
+    return () => ipcRenderer.removeListener(IPC.CONN_STATUS, handler)
   },
 
-  runCli: (params: CreateParams): Promise<{ code: number }> =>
-    ipcRenderer.invoke(IPC.CLI_RUN, params),
-
-  cancelCli: (): void =>
-    ipcRenderer.send(IPC.CLI_CANCEL),
-
-  onCliOutput: (cb: (entry: { line: string; stream: 'stdout' | 'stderr' }) => void) => {
-    ipcRenderer.on(IPC.CLI_OUTPUT, (_event, entry) => cb(entry))
-    return () => ipcRenderer.removeAllListeners(IPC.CLI_OUTPUT)
+  onScanKeypairs: (cb: (pairs: string[]) => void) => {
+    const handler = (_e: Electron.IpcRendererEvent, pairs: string[]) => cb(pairs)
+    ipcRenderer.on(IPC.SCAN_KEYPAIRS, handler)
+    return () => ipcRenderer.removeListener(IPC.SCAN_KEYPAIRS, handler)
   },
 
-  onCliDone: (cb: (result: { code: number }) => void) => {
-    ipcRenderer.on(IPC.CLI_DONE, (_event, result) => cb(result))
-    return () => ipcRenderer.removeAllListeners(IPC.CLI_DONE)
+  getSettings: () => ipcRenderer.invoke(IPC.SETTINGS_GET),
+  setSettings: (s: import('../renderer/store/cloud').Settings) => ipcRenderer.invoke(IPC.SETTINGS_SET, s),
+
+  // CLI — renderer sends pre-built string[][] argv arrays
+  runCli: (commands: string[][]) => ipcRenderer.invoke(IPC.CLI_RUN, commands),
+  cancelCli: () => ipcRenderer.send(IPC.CLI_CANCEL),
+  onCliOutput: (cb: (data: { line: string; stream: 'stdout' | 'stderr' }) => void) => {
+    const handler = (_e: Electron.IpcRendererEvent, data: { line: string; stream: 'stdout' | 'stderr' }) => cb(data)
+    ipcRenderer.on(IPC.CLI_OUTPUT, handler)
+    return () => ipcRenderer.removeListener(IPC.CLI_OUTPUT, handler)
+  },
+  onCliDone: (cb: (data: { code: number }) => void) => {
+    const handler = (_e: Electron.IpcRendererEvent, data: { code: number }) => cb(data)
+    ipcRenderer.on(IPC.CLI_DONE, handler)
+    return () => ipcRenderer.removeListener(IPC.CLI_DONE, handler)
   },
 })
-
-declare global {
-  interface Window {
-    cloudblocks: {
-      listProfiles: () => Promise<AwsProfile[]>
-      selectProfile: (name: string) => Promise<void>
-      selectRegion: (region: string) => Promise<void>
-      startScan: () => Promise<void>
-      onScanDelta: (cb: (delta: ScanDelta) => void) => () => void
-      onScanStatus: (cb: (status: string) => void) => () => void
-      onConnStatus: (cb: (status: string) => void) => () => void
-      runCli:      (params: CreateParams) => Promise<{ code: number }>
-      cancelCli:   () => void
-      onCliOutput: (cb: (entry: { line: string; stream: 'stdout' | 'stderr' }) => void) => () => void
-      onCliDone:   (cb: (result: { code: number }) => void) => () => void
-    }
-  }
-}

@@ -2,7 +2,7 @@ import { BrowserWindow } from 'electron'
 import { IPC } from '../ipc/channels'
 import type { AwsClients } from './client'
 import type { CloudNode, ScanDelta } from '../../renderer/types/cloud'
-import { describeInstances, describeVpcs, describeSubnets, describeSecurityGroups } from './services/ec2'
+import { describeInstances, describeVpcs, describeSubnets, describeSecurityGroups, describeKeyPairs } from './services/ec2'
 import { describeDBInstances } from './services/rds'
 import { listBuckets } from './services/s3'
 import { listFunctions } from './services/lambda'
@@ -85,6 +85,11 @@ export class ResourceScanner {
       this.currentNodes = nextNodes
       this.window.webContents.send(IPC.SCAN_DELTA, delta)
       this.window.webContents.send(IPC.SCAN_STATUS, 'idle')
+
+      // Also scan key pairs and broadcast to renderer
+      const keyPairs = await describeKeyPairs(this.clients.ec2)
+      this.window.webContents.send(IPC.SCAN_KEYPAIRS, keyPairs)
+
       // Signal successful connection on the first scan that completes
       this.window.webContents.send(IPC.CONN_STATUS, 'connected')
     } catch (err) {

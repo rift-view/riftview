@@ -8,10 +8,13 @@ interface Props {
 }
 
 const CREATABLE = [
-  { resource: 'vpc', label: 'New VPC' },
-  { resource: 'ec2', label: 'New EC2 Instance' },
-  { resource: 'sg',  label: 'New Security Group' },
-  { resource: 's3',  label: 'New S3 Bucket' },
+  { resource: 'vpc',    label: 'New VPC' },
+  { resource: 'ec2',    label: 'New EC2 Instance' },
+  { resource: 'sg',     label: 'New Security Group' },
+  { resource: 's3',     label: 'New S3 Bucket' },
+  { resource: 'rds',    label: 'New RDS Instance' },
+  { resource: 'lambda', label: 'New Lambda Function' },
+  { resource: 'alb',    label: 'New ALB' },
 ] as const
 
 export function CanvasContextMenu({ x, y, onClose }: Props): JSX.Element {

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useCloudStore } from '../../store/cloud'
 import { buildCommands } from '../../utils/buildCommand'
 import type { CreateParams } from '../../types/create'
@@ -7,20 +7,43 @@ import { VpcForm } from './VpcForm'
 import { Ec2Form } from './Ec2Form'
 import { SgForm } from './SgForm'
 import { S3Form } from './S3Form'
+import { RdsForm } from './RdsForm'
+import { LambdaForm } from './LambdaForm'
+import { AlbForm } from './AlbForm'
+
+function validateParams(params: CreateParams | null): boolean {
+  if (!params) return false
+  switch (params.resource) {
+    case 'vpc':    return !!(params.name && params.cidr)
+    case 'ec2':    return !!(params.name && params.amiId && params.instanceType)
+    case 'sg':     return !!(params.name && params.description && params.vpcId)
+    case 's3':     return !!(params.bucketName)
+    case 'rds':    return !!(params.identifier && params.masterUsername && params.masterPassword)
+    case 'lambda': return !!(params.name && params.roleArn && params.handler)
+    case 'alb':    return !!(params.name && params.subnetIds.length >= 2 && params.securityGroupIds.length >= 1)
+    default:       return true
+  }
+}
 
 const TITLES: Record<string, string> = {
-  vpc: 'New VPC',
-  ec2: 'New EC2 Instance',
-  sg:  'New Security Group',
-  s3:  'New S3 Bucket',
+  vpc:    'New VPC',
+  ec2:    'New EC2 Instance',
+  sg:     'New Security Group',
+  s3:     'New S3 Bucket',
+  rds:    'New RDS Instance',
+  lambda: 'New Lambda Function',
+  alb:    'New ALB',
 }
 
 // Maps form resource identifier to CloudNode NodeType
 const RESOURCE_TO_NODE_TYPE: Record<string, NodeType> = {
-  vpc: 'vpc',
-  ec2: 'ec2',
-  sg:  'security-group',
-  s3:  's3',
+  vpc:    'vpc',
+  ec2:    'ec2',
+  sg:     'security-group',
+  s3:     's3',
+  rds:    'rds',
+  lambda: 'lambda',
+  alb:    'alb',
 }
 
 export function CreateModal(): JSX.Element | null {
@@ -31,6 +54,8 @@ export function CreateModal(): JSX.Element | null {
   const clearCliOutput    = useCloudStore((s) => s.clearCliOutput)
   const addPendingNode    = useCloudStore((s) => s.addPendingNode)
   const removePendingNode = useCloudStore((s) => s.removePendingNode)
+
+  const [showErrors, setShowErrors] = useState(false)
 
   const pendingIdRef  = useRef<string | null>(null)
   const paramsRef     = useRef<CreateParams | null>(null)
@@ -50,8 +75,8 @@ export function CreateModal(): JSX.Element | null {
   function handleChange(params: CreateParams): void {
     paramsRef.current = params
     try {
-      const cmds = buildCommands(params)
-      setCommandPreview(cmds.map((c) => 'aws ' + c.join(' ')).join('\n'))
+      const preview = buildCommands(params).map(argv => 'aws ' + argv.join(' '))
+      setCommandPreview(preview)
     } catch {
       // incomplete form — ignore preview update
     }
@@ -60,12 +85,17 @@ export function CreateModal(): JSX.Element | null {
   function handleCancel(): void {
     if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
     clearCliOutput()
-    setCommandPreview('')
+    setCommandPreview([])
     setActiveCreate(null)
   }
 
   function handleRun(): void {
-    if (!paramsRef.current) return
+    const isValid = validateParams(paramsRef.current)
+    if (!isValid) {
+      setShowErrors(true)
+      return
+    }
+    setShowErrors(false)
     const id = `pending:${crypto.randomUUID()}`
     pendingIdRef.current = id
     addPendingNode({
@@ -78,15 +108,21 @@ export function CreateModal(): JSX.Element | null {
     })
     clearCliOutput()
 
-    window.cloudblocks.runCli(paramsRef.current).then((result) => {
-      if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
-      pendingIdRef.current = null
-      if (result.code === 0) {
-        setCommandPreview('')
-        setActiveCreate(null)
-        window.cloudblocks.startScan()
-      }
-    })
+    const commands = buildCommands(paramsRef.current)
+    window.cloudblocks.runCli(commands)
+      .then((result) => {
+        if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
+        pendingIdRef.current = null
+        if (result.code === 0) {
+          setCommandPreview([])
+          setActiveCreate(null)
+          window.cloudblocks.startScan()
+        }
+      })
+      .catch(() => {
+        if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
+        pendingIdRef.current = null
+      })
   }
 
   // Update the ref each render so the event listener always calls the latest version
@@ -109,10 +145,13 @@ export function CreateModal(): JSX.Element | null {
           {TITLES[activeCreate.resource] ?? 'New Resource'}
         </div>
 
-        {activeCreate.resource === 'vpc' && <VpcForm onChange={handleChange} />}
-        {activeCreate.resource === 'ec2' && <Ec2Form onChange={handleChange} />}
-        {activeCreate.resource === 'sg'  && <SgForm  onChange={handleChange} />}
-        {activeCreate.resource === 's3'  && <S3Form  onChange={handleChange} />}
+        {activeCreate.resource === 'vpc'    && <VpcForm    onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'ec2'    && <Ec2Form    onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'sg'     && <SgForm     onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 's3'     && <S3Form     onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'rds'    && <RdsForm    onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'lambda' && <LambdaForm onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'alb'    && <AlbForm    onChange={handleChange} showErrors={showErrors} />}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid #1e2d40' }}>
           <button

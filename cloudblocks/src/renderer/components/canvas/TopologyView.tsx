@@ -81,15 +81,21 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Nod
   return nodes
 }
 
-export function TopologyView(): JSX.Element {
+interface TopologyViewProps {
+  onNodeContextMenu: (node: CloudNode, x: number, y: number) => void
+}
+
+export function TopologyView({ onNodeContextMenu }: TopologyViewProps): JSX.Element {
   const cloudNodes   = useCloudStore((s) => s.nodes)
   const pendingNodes = useCloudStore((s) => s.pendingNodes)
   const selectNode = useCloudStore((s) => s.selectNode)
   const selectedId = useCloudStore((s) => s.selectedNodeId)
 
+  const allNodes = useMemo(() => [...cloudNodes, ...pendingNodes], [cloudNodes, pendingNodes])
+
   const flowNodes: Node[] = useMemo(
-    () => buildFlowNodes([...cloudNodes, ...pendingNodes], selectedId),
-    [cloudNodes, pendingNodes, selectedId],
+    () => buildFlowNodes(allNodes, selectedId),
+    [allNodes, selectedId],
   )
 
   const flowEdges: Edge[] = []  // Topology view uses nesting, not edges
@@ -101,6 +107,11 @@ export function TopologyView(): JSX.Element {
       nodeTypes={NODE_TYPES}
       onNodeClick={(_e, node) => selectNode(node.id)}
       onPaneClick={() => selectNode(null)}
+      onNodeContextMenu={(event, rfNode) => {
+        event.preventDefault()
+        const cloudNode = allNodes.find((n) => n.id === rfNode.id)
+        if (cloudNode) onNodeContextMenu(cloudNode, event.clientX, event.clientY)
+      }}
       fitView
       style={{ background: '#080c14' }}
     >

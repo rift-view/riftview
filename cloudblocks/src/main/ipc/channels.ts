@@ -10,6 +10,9 @@ export const IPC = {
   CLI_OUTPUT:     'cli:output',
   CLI_DONE:       'cli:done',
   CLI_CANCEL:     'cli:cancel',
+  SCAN_KEYPAIRS:  'scan:keypairs',   // on → (keyPairs: string[])
+  SETTINGS_GET:   'settings:get',    // invoke → Settings
+  SETTINGS_SET:   'settings:set',    // invoke → void
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]
