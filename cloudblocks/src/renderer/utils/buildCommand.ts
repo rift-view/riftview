@@ -1,4 +1,4 @@
-import type { CreateParams, SgParams, S3Params } from '../types/create'
+import type { CreateParams, SgParams, S3Params, RdsParams, LambdaParams, AlbParams } from '../types/create'
 
 /**
  * Returns an array of argv arrays — one per aws CLI command.
@@ -38,7 +38,54 @@ export function buildCommands(params: CreateParams): string[][] {
 
     case 's3':
       return buildS3Commands(params)
+
+    case 'rds':    return buildRdsCommands(params as RdsParams)
+    case 'lambda': return buildLambdaCommands(params as LambdaParams)
+    case 'alb':    return buildAlbCommands(params as AlbParams)
   }
+}
+
+function buildRdsCommands(p: RdsParams): string[][] {
+  const args = [
+    'rds', 'create-db-instance',
+    '--db-instance-identifier', p.identifier,
+    '--db-instance-class', p.instanceClass,
+    '--engine', p.engine,
+    '--master-username', p.masterUsername,
+    '--master-user-password', p.masterPassword,
+    '--allocated-storage', String(p.allocatedStorage),
+  ]
+  if (p.multiAZ) args.push('--multi-az')
+  if (p.publiclyAccessible) args.push('--publicly-accessible')
+  else args.push('--no-publicly-accessible')
+  return [args]
+}
+
+function buildLambdaCommands(p: LambdaParams): string[][] {
+  const args = [
+    'lambda', 'create-function',
+    '--function-name', p.name,
+    '--runtime', p.runtime,
+    '--handler', p.handler,
+    '--role', p.roleArn,
+    '--code', 'ZipFile=fileb://function.zip',
+    '--memory-size', String(p.memorySize),
+    '--timeout', String(p.timeout),
+  ]
+  if (p.vpcId && p.subnetIds && p.securityGroupIds) {
+    args.push('--vpc-config', `SubnetIds=${p.subnetIds.join(',')},SecurityGroupIds=${p.securityGroupIds.join(',')}`)
+  }
+  return [args]
+}
+
+function buildAlbCommands(p: AlbParams): string[][] {
+  return [[
+    'elbv2', 'create-load-balancer',
+    '--name', p.name,
+    '--scheme', p.scheme,
+    '--subnets', ...p.subnetIds,
+    '--security-groups', ...p.securityGroupIds,
+  ]]
 }
 
 function buildSgCommands(params: SgParams): string[][] {
