@@ -30,11 +30,10 @@ describe('buildEditCommands — EC2', () => {
     ])
   })
 
-  it('instance type change on stopped instance: modify + start only', () => {
+  it('instance type change on stopped instance: modify only, no start', () => {
     const cmds = buildEditCommands(node('ec2', 'i-123', 'stopped'), { resource: 'ec2', instanceType: 't3.large' })
     expect(cmds).toEqual([
       ['ec2', 'modify-instance-attribute', '--instance-id', 'i-123', '--instance-type', 'Value=t3.large'],
-      ['ec2', 'start-instances', '--instance-ids', 'i-123'],
     ])
   })
 })
