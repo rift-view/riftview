@@ -53,6 +53,12 @@ export default function App(): JSX.Element {
     }
   }
 
+  const handleQuickAction = (node: CloudNode, action: 'stop' | 'start' | 'reboot') => {
+    const cmds = buildQuickActionCommand(node, action)
+    setCommandPreview(cmds.map(a => 'aws ' + a.join(' ')))
+    setPendingCommand(cmds)
+  }
+
   const handleNodeContextMenu = (node: CloudNode, x: number, y: number) => {
     setNodeMenu({ node, x, y })
   }
@@ -67,7 +73,7 @@ export default function App(): JSX.Element {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <CloudCanvas onScan={triggerScan} onNodeContextMenu={handleNodeContextMenu} />
-        <Inspector onDelete={handleDeleteRequest} onEdit={node => setEditTarget(node)} />
+        <Inspector onDelete={handleDeleteRequest} onEdit={node => setEditTarget(node)} onQuickAction={handleQuickAction} />
       </div>
       <CommandDrawer />
       <CreateModal />
