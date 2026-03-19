@@ -5,11 +5,11 @@ import { useCloudStore } from '../../store/cloud'
 
 interface Props { node: CloudNode; onChange: (p: Ec2EditParams) => void }
 
-const inp: React.CSSProperties = { width: '100%', background: '#060d14', border: '1px solid #30363d', borderRadius: 3, padding: '3px 6px', color: '#eee', fontFamily: 'monospace', fontSize: 10, boxSizing: 'border-box' as const }
+const inp: React.CSSProperties = { width: '100%', background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)', borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10, boxSizing: 'border-box' as const }
 const sel = inp
-const lbl: React.CSSProperties = { fontSize: 9, color: '#555', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
+const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
 
-export default function Ec2EditForm({ node, onChange }: Props) {
+export default function Ec2EditForm({ node, onChange }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
   const [name, setName]       = useState((node.metadata.name as string) ?? node.label)
   const [instType, setInstType] = useState((node.metadata.instanceType as string) ?? 't3.micro')
@@ -17,10 +17,10 @@ export default function Ec2EditForm({ node, onChange }: Props) {
 
   const sgs = nodes.filter(n => n.type === 'security-group')
 
-  const emit = (overrides: Partial<Ec2EditParams>) =>
+  const emit = (overrides: Partial<Ec2EditParams>): void =>
     onChange({ resource: 'ec2', name, instanceType: instType, securityGroupIds: sgIds, ...overrides })
 
-  const toggleSg = (id: string) => {
+  const toggleSg = (id: string): void => {
     const next = sgIds.includes(id) ? sgIds.filter(x => x !== id) : [...sgIds, id]
     setSgIds(next)
     emit({ securityGroupIds: next })
@@ -38,7 +38,7 @@ export default function Ec2EditForm({ node, onChange }: Props) {
         <>
           <div style={lbl}>Security groups</div>
           {sgs.map(sg => (
-            <label key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, fontSize: 10, color: '#aaa', cursor: 'pointer' }}>
+            <label key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, fontSize: 10, color: 'var(--cb-text-secondary)', cursor: 'pointer' }}>
               <input type="checkbox" checked={sgIds.includes(sg.id)} onChange={() => toggleSg(sg.id)} />
               {sg.label} ({sg.id})
             </label>

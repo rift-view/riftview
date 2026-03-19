@@ -2,31 +2,31 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock all AWS SDK clients before importing client.ts
 vi.mock('@aws-sdk/client-ec2', () => {
-  const EC2Client = vi.fn(function(this: any) {
+  const EC2Client = vi.fn(function(this: { send: ReturnType<typeof vi.fn> }) {
     this.send = vi.fn()
   })
   return { EC2Client }
 })
 vi.mock('@aws-sdk/client-rds', () => {
-  const RDSClient = vi.fn(function(this: any) {
+  const RDSClient = vi.fn(function(this: { send: ReturnType<typeof vi.fn> }) {
     this.send = vi.fn()
   })
   return { RDSClient }
 })
 vi.mock('@aws-sdk/client-s3', () => {
-  const S3Client = vi.fn(function(this: any) {
+  const S3Client = vi.fn(function(this: { send: ReturnType<typeof vi.fn> }) {
     this.send = vi.fn()
   })
   return { S3Client }
 })
 vi.mock('@aws-sdk/client-lambda', () => {
-  const LambdaClient = vi.fn(function(this: any) {
+  const LambdaClient = vi.fn(function(this: { send: ReturnType<typeof vi.fn> }) {
     this.send = vi.fn()
   })
   return { LambdaClient }
 })
 vi.mock('@aws-sdk/client-elastic-load-balancing-v2', () => {
-  const ElasticLoadBalancingV2Client = vi.fn(function(this: any) {
+  const ElasticLoadBalancingV2Client = vi.fn(function(this: { send: ReturnType<typeof vi.fn> }) {
     this.send = vi.fn()
   })
   return { ElasticLoadBalancingV2Client }

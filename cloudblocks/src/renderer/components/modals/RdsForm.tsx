@@ -4,12 +4,12 @@ import { useCloudStore } from '../../store/cloud'
 
 interface Props { onChange: (p: RdsParams) => void; showErrors?: boolean }
 
-const inp = (err: boolean): React.CSSProperties => ({ width: '100%', background: '#060d14', border: `1px solid ${err ? '#ff5f57' : '#30363d'}`, borderRadius: 3, padding: '3px 6px', color: '#eee', fontFamily: 'monospace', fontSize: 10, boxSizing: 'border-box' as const })
+const inp = (err: boolean): React.CSSProperties => ({ width: '100%', background: 'var(--cb-bg-panel)', border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`, borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10, boxSizing: 'border-box' as const })
 const sel = (err: boolean): React.CSSProperties => ({ ...inp(err), cursor: 'pointer' })
-const lbl: React.CSSProperties = { fontSize: 9, color: '#555', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
+const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
 const row: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }
 
-export function RdsForm({ onChange, showErrors }: Props) {
+export function RdsForm({ onChange, showErrors }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
   const vpcs  = nodes.filter(n => n.type === 'vpc')
 
@@ -19,7 +19,7 @@ export function RdsForm({ onChange, showErrors }: Props) {
     multiAZ: false, publiclyAccessible: false, vpcId: '',
   })
 
-  const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => {
+  const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]): void => {
     const next = { ...form, [k]: v }
     setForm(next)
     onChange({ resource: 'rds', ...next })
@@ -56,8 +56,8 @@ export function RdsForm({ onChange, showErrors }: Props) {
           </select>
         </>
       )}
-      <label style={row}><input type="checkbox" checked={form.multiAZ} onChange={e => update('multiAZ', e.target.checked)} /><span style={{ fontSize: 10, color: '#aaa' }}>Multi-AZ</span></label>
-      <label style={row}><input type="checkbox" checked={form.publiclyAccessible} onChange={e => update('publiclyAccessible', e.target.checked)} /><span style={{ fontSize: 10, color: '#aaa' }}>Publicly accessible</span></label>
+      <label style={row}><input type="checkbox" checked={form.multiAZ} onChange={e => update('multiAZ', e.target.checked)} /><span style={{ fontSize: 10, color: 'var(--cb-text-secondary)' }}>Multi-AZ</span></label>
+      <label style={row}><input type="checkbox" checked={form.publiclyAccessible} onChange={e => update('publiclyAccessible', e.target.checked)} /><span style={{ fontSize: 10, color: 'var(--cb-text-secondary)' }}>Publicly accessible</span></label>
     </div>
   )
 }
