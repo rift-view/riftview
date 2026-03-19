@@ -13,7 +13,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   rds: 'RDS Instance', s3: 'S3 Bucket', lambda: 'Lambda Function', alb: 'Load Balancer',
 }
 
-export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogProps) {
+export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogProps): React.JSX.Element {
   const [input, setInput] = useState('')
   const [skipSnapshot, setSkipSnapshot] = useState(false)
   const [force, setForce] = useState(false)
@@ -25,7 +25,7 @@ export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogP
     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200,
   }
   const dialog: React.CSSProperties = {
-    background: '#0d1117', border: '1px solid #ff5f57', borderRadius: 8,
+    background: 'var(--cb-bg-panel)', border: '1px solid #ff5f57', borderRadius: 8,
     padding: 20, width: 340, fontFamily: 'monospace',
   }
 
@@ -35,8 +35,8 @@ export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogP
         <div style={{ color: '#ff5f57', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>
           Delete {RESOURCE_LABELS[node.type] ?? node.type}?
         </div>
-        <div style={{ color: '#aaa', fontSize: 10, marginBottom: 4 }}>
-          Type <span style={{ color: '#eee' }}>{node.id}</span> to confirm
+        <div style={{ color: 'var(--cb-text-secondary)', fontSize: 10, marginBottom: 4 }}>
+          Type <span style={{ color: 'var(--cb-text-primary)' }}>{node.id}</span> to confirm
         </div>
         <input
           autoFocus
@@ -44,32 +44,32 @@ export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogP
           value={input}
           onChange={e => setInput(e.target.value)}
           style={{
-            width: '100%', background: '#060d14', border: '1px solid #30363d',
-            borderRadius: 3, padding: '4px 8px', color: '#eee',
+            width: '100%', background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)',
+            borderRadius: 3, padding: '4px 8px', color: 'var(--cb-text-primary)',
             fontFamily: 'monospace', fontSize: 11, boxSizing: 'border-box', marginBottom: 10,
           }}
         />
 
         {node.type === 's3' && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#aaa', marginBottom: 8, cursor: 'pointer' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--cb-text-secondary)', marginBottom: 8, cursor: 'pointer' }}>
             <input type="checkbox" checked={force} onChange={e => setForce(e.target.checked)} />
             Force delete (removes all objects)
           </label>
         )}
 
         {node.type === 'rds' && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#aaa', marginBottom: 8, cursor: 'pointer' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--cb-text-secondary)', marginBottom: 8, cursor: 'pointer' }}>
             <input type="checkbox" checked={skipSnapshot} onChange={e => setSkipSnapshot(e.target.checked)} />
             Skip final snapshot
           </label>
         )}
 
-        <div style={{ color: '#555', fontSize: 9, marginBottom: 12 }}>This action cannot be undone.</div>
+        <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, marginBottom: 12 }}>This action cannot be undone.</div>
 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}
-            style={{ background: '#1a2332', border: '1px solid #30363d', borderRadius: 3, padding: '4px 14px', color: '#aaa', fontFamily: 'monospace', fontSize: 11, cursor: 'pointer' }}
+            style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 3, padding: '4px 14px', color: 'var(--cb-text-secondary)', fontFamily: 'monospace', fontSize: 11, cursor: 'pointer' }}
           >
             Cancel
           </button>

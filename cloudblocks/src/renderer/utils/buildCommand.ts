@@ -1,4 +1,4 @@
-import type { CreateParams, SgParams, S3Params, RdsParams, LambdaParams, AlbParams } from '../types/create'
+import type { CreateParams, SgParams, S3Params, RdsParams, LambdaParams, AlbParams, AcmParams, ApigwParams, ApigwRouteParams } from '../types/create'
 
 /**
  * Returns an array of argv arrays — one per aws CLI command.
@@ -39,9 +39,13 @@ export function buildCommands(params: CreateParams): string[][] {
     case 's3':
       return buildS3Commands(params)
 
-    case 'rds':    return buildRdsCommands(params as RdsParams)
-    case 'lambda': return buildLambdaCommands(params as LambdaParams)
-    case 'alb':    return buildAlbCommands(params as AlbParams)
+    case 'rds':        return buildRdsCommands(params as RdsParams)
+    case 'lambda':     return buildLambdaCommands(params as LambdaParams)
+    case 'alb':        return buildAlbCommands(params as AlbParams)
+    case 'acm':        return buildAcmCommands(params as AcmParams)
+    case 'cloudfront': return []   // CloudFront create uses SDK via IPC, not CLI
+    case 'apigw':      return buildApigwCommands(params as ApigwParams)
+    case 'apigw-route': return buildApigwRouteCommands(params as ApigwRouteParams)
   }
 }
 
@@ -107,6 +111,38 @@ function buildSgCommands(params: SgParams): string[][] {
   ])
 
   return [create, ...authorizes]
+}
+
+function buildApigwCommands(p: ApigwParams): string[][] {
+  const args = [
+    'apigatewayv2', 'create-api',
+    '--name', p.name,
+    '--protocol-type', 'HTTP',
+  ]
+  if (p.corsOrigins.length > 0) {
+    args.push('--cors-configuration', `AllowOrigins=${p.corsOrigins.join(',')},AllowMethods=*,AllowHeaders=*`)
+  }
+  return [args]
+}
+
+function buildApigwRouteCommands(p: ApigwRouteParams): string[][] {
+  return [[
+    'apigatewayv2', 'create-route',
+    '--api-id', p.apiId,
+    '--route-key', `${p.method} ${p.path}`,
+  ]]
+}
+
+function buildAcmCommands(p: AcmParams): string[][] {
+  const args = [
+    'acm', 'request-certificate',
+    '--domain-name', p.domainName,
+    '--validation-method', p.validationMethod,
+  ]
+  if (p.subjectAlternativeNames.length > 0) {
+    args.push('--subject-alternative-names', ...p.subjectAlternativeNames)
+  }
+  return [args]
 }
 
 function buildS3Commands(params: S3Params): string[][] {

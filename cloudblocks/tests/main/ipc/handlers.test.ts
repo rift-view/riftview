@@ -28,7 +28,7 @@ describe('registerHandlers', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('registers all required IPC handlers', () => {
-    const mockWin = { webContents: { send: vi.fn() } } as any
+    const mockWin = { webContents: { send: vi.fn() } } as unknown as Electron.BrowserWindow
     registerHandlers(mockWin)
     const registeredChannels = vi.mocked(ipcMain.handle).mock.calls.map((c) => c[0])
     expect(registeredChannels).toContain('profiles:list')
@@ -41,11 +41,11 @@ describe('registerHandlers', () => {
   })
 
   it('profiles:list handler returns listProfiles result', async () => {
-    const mockWin = { webContents: { send: vi.fn() } } as any
+    const mockWin = { webContents: { send: vi.fn() } } as unknown as Electron.BrowserWindow
     registerHandlers(mockWin)
     const handler = vi.mocked(ipcMain.handle).mock.calls.find((c) => c[0] === 'profiles:list')?.[1]
     expect(handler).toBeDefined()
-    const result = await handler!({} as any)
+    const result = await handler!({} as Electron.IpcMainInvokeEvent)
     expect(result).toEqual([{ name: 'default' }])
   })
 })

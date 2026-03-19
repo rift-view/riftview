@@ -14,5 +14,11 @@ interface Window {
     onScanKeypairs(cb: (pairs: string[]) => void): () => void
     getSettings(): Promise<import('../renderer/types/cloud').Settings>
     setSettings(s: import('../renderer/types/cloud').Settings): Promise<void>
+    getThemeOverrides(): Promise<Record<string, string>>
+    createCloudFront(params: import('../renderer/types/create').CloudFrontParams): Promise<{ code: number }>
+    updateCloudFront(id: string, params: import('../renderer/types/edit').CloudFrontEditParams): Promise<{ code: number }>
+    deleteCloudFront(id: string): Promise<{ code: number }>
+    invalidateCloudFront(id: string, path: string): Promise<{ code: number }>
+    deleteAcm(arn: string): Promise<{ code: number }>
   }
 }

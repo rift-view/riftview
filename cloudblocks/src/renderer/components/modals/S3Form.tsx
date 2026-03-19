@@ -10,18 +10,18 @@ interface Props {
 function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
   return {
     width: '100%',
-    background: '#060d14',
-    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : '#30363d'}`,
+    background: 'var(--cb-bg-panel)',
+    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--cb-border)'}`,
     borderRadius: 3,
     padding: '3px 6px',
-    color: '#eee',
+    color: 'var(--cb-text-primary)',
     fontFamily: 'monospace',
     fontSize: 10,
     boxSizing: 'border-box' as const,
   }
 }
 
-export function S3Form({ onChange, showErrors = false }: Props){
+export function S3Form({ onChange, showErrors = false }: Props): React.JSX.Element {
   const currentRegion       = useCloudStore((s) => s.region)
   const [bucketName,        setBucketName]        = useState('')
   const [region,            setRegion]            = useState(currentRegion)
@@ -33,7 +33,7 @@ export function S3Form({ onChange, showErrors = false }: Props){
     onChange({ resource: 's3', ...next })
   }
 
-  const labelStyle: React.CSSProperties = { color: '#555', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
+  const labelStyle: React.CSSProperties = { color: 'var(--cb-text-muted)', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -43,7 +43,7 @@ export function S3Form({ onChange, showErrors = false }: Props){
         <input style={fieldStyle(region, false)} value={region} onChange={(e) => update({ region: e.target.value })} /></label>
       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
         <input type="checkbox" checked={blockPublicAccess} onChange={(e) => update({ blockPublicAccess: e.target.checked })} />
-        <span style={{ color: '#aaa', fontSize: '11px', fontFamily: 'monospace' }}>Block all public access</span>
+        <span style={{ color: 'var(--cb-text-secondary)', fontSize: '11px', fontFamily: 'monospace' }}>Block all public access</span>
       </label>
     </div>
   )

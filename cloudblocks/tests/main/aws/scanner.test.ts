@@ -7,7 +7,7 @@ vi.mock('electron', () => ({
 }))
 
 const makeNode = (id: string, status = 'running', label = id): CloudNode => ({
-  id, type: 'ec2', label, status: status as any, region: 'us-east-1', metadata: {},
+  id, type: 'ec2', label, status: status as import('../../../src/renderer/types/cloud').NodeStatus, region: 'us-east-1', metadata: {},
 })
 
 describe('computeDelta', () => {
