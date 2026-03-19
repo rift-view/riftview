@@ -23,9 +23,9 @@ export async function listQueues(client: SQSClient, lambdaClient: LambdaClient, 
     nodes.map(async (node): Promise<CloudNode> => {
       const attrRes = await client
         .send(new GetQueueAttributesCommand({ QueueUrl: node.id, AttributeNames: ['QueueArn'] }))
-        .catch(() => ({ Attributes: {} }))
+        .catch((): { Attributes: Record<string, string> } => ({ Attributes: {} }))
 
-      const queueArn = attrRes.Attributes?.QueueArn
+      const queueArn = attrRes.Attributes?.['QueueArn']
       if (!queueArn) return node
 
       const mappingRes = await lambdaClient
