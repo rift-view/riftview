@@ -12,7 +12,8 @@ export async function listBuckets(client: S3Client, region: string): Promise<Clo
       region,
       metadata: { creationDate: b.CreationDate },
     }))
-  } catch {
+  } catch (err) {
+    console.error('[s3] listBuckets failed:', err)
     return []
   }
 }
