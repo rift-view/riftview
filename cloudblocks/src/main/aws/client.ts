@@ -40,7 +40,15 @@ export interface AwsClients {
 // Pass an optional endpoint to redirect all clients to a local emulator (e.g. LocalStack).
 export function createClients(profile: string, region: string, endpoint?: string): AwsClients {
   const endpointConfig = endpoint ? { endpoint } : {}
-  const config = { region, ...endpointConfig }
+
+  // Local emulators (LocalStack, etc.) don't validate credentials but the SDK still
+  // needs something to sign requests with. Provide static test credentials so the
+  // credential provider chain doesn't fail trying to resolve a non-existent profile.
+  const credentialsConfig = endpoint
+    ? { credentials: { accessKeyId: 'test', secretAccessKey: 'test' } }
+    : {}
+
+  const config = { region, ...endpointConfig, ...credentialsConfig }
 
   // Set AWS_PROFILE so the SDK credential provider picks up the right profile.
   process.env.AWS_PROFILE = profile
@@ -52,10 +60,10 @@ export function createClients(profile: string, region: string, endpoint?: string
   return {
     ec2:        new EC2Client(config),
     rds:        new RDSClient(config),
-    s3:         new S3Client({ region, ...(endpoint ? { endpoint, forcePathStyle: true } : {}) }),
+    s3:         new S3Client({ region, ...endpointConfig, ...credentialsConfig, ...(endpoint ? { forcePathStyle: true } : {}) }),
     lambda:     new LambdaClient(config),
     alb:        new ElasticLoadBalancingV2Client(config),
-    acm:        new ACMClient({ region: globalRegion, ...endpointConfig }),
+    acm:        new ACMClient({ region: globalRegion, ...endpointConfig, ...credentialsConfig }),
     cloudfront: new CloudFrontClient(config),
     apigw:      new ApiGatewayV2Client(config),
     sqs:        new SQSClient(config),
@@ -64,7 +72,7 @@ export function createClients(profile: string, region: string, endpoint?: string
     sns:        new SNSClient(config),
     dynamo:     new DynamoDBClient(config),
     ssm:        new SSMClient(config),
-    r53:        new Route53Client({ region: globalRegion, ...endpointConfig }),
+    r53:        new Route53Client({ region: globalRegion, ...endpointConfig, ...credentialsConfig }),
     sfn:        new SFNClient(config),
     eventbridge: new EventBridgeClient(config),
   }
