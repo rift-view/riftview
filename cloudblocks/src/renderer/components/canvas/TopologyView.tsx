@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useRef, useEffect } from 'react'
+import { useMemo, useCallback, useRef, useEffect, useState } from 'react'
 import { ReactFlow, Background, MiniMap, useReactFlow, type Node, type Edge, type NodeChange } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
@@ -376,14 +376,30 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
 
   const topologyPositions = nodePositions.topology
 
+  // Track in-flight drag positions so controlled nodes follow the mouse.
+  // Only persisted to the store on drag-end; cleared on drop.
+  const [livePositions, setLivePositions] = useState<Record<string, { x: number; y: number }>>({})
+
+  // Only top-level nodes (no parentId, not in global zone) have draggable positions
+  // we want to persist. Everything else (child nodes, phantom IDs) is ignored.
+  const topLevelNodeIds = useMemo(() => {
+    const set = new Set<string>()
+    allNodes.forEach((n) => {
+      if (!n.parentId && n.region !== 'global') set.add(n.id)
+    })
+    return set
+  }, [allNodes])
+
   const flowNodes: Node[] = useMemo(() => {
     const raw = buildFlowNodes(allNodes, selectedId, highlightedIds)
     return raw.map((n) => {
       if (n.extent === 'parent') return n  // never override child nodes
+      const live  = livePositions[n.id]
+      if (live) return { ...n, position: live }
       const saved = topologyPositions[n.id]
       return saved ? { ...n, position: saved } : n
     })
-  }, [allNodes, selectedId, highlightedIds, topologyPositions])
+  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
@@ -398,17 +414,32 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
     }
   }, [cloudNodes.length, fitView])
 
-  // Persist drag-end positions for top-level nodes only.
-  // Child nodes carry extent: 'parent' in flowNodes — look up by id to check before saving.
+  // Track drag positions in local state (so controlled nodes follow the mouse),
+  // and persist to the store only on drag-end.
   const onNodesChange = useCallback((changes: NodeChange[]) => {
+    const nextLive: Record<string, { x: number; y: number }> = {}
+    const toClear: string[] = []
+
     for (const change of changes) {
-      if (change.type === 'position' && change.position && !change.dragging) {
-        const rfNode = flowNodes.find((n) => n.id === change.id)
-        if (!rfNode || rfNode.extent === 'parent') continue
+      if (change.type !== 'position' || !change.position) continue
+      if (!topLevelNodeIds.has(change.id)) continue  // ignore child/phantom nodes
+
+      if (change.dragging) {
+        nextLive[change.id] = change.position
+      } else {
+        toClear.push(change.id)
         setNodePosition('topology', change.id, change.position)
       }
     }
-  }, [setNodePosition, flowNodes])
+
+    if (Object.keys(nextLive).length > 0 || toClear.length > 0) {
+      setLivePositions((prev) => {
+        const next = { ...prev, ...nextLive }
+        toClear.forEach((id) => delete next[id])
+        return next
+      })
+    }
+  }, [topLevelNodeIds, setNodePosition])
 
   const flowEdges: Edge[] = useMemo(() => {
     const raw = buildTopologyEdges(allNodes)
