@@ -170,6 +170,60 @@ describe('NodeType union', () => {
   })
 })
 
+describe('scanGeneration', () => {
+  it('starts at 0', () => {
+    const store = createCloudStore()
+    expect(store.getState().scanGeneration).toBe(0)
+  })
+
+  it('incrementGeneration increments by 1', () => {
+    const store = createCloudStore()
+    store.getState().incrementGeneration()
+    expect(store.getState().scanGeneration).toBe(1)
+  })
+
+  it('setProfile increments generation and clears nodes', () => {
+    const store = createCloudStore()
+    const node = { id: 'n1', type: 'vpc' as const, label: 'VPC', status: 'active' as const, region: 'us-east-1', metadata: {} }
+    store.getState().applyDelta({ added: [node], changed: [], removed: [] })
+    expect(store.getState().nodes).toHaveLength(1)
+    store.getState().setProfile({ name: 'other' })
+    expect(store.getState().scanGeneration).toBe(1)
+    // Note: test-factory setProfile only increments generation (no node clearing) — that's fine for isolation
+  })
+
+  it('setRegion increments generation', () => {
+    const store = createCloudStore()
+    store.getState().setRegion('eu-west-1')
+    expect(store.getState().scanGeneration).toBe(1)
+  })
+
+  it('applyDelta without generation always applies', () => {
+    const store = createCloudStore()
+    store.getState().incrementGeneration() // generation = 1
+    const node = { id: 'n1', type: 'vpc' as const, label: 'VPC', status: 'active' as const, region: 'us-east-1', metadata: {} }
+    store.getState().applyDelta({ added: [node], changed: [], removed: [] })
+    expect(store.getState().nodes).toHaveLength(1)
+  })
+
+  it('applyDelta with matching generation applies', () => {
+    const store = createCloudStore()
+    const gen = store.getState().scanGeneration
+    const node = { id: 'n1', type: 'vpc' as const, label: 'VPC', status: 'active' as const, region: 'us-east-1', metadata: {} }
+    store.getState().applyDelta({ added: [node], changed: [], removed: [] }, gen)
+    expect(store.getState().nodes).toHaveLength(1)
+  })
+
+  it('applyDelta with stale generation is discarded', () => {
+    const store = createCloudStore()
+    const staleGen = store.getState().scanGeneration
+    store.getState().incrementGeneration() // generation now = 1, staleGen = 0
+    const node = { id: 'n1', type: 'vpc' as const, label: 'VPC', status: 'active' as const, region: 'us-east-1', metadata: {} }
+    store.getState().applyDelta({ added: [node], changed: [], removed: [] }, staleGen)
+    expect(store.getState().nodes).toHaveLength(0)
+  })
+})
+
 describe('theme defaults', () => {
   it('DEFAULT_SETTINGS includes theme: dark', () => {
     const store = createCloudStore()

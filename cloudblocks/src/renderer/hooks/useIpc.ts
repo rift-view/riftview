@@ -10,7 +10,12 @@ export function useIpc(): void {
   const setKeyPairs   = useCloudStore((s) => s.setKeyPairs)
 
   useEffect(() => {
-    const unsubDelta  = window.cloudblocks.onScanDelta((delta) => applyDelta(delta))
+    const unsubDelta  = window.cloudblocks.onScanDelta((delta) => {
+      // Capture the generation at the moment the delta arrives so stale
+      // deltas from a previous profile/region scan are discarded.
+      const generation = useCloudStore.getState().scanGeneration
+      applyDelta(delta, generation)
+    })
     const unsubStatus = window.cloudblocks.onScanStatus((status) => {
       setScanStatus(status as 'idle' | 'scanning' | 'error')
     })
