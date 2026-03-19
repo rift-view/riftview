@@ -10,34 +10,37 @@ interface SavedView {
 }
 
 interface UIState {
-  view:            ViewKey
-  selectedNodeId:  string | null
-  activeCreate:    { resource: string; view: ViewKey; dropPosition?: { x: number; y: number } } | null
-  toast:           { message: string; type: 'success' | 'error' } | null
-  nodePositions:   { topology: Record<string, { x: number; y: number }>; graph: Record<string, { x: number; y: number }> }
-  savedViews:      Array<SavedView | null>
-  activeViewSlot:  number | null
+  view:             ViewKey
+  selectedNodeId:   string | null
+  activeCreate:     { resource: string; view: ViewKey; dropPosition?: { x: number; y: number } } | null
+  toast:            { message: string; type: 'success' | 'error' } | null
+  nodePositions:    { topology: Record<string, { x: number; y: number }>; graph: Record<string, { x: number; y: number }> }
+  savedViews:       Array<SavedView | null>
+  activeViewSlot:   number | null
+  showIntegrations: boolean
 
-  setView:         (view: ViewKey) => void
-  selectNode:      (id: string | null) => void
-  setActiveCreate: (val: UIState['activeCreate']) => void
-  showToast:       (message: string, type?: 'success' | 'error') => void
-  clearToast:      () => void
-  setNodePosition: (view: ViewKey, id: string, pos: { x: number; y: number }) => void
-  saveView:        (slot: number, name: string, view: ViewKey) => void
-  loadView:        (slot: number, view: ViewKey, fitViewFn: () => void) => void
+  setView:              (view: ViewKey) => void
+  selectNode:           (id: string | null) => void
+  setActiveCreate:      (val: UIState['activeCreate']) => void
+  showToast:            (message: string, type?: 'success' | 'error') => void
+  clearToast:           () => void
+  setNodePosition:      (view: ViewKey, id: string, pos: { x: number; y: number }) => void
+  saveView:             (slot: number, name: string, view: ViewKey) => void
+  loadView:             (slot: number, view: ViewKey, fitViewFn: () => void) => void
+  toggleIntegrations:   () => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 export const useUIStore = create<UIState>((set, get) => ({
-  view:           'topology',
-  selectedNodeId: null,
-  activeCreate:   null,
-  toast:          null,
-  nodePositions:  { topology: {}, graph: {} },
-  savedViews:     [null, null, null, null],
-  activeViewSlot: null,
+  view:             'topology',
+  selectedNodeId:   null,
+  activeCreate:     null,
+  toast:            null,
+  nodePositions:    { topology: {}, graph: {} },
+  savedViews:       [null, null, null, null],
+  activeViewSlot:   null,
+  showIntegrations: true,
 
   setView:         (view) => set({ view }),
   selectNode:      (id)   => set({ selectedNodeId: id }),
@@ -80,4 +83,6 @@ export const useUIStore = create<UIState>((set, get) => ({
     }))
     fitViewFn()
   },
+
+  toggleIntegrations: () => set((s) => ({ showIntegrations: !s.showIntegrations })),
 }))

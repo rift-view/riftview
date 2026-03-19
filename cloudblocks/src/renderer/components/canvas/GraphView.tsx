@@ -161,12 +161,13 @@ interface GraphViewProps {
 }
 
 export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Element {
-  const cloudNodes      = useCloudStore((s) => s.nodes)
-  const pendingNodes    = useCloudStore((s) => s.pendingNodes)
-  const selectNode      = useUIStore((s) => s.selectNode)
-  const selectedId      = useUIStore((s) => s.selectedNodeId)
-  const setActiveCreate = useUIStore((s) => s.setActiveCreate)
-  const view            = useUIStore((s) => s.view)
+  const cloudNodes         = useCloudStore((s) => s.nodes)
+  const pendingNodes       = useCloudStore((s) => s.pendingNodes)
+  const selectNode         = useUIStore((s) => s.selectNode)
+  const selectedId         = useUIStore((s) => s.selectedNodeId)
+  const setActiveCreate    = useUIStore((s) => s.setActiveCreate)
+  const view               = useUIStore((s) => s.view)
+  const showIntegrations   = useUIStore((s) => s.showIntegrations)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const nodePositions   = useUIStore((s) => s.nodePositions)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
@@ -296,12 +297,15 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
   const flowEdges: Edge[] = useMemo(() => {
     const raw = deriveEdges(allNodes)
-    if (!selectedId) return raw
-    return raw.map((e) => {
+    const filtered = showIntegrations
+      ? raw
+      : raw.filter((e) => !e.id.startsWith('integration-'))
+    if (!selectedId) return filtered
+    return filtered.map((e) => {
       const incident = e.source === selectedId || e.target === selectedId
       return incident ? e : { ...e, style: { ...(e.style ?? {}), opacity: 0.15 } }
     })
-  }, [allNodes, selectedId])
+  }, [allNodes, selectedId, showIntegrations])
 
   return (
     <ReactFlow
