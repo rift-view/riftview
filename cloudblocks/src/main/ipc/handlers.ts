@@ -1,6 +1,7 @@
 import fs from 'fs'
+import fsp from 'fs/promises'
 import path from 'path'
-import { ipcMain, BrowserWindow, app } from 'electron'
+import { ipcMain, BrowserWindow, app, dialog } from 'electron'
 import { IPC } from './channels'
 import { listProfiles, getDefaultRegion } from '../aws/credentials'
 import { createClients } from '../aws/client'
@@ -17,7 +18,8 @@ import {
 } from '@aws-sdk/client-cloudfront'
 import type { CloudFrontParams } from '../../renderer/types/create'
 import type { CloudFrontEditParams } from '../../renderer/types/edit'
-import type { AwsProfile } from '../../renderer/types/cloud'
+import type { AwsProfile, CloudNode } from '../../renderer/types/cloud'
+import { generateTerraformFile } from '../terraform/index'
 
 function settingsPath(): string {
   return path.join(app.getPath('userData'), 'settings.json')
@@ -215,6 +217,23 @@ export function registerHandlers(win: BrowserWindow): void {
     } catch (err) {
       console.error('CF_INVALIDATE error:', err)
       return { code: 1, error: String(err) }
+    }
+  })
+
+  // Terraform HCL export — generate file and open native save dialog
+  ipcMain.handle(IPC.TERRAFORM_EXPORT, async (_e, nodes: CloudNode[]) => {
+    try {
+      const hcl = generateTerraformFile(nodes)
+      const { filePath } = await dialog.showSaveDialog({
+        defaultPath: 'main.tf',
+        filters: [{ name: 'Terraform', extensions: ['tf'] }],
+      })
+      if (!filePath) return { success: false }
+      await fsp.writeFile(filePath, hcl, 'utf-8')
+      return { success: true }
+    } catch (err) {
+      console.error('TERRAFORM_EXPORT error:', err)
+      return { success: false }
     }
   })
 

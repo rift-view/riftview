@@ -142,6 +142,22 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
           ▦ Grid
         </button>
 
+        <button
+          onClick={() => window.cloudblocks.exportTerraform(nodes)}
+          disabled={nodes.length === 0}
+          title="Export Terraform HCL"
+          style={{
+            ...btnBase,
+            background: 'var(--cb-bg-elevated)',
+            border: '1px solid var(--cb-border)',
+            color: 'var(--cb-text-secondary)',
+            opacity: nodes.length === 0 ? 0.4 : 1,
+            cursor: nodes.length === 0 ? 'not-allowed' : 'pointer',
+          }}
+        >
+          ⬡ HCL
+        </button>
+
         <div className="w-px h-3.5 bg-gray-700" />
 
         {(['topology', 'graph'] as const).map((v) => (

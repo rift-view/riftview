@@ -59,4 +59,7 @@ contextBridge.exposeInMainWorld('cloudblocks', {
 
   // ACM delete via CLI
   deleteAcm: (arn: string) => ipcRenderer.invoke(IPC.CLI_RUN, [['acm', 'delete-certificate', '--certificate-arn', arn]]),
+
+  // Terraform HCL export
+  exportTerraform: (nodes: import('../renderer/types/cloud').CloudNode[]) => ipcRenderer.invoke(IPC.TERRAFORM_EXPORT, nodes),
 })

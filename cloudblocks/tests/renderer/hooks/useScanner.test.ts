@@ -25,6 +25,7 @@ beforeEach(() => {
     deleteCloudFront:     vi.fn().mockResolvedValue({ code: 0 }),
     invalidateCloudFront: vi.fn().mockResolvedValue({ code: 0 }),
     deleteAcm:            vi.fn().mockResolvedValue({ code: 0 }),
+    exportTerraform:      vi.fn().mockResolvedValue({ success: true }),
   }
   useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })
