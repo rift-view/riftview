@@ -9,7 +9,7 @@ const makeNode = (id: string): CloudNode => ({
 
 describe('useCloudStore', () => {
   beforeEach(() => {
-    useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: 'default', region: 'us-east-1' })
+    useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
     useUIStore.setState({ selectedNodeId: null, view: 'topology' })
   })
 
