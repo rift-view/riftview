@@ -1,12 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { ScanDelta } from '../renderer/types/cloud'
+import type { ScanDelta, AwsProfile } from '../renderer/types/cloud'
 import type { CloudFrontParams } from '../renderer/types/create'
 import type { CloudFrontEditParams } from '../renderer/types/edit'
 import { IPC } from '../main/ipc/channels'
 
 contextBridge.exposeInMainWorld('cloudblocks', {
   listProfiles: () => ipcRenderer.invoke(IPC.PROFILES_LIST),
-  selectProfile: (name: string) => ipcRenderer.invoke(IPC.PROFILE_SELECT, name),
+  selectProfile: (profile: AwsProfile) => ipcRenderer.invoke(IPC.PROFILE_SELECT, profile),
   selectRegion: (region: string) => ipcRenderer.invoke(IPC.REGION_SELECT, region),
   startScan: () => ipcRenderer.invoke(IPC.SCAN_START),
 

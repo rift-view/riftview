@@ -17,6 +17,7 @@ import {
 } from '@aws-sdk/client-cloudfront'
 import type { CloudFrontParams } from '../../renderer/types/create'
 import type { CloudFrontEditParams } from '../../renderer/types/edit'
+import type { AwsProfile } from '../../renderer/types/cloud'
 
 function settingsPath(): string {
   return path.join(app.getPath('userData'), 'settings.json')
@@ -37,9 +38,9 @@ export function registerHandlers(win: BrowserWindow): void {
   ipcMain.handle(IPC.PROFILES_LIST, () => listProfiles())
 
   // Select a profile — recreates clients + restarts scanner
-  ipcMain.handle(IPC.PROFILE_SELECT, (_event, profileName: string) => {
-    const region = getDefaultRegion(profileName)
-    restartScanner(win, profileName, region)
+  ipcMain.handle(IPC.PROFILE_SELECT, (_event, profile: AwsProfile) => {
+    const region = getDefaultRegion(profile.name)
+    restartScanner(win, profile.name, region, profile.endpoint)
   })
 
   // Select a region — recreates clients + restarts scanner with current profile
@@ -221,11 +222,11 @@ export function registerHandlers(win: BrowserWindow): void {
   cliEngine = new CliEngine(win)
 }
 
-function restartScanner(win: BrowserWindow, profile: string, region: string): void {
+function restartScanner(win: BrowserWindow, profile: string, region: string, endpoint?: string): void {
   scanner?.stop()
   // Recreate engine to ensure it holds the current win reference after profile/region switch
   cliEngine = new CliEngine(win)
-  clients   = createClients(profile, region)
+  clients   = createClients(profile, region, endpoint)
   scanner   = new ResourceScanner(clients, region, win)
   scanner.start()
 }
