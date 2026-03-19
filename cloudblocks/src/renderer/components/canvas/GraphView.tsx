@@ -3,7 +3,7 @@ import { ReactFlow, Background, MiniMap, useReactFlow, type Node, type Edge, typ
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
-import type { NodeType, EdgeType } from '../../types/cloud'
+import type { NodeType, EdgeType, IntegrationEdgeData } from '../../types/cloud'
 import { ResourceNode } from './nodes/ResourceNode'
 import { AcmNode } from './nodes/AcmNode'
 import { CloudFrontNode } from './nodes/CloudFrontNode'
@@ -148,7 +148,7 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
           : integration.edgeType === 'subscription'
           ? { strokeDasharray: '2 4' }
           : undefined,
-        data: { edgeType: integration.edgeType as EdgeType },
+        data: { isIntegration: true as const, edgeType: integration.edgeType as EdgeType },
       })
     }
   }
@@ -299,7 +299,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
     const raw = deriveEdges(allNodes)
     const filtered = showIntegrations
       ? raw
-      : raw.filter((e) => !e.id.startsWith('integration-'))
+      : raw.filter((e) => !(e.data as IntegrationEdgeData | undefined)?.isIntegration)
     if (!selectedId) return filtered
     return filtered.map((e) => {
       const incident = e.source === selectedId || e.target === selectedId

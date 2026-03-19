@@ -12,7 +12,7 @@ import { AcmNode } from './nodes/AcmNode'
 import { CloudFrontNode } from './nodes/CloudFrontNode'
 import { ApigwNode } from './nodes/ApigwNode'
 import { ApigwRouteNode } from './nodes/ApigwRouteNode'
-import type { CloudNode, EdgeType } from '../../types/cloud'
+import type { CloudNode, EdgeType, IntegrationEdgeData } from '../../types/cloud'
 
 const NODE_TYPES = {
   resource:    ResourceNode,
@@ -347,7 +347,7 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
           : edgeType === 'subscription'
           ? { strokeDasharray: '2 4' }
           : undefined, // solid for 'origin'
-        data:     { edgeType },
+        data:     { isIntegration: true as const, edgeType },
       })
     }
   }
@@ -469,7 +469,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
     const raw = buildTopologyEdges(allNodes)
     const filtered = showIntegrations
       ? raw
-      : raw.filter((e) => !e.id.startsWith('integration-'))
+      : raw.filter((e) => !(e.data as IntegrationEdgeData | undefined)?.isIntegration)
     if (!selectedId) return filtered
     return filtered.map((e) => {
       const incident = e.source === selectedId || e.target === selectedId
