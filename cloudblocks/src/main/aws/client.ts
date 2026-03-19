@@ -37,21 +37,25 @@ export interface AwsClients {
 }
 
 // Creates a fresh set of AWS SDK clients for the given profile + region.
-export function createClients(profile: string, region: string): AwsClients {
-  const config = { region }
+// Pass an optional endpoint to redirect all clients to a local emulator (e.g. LocalStack).
+export function createClients(profile: string, region: string, endpoint?: string): AwsClients {
+  const endpointConfig = endpoint ? { endpoint } : {}
+  const config = { region, ...endpointConfig }
 
   // Set AWS_PROFILE so the SDK credential provider picks up the right profile.
   process.env.AWS_PROFILE = profile
   process.env.AWS_REGION = region
 
+  // ACM and Route53 must use us-east-1 for real AWS, but local emulators are fully regional.
+  const globalRegion = endpoint ? region : 'us-east-1'
+
   return {
     ec2:        new EC2Client(config),
     rds:        new RDSClient(config),
-    s3:         new S3Client(config),
+    s3:         new S3Client({ region, ...(endpoint ? { endpoint, forcePathStyle: true } : {}) }),
     lambda:     new LambdaClient(config),
     alb:        new ElasticLoadBalancingV2Client(config),
-    // ACM for CloudFront must always use us-east-1
-    acm:        new ACMClient({ region: 'us-east-1' }),
+    acm:        new ACMClient({ region: globalRegion, ...endpointConfig }),
     cloudfront: new CloudFrontClient(config),
     apigw:      new ApiGatewayV2Client(config),
     sqs:        new SQSClient(config),
@@ -60,7 +64,7 @@ export function createClients(profile: string, region: string): AwsClients {
     sns:        new SNSClient(config),
     dynamo:     new DynamoDBClient(config),
     ssm:        new SSMClient(config),
-    r53:        new Route53Client({ region: 'us-east-1' }),
+    r53:        new Route53Client({ region: globalRegion, ...endpointConfig }),
     sfn:        new SFNClient(config),
     eventbridge: new EventBridgeClient(config),
   }
