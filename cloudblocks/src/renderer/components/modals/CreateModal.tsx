@@ -232,12 +232,18 @@ export function CreateModal(): React.JSX.Element | null {
         {activeCreate.resource === 'apigw'        && <ApigwForm        onChange={handleChange} showErrors={showErrors} />}
         {activeCreate.resource === 'apigw-route'  && <ApigwRouteForm   onChange={handleChange} showErrors={showErrors} apiId={parentApiId} />}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid var(--cb-border-strong)' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid var(--cb-border-strong)' }}>
           <button
             onClick={handleCancel}
             style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: '3px', color: 'var(--cb-text-secondary)', cursor: 'pointer', fontSize: '10px', padding: '4px 10px', fontFamily: 'monospace' }}
           >
             Cancel
+          </button>
+          <button
+            onClick={handleRun}
+            style={{ background: 'var(--cb-accent)', border: '1px solid var(--cb-accent)', borderRadius: '3px', color: '#000', cursor: 'pointer', fontSize: '10px', padding: '4px 12px', fontFamily: 'monospace', fontWeight: 'bold' }}
+          >
+            Create
           </button>
         </div>
       </div>
