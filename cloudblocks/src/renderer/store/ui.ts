@@ -10,15 +10,16 @@ interface SavedView {
 }
 
 interface UIState {
-  view:             ViewKey
-  selectedNodeId:   string | null
-  activeCreate:     { resource: string; view: ViewKey; dropPosition?: { x: number; y: number } } | null
-  toast:            { message: string; type: 'success' | 'error' } | null
-  nodePositions:    { topology: Record<string, { x: number; y: number }>; graph: Record<string, { x: number; y: number }> }
-  savedViews:       Array<SavedView | null>
-  activeViewSlot:   number | null
-  showIntegrations: boolean
-  snapToGrid:       boolean
+  view:               ViewKey
+  selectedNodeId:     string | null
+  activeCreate:       { resource: string; view: ViewKey; dropPosition?: { x: number; y: number } } | null
+  toast:              { message: string; type: 'success' | 'error' } | null
+  nodePositions:      { topology: Record<string, { x: number; y: number }>; graph: Record<string, { x: number; y: number }> }
+  savedViews:         Array<SavedView | null>
+  activeViewSlot:     number | null
+  showIntegrations:   boolean
+  snapToGrid:         boolean
+  expandedSsmGroups:  Set<string>
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -30,20 +31,22 @@ interface UIState {
   loadView:             (slot: number, view: ViewKey, fitViewFn: () => void) => void
   toggleIntegrations:   () => void
   toggleSnapToGrid:     () => void
+  toggleSsmGroup:       (prefix: string) => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 export const useUIStore = create<UIState>((set, get) => ({
-  view:             'topology',
-  selectedNodeId:   null,
-  activeCreate:     null,
-  toast:            null,
-  nodePositions:    { topology: {}, graph: {} },
-  savedViews:       [null, null, null, null],
-  activeViewSlot:   null,
-  showIntegrations: true,
-  snapToGrid:       false,
+  view:              'topology',
+  selectedNodeId:    null,
+  activeCreate:      null,
+  toast:             null,
+  nodePositions:     { topology: {}, graph: {} },
+  savedViews:        [null, null, null, null],
+  activeViewSlot:    null,
+  showIntegrations:  true,
+  snapToGrid:        false,
+  expandedSsmGroups: new Set<string>(),
 
   setView:         (view) => set({ view }),
   selectNode:      (id)   => set({ selectedNodeId: id }),
@@ -89,4 +92,11 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   toggleIntegrations: () => set((s) => ({ showIntegrations: !s.showIntegrations })),
   toggleSnapToGrid:   () => set((s) => ({ snapToGrid: !s.snapToGrid })),
+  toggleSsmGroup: (prefix) =>
+    set((s) => {
+      const next = new Set(s.expandedSsmGroups)
+      if (next.has(prefix)) next.delete(prefix)
+      else next.add(prefix)
+      return { expandedSsmGroups: next }
+    }),
 }))
