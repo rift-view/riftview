@@ -12,7 +12,7 @@ import { AcmNode } from './nodes/AcmNode'
 import { CloudFrontNode } from './nodes/CloudFrontNode'
 import { ApigwNode } from './nodes/ApigwNode'
 import { ApigwRouteNode } from './nodes/ApigwRouteNode'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode, EdgeType } from '../../types/cloud'
 
 const NODE_TYPES = {
   resource:    ResourceNode,
@@ -328,6 +328,29 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
       style:  { stroke: 'var(--cb-border)', strokeDasharray: '4 2', strokeWidth: 1 },
     })
   })
+
+  // Integration edges from node.integrations[]
+  for (const node of cloudNodes) {
+    if (!node.integrations) continue
+    for (const integration of node.integrations) {
+      const targetExists = cloudNodes.some((n) => n.id === integration.targetId)
+      if (!targetExists) continue
+      const edgeType: EdgeType = integration.edgeType
+      const animated = edgeType === 'trigger' && cloudNodes.length < 50
+      edges.push({
+        id:       `integration-${node.id}-${integration.targetId}`,
+        source:   node.id,
+        target:   integration.targetId,
+        animated,
+        style:    edgeType === 'trigger'
+          ? { strokeDasharray: '5 5' }
+          : edgeType === 'subscription'
+          ? { strokeDasharray: '2 4' }
+          : undefined, // solid for 'origin'
+        data:     { edgeType },
+      })
+    }
+  }
 
   return edges
 }
