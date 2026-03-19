@@ -35,9 +35,9 @@ export async function listQueues(client: SQSClient, region: string): Promise<Clo
         .catch(() => ({ EventSourceMappings: [] }))
 
       const integrations = (mappingRes.EventSourceMappings ?? [])
-        .filter((m) => m.FunctionArn != null)
+        .filter((m): m is typeof m & { FunctionArn: string } => m.FunctionArn != null)
         .map((m): { targetId: string; edgeType: EdgeType } => ({
-          targetId: m.FunctionArn!,
+          targetId: m.FunctionArn,
           edgeType: 'trigger',
         }))
 
