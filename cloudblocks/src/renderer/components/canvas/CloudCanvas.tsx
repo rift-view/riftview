@@ -143,7 +143,11 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
         </button>
 
         <button
-          onClick={() => window.cloudblocks.exportTerraform(nodes)}
+          onClick={() => {
+            window.cloudblocks.exportTerraform(nodes).then((res) => {
+              if (res.success) useUIStore.getState().showToast('HCL exported', 'success')
+            }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
+          }}
           disabled={nodes.length === 0}
           title="Export Terraform HCL"
           style={{
