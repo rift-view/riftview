@@ -139,7 +139,7 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
             color:  snapToGrid ? '#64b5f6' : '#666',
           }}
         >
-          ⊞ Grid
+          ▦ Grid
         </button>
 
         <div className="w-px h-3.5 bg-gray-700" />

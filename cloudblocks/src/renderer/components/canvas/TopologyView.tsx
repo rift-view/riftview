@@ -14,6 +14,8 @@ import { ApigwNode } from './nodes/ApigwNode'
 import { ApigwRouteNode } from './nodes/ApigwRouteNode'
 import type { CloudNode, EdgeType, IntegrationEdgeData } from '../../types/cloud'
 
+const SNAP_GRID_SIZE = 20
+
 const NODE_TYPES = {
   resource:    ResourceNode,
   vpc:         VpcNode,
@@ -495,12 +497,12 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       onNodesChange={onNodesChange}
       panOnScroll
       snapToGrid={snapToGrid}
-      snapGrid={[20, 20] as [number, number]}
+      snapGrid={[SNAP_GRID_SIZE, SNAP_GRID_SIZE]}
       minZoom={0.1}
       maxZoom={2}
       style={{ background: 'var(--cb-canvas-bg)' }}
     >
-      <Background color="var(--cb-canvas-grid)" gap={20} />
+      <Background color="var(--cb-canvas-grid)" gap={SNAP_GRID_SIZE} />
       <MiniMap
         style={{ background: 'var(--cb-minimap-bg)', border: '1px solid var(--cb-minimap-border)' }}
         nodeColor="#FF9900"
