@@ -38,18 +38,16 @@ function generateEc2(node: CloudNode): string {
 
 function generateS3(node: CloudNode): string {
   const name = sanitizeName(node.label, node.id)
-  // Bucket name is the node label (same as node.id for S3)
-  const bucket = str(node.label.length > 0 ? node.label : node.id)
+  const bucket = str(node.label, node.id)
   return `resource "aws_s3_bucket" "${name}" {\n  bucket = "${bucket}"\n}`
 }
 
 function generateLambda(node: CloudNode): string {
   const name = sanitizeName(node.label, node.id)
-  // function_name is stored as the node label
-  const functionName = str(node.label.length > 0 ? node.label : node.id)
+  const functionName = str(node.label, node.id)
   const runtime = str(node.metadata['runtime'])
   const handler = str(node.metadata['handler'])
-  return `resource "aws_lambda_function" "${name}" {\n  function_name = "${functionName}"\n  runtime       = "${runtime}"\n  handler       = "${handler}"\n}`
+  return `resource "aws_lambda_function" "${name}" {\n  function_name = "${functionName}"\n  # filename     = "REPLACE_WITH_DEPLOYMENT_PACKAGE"\n  runtime       = "${runtime}"\n  handler       = "${handler}"\n}`
 }
 
 export const terraformGenerators: TerraformGeneratorMap = {
