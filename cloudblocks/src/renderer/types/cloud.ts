@@ -25,6 +25,8 @@ export type NodeType =
   | 'sfn'
   | 'eventbridge-bus'
 
+export type EdgeType = 'trigger' | 'origin' | 'subscription'
+
 export interface CloudNode {
   id: string
   type: NodeType
@@ -33,6 +35,7 @@ export interface CloudNode {
   region: string
   metadata: Record<string, unknown>
   parentId?: string
+  integrations?: { targetId: string; edgeType: EdgeType }[]
 }
 
 export interface CloudEdge {
