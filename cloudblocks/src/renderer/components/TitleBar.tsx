@@ -51,7 +51,7 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps): React.JSX.Element {
   const handleRegionChange = (r: string): void => {
     setRegion(r)
     setConnStatus('unknown')
-    window.cloudblocks.selectRegion(r)
+    window.cloudblocks.selectRegion(r, profile.endpoint)
   }
 
   const handleEndpointSubmit = (): void => {
