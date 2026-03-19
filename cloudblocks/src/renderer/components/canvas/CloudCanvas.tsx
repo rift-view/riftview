@@ -24,16 +24,18 @@ interface Props {
 /** Inner component — must live inside ReactFlowProvider to access useReactFlow hooks. */
 function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
   const { fitView, zoomIn, zoomOut } = useReactFlow()
-  const view          = useUIStore((s) => s.view)
-  const setView       = useUIStore((s) => s.setView)
-  const scanStatus    = useCloudStore((s) => s.scanStatus)
-  const lastScannedAt = useCloudStore((s) => s.lastScannedAt)
-  const nodes         = useCloudStore((s) => s.nodes)
-  const profile       = useCloudStore((s) => s.profile)
-  const savedViews     = useUIStore((s) => s.savedViews)
-  const activeViewSlot = useUIStore((s) => s.activeViewSlot)
-  const saveView       = useUIStore((s) => s.saveView)
-  const loadView       = useUIStore((s) => s.loadView)
+  const view               = useUIStore((s) => s.view)
+  const setView            = useUIStore((s) => s.setView)
+  const scanStatus         = useCloudStore((s) => s.scanStatus)
+  const lastScannedAt      = useCloudStore((s) => s.lastScannedAt)
+  const nodes              = useCloudStore((s) => s.nodes)
+  const profile            = useCloudStore((s) => s.profile)
+  const savedViews         = useUIStore((s) => s.savedViews)
+  const activeViewSlot     = useUIStore((s) => s.activeViewSlot)
+  const saveView           = useUIStore((s) => s.saveView)
+  const loadView           = useUIStore((s) => s.loadView)
+  const showIntegrations   = useUIStore((s) => s.showIntegrations)
+  const toggleIntegrations = useUIStore((s) => s.toggleIntegrations)
   const [modalSlot, setModalSlot] = useState<number | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [, forceUpdate] = useState(0)
@@ -109,6 +111,21 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
         </button>
         <button onClick={() => zoomIn()}  style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}>+</button>
         <button onClick={() => zoomOut()} style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}>−</button>
+
+        <div className="w-px h-3.5 bg-gray-700" />
+
+        <button
+          onClick={toggleIntegrations}
+          title={showIntegrations ? 'Hide integration edges' : 'Show integration edges'}
+          style={{
+            ...btnBase,
+            background: showIntegrations ? 'var(--cb-bg-elevated)' : 'transparent',
+            border: `1px solid ${showIntegrations ? '#64b5f6' : 'var(--cb-border)'}`,
+            color:  showIntegrations ? '#64b5f6' : '#666',
+          }}
+        >
+          ⇢ Integrations
+        </button>
 
         <div className="w-px h-3.5 bg-gray-700" />
 
