@@ -44,9 +44,9 @@ export function registerHandlers(win: BrowserWindow): void {
   })
 
   // Select a region — recreates clients + restarts scanner with current profile
-  ipcMain.handle(IPC.REGION_SELECT, (_event, region: string) => {
+  ipcMain.handle(IPC.REGION_SELECT, (_event, { region, endpoint }: { region: string; endpoint?: string }) => {
     const profile = process.env.AWS_PROFILE ?? 'default'
-    restartScanner(win, profile, region)
+    restartScanner(win, profile, region, endpoint)
   })
 
   // Manual scan trigger

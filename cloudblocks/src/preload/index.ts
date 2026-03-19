@@ -7,7 +7,7 @@ import { IPC } from '../main/ipc/channels'
 contextBridge.exposeInMainWorld('cloudblocks', {
   listProfiles: () => ipcRenderer.invoke(IPC.PROFILES_LIST),
   selectProfile: (profile: AwsProfile) => ipcRenderer.invoke(IPC.PROFILE_SELECT, profile),
-  selectRegion: (region: string) => ipcRenderer.invoke(IPC.REGION_SELECT, region),
+  selectRegion: (region: string, endpoint?: string) => ipcRenderer.invoke(IPC.REGION_SELECT, { region, endpoint }),
   startScan: () => ipcRenderer.invoke(IPC.SCAN_START),
 
   onScanDelta: (cb: (delta: ScanDelta) => void): (() => void) => {
