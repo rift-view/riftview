@@ -3,7 +3,7 @@ import { LambdaClient, ListEventSourceMappingsCommand } from '@aws-sdk/client-la
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 import { scanFlatService } from './scanFlatService'
 
-export async function listQueues(client: SQSClient, region: string): Promise<CloudNode[]> {
+export async function listQueues(client: SQSClient, lambdaClient: LambdaClient, region: string): Promise<CloudNode[]> {
   const nodes = await scanFlatService(client, region, {
     fetch: async (c) => {
       const res = await c.send(new ListQueuesCommand({}))
@@ -18,8 +18,6 @@ export async function listQueues(client: SQSClient, region: string): Promise<Clo
       metadata: {},
     }),
   })
-
-  const lambdaClient = new LambdaClient({ region })
 
   const enriched = await Promise.all(
     nodes.map(async (node): Promise<CloudNode> => {

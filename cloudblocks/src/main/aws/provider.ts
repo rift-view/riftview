@@ -50,7 +50,7 @@ export const awsProvider: CloudProvider = {
       listDistributions(clients.cloudfront),
       listApis(clients.apigw, region),
       listInternetGateways(clients.ec2, region).catch(() => [] as CloudNode[]),
-      listQueues(clients.sqs, region).catch(() => [] as CloudNode[]),
+      listQueues(clients.sqs, clients.lambda, region).catch(() => [] as CloudNode[]),
       listSecrets(clients.secrets, region).catch(() => [] as CloudNode[]),
       listRepositories(clients.ecr, region).catch(() => [] as CloudNode[]),
       listTopics(clients.sns, region).catch(() => [] as CloudNode[]),
