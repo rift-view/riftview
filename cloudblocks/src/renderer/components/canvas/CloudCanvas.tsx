@@ -36,6 +36,8 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
   const loadView           = useUIStore((s) => s.loadView)
   const showIntegrations   = useUIStore((s) => s.showIntegrations)
   const toggleIntegrations = useUIStore((s) => s.toggleIntegrations)
+  const snapToGrid         = useUIStore((s) => s.snapToGrid)
+  const toggleSnapToGrid   = useUIStore((s) => s.toggleSnapToGrid)
   const [modalSlot, setModalSlot] = useState<number | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [, forceUpdate] = useState(0)
@@ -125,6 +127,19 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
           }}
         >
           ⇢ Integrations
+        </button>
+
+        <button
+          onClick={toggleSnapToGrid}
+          title={snapToGrid ? 'Disable snap to grid' : 'Enable snap to grid'}
+          style={{
+            ...btnBase,
+            background: snapToGrid ? 'var(--cb-bg-elevated)' : 'transparent',
+            border: `1px solid ${snapToGrid ? '#64b5f6' : 'var(--cb-border)'}`,
+            color:  snapToGrid ? '#64b5f6' : '#666',
+          }}
+        >
+          ⊞ Grid
         </button>
 
         <div className="w-px h-3.5 bg-gray-700" />
