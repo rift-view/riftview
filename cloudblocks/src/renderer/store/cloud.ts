@@ -21,12 +21,14 @@ interface CloudState {
   pendingNodes:   CloudNode[]
   keyPairs:       string[]
   settings:       Settings
+  scanGeneration: number
 
-  applyDelta:     (delta: ScanDelta) => void
-  setScanStatus:  (status: 'idle' | 'scanning' | 'error') => void
-  setProfile:     (profile: AwsProfile) => void
-  setRegion:      (region: string) => void
-  setError:       (msg: string | null) => void
+  applyDelta:        (delta: ScanDelta, generation?: number) => void
+  setScanStatus:     (status: 'idle' | 'scanning' | 'error') => void
+  setProfile:        (profile: AwsProfile) => void
+  setRegion:         (region: string) => void
+  setError:          (msg: string | null) => void
+  incrementGeneration: () => void
   addPendingNode:    (node: CloudNode) => void
   removePendingNode: (id: string) => void
   clearPendingNodes: () => void
@@ -47,9 +49,11 @@ export const useCloudStore = create<CloudState>((set) => ({
   pendingNodes:   [],
   keyPairs:       [],
   settings:       DEFAULT_SETTINGS,
+  scanGeneration: 0,
 
-  applyDelta: (delta) =>
+  applyDelta: (delta, generation) =>
     set((state) => {
+      if (generation !== undefined && generation !== state.scanGeneration) return state
       const nodeMap = new Map(state.nodes.map((n) => [n.id, n]))
       for (const n of delta.added)   nodeMap.set(n.id, n)
       for (const n of delta.changed) nodeMap.set(n.id, n)
@@ -63,10 +67,11 @@ export const useCloudStore = create<CloudState>((set) => ({
       return { nodes: Array.from(nodeMap.values()), lastScannedAt: new Date() }
     }),
 
-  setScanStatus: (status)  => set({ scanStatus: status }),
-  setProfile:    (profile) => set({ profile, nodes: [], scanStatus: 'idle', lastScannedAt: null }),
-  setRegion:     (region)  => set({ region }),
-  setError:      (msg)     => set({ errorMessage: msg }),
+  setScanStatus:     (status)  => set({ scanStatus: status }),
+  setProfile:        (profile) => set((state) => ({ profile, nodes: [], scanStatus: 'idle', lastScannedAt: null, scanGeneration: state.scanGeneration + 1 })),
+  setRegion:         (region)  => set((state) => ({ region, nodes: [], scanStatus: 'idle', lastScannedAt: null, scanGeneration: state.scanGeneration + 1 })),
+  setError:          (msg)     => set({ errorMessage: msg }),
+  incrementGeneration:         () => set((state) => ({ scanGeneration: state.scanGeneration + 1 })),
 
   addPendingNode: (node) =>
     set((state) => ({ pendingNodes: [...state.pendingNodes, node] })),
@@ -107,9 +112,11 @@ export function createCloudStore(): StoreApi<CloudState> {
     pendingNodes:   [],
     keyPairs:       [],
     settings:       DEFAULT_SETTINGS,
+    scanGeneration: 0,
 
-    applyDelta: (delta) =>
+    applyDelta: (delta, generation) =>
       set((state) => {
+        if (generation !== undefined && generation !== state.scanGeneration) return state
         const nodeMap = new Map(state.nodes.map((n) => [n.id, n]))
         for (const n of delta.added)   nodeMap.set(n.id, n)
         for (const n of delta.changed) nodeMap.set(n.id, n)
@@ -123,10 +130,11 @@ export function createCloudStore(): StoreApi<CloudState> {
         return { nodes: Array.from(nodeMap.values()), lastScannedAt: new Date() }
       }),
 
-    setScanStatus: (status)  => set({ scanStatus: status }),
-    setProfile:    (profile) => set({ profile }),
-    setRegion:     (region)  => set({ region }),
-    setError:      (msg)     => set({ errorMessage: msg }),
+    setScanStatus:     (status)  => set({ scanStatus: status }),
+    setProfile:        (profile) => set((state) => ({ profile, scanGeneration: state.scanGeneration + 1 })),
+    setRegion:         (region)  => set((state) => ({ region, scanGeneration: state.scanGeneration + 1 })),
+    setError:          (msg)     => set({ errorMessage: msg }),
+    incrementGeneration:         () => set((state) => ({ scanGeneration: state.scanGeneration + 1 })),
 
     addPendingNode: (node) =>
       set((state) => ({ pendingNodes: [...state.pendingNodes, node] })),
