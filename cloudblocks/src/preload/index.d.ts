@@ -1,7 +1,7 @@
 interface Window {
   cloudblocks: {
     listProfiles(): Promise<{ name: string; region?: string }[]>
-    selectProfile(name: string): Promise<void>
+    selectProfile(profile: import('../renderer/types/cloud').AwsProfile): Promise<void>
     selectRegion(region: string): Promise<void>
     startScan(): Promise<void>
     onScanDelta(cb: (delta: import('../renderer/types/cloud').ScanDelta) => void): () => void
