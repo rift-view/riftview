@@ -1,4 +1,4 @@
-export type NodeStatus = 'running' | 'stopped' | 'pending' | 'error' | 'unknown' | 'creating'
+export type NodeStatus = 'running' | 'stopped' | 'pending' | 'error' | 'unknown' | 'creating' | 'deleting'
 
 export type NodeType =
   | 'ec2'
@@ -10,6 +10,20 @@ export type NodeType =
   | 'alb'
   | 'security-group'
   | 'igw'
+  | 'acm'
+  | 'cloudfront'
+  | 'apigw'
+  | 'apigw-route'
+  | 'sqs'
+  | 'secret'
+  | 'ecr-repo'
+  | 'sns'
+  | 'dynamo'
+  | 'ssm-param'
+  | 'nat-gateway'
+  | 'r53-zone'
+  | 'sfn'
+  | 'eventbridge-bus'
 
 export interface CloudNode {
   id: string
@@ -39,7 +53,10 @@ export interface AwsProfile {
   region?: string
 }
 
+export type Theme = 'dark' | 'light' | 'solarized' | 'rose-pine' | 'catppuccin'
+
 export interface Settings {
   deleteConfirmStyle: 'type-to-confirm' | 'command-drawer'
   scanInterval: 15 | 30 | 60 | 'manual'
+  theme: Theme
 }

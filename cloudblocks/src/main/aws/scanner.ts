@@ -2,11 +2,8 @@ import { BrowserWindow } from 'electron'
 import { IPC } from '../ipc/channels'
 import type { AwsClients } from './client'
 import type { CloudNode, ScanDelta } from '../../renderer/types/cloud'
-import { describeInstances, describeVpcs, describeSubnets, describeSecurityGroups, describeKeyPairs } from './services/ec2'
-import { describeDBInstances } from './services/rds'
-import { listBuckets } from './services/s3'
-import { listFunctions } from './services/lambda'
-import { describeLoadBalancers } from './services/alb'
+import { describeKeyPairs } from './services/ec2'
+import { awsProvider } from './provider'
 
 const POLL_INTERVAL_MS = 30_000
 
@@ -25,7 +22,13 @@ export function computeDelta(prev: CloudNode[], next: CloudNode[]): ScanDelta {
       added.push(node)
     } else {
       const p = prevMap.get(id)!
-      if (p.status !== node.status || p.label !== node.label) {
+      if (
+        p.status !== node.status ||
+        p.label  !== node.label  ||
+        // NOTE: JSON.stringify is key-order-sensitive; service functions must
+        // return stable object literals (not spread/merge) to avoid false positives.
+        JSON.stringify(p.metadata) !== JSON.stringify(node.metadata)
+      ) {
         changed.push(node)
       }
     }
@@ -68,31 +71,23 @@ export class ResourceScanner {
     this.window.webContents.send(IPC.SCAN_STATUS, 'scanning')
 
     try {
-      const [instances, vpcs, subnets, sgs, dbs, buckets, fns, lbs] = await Promise.all([
-        describeInstances(this.clients.ec2, this.region),
-        describeVpcs(this.clients.ec2, this.region),
-        describeSubnets(this.clients.ec2, this.region),
-        describeSecurityGroups(this.clients.ec2, this.region),
-        describeDBInstances(this.clients.rds, this.region),
-        listBuckets(this.clients.s3, this.region),
-        listFunctions(this.clients.lambda, this.region),
-        describeLoadBalancers(this.clients.alb, this.region),
-      ])
-
-      const nextNodes = [...instances, ...vpcs, ...subnets, ...sgs, ...dbs, ...buckets, ...fns, ...lbs]
+      const nextNodes = await awsProvider.scan(this.clients, this.region)
       const delta = computeDelta(this.currentNodes, nextNodes)
 
       this.currentNodes = nextNodes
       this.window.webContents.send(IPC.SCAN_DELTA, delta)
       this.window.webContents.send(IPC.SCAN_STATUS, 'idle')
 
-      // Also scan key pairs and broadcast to renderer
+      // Key pairs are AWS-specific and consumed by the renderer's create-node
+      // flow (not part of the topology graph), so they live outside awsProvider.
+      // TODO(M6): if ResourceScanner becomes provider-agnostic, move this into
+      //           a provider-level `scanExtras()` hook or guard with provider.id.
       const keyPairs = await describeKeyPairs(this.clients.ec2)
       this.window.webContents.send(IPC.SCAN_KEYPAIRS, keyPairs)
 
       // Signal successful connection on the first scan that completes
       this.window.webContents.send(IPC.CONN_STATUS, 'connected')
-    } catch (err) {
+    } catch {
       this.window.webContents.send(IPC.SCAN_STATUS, 'error')
       this.window.webContents.send(IPC.CONN_STATUS, 'error')
     }

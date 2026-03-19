@@ -11,4 +11,8 @@ describe('IPC channel constants', () => {
     expect(IPC.REGION_SELECT).toBe('region:select')
     expect(IPC.CONN_STATUS).toBe('conn:status')
   })
+
+  it('defines THEME_OVERRIDES channel', () => {
+    expect(IPC.THEME_OVERRIDES).toBe('theme:overrides')
+  })
 })

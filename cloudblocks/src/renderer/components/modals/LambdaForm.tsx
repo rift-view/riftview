@@ -4,11 +4,11 @@ import { useCloudStore } from '../../store/cloud'
 
 interface Props { onChange: (p: LambdaParams) => void; showErrors?: boolean }
 
-const inp = (err: boolean): React.CSSProperties => ({ width: '100%', background: '#060d14', border: `1px solid ${err ? '#ff5f57' : '#30363d'}`, borderRadius: 3, padding: '3px 6px', color: '#eee', fontFamily: 'monospace', fontSize: 10, boxSizing: 'border-box' as const })
+const inp = (err: boolean): React.CSSProperties => ({ width: '100%', background: 'var(--cb-bg-panel)', border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`, borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10, boxSizing: 'border-box' as const })
 const sel = inp
-const lbl: React.CSSProperties = { fontSize: 9, color: '#555', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
+const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
 
-export function LambdaForm({ onChange, showErrors }: Props) {
+export function LambdaForm({ onChange, showErrors }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
   const vpcs    = nodes.filter(n => n.type === 'vpc')
   const subnets = nodes.filter(n => n.type === 'subnet')
@@ -19,7 +19,7 @@ export function LambdaForm({ onChange, showErrors }: Props) {
     memorySize: 128, timeout: 3,
   })
 
-  const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => {
+  const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]): void => {
     const next = { ...form, [k]: v }
     setForm(next)
     onChange({ resource: 'lambda', ...next })
@@ -57,7 +57,7 @@ export function LambdaForm({ onChange, showErrors }: Props) {
         <>
           <div style={lbl}>Subnets *</div>
           {filteredSubnets.map(s => (
-            <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, fontSize: 10, color: '#aaa', cursor: 'pointer' }}>
+            <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, fontSize: 10, color: 'var(--cb-text-secondary)', cursor: 'pointer' }}>
               <input type="checkbox" checked={(form.subnetIds ?? []).includes(s.id)} onChange={e => {
                 const ids = form.subnetIds ?? []
                 update('subnetIds', e.target.checked ? [...ids, s.id] : ids.filter(x => x !== s.id))
@@ -67,7 +67,7 @@ export function LambdaForm({ onChange, showErrors }: Props) {
           ))}
           <div style={lbl}>Security groups *</div>
           {sgs.map(sg => (
-            <label key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, fontSize: 10, color: '#aaa', cursor: 'pointer' }}>
+            <label key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, fontSize: 10, color: 'var(--cb-text-secondary)', cursor: 'pointer' }}>
               <input type="checkbox" checked={(form.securityGroupIds ?? []).includes(sg.id)} onChange={e => {
                 const ids = form.securityGroupIds ?? []
                 update('securityGroupIds', e.target.checked ? [...ids, sg.id] : ids.filter(x => x !== sg.id))

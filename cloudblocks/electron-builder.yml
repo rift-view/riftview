@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: com.cloudblocks.desktop
 productName: cloudblocks
 directories:
   buildResources: build
@@ -21,10 +21,8 @@ nsis:
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+  # TODO: enable before public release — requires Apple Developer account + notarize config
   notarize: false
 dmg:
   artifactName: ${name}-${version}.${ext}
@@ -40,4 +38,4 @@ appImage:
 npmRebuild: false
 publish:
   provider: generic
-  url: https://example.com/auto-updates
+  url: https://releases.cloudblocks.app/auto-updates

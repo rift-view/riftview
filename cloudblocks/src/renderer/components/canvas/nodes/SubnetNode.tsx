@@ -2,7 +2,7 @@ import type { NodeProps } from '@xyflow/react'
 
 interface SubnetNodeData { label: string; isPublic?: boolean; az?: string }
 
-export function SubnetNode({ data }: NodeProps) {
+export function SubnetNode({ data }: NodeProps): React.JSX.Element {
   const d     = data as unknown as SubnetNodeData
   const color = d.isPublic ? '#4CAF50' : '#78909c'
   const tag   = d.isPublic ? 'PUBLIC' : 'PRIVATE'

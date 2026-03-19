@@ -14,18 +14,18 @@ const BLANK_RULE: Rule = { protocol: 'tcp', fromPort: 443, toPort: 443, cidr: '0
 function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
   return {
     width: '100%',
-    background: '#060d14',
-    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : '#30363d'}`,
+    background: 'var(--cb-bg-panel)',
+    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--cb-border)'}`,
     borderRadius: 3,
     padding: '3px 6px',
-    color: '#eee',
+    color: 'var(--cb-text-primary)',
     fontFamily: 'monospace',
     fontSize: 10,
     boxSizing: 'border-box' as const,
   }
 }
 
-export function SgForm({ onChange, showErrors = false }: Props){
+export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
   const vpcs  = nodes.filter((n) => n.type === 'vpc')
 
@@ -59,10 +59,10 @@ export function SgForm({ onChange, showErrors = false }: Props){
   }
 
   const ruleInputStyle: React.CSSProperties = {
-    background: '#060d14', border: '1px solid #30363d', borderRadius: '3px',
-    padding: '4px 6px', color: '#eee', fontFamily: 'monospace', fontSize: '11px',
+    background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)', borderRadius: '3px',
+    padding: '4px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: '11px',
   }
-  const labelStyle: React.CSSProperties = { color: '#555', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
+  const labelStyle: React.CSSProperties = { color: 'var(--cb-text-muted)', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -91,17 +91,17 @@ export function SgForm({ onChange, showErrors = false }: Props){
             </select>
             <input style={{ ...ruleInputStyle, width: '50px' }} type="number" value={rule.fromPort}
               onChange={(e) => updateRule(i, { fromPort: Number(e.target.value) })} placeholder="from" />
-            <span style={{ color: '#555', fontSize: '10px' }}>–</span>
+            <span style={{ color: 'var(--cb-text-muted)', fontSize: '10px' }}>–</span>
             <input style={{ ...ruleInputStyle, width: '50px' }} type="number" value={rule.toPort}
               onChange={(e) => updateRule(i, { toPort: Number(e.target.value) })} placeholder="to" />
             <input style={{ ...ruleInputStyle, flex: 1 }} value={rule.cidr}
               onChange={(e) => updateRule(i, { cidr: e.target.value })} placeholder="0.0.0.0/0" />
             <button onClick={() => removeRule(i)}
-              style={{ background: 'transparent', border: 'none', color: '#555', cursor: 'pointer', fontSize: '12px' }}>✕</button>
+              style={{ background: 'transparent', border: 'none', color: 'var(--cb-text-muted)', cursor: 'pointer', fontSize: '12px' }}>✕</button>
           </div>
         ))}
         <button onClick={addRule}
-          style={{ background: '#1a2332', border: '1px solid #30363d', borderRadius: '3px', color: '#aaa', cursor: 'pointer', fontSize: '10px', padding: '3px 8px', fontFamily: 'monospace' }}>
+          style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: '3px', color: 'var(--cb-text-secondary)', cursor: 'pointer', fontSize: '10px', padding: '3px 8px', fontFamily: 'monospace' }}>
           + Add Rule
         </button>
       </div>

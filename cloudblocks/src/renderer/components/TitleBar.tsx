@@ -12,7 +12,7 @@ interface TitleBarProps {
   onSettingsOpen: () => void
 }
 
-export function TitleBar({ onSettingsOpen }: TitleBarProps){
+export function TitleBar({ onSettingsOpen }: TitleBarProps): React.JSX.Element {
   const [profiles, setProfiles]       = useState<AwsProfile[]>([])
   const [connStatus, setConnStatus]   = useState<'unknown' | 'connected' | 'error'>('unknown')
   const profile    = useCloudStore((s) => s.profile)
@@ -28,13 +28,13 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps){
     return unsub
   }, [])
 
-  const handleProfileChange = (name: string) => {
+  const handleProfileChange = (name: string): void => {
     setProfile(name)
     setConnStatus('unknown')
     window.cloudblocks.selectProfile(name)
   }
 
-  const handleRegionChange = (r: string) => {
+  const handleRegionChange = (r: string): void => {
     setRegion(r)
     setConnStatus('unknown')
     window.cloudblocks.selectRegion(r)
@@ -47,7 +47,7 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps){
   return (
     <div
       className="flex items-center gap-4 px-3 h-9 flex-shrink-0"
-      style={{ background: '#0d1320', borderBottom: '1px solid #1e2d40' }}
+      style={{ background: 'var(--cb-bg-panel)', borderBottom: '1px solid var(--cb-border-strong)' }}
     >
       {/* Traffic lights placeholder for macOS hiddenInset */}
       <div className="flex gap-1.5 mr-2">
@@ -56,7 +56,7 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps){
         <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
       </div>
 
-      <span className="text-[11px] font-bold tracking-widest font-mono" style={{ color: '#FF9900' }}>
+      <span className="text-[11px] font-bold tracking-widest font-mono" style={{ color: 'var(--cb-accent)' }}>
         CLOUDBLOCKS
       </span>
 
@@ -67,7 +67,7 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps){
         value={profile}
         onChange={(e) => handleProfileChange(e.target.value)}
         className="text-[10px] font-mono px-2 py-0.5 rounded"
-        style={{ background: '#1a2332', border: '1px solid #FF9900', color: '#FF9900' }}
+        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-accent)', color: 'var(--cb-accent)' }}
       >
         {profiles.map((p) => (
           <option key={p.name} value={p.name}>{p.name}</option>
@@ -79,7 +79,7 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps){
         value={region}
         onChange={(e) => handleRegionChange(e.target.value)}
         className="text-[10px] font-mono px-2 py-0.5 rounded"
-        style={{ background: '#1a2332', border: '1px solid #333', color: '#aaa' }}
+        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}
       >
         {REGIONS.map((r) => (
           <option key={r} value={r}>{r}</option>
@@ -97,7 +97,7 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps){
         onClick={onSettingsOpen}
         title="Settings"
         style={{
-          background: 'none', border: 'none', color: '#aaa', cursor: 'pointer',
+          background: 'none', border: 'none', color: 'var(--cb-text-secondary)', cursor: 'pointer',
           fontSize: 14, padding: '0 8px', marginLeft: 'auto',
         }}
       >

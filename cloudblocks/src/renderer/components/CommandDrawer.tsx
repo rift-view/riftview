@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useCloudStore } from '../store/cloud'
+import { useUIStore } from '../store/ui'
+import { useCliStore } from '../store/cli'
 
-export function CommandDrawer(){
-  const cliOutput         = useCloudStore((s) => s.cliOutput)
-  const commandPreview    = useCloudStore((s) => s.commandPreview)
-  const pendingCommand    = useCloudStore((s) => s.pendingCommand)
-  const activeCreate      = useCloudStore((s) => s.activeCreate)
-  const appendCliOutput   = useCloudStore((s) => s.appendCliOutput)
-  const clearCliOutput    = useCloudStore((s) => s.clearCliOutput)
+export function CommandDrawer(): React.JSX.Element {
+  const cliOutput         = useCliStore((s) => s.cliOutput)
+  const commandPreview    = useCliStore((s) => s.commandPreview)
+  const pendingCommand    = useCliStore((s) => s.pendingCommand)
+  const activeCreate      = useUIStore((s) => s.activeCreate)
+  const appendCliOutput   = useCliStore((s) => s.appendCliOutput)
+  const clearCliOutput    = useCliStore((s) => s.clearCliOutput)
   const clearPendingNodes = useCloudStore((s) => s.clearPendingNodes)
-  const setPendingCommand = useCloudStore((s) => s.setPendingCommand)
-  const setCommandPreview = useCloudStore((s) => s.setCommandPreview)
+  const setPendingCommand = useCliStore((s) => s.setPendingCommand)
+  const setCommandPreview = useCliStore((s) => s.setCommandPreview)
 
   const [expanded, setExpanded] = useState(false)
   const [running,  setRunning]  = useState(false)
@@ -39,6 +41,11 @@ export function CommandDrawer(){
     const offDone = window.cloudblocks.onCliDone((result) => {
       setRunning(false)
       setExitCode(result.code)
+      if (result.code === 0) {
+        useUIStore.getState().showToast('Done')
+      } else {
+        useUIStore.getState().showToast('Command failed', 'error')
+      }
     })
     return () => { offOutput(); offDone() }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -54,7 +61,10 @@ export function CommandDrawer(){
       try {
         const result = await window.cloudblocks.runCli(pendingCommand)
         if (result.code === 0) {
+          useUIStore.getState().showToast('Done')
           await window.cloudblocks.startScan()
+        } else {
+          useUIStore.getState().showToast('Command failed', 'error')
         }
       } finally {
         setRunning(false)
@@ -99,12 +109,12 @@ export function CommandDrawer(){
     : 'Right-click canvas to create a resource'
 
   return (
-    <div style={{ background: '#0d1117', borderTop: '1px solid #FF9900', fontFamily: 'monospace', flexShrink: 0 }}>
+    <div style={{ background: 'var(--cb-bg-panel)', borderTop: '1px solid var(--cb-accent)', fontFamily: 'monospace', flexShrink: 0 }}>
       {/* Command preview area — all lines, one per row */}
       {commandPreview.length > 0 && !running && exitCode === null && (
-        <div style={{ padding: '6px 10px', background: '#060d14', borderBottom: '1px solid #1e2d40' }}>
+        <div style={{ padding: '6px 10px', background: 'var(--cb-bg-panel)', borderBottom: '1px solid var(--cb-border-strong)' }}>
           {commandPreview.map((line, i) => (
-            <div key={i} style={{ color: '#eee', fontFamily: 'monospace', fontSize: '12px' }}>{line}</div>
+            <div key={i} style={{ color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: '12px' }}>{line}</div>
           ))}
         </div>
       )}
@@ -113,13 +123,13 @@ export function CommandDrawer(){
       {expanded && (
         <div
           ref={logRef}
-          style={{ height: '120px', overflowY: 'auto', padding: '6px 10px', background: '#060d14', borderBottom: '1px solid #1e2d40', fontSize: '10px', lineHeight: '1.6' }}
+          style={{ height: '120px', overflowY: 'auto', padding: '6px 10px', background: 'var(--cb-bg-panel)', borderBottom: '1px solid var(--cb-border-strong)', fontSize: '10px', lineHeight: '1.6' }}
         >
           {cliOutput.length === 0 ? (
-            <span style={{ color: '#555' }}>Waiting for output…</span>
+            <span style={{ color: 'var(--cb-text-muted)' }}>Waiting for output…</span>
           ) : (
             cliOutput.map((entry, i) => (
-              <div key={i} style={{ color: entry.stream === 'stderr' ? '#febc2e' : '#ccc', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+              <div key={i} style={{ color: entry.stream === 'stderr' ? '#febc2e' : 'var(--cb-text-primary)', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                 {entry.line}
               </div>
             ))
@@ -129,9 +139,9 @@ export function CommandDrawer(){
 
       {/* Bottom strip */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 8px', minHeight: '26px' }}>
-        <span style={{ color: '#FF9900', fontSize: '9px' }}>$</span>
+        <span style={{ color: 'var(--cb-accent)', fontSize: '9px' }}>$</span>
 
-        <code style={{ fontSize: '9px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: commandPreview.length > 0 || running ? '#eee' : '#444' }}>
+        <code style={{ fontSize: '9px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: commandPreview.length > 0 || running ? 'var(--cb-text-primary)' : 'var(--cb-text-muted)' }}>
           {statusText}
         </code>
 
@@ -147,7 +157,7 @@ export function CommandDrawer(){
         {running && (
           <button
             onClick={handleCancel}
-            style={{ background: '#1a2332', border: '1px solid #ff5f57', borderRadius: '2px', padding: '1px 8px', color: '#ff5f57', fontSize: '9px', cursor: 'pointer', fontFamily: 'monospace' }}
+            style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #ff5f57', borderRadius: '2px', padding: '1px 8px', color: '#ff5f57', fontSize: '9px', cursor: 'pointer', fontFamily: 'monospace' }}
           >
             Cancel
           </button>
@@ -156,7 +166,7 @@ export function CommandDrawer(){
         {(showSuccess || showError) && (
           <button
             onClick={handleCollapse}
-            style={{ background: 'transparent', border: 'none', color: '#555', fontSize: '11px', cursor: 'pointer' }}
+            style={{ background: 'transparent', border: 'none', color: 'var(--cb-text-muted)', fontSize: '11px', cursor: 'pointer' }}
           >
             ✕
           </button>
@@ -165,7 +175,7 @@ export function CommandDrawer(){
         {cliOutput.length > 0 && !expanded && (
           <button
             onClick={() => setExpanded(true)}
-            style={{ background: 'transparent', border: 'none', color: '#555', fontSize: '9px', cursor: 'pointer', fontFamily: 'monospace' }}
+            style={{ background: 'transparent', border: 'none', color: 'var(--cb-text-muted)', fontSize: '9px', cursor: 'pointer', fontFamily: 'monospace' }}
           >
             ▲
           </button>
@@ -174,7 +184,7 @@ export function CommandDrawer(){
         {expanded && (
           <button
             onClick={() => setExpanded(false)}
-            style={{ background: 'transparent', border: 'none', color: '#555', fontSize: '9px', cursor: 'pointer', fontFamily: 'monospace' }}
+            style={{ background: 'transparent', border: 'none', color: 'var(--cb-text-muted)', fontSize: '9px', cursor: 'pointer', fontFamily: 'monospace' }}
           >
             ▼
           </button>

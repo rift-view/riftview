@@ -72,4 +72,33 @@ export interface AlbParams {
   vpcId: string
 }
 
-export type CreateParams = VpcParams | Ec2Params | SgParams | S3Params | RdsParams | LambdaParams | AlbParams
+export interface AcmParams {
+  resource: 'acm'
+  domainName: string
+  subjectAlternativeNames: string[]
+  validationMethod: 'DNS' | 'EMAIL'
+}
+
+export interface CloudFrontParams {
+  resource: 'cloudfront'
+  comment: string
+  origins: Array<{ id: string; domainName: string }>
+  defaultRootObject: string
+  certArn?: string
+  priceClass: 'PriceClass_All' | 'PriceClass_100' | 'PriceClass_200'
+}
+
+export interface ApigwParams {
+  resource: 'apigw'
+  name: string
+  corsOrigins: string[]
+}
+
+export interface ApigwRouteParams {
+  resource: 'apigw-route'
+  apiId: string
+  method: string
+  path: string
+}
+
+export type CreateParams = VpcParams | Ec2Params | SgParams | S3Params | RdsParams | LambdaParams | AlbParams | AcmParams | CloudFrontParams | ApigwParams | ApigwRouteParams

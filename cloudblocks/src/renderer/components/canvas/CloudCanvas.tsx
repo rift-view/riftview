@@ -1,10 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { useCloudStore } from '../../store/cloud'
+import { useUIStore } from '../../store/ui'
 import { TopologyView } from './TopologyView'
 import { GraphView } from './GraphView'
 import { CanvasContextMenu } from './CanvasContextMenu'
+import { CanvasToast } from '../CanvasToast'
+import { SaveViewModal } from './SaveViewModal'
 import type { CloudNode } from '../../types/cloud'
+
+function relativeTime(date: Date): string {
+  const secs = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (secs < 60) return `${secs}s ago`
+  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`
+  return `${Math.floor(secs / 3600)}h ago`
+}
 
 interface Props {
   onScan: () => void
@@ -12,12 +22,38 @@ interface Props {
 }
 
 /** Inner component — must live inside ReactFlowProvider to access useReactFlow hooks. */
-function CanvasInner({ onScan, onNodeContextMenu }: Props){
+function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
   const { fitView, zoomIn, zoomOut } = useReactFlow()
-  const view       = useCloudStore((s) => s.view)
-  const setView    = useCloudStore((s) => s.setView)
-  const scanStatus = useCloudStore((s) => s.scanStatus)
+  const view          = useUIStore((s) => s.view)
+  const setView       = useUIStore((s) => s.setView)
+  const scanStatus    = useCloudStore((s) => s.scanStatus)
+  const lastScannedAt = useCloudStore((s) => s.lastScannedAt)
+  const nodes         = useCloudStore((s) => s.nodes)
+  const profile       = useCloudStore((s) => s.profile)
+  const savedViews     = useUIStore((s) => s.savedViews)
+  const activeViewSlot = useUIStore((s) => s.activeViewSlot)
+  const saveView       = useUIStore((s) => s.saveView)
+  const loadView       = useUIStore((s) => s.loadView)
+  const [modalSlot, setModalSlot] = useState<number | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const [, forceUpdate] = useState(0)
+
+  // Refresh the relative timestamp every 10 seconds
+  useEffect(() => {
+    if (!lastScannedAt) return
+    const id = setInterval(() => forceUpdate(n => n + 1), 10_000)
+    return () => clearInterval(id)
+  }, [lastScannedAt])
+
+  // Listen for search-palette node selection — fly camera to the selected node
+  useEffect(() => {
+    function onFitNode(e: Event): void {
+      const { nodeId } = (e as CustomEvent<{ nodeId: string }>).detail
+      fitView({ nodes: [{ id: nodeId }], duration: 400, padding: 0.5 })
+    }
+    window.addEventListener('cloudblocks:fitnode', onFitNode)
+    return () => window.removeEventListener('cloudblocks:fitnode', onFitNode)
+  }, [fitView])
 
   const btnBase = { fontFamily: 'monospace', fontSize: '9px', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }
 
@@ -26,26 +62,53 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props){
     setContextMenu({ x: e.clientX, y: e.clientY })
   }
 
+  function handleSlotClick(slot: number): void {
+    const saved = savedViews[slot]
+    if (saved === null) {
+      setModalSlot(slot)                                       // empty → open modal to create
+    } else if (slot === activeViewSlot) {
+      setModalSlot(slot)                                       // active → open modal to rename
+    } else {
+      loadView(slot, view, () => fitView({ duration: 300 }))  // saved non-active → load
+    }
+  }
+
+  function handleModalSave(name: string): void {
+    if (modalSlot === null) return
+    saveView(modalSlot, name, view)
+    setModalSlot(null)
+  }
+
+  const activeViewName = activeViewSlot !== null
+    ? (savedViews[activeViewSlot]?.name ?? null)
+    : null
+
   return (
     <div className="relative flex-1 h-full" onContextMenu={handleContextMenu}>
       {/* Toolbar */}
       <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-md"
-           style={{ background: '#0d1320', border: '1px solid #1e2d40' }}>
+           style={{ background: 'var(--cb-minimap-bg)', border: '1px solid var(--cb-border-strong)' }}>
         <button
           onClick={onScan}
           disabled={scanStatus === 'scanning'}
-          style={{ ...btnBase, background: '#1a2332', border: '1px solid #FF9900', color: '#FF9900', opacity: scanStatus === 'scanning' ? 0.5 : 1 }}
+          style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-accent)', color: 'var(--cb-accent)', opacity: scanStatus === 'scanning' ? 0.5 : 1 }}
         >
           {scanStatus === 'scanning' ? '⟳ Scanning…' : '⟳ Scan'}
         </button>
 
+        {lastScannedAt && (
+          <span style={{ fontSize: 11, color: 'var(--cb-text-muted)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+            Scanned {relativeTime(lastScannedAt)}
+          </span>
+        )}
+
         <div className="w-px h-3.5 bg-gray-700" />
 
-        <button onClick={() => fitView({ duration: 300 })} style={{ ...btnBase, background: '#111', border: '1px solid #333', color: '#aaa' }}>
+        <button onClick={() => fitView({ duration: 300 })} style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}>
           ⊞ Fit
         </button>
-        <button onClick={() => zoomIn()}  style={{ ...btnBase, background: '#111', border: '1px solid #333', color: '#aaa' }}>+</button>
-        <button onClick={() => zoomOut()} style={{ ...btnBase, background: '#111', border: '1px solid #333', color: '#aaa' }}>−</button>
+        <button onClick={() => zoomIn()}  style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}>+</button>
+        <button onClick={() => zoomOut()} style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}>−</button>
 
         <div className="w-px h-3.5 bg-gray-700" />
 
@@ -55,20 +118,98 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props){
             onClick={() => setView(v)}
             style={{
               ...btnBase,
-              background: view === v ? '#1a2332' : 'transparent',
-              border: `1px solid ${view === v ? '#64b5f6' : '#333'}`,
+              background: view === v ? 'var(--cb-bg-elevated)' : 'transparent',
+              border: `1px solid ${view === v ? '#64b5f6' : 'var(--cb-border)'}`,
               color: view === v ? '#64b5f6' : '#666',
             }}
           >
             {v === 'topology' ? '⊞ Topology' : '◈ Graph'}
           </button>
         ))}
+
+        <div className="w-px h-3.5 bg-gray-700" />
+
+        {/* Saved view slots */}
+        {([0, 1, 2, 3] as const).map((slot) => {
+          const saved    = savedViews[slot]
+          const isActive = slot === activeViewSlot
+          return (
+            <button
+              key={slot}
+              onClick={() => handleSlotClick(slot)}
+              title={saved?.name ?? `Empty slot ${slot + 1}`}
+              style={{
+                ...btnBase,
+                background: isActive ? 'var(--cb-bg-elevated)' : 'transparent',
+                border: `1px solid ${saved ? (isActive ? 'var(--cb-accent)' : 'var(--cb-border-strong)') : 'var(--cb-border)'}`,
+                color:  saved ? (isActive ? 'var(--cb-accent)' : 'var(--cb-text-secondary)') : '#444',
+                minWidth: '20px',
+              }}
+            >
+              {slot + 1}
+            </button>
+          )
+        })}
+
+        {activeViewName && (
+          <span style={{ fontSize: 10, color: 'var(--cb-text-muted)', fontFamily: 'monospace',
+                         whiteSpace: 'nowrap', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {activeViewName}
+          </span>
+        )}
       </div>
 
       {view === 'topology'
         ? <TopologyView onNodeContextMenu={onNodeContextMenu} />
         : <GraphView onNodeContextMenu={onNodeContextMenu} />
       }
+
+      {/* Empty state overlay — shown when no nodes, not scanning, and a profile is connected */}
+      {nodes.length === 0 && scanStatus !== 'scanning' && profile && (
+        <div
+          style={{
+            position:        'absolute',
+            inset:           0,
+            display:         'flex',
+            alignItems:      'center',
+            justifyContent:  'center',
+            pointerEvents:   'none',
+            zIndex:          5,
+          }}
+        >
+          <div
+            style={{
+              textAlign:   'center',
+              color:       'var(--cb-text-muted)',
+              fontFamily:  'monospace',
+              pointerEvents: 'auto',
+            }}
+          >
+            <div style={{ fontSize: 32, marginBottom: 12 }}>🌩</div>
+            <div style={{ fontSize: 16, color: 'var(--cb-text)', marginBottom: 8, fontWeight: 600 }}>
+              No resources yet
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--cb-text-muted)', maxWidth: 280, marginBottom: 20, lineHeight: 1.6 }}>
+              Connect an AWS profile and scan your account to visualize your infrastructure.
+            </div>
+            <button
+              onClick={onScan}
+              style={{
+                fontFamily:   'monospace',
+                fontSize:     '11px',
+                borderRadius: '4px',
+                padding:      '4px 16px',
+                cursor:       'pointer',
+                background:   'var(--cb-bg-elevated)',
+                border:       '1px solid var(--cb-accent)',
+                color:        'var(--cb-accent)',
+              }}
+            >
+              Scan Account
+            </button>
+          </div>
+        </div>
+      )}
 
       {contextMenu && (
         <CanvasContextMenu
@@ -77,11 +218,22 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props){
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      <CanvasToast />
+
+      {modalSlot !== null && (
+        <SaveViewModal
+          slot={modalSlot}
+          initialName={savedViews[modalSlot]?.name ?? ''}
+          onSave={handleModalSave}
+          onCancel={() => setModalSlot(null)}
+        />
+      )}
     </div>
   )
 }
 
-export function CloudCanvas(props: Props){
+export function CloudCanvas(props: Props): React.JSX.Element {
   return (
     <ReactFlowProvider>
       <CanvasInner {...props} />

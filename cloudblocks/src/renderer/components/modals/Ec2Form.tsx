@@ -12,18 +12,18 @@ interface Props {
 function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
   return {
     width: '100%',
-    background: '#060d14',
-    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : '#30363d'}`,
+    background: 'var(--cb-bg-panel)',
+    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--cb-border)'}`,
     borderRadius: 3,
     padding: '3px 6px',
-    color: '#eee',
+    color: 'var(--cb-text-primary)',
     fontFamily: 'monospace',
     fontSize: 10,
     boxSizing: 'border-box' as const,
   }
 }
 
-export function Ec2Form({ onChange, showErrors = false }: Props){
+export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Element {
   const nodes    = useCloudStore((s) => s.nodes)
   const keyPairs = useCloudStore((s) => s.keyPairs)
   const vpcs    = nodes.filter((n) => n.type === 'vpc')
@@ -57,7 +57,7 @@ export function Ec2Form({ onChange, showErrors = false }: Props){
     update({ securityGroupIds: next })
   }
 
-  const labelStyle: React.CSSProperties = { color: '#555', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
+  const labelStyle: React.CSSProperties = { color: 'var(--cb-text-muted)', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
   const nonRequiredStyle: React.CSSProperties = fieldStyle('_nonempty_', false)
 
   return (
@@ -91,11 +91,11 @@ export function Ec2Form({ onChange, showErrors = false }: Props){
         </select></label>
       <div><span style={labelStyle}>Security Groups</span>
         {sgs.length === 0 ? (
-          <div style={{ color: '#555', fontSize: '10px' }}>No security groups found</div>
+          <div style={{ color: 'var(--cb-text-muted)', fontSize: '10px' }}>No security groups found</div>
         ) : sgs.map((sg) => (
           <label key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px', cursor: 'pointer' }}>
             <input type="checkbox" checked={securityGroupIds.includes(sg.id)} onChange={() => toggleSg(sg.id)} />
-            <span style={{ color: '#aaa', fontSize: '10px', fontFamily: 'monospace' }}>{sg.label}</span>
+            <span style={{ color: 'var(--cb-text-secondary)', fontSize: '10px', fontFamily: 'monospace' }}>{sg.label}</span>
           </label>
         ))}</div>
     </div>

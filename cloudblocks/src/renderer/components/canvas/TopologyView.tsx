@@ -1,27 +1,54 @@
-import { useMemo } from 'react'
-import { ReactFlow, Background, MiniMap, type Node, type Edge } from '@xyflow/react'
+import { useMemo, useCallback, useRef, useEffect } from 'react'
+import { ReactFlow, Background, MiniMap, useReactFlow, type Node, type Edge, type NodeChange } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
+import { useUIStore } from '../../store/ui'
+import type { NodeType } from '../../types/cloud'
 import { ResourceNode } from './nodes/ResourceNode'
 import { VpcNode } from './nodes/VpcNode'
 import { SubnetNode } from './nodes/SubnetNode'
+import { GlobalZoneNode } from './nodes/GlobalZoneNode'
+import { AcmNode } from './nodes/AcmNode'
+import { CloudFrontNode } from './nodes/CloudFrontNode'
+import { ApigwNode } from './nodes/ApigwNode'
+import { ApigwRouteNode } from './nodes/ApigwRouteNode'
 import type { CloudNode } from '../../types/cloud'
 
-const NODE_TYPES = { resource: ResourceNode, vpc: VpcNode, subnet: SubnetNode }
+const NODE_TYPES = {
+  resource:    ResourceNode,
+  vpc:         VpcNode,
+  subnet:      SubnetNode,
+  globalZone:  GlobalZoneNode,
+  acm:         AcmNode,
+  cloudfront:  CloudFrontNode,
+  apigw:       ApigwNode,
+  'apigw-route': ApigwRouteNode,
+}
 
-const CONTAINER_TYPES = new Set(['vpc', 'subnet'])
+const CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw'])
 
-const RES_W     = 150   // wider nodes for readable text
-const RES_H     = 66   // taller nodes: type row + label row + optional badge
+const RES_W     = 150
+const RES_H     = 66
 const RES_COLS  = 2
 const RES_GAP_X = 12
 const RES_GAP_Y = 12
 const SUB_PAD_X = 12
-const SUB_PAD_Y = 38  // space for subnet header
+const SUB_PAD_Y = 38
 const SUB_GAP   = 16
 const VPC_PAD   = 16
 const VPC_GAP   = 48
-const VPC_LABEL = 32  // space for VPC header bar
+const VPC_LABEL = 32
+
+// Global zone constants
+const GLOBAL_PAD   = 16
+const GLOBAL_LABEL = 32
+
+// API Gateway container constants
+const APIGW_PAD       = 16
+const APIGW_HEADER    = 32
+const APIGW_ROUTE_H   = 36
+const APIGW_ROUTE_GAP = 8
+const APIGW_MIN_W     = 240
 
 function subnetSize(resourceCount: number): { w: number; h: number } {
   const cols = Math.min(resourceCount || 1, RES_COLS)
@@ -32,18 +59,64 @@ function subnetSize(resourceCount: number): { w: number; h: number } {
   }
 }
 
-// Lays out container nodes (VPCs, subnets) as parent nodes and
-// resource nodes as children inside them. All sizes are computed
-// from content so nothing overflows.
-function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Node[] {
+function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, highlightedIds: Set<string> | null): Node[] {
   const nodes: Node[] = []
 
-  // Bucket nodes by role
-  const vpcs    = cloudNodes.filter((n) => n.type === 'vpc')
-  const subnets = cloudNodes.filter((n) => n.type === 'subnet')
-  const resources = cloudNodes.filter((n) => !CONTAINER_TYPES.has(n.type))
+  // Separate global nodes from regional nodes
+  const globalNodes = cloudNodes.filter((n) => n.region === 'global')
+  const regionalNodes = cloudNodes.filter((n) => n.region !== 'global')
 
-  const subnetsByVpc    = new Map<string, CloudNode[]>()
+  // Layout global zone
+  let globalZoneHeight = 0
+  let vpcY = 40
+
+  if (globalNodes.length > 0) {
+    const GLOBAL_COLS = 5
+    const globalRows  = Math.ceil(globalNodes.length / GLOBAL_COLS)
+    const globalW     = GLOBAL_PAD * 2 + Math.min(globalNodes.length, GLOBAL_COLS) * (RES_W + RES_GAP_X) - RES_GAP_X
+    globalZoneHeight  = GLOBAL_LABEL + GLOBAL_PAD + globalRows * (RES_H + RES_GAP_Y)
+
+    const GLOBAL_ZONE_ID = '__global_zone__'
+    nodes.push({
+      id:       GLOBAL_ZONE_ID,
+      type:     'globalZone',
+      position: { x: 40, y: 40 },
+      style:    { width: Math.max(400, globalW), height: globalZoneHeight },
+      data:     {},
+      selectable: false,
+      draggable:  false,
+    })
+
+    // Place global resource nodes inside the zone
+    globalNodes.forEach((n, i) => {
+      const col = i % GLOBAL_COLS
+      const row = Math.floor(i / GLOBAL_COLS)
+      const nodeType = n.type === 'acm' ? 'acm' : n.type === 'cloudfront' ? 'cloudfront' : 'resource'
+      nodes.push({
+        id:       n.id,
+        type:     nodeType,
+        parentId: GLOBAL_ZONE_ID,
+        extent:   'parent',
+        position: {
+          x: GLOBAL_PAD + col * (RES_W + RES_GAP_X),
+          y: GLOBAL_LABEL + row * (RES_H + RES_GAP_Y),
+        },
+        data:     { label: n.label, nodeType: n.type, status: n.status, dimmed: highlightedIds !== null && !highlightedIds.has(n.id) },
+        selected: n.id === selectedId,
+      })
+    })
+
+    vpcY = 40 + globalZoneHeight + 60
+  }
+
+  // Bucket regional nodes by role
+  const vpcs      = regionalNodes.filter((n) => n.type === 'vpc')
+  const subnets   = regionalNodes.filter((n) => n.type === 'subnet')
+  const apigws    = regionalNodes.filter((n) => n.type === 'apigw')
+  const apigwRoutes = regionalNodes.filter((n) => n.type === 'apigw-route')
+  const resources = regionalNodes.filter((n) => !CONTAINER_TYPES.has(n.type) && n.type !== 'apigw-route')
+
+  const subnetsByVpc      = new Map<string, CloudNode[]>()
   const resourcesByParent = new Map<string, CloudNode[]>()
   const rootResources: CloudNode[] = []
 
@@ -59,8 +132,9 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Nod
     resourcesByParent.get(r.parentId)!.push(r)
   })
 
-  // Place VPCs, sizing each one from its content
+  // Place VPCs
   let vpcX = 40
+  let maxVpcHeight = 0
   vpcs.forEach((vpc) => {
     const vpcSubnets = subnetsByVpc.get(vpc.id) ?? []
     const subSizes   = vpcSubnets.map((s) => subnetSize((resourcesByParent.get(s.id) ?? []).length))
@@ -70,16 +144,17 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Nod
     const directSize = subnetSize(directRes.length)
     const vpcW = Math.max(260, VPC_PAD * 2 + Math.max(totalSubW, directRes.length > 0 ? directSize.w : 0))
     const vpcH = VPC_LABEL + VPC_PAD + maxSubH + VPC_PAD + (directRes.length > 0 ? directSize.h + SUB_GAP : 0)
+    const vpcHFinal = Math.max(160, vpcH)
+    maxVpcHeight = Math.max(maxVpcHeight, vpcHFinal)
 
     nodes.push({
       id:       vpc.id,
       type:     'vpc',
-      position: { x: vpcX, y: 40 },
-      style:    { width: vpcW, height: Math.max(160, vpcH) },
+      position: { x: vpcX, y: vpcY },
+      style:    { width: vpcW, height: vpcHFinal },
       data:     { label: vpc.label, cidr: vpc.metadata.cidr as string | undefined },
     })
 
-    // Subnets in a single row inside the VPC
     let subX = VPC_PAD
     vpcSubnets.forEach((subnet, si) => {
       const { w: sw, h: sh } = subSizes[si]
@@ -93,7 +168,6 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Nod
         data:     { label: subnet.label, isPublic: subnet.metadata.mapPublicIp, az: subnet.metadata.availabilityZone as string | undefined },
       })
 
-      // Resources inside this subnet
       const rNodes = resourcesByParent.get(subnet.id) ?? []
       rNodes.forEach((r, ri) => {
         const col = ri % RES_COLS
@@ -107,14 +181,13 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Nod
             x: SUB_PAD_X + col * (RES_W + RES_GAP_X),
             y: SUB_PAD_Y + row * (RES_H + RES_GAP_Y),
           },
-          data:     { label: r.label, nodeType: r.type, status: r.status },
+          data:     { label: r.label, nodeType: r.type, status: r.status, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
           selected: r.id === selectedId,
         })
       })
       subX += sw + SUB_GAP
     })
 
-    // Resources attached directly to the VPC (e.g. ALBs, SGs without a subnet)
     const subnetBottom = VPC_LABEL + VPC_PAD + maxSubH + SUB_GAP
     directRes.forEach((r, ri) => {
       const col = ri % RES_COLS
@@ -128,7 +201,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Nod
           x: VPC_PAD + col * (RES_W + RES_GAP_X),
           y: subnetBottom + row * (RES_H + RES_GAP_Y),
         },
-        data:     { label: r.label, nodeType: r.type, status: r.status },
+        data:     { label: r.label, nodeType: r.type, status: r.status, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
         selected: r.id === selectedId,
       })
     })
@@ -136,15 +209,65 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Nod
     vpcX += vpcW + VPC_GAP
   })
 
-  // Resources with no parent (S3, Lambda, ALB if not VPC-attached, etc.)
-  // rendered in a row below all VPCs
-  const ROOT_COLS = 5
+  // Place API Gateway containers — same row as VPCs, appended to the right
+  const routesByApi = new Map<string, CloudNode[]>()
+  apigwRoutes.forEach((r) => {
+    if (!r.parentId) return
+    if (!routesByApi.has(r.parentId)) routesByApi.set(r.parentId, [])
+    routesByApi.get(r.parentId)!.push(r)
+  })
+
+  apigws.forEach((api) => {
+    const routes = routesByApi.get(api.id) ?? []
+    const longestLabel = routes.reduce((max, r) => Math.max(max, r.label.length), 0)
+    const apigwW = Math.max(APIGW_MIN_W, longestLabel * 7 + APIGW_PAD * 2)
+    const apigwH = APIGW_HEADER + APIGW_PAD + routes.length * (APIGW_ROUTE_H + APIGW_ROUTE_GAP) + APIGW_PAD
+    const apigwHFinal = Math.max(80, apigwH)
+    maxVpcHeight = Math.max(maxVpcHeight, apigwHFinal)
+
+    nodes.push({
+      id:       api.id,
+      type:     'apigw',
+      position: { x: vpcX, y: vpcY },
+      style:    { width: apigwW, height: apigwHFinal },
+      data:     { label: api.label, endpoint: api.metadata.endpoint as string | undefined, dimmed: highlightedIds !== null && !highlightedIds.has(api.id) },
+      selected: api.id === selectedId,
+    })
+
+    routes.forEach((route, ri) => {
+      nodes.push({
+        id:       route.id,
+        type:     'apigw-route',
+        parentId: api.id,
+        extent:   'parent',
+        position: {
+          x: APIGW_PAD,
+          y: APIGW_HEADER + APIGW_PAD + ri * (APIGW_ROUTE_H + APIGW_ROUTE_GAP),
+        },
+        style:    { width: apigwW - APIGW_PAD * 2 },
+        data: {
+          label:     route.label,
+          method:    route.metadata.method as string | undefined,
+          path:      route.metadata.path as string | undefined,
+          hasLambda: !!(route.metadata.lambdaArn),
+          dimmed:    highlightedIds !== null && !highlightedIds.has(route.id),
+        },
+        selected: route.id === selectedId,
+      })
+    })
+
+    vpcX += apigwW + VPC_GAP
+  })
+
+  // Root resources (no parent) — row below all VPCs
+  const ROOT_COLS  = 5
+  const rootY      = vpcY + maxVpcHeight + 60
   rootResources.forEach((r, i) => {
     nodes.push({
       id:       r.id,
       type:     'resource',
-      position: { x: 40 + (i % ROOT_COLS) * (RES_W + RES_GAP_X + 40), y: 520 + Math.floor(i / ROOT_COLS) * (RES_H + RES_GAP_Y + 20) },
-      data:     { label: r.label, nodeType: r.type, status: r.status },
+      position: { x: 40 + (i % ROOT_COLS) * (RES_W + RES_GAP_X + 40), y: rootY + Math.floor(i / ROOT_COLS) * (RES_H + RES_GAP_Y + 20) },
+      data:     { label: r.label, nodeType: r.type, status: r.status, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
       selected: r.id === selectedId,
     })
   })
@@ -152,24 +275,149 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null): Nod
   return nodes
 }
 
+// Build topology edges: CloudFront → origin, route → lambda
+function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
+  const edges: Edge[] = []
+  const s3Nodes     = cloudNodes.filter((n) => n.type === 's3')
+  const albNodes    = cloudNodes.filter((n) => n.type === 'alb')
+  const cfNodes     = cloudNodes.filter((n) => n.type === 'cloudfront')
+  const lambdaNodes = cloudNodes.filter((n) => n.type === 'lambda')
+  const routeNodes  = cloudNodes.filter((n) => n.type === 'apigw-route')
+
+  cfNodes.forEach((cf) => {
+    const origins = (cf.metadata.origins ?? []) as Array<{ id: string; domainName: string; type: string }>
+    origins.forEach((origin) => {
+      // S3 match: origin domainName starts with <bucketName>.
+      const s3Match = s3Nodes.find((s) => origin.domainName.startsWith(s.id + '.'))
+      if (s3Match) {
+        edges.push({
+          id:     `cf-origin-${cf.id}-${s3Match.id}`,
+          source: cf.id,
+          target: s3Match.id,
+          type:   'step',
+          style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
+        })
+        return
+      }
+      // ALB match: origin domainName === alb dnsName
+      const albMatch = albNodes.find((a) => origin.domainName === (a.metadata.dnsName as string))
+      if (albMatch) {
+        edges.push({
+          id:     `cf-origin-${cf.id}-${albMatch.id}`,
+          source: cf.id,
+          target: albMatch.id,
+          type:   'step',
+          style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
+        })
+      }
+    })
+  })
+
+  // Route → Lambda integration edges (dotted)
+  routeNodes.forEach((route) => {
+    const lambdaArn = route.metadata.lambdaArn as string | undefined
+    if (!lambdaArn) return
+    const lambdaNode = lambdaNodes.find((n) => n.id === lambdaArn || n.metadata.arn === lambdaArn)
+    if (!lambdaNode) return
+    edges.push({
+      id:     `route-lambda-${route.id}`,
+      source: route.id,
+      target: lambdaNode.id,
+      type:   'step',
+      label:  'integration',
+      style:  { stroke: 'var(--cb-border)', strokeDasharray: '4 2', strokeWidth: 1 },
+    })
+  })
+
+  return edges
+}
+
 interface TopologyViewProps {
   onNodeContextMenu: (node: CloudNode, x: number, y: number) => void
 }
 
-export function TopologyView({ onNodeContextMenu }: TopologyViewProps){
-  const cloudNodes   = useCloudStore((s) => s.nodes)
-  const pendingNodes = useCloudStore((s) => s.pendingNodes)
-  const selectNode = useCloudStore((s) => s.selectNode)
-  const selectedId = useCloudStore((s) => s.selectedNodeId)
+export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JSX.Element {
+  const cloudNodes      = useCloudStore((s) => s.nodes)
+  const pendingNodes    = useCloudStore((s) => s.pendingNodes)
+  const selectNode      = useUIStore((s) => s.selectNode)
+  const selectedId      = useUIStore((s) => s.selectedNodeId)
+  const setActiveCreate = useUIStore((s) => s.setActiveCreate)
+  const view            = useUIStore((s) => s.view)
+  const { screenToFlowPosition, fitView } = useReactFlow()
+  const nodePositions   = useUIStore((s) => s.nodePositions)
+  const setNodePosition = useUIStore((s) => s.setNodePosition)
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }, [])
+
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    const type = e.dataTransfer.getData('text/plain') as NodeType
+    if (!type) return
+    const dropPosition = screenToFlowPosition({ x: e.clientX, y: e.clientY })
+    setActiveCreate({ resource: type, view, dropPosition })
+  }, [screenToFlowPosition, view, setActiveCreate])
 
   const allNodes = useMemo(() => [...cloudNodes, ...pendingNodes], [cloudNodes, pendingNodes])
 
-  const flowNodes: Node[] = useMemo(
-    () => buildFlowNodes(allNodes, selectedId),
-    [allNodes, selectedId],
-  )
+  // Compute highlighted set for focus mode
+  const highlightedIds = useMemo<Set<string> | null>(() => {
+    if (!selectedId) return null
+    const rawEdges = buildTopologyEdges(allNodes)
+    const neighbours = new Set<string>([selectedId])
+    for (const e of rawEdges) {
+      if (e.source === selectedId) neighbours.add(e.target)
+      if (e.target === selectedId) neighbours.add(e.source)
+    }
+    return neighbours
+  }, [selectedId, allNodes])
 
-  const flowEdges: Edge[] = []  // Topology view uses nesting, not edges
+  const topologyPositions = nodePositions.topology
+
+  const flowNodes: Node[] = useMemo(() => {
+    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds)
+    return raw.map((n) => {
+      if (n.extent === 'parent') return n  // never override child nodes
+      const saved = topologyPositions[n.id]
+      return saved ? { ...n, position: saved } : n
+    })
+  }, [allNodes, selectedId, highlightedIds, topologyPositions])
+
+  // One-time fitView when nodes first appear (or re-appear after dropping to 0)
+  const hasFitted = useRef(false)
+  useEffect(() => {
+    if (cloudNodes.length === 0) {
+      hasFitted.current = false
+      return
+    }
+    if (!hasFitted.current) {
+      hasFitted.current = true
+      fitView({ duration: 300 })
+    }
+  }, [cloudNodes.length, fitView])
+
+  // Persist drag-end positions for top-level nodes only.
+  // Child nodes carry extent: 'parent' in flowNodes — look up by id to check before saving.
+  const onNodesChange = useCallback((changes: NodeChange[]) => {
+    for (const change of changes) {
+      if (change.type === 'position' && change.position && !change.dragging) {
+        const rfNode = flowNodes.find((n) => n.id === change.id)
+        if (!rfNode || rfNode.extent === 'parent') continue
+        setNodePosition('topology', change.id, change.position)
+      }
+    }
+  }, [setNodePosition, flowNodes])
+
+  const flowEdges: Edge[] = useMemo(() => {
+    const raw = buildTopologyEdges(allNodes)
+    if (!selectedId) return raw
+    return raw.map((e) => {
+      const incident = e.source === selectedId || e.target === selectedId
+      return incident ? e : { ...e, style: { ...(e.style ?? {}), opacity: 0.15 } }
+    })
+  }, [allNodes, selectedId])
 
   return (
     <ReactFlow
@@ -183,12 +431,17 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps){
         const cloudNode = allNodes.find((n) => n.id === rfNode.id)
         if (cloudNode) onNodeContextMenu(cloudNode, event.clientX, event.clientY)
       }}
-      fitView
-      style={{ background: '#080c14' }}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onNodesChange={onNodesChange}
+      panOnScroll
+      minZoom={0.1}
+      maxZoom={2}
+      style={{ background: 'var(--cb-canvas-bg)' }}
     >
-      <Background color="#1a1a2e" gap={20} />
+      <Background color="var(--cb-canvas-grid)" gap={20} />
       <MiniMap
-        style={{ background: '#0d1320', border: '1px solid #1e2d40' }}
+        style={{ background: 'var(--cb-minimap-bg)', border: '1px solid var(--cb-minimap-border)' }}
         nodeColor="#FF9900"
       />
     </ReactFlow>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useCloudStore } from '../../store/cloud'
+import { useUIStore } from '../../store/ui'
 
 interface Props {
   x: number
@@ -8,37 +8,40 @@ interface Props {
 }
 
 const CREATABLE = [
-  { resource: 'vpc',    label: 'New VPC' },
-  { resource: 'ec2',    label: 'New EC2 Instance' },
-  { resource: 'sg',     label: 'New Security Group' },
-  { resource: 's3',     label: 'New S3 Bucket' },
-  { resource: 'rds',    label: 'New RDS Instance' },
-  { resource: 'lambda', label: 'New Lambda Function' },
-  { resource: 'alb',    label: 'New ALB' },
+  { resource: 'vpc',        label: 'New VPC' },
+  { resource: 'ec2',        label: 'New EC2 Instance' },
+  { resource: 'sg',         label: 'New Security Group' },
+  { resource: 's3',         label: 'New S3 Bucket' },
+  { resource: 'rds',        label: 'New RDS Instance' },
+  { resource: 'lambda',     label: 'New Lambda Function' },
+  { resource: 'alb',        label: 'New ALB' },
+  { resource: 'acm',        label: 'New ACM Certificate' },
+  { resource: 'cloudfront', label: 'New CloudFront Distribution' },
+  { resource: 'apigw',      label: 'New API Gateway' },
 ] as const
 
-export function CanvasContextMenu({ x, y, onClose }: Props){
-  const setActiveCreate = useCloudStore((s) => s.setActiveCreate)
+export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
+  const setActiveCreate = useUIStore((s) => s.setActiveCreate)
   const [pendingResource, setPendingResource] = useState<string | null>(null)
 
   const menuStyle: React.CSSProperties = {
     position: 'fixed', top: y, left: x,
-    background: '#0d1117', border: '1px solid #FF9900', borderRadius: '4px',
+    background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-accent)', borderRadius: '4px',
     fontFamily: 'monospace', fontSize: '10px', zIndex: 1000, minWidth: '160px',
     boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
   }
 
   function hoverOn(e: React.MouseEvent<HTMLDivElement>): void {
-    (e.currentTarget as HTMLDivElement).style.background = '#1a2332'
-    ;(e.currentTarget as HTMLDivElement).style.color = '#FF9900'
+    (e.currentTarget as HTMLDivElement).style.background = 'var(--cb-bg-elevated)'
+    ;(e.currentTarget as HTMLDivElement).style.color = 'var(--cb-accent)'
   }
   function hoverOff(e: React.MouseEvent<HTMLDivElement>): void {
     (e.currentTarget as HTMLDivElement).style.background = 'transparent'
-    ;(e.currentTarget as HTMLDivElement).style.color = '#aaa'
+    ;(e.currentTarget as HTMLDivElement).style.color = 'var(--cb-text-secondary)'
   }
 
-  const itemStyle: React.CSSProperties = { padding: '5px 10px', color: '#aaa', cursor: 'pointer' }
-  const sectionLabel: React.CSSProperties = { padding: '4px 10px 2px', color: '#555', fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }
+  const itemStyle: React.CSSProperties = { padding: '5px 10px', color: 'var(--cb-text-secondary)', cursor: 'pointer' }
+  const sectionLabel: React.CSSProperties = { padding: '4px 10px 2px', color: 'var(--cb-text-muted)', fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }
 
   function selectView(view: 'topology' | 'graph'): void {
     if (!pendingResource) return
@@ -84,7 +87,7 @@ export function CanvasContextMenu({ x, y, onClose }: Props){
               </div>
             ))}
             <div
-              style={{ ...itemStyle, borderTop: '1px solid #1e2d40', color: '#555' }}
+              style={{ ...itemStyle, borderTop: '1px solid var(--cb-border-strong)', color: 'var(--cb-text-muted)' }}
               onClick={() => setPendingResource(null)}
               onMouseEnter={hoverOn}
               onMouseLeave={hoverOff}

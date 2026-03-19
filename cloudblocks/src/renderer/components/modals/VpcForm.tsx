@@ -9,18 +9,18 @@ interface Props {
 function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
   return {
     width: '100%',
-    background: '#060d14',
-    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : '#30363d'}`,
+    background: 'var(--cb-bg-panel)',
+    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--cb-border)'}`,
     borderRadius: 3,
     padding: '3px 6px',
-    color: '#eee',
+    color: 'var(--cb-text-primary)',
     fontFamily: 'monospace',
     fontSize: 10,
     boxSizing: 'border-box' as const,
   }
 }
 
-export function VpcForm({ onChange, showErrors = false }: Props){
+export function VpcForm({ onChange, showErrors = false }: Props): React.JSX.Element {
   const [name,    setName]    = useState('')
   const [cidr,    setCidr]    = useState('10.0.0.0/16')
   const [tenancy, setTenancy] = useState<'default' | 'dedicated'>('default')
@@ -31,7 +31,7 @@ export function VpcForm({ onChange, showErrors = false }: Props){
     onChange({ resource: 'vpc', ...next })
   }
 
-  const labelStyle: React.CSSProperties = { color: '#555', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
+  const labelStyle: React.CSSProperties = { color: 'var(--cb-text-muted)', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

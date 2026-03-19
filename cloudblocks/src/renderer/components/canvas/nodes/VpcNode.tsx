@@ -2,7 +2,7 @@ import type { NodeProps } from '@xyflow/react'
 
 interface VpcNodeData { label: string; cidr?: string }
 
-export function VpcNode({ data }: NodeProps) {
+export function VpcNode({ data }: NodeProps): React.JSX.Element {
   const d = data as unknown as VpcNodeData
   return (
     <div

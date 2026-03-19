@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { CloudNode, CloudEdge, ScanDelta, AwsProfile } from '../../../src/renderer/types/cloud'
+import type { CloudNode, ScanDelta } from '../../../src/renderer/types/cloud'
 
 describe('CloudNode type', () => {
   it('accepts a valid CloudNode object', () => {

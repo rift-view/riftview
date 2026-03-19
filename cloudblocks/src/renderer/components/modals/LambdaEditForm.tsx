@@ -4,10 +4,10 @@ import type { LambdaEditParams } from '../../types/edit'
 
 interface Props { node: CloudNode; onChange: (p: LambdaEditParams) => void }
 
-const inp: React.CSSProperties = { width: '100%', background: '#060d14', border: '1px solid #30363d', borderRadius: 3, padding: '3px 6px', color: '#eee', fontFamily: 'monospace', fontSize: 10, boxSizing: 'border-box' as const }
-const lbl: React.CSSProperties = { fontSize: 9, color: '#555', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
+const inp: React.CSSProperties = { width: '100%', background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)', borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10, boxSizing: 'border-box' as const }
+const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
 
-export default function LambdaEditForm({ node, onChange }: Props) {
+export default function LambdaEditForm({ node, onChange }: Props): React.JSX.Element {
   const [memory, setMemory]   = useState(Number(node.metadata.memorySize) || 128)
   const [timeout, setTimeout] = useState(Number(node.metadata.timeout) || 3)
   const [envStr, setEnvStr]   = useState(() => {
@@ -18,7 +18,7 @@ export default function LambdaEditForm({ node, onChange }: Props) {
   const parseEnv = (s: string): Record<string, string> =>
     Object.fromEntries(s.split('\n').filter(l => l.includes('=')).map(l => { const i = l.indexOf('='); return [l.slice(0, i), l.slice(i + 1)] }))
 
-  const emit = (overrides: Partial<LambdaEditParams>) =>
+  const emit = (overrides: Partial<LambdaEditParams>): void =>
     onChange({ resource: 'lambda', memorySize: memory, timeout, environment: parseEnv(envStr), ...overrides })
 
   return (
