@@ -18,21 +18,22 @@ export async function listTopics(client: SNSClient, region: string): Promise<Clo
     }),
   })
 
-  await Promise.all(
+  const enrichedNodes = await Promise.all(
     nodes.map(async (node) => {
       const subs = await client
         .send(new ListSubscriptionsByTopicCommand({ TopicArn: node.id }))
         .catch(() => ({ Subscriptions: [] }))
 
       const integrations: { targetId: string; edgeType: EdgeType }[] = (subs.Subscriptions ?? [])
-        .filter((s) => typeof s.Endpoint === 'string' && s.Endpoint.startsWith('arn:'))
-        .map((s) => ({ targetId: s.Endpoint as string, edgeType: 'subscription' as EdgeType }))
+        .filter((s): s is typeof s & { Endpoint: string } => typeof s.Endpoint === 'string' && s.Endpoint.startsWith('arn:'))
+        .map((s) => ({ targetId: s.Endpoint, edgeType: 'subscription' as EdgeType }))
 
       if (integrations.length > 0) {
-        node.integrations = integrations
+        return { ...node, integrations }
       }
+      return node
     }),
   )
 
-  return nodes
+  return enrichedNodes
 }
