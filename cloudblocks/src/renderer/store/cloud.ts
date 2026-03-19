@@ -64,7 +64,7 @@ export const useCloudStore = create<CloudState>((set) => ({
     }),
 
   setScanStatus: (status)  => set({ scanStatus: status }),
-  setProfile:    (profile) => set({ profile }),
+  setProfile:    (profile) => set({ profile, nodes: [], scanStatus: 'idle', lastScannedAt: null }),
   setRegion:     (region)  => set({ region }),
   setError:      (msg)     => set({ errorMessage: msg }),
 
