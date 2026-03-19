@@ -1,0 +1,27 @@
+import type { TerraformGeneratorMap } from './types'
+
+export const terraformGenerators: TerraformGeneratorMap = {
+  'vpc': () => '',
+  'subnet': () => '',
+  'ec2': () => '',
+  's3': () => '',
+  'lambda': () => '',
+  'rds': () => '',
+  'alb': () => '',
+  'security-group': () => '',
+  'igw': () => '',
+  'acm': () => '',
+  'cloudfront': () => '',
+  'apigw': () => '',
+  'apigw-route': () => '',
+  'sqs': () => '',
+  'secret': () => '',
+  'ecr-repo': () => '',
+  'sns': () => '',
+  'dynamo': () => '',
+  'ssm-param': () => '',
+  'nat-gateway': () => '',
+  'r53-zone': () => '',
+  'sfn': () => '',
+  'eventbridge-bus': () => '',
+}
