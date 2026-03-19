@@ -172,7 +172,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const showIntegrations   = useUIStore((s) => s.showIntegrations)
   const snapToGrid         = useUIStore((s) => s.snapToGrid)
   const { screenToFlowPosition, fitView } = useReactFlow()
-  const nodePositions   = useUIStore((s) => s.nodePositions)
+  const graphPositions  = useUIStore((s) => s.nodePositions.graph)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
@@ -256,8 +256,6 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
   // Track in-flight drag positions so controlled nodes follow the mouse.
   const [livePositions, setLivePositions] = useState<Record<string, { x: number; y: number }>>({})
-
-  const graphPositions = nodePositions.graph
 
   const flowNodes: Node[] = useMemo(
     () => allNodes.map((n, i) => {

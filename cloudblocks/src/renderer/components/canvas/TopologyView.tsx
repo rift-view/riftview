@@ -371,8 +371,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const showIntegrations   = useUIStore((s) => s.showIntegrations)
   const snapToGrid         = useUIStore((s) => s.snapToGrid)
   const { screenToFlowPosition, fitView } = useReactFlow()
-  const nodePositions   = useUIStore((s) => s.nodePositions)
-  const setNodePosition = useUIStore((s) => s.setNodePosition)
+  const topologyPositions = useUIStore((s) => s.nodePositions.topology)
+  const setNodePosition   = useUIStore((s) => s.setNodePosition)
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -400,8 +400,6 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
     }
     return neighbours
   }, [selectedId, allNodes])
-
-  const topologyPositions = nodePositions.topology
 
   // Track in-flight drag positions so controlled nodes follow the mouse.
   // Only persisted to the store on drag-end; cleared on drop.
