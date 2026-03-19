@@ -29,9 +29,9 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps): React.JSX.Element {
   }, [])
 
   const handleProfileChange = (name: string): void => {
-    setProfile(name)
+    setProfile({ name })
     setConnStatus('unknown')
-    window.cloudblocks.selectProfile(name)
+    window.cloudblocks.selectProfile({ name })
   }
 
   const handleRegionChange = (r: string): void => {
@@ -64,7 +64,7 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps): React.JSX.Element {
 
       {/* Profile selector */}
       <select
-        value={profile}
+        value={profile.name}
         onChange={(e) => handleProfileChange(e.target.value)}
         className="text-[10px] font-mono px-2 py-0.5 rounded"
         style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-accent)', color: 'var(--cb-accent)' }}

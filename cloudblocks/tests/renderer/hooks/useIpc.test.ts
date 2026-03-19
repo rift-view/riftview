@@ -29,7 +29,7 @@ beforeEach(() => {
     invalidateCloudFront: vi.fn().mockResolvedValue({ code: 0 }),
     deleteAcm:            vi.fn().mockResolvedValue({ code: 0 }),
   }
-  useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: 'default', region: 'us-east-1' })
+  useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })
 
 describe('useIpc', () => {

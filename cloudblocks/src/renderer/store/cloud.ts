@@ -1,6 +1,6 @@
 import { create, createStore } from 'zustand'
 import type { StoreApi } from 'zustand'
-import type { CloudNode, NodeStatus, ScanDelta, Settings } from '../types/cloud'
+import type { AwsProfile, CloudNode, NodeStatus, ScanDelta, Settings } from '../types/cloud'
 import { applyTheme } from '../utils/applyTheme'
 
 export type { Settings }
@@ -15,7 +15,7 @@ interface CloudState {
   nodes:          CloudNode[]
   scanStatus:     'idle' | 'scanning' | 'error'
   lastScannedAt:  Date | null
-  profile:        string
+  profile:        AwsProfile
   region:         string
   errorMessage:   string | null
   pendingNodes:   CloudNode[]
@@ -24,7 +24,7 @@ interface CloudState {
 
   applyDelta:     (delta: ScanDelta) => void
   setScanStatus:  (status: 'idle' | 'scanning' | 'error') => void
-  setProfile:     (profile: string) => void
+  setProfile:     (profile: AwsProfile) => void
   setRegion:      (region: string) => void
   setError:       (msg: string | null) => void
   addPendingNode:    (node: CloudNode) => void
@@ -41,7 +41,7 @@ export const useCloudStore = create<CloudState>((set) => ({
   nodes:          [],
   scanStatus:     'idle',
   lastScannedAt:  null,
-  profile:        'default',
+  profile:        { name: 'default' },
   region:         'us-east-1',
   errorMessage:   null,
   pendingNodes:   [],
@@ -101,7 +101,7 @@ export function createCloudStore(): StoreApi<CloudState> {
     nodes:          [],
     scanStatus:     'idle',
     lastScannedAt:  null,
-    profile:        'default',
+    profile:        { name: 'default' },
     region:         'us-east-1',
     errorMessage:   null,
     pendingNodes:   [],

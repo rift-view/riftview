@@ -15,9 +15,9 @@ export function useScanner(): { triggerScan: () => void } {
     window.cloudblocks.listProfiles().then((profiles) => {
       if (profiles.length === 0) return
       const first = profiles[0]
-      setProfile(first.name)
+      setProfile(first)
       // selectProfile in main reads the default region and starts the scanner
-      window.cloudblocks.selectProfile(first.name)
+      window.cloudblocks.selectProfile(first)
       // Sync the region selector in the renderer with what main will use
       if (first.region) {
         setRegion(first.region)

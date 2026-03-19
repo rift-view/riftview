@@ -26,13 +26,13 @@ beforeEach(() => {
     invalidateCloudFront: vi.fn().mockResolvedValue({ code: 0 }),
     deleteAcm:            vi.fn().mockResolvedValue({ code: 0 }),
   }
-  useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: 'default', region: 'us-east-1' })
+  useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })
 
 describe('useScanner', () => {
   it('calls selectProfile with first profile on mount', async () => {
     renderHook(() => useScanner())
-    await waitFor(() => expect(window.cloudblocks.selectProfile).toHaveBeenCalledWith('default'))
+    await waitFor(() => expect(window.cloudblocks.selectProfile).toHaveBeenCalledWith({ name: 'default' }))
   })
 
   it('triggerScan calls startScan', () => {
