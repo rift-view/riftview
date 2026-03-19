@@ -18,6 +18,7 @@ interface UIState {
   savedViews:       Array<SavedView | null>
   activeViewSlot:   number | null
   showIntegrations: boolean
+  snapToGrid:       boolean
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -28,6 +29,7 @@ interface UIState {
   saveView:             (slot: number, name: string, view: ViewKey) => void
   loadView:             (slot: number, view: ViewKey, fitViewFn: () => void) => void
   toggleIntegrations:   () => void
+  toggleSnapToGrid:     () => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -41,6 +43,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   savedViews:       [null, null, null, null],
   activeViewSlot:   null,
   showIntegrations: true,
+  snapToGrid:       false,
 
   setView:         (view) => set({ view }),
   selectNode:      (id)   => set({ selectedNodeId: id }),
@@ -85,4 +88,5 @@ export const useUIStore = create<UIState>((set, get) => ({
   },
 
   toggleIntegrations: () => set((s) => ({ showIntegrations: !s.showIntegrations })),
+  toggleSnapToGrid:   () => set((s) => ({ snapToGrid: !s.snapToGrid })),
 }))

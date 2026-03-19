@@ -168,6 +168,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const setActiveCreate    = useUIStore((s) => s.setActiveCreate)
   const view               = useUIStore((s) => s.view)
   const showIntegrations   = useUIStore((s) => s.showIntegrations)
+  const snapToGrid         = useUIStore((s) => s.snapToGrid)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const nodePositions   = useUIStore((s) => s.nodePositions)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
@@ -323,6 +324,8 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       onDrop={onDrop}
       onNodesChange={onNodesChange}
       panOnScroll
+      snapToGrid={snapToGrid}
+      snapGrid={[20, 20] as [number, number]}
       minZoom={0.1}
       maxZoom={2}
       style={{ background: 'var(--cb-canvas-bg)' }}
