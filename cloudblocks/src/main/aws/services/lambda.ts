@@ -28,9 +28,9 @@ export async function listFunctions(client: LambdaClient, region: string): Promi
           .catch(() => ({ EventSourceMappings: [] }))
 
         const integrations = (mappingRes.EventSourceMappings ?? [])
-          .filter((m) => m.EventSourceArn != null)
+          .filter((m): m is typeof m & { EventSourceArn: string } => m.EventSourceArn != null)
           .map((m): { targetId: string; edgeType: EdgeType } => ({
-            targetId: m.EventSourceArn!,
+            targetId: m.EventSourceArn,
             edgeType: 'trigger',
           }))
 
