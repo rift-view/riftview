@@ -246,7 +246,7 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
             </div>
             {profile.endpoint && (
               <div style={{ fontSize: 12, color: 'var(--cb-text-muted)', maxWidth: 320, marginTop: 10, lineHeight: 1.6, opacity: 0.75 }}>
-                Running in local mode — make sure floci is running on {profile.endpoint}
+                Start your local AWS emulator and trigger a scan.
               </div>
             )}
           </div>
