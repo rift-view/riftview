@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useRef, useEffect } from 'react'
+import { useMemo, useCallback, useRef, useEffect, useState } from 'react'
 import { ReactFlow, Background, MiniMap, useReactFlow, type Node, type Edge, type NodeChange } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
@@ -175,12 +175,28 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
     setActiveCreate({ resource: type, view, dropPosition })
   }, [screenToFlowPosition, view, setActiveCreate])
 
-  // Persist drag-end positions (all nodes in GraphView are free-floating)
+  // Track drag positions in local state so controlled nodes follow the mouse,
+  // and persist to the store only on drag-end.
   const onNodesChange = useCallback((changes: NodeChange[]) => {
+    const nextLive: Record<string, { x: number; y: number }> = {}
+    const toClear: string[] = []
+
     for (const change of changes) {
-      if (change.type === 'position' && change.position && !change.dragging) {
+      if (change.type !== 'position' || !change.position) continue
+      if (change.dragging) {
+        nextLive[change.id] = change.position
+      } else {
+        toClear.push(change.id)
         setNodePosition('graph', change.id, change.position)
       }
+    }
+
+    if (Object.keys(nextLive).length > 0 || toClear.length > 0) {
+      setLivePositions((prev) => {
+        const next = { ...prev, ...nextLive }
+        toClear.forEach((id) => delete next[id])
+        return next
+      })
     }
   }, [setNodePosition])
 
@@ -212,6 +228,9 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
     return neighbours
   }, [selectedId, allNodes])
 
+  // Track in-flight drag positions so controlled nodes follow the mouse.
+  const [livePositions, setLivePositions] = useState<Record<string, { x: number; y: number }>>({})
+
   const graphPositions = nodePositions.graph
 
   const flowNodes: Node[] = useMemo(
@@ -231,7 +250,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       return {
         id:       n.id,
         type:     rfType,
-        position: graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: Math.floor(i / 5) * 110 + 60 },
+        position: livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: Math.floor(i / 5) * 110 + 60 },
         data:     {
           label:     n.label,
           nodeType:  n.type,
@@ -250,7 +269,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
         selected: n.id === selectedId,
       }
     }),
-    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions],
+    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions],
   )
 
   const flowEdges: Edge[] = useMemo(() => {
