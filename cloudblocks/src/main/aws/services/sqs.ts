@@ -39,7 +39,8 @@ export async function listQueues(client: SQSClient, lambdaClient: LambdaClient, 
           edgeType: 'trigger',
         }))
 
-      return integrations.length > 0 ? { ...node, integrations } : node
+      const enrichedNode: CloudNode = { ...node, id: queueArn }
+      return integrations.length > 0 ? { ...enrichedNode, integrations } : enrichedNode
     })
   )
 
