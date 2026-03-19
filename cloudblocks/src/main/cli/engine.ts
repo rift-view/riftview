@@ -20,7 +20,7 @@ function extractGroupId(stdout: string): string | null {
 export class CliEngine {
   private currentProcess: ChildProcess | null = null
 
-  constructor(private win: BrowserWindow) {}
+  constructor(private win: BrowserWindow, private endpoint?: string) {}
 
   /**
    * Runs commands sequentially. Stops chain on first non-zero exit.
@@ -59,7 +59,10 @@ export class CliEngine {
 
   private runOne(argv: string[]): Promise<{ code: number; stdout: string }> {
     return new Promise((resolve) => {
-      const proc = spawn('aws', argv, { shell: false })
+      const env = this.endpoint
+        ? { ...process.env, AWS_ENDPOINT_URL: this.endpoint }
+        : process.env
+      const proc = spawn('aws', argv, { shell: false, env })
       this.currentProcess = proc
       let stdoutBuffer = ''
 
