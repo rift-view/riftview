@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useUIStore } from '../store/ui'
 import { useCloudStore } from '../store/cloud'
-import type { NodeType } from '../types/cloud'
+import type { NodeType, CloudNode } from '../types/cloud'
 
 const SERVICES: { type: NodeType; label: string }[] = [
   { type: 'vpc',            label: 'VPC' },
@@ -14,10 +14,24 @@ const SERVICES: { type: NodeType; label: string }[] = [
   { type: 'igw',            label: 'IGW' },
 ]
 
+function getSsmPrefix(label: string): string {
+  if (!label.startsWith('/')) return '(ungrouped)'
+  const secondSlash = label.indexOf('/', 1)
+  if (secondSlash === -1) return label
+  return label.slice(0, secondSlash)
+}
+
+interface SsmGroup {
+  prefix: string
+  nodes: CloudNode[]
+}
+
 export function Sidebar(): React.JSX.Element {
-  const view    = useUIStore((s) => s.view)
-  const setView = useUIStore((s) => s.setView)
-  const nodes   = useCloudStore((s) => s.nodes)
+  const view              = useUIStore((s) => s.view)
+  const setView           = useUIStore((s) => s.setView)
+  const expandedSsmGroups = useUIStore((s) => s.expandedSsmGroups)
+  const toggleSsmGroup    = useUIStore((s) => s.toggleSsmGroup)
+  const nodes             = useCloudStore((s) => s.nodes)
 
   const counts = useMemo(
     () => nodes.reduce<Record<string, number>>(
@@ -26,6 +40,45 @@ export function Sidebar(): React.JSX.Element {
     ),
     [nodes],
   )
+
+  const ssmGroups = useMemo<SsmGroup[]>(() => {
+    const ssmNodes = nodes.filter((n) => n.type === 'ssm-param')
+    if (ssmNodes.length === 0) return []
+
+    const byPrefix = new Map<string, CloudNode[]>()
+    for (const node of ssmNodes) {
+      const prefix = getSsmPrefix(node.label)
+      const existing = byPrefix.get(prefix)
+      if (existing) existing.push(node)
+      else byPrefix.set(prefix, [node])
+    }
+
+    return Array.from(byPrefix.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([prefix, groupNodes]) => ({ prefix, nodes: groupNodes }))
+  }, [nodes])
+
+  const serviceRowStyle: React.CSSProperties = {
+    background:     'var(--cb-bg-elevated)',
+    border:         '1px solid var(--cb-border)',
+    color:          'var(--cb-text-secondary)',
+    display:        'flex',
+    alignItems:     'center',
+    justifyContent: 'space-between',
+  }
+
+  const badgeStyle: React.CSSProperties = {
+    fontSize:     10,
+    color:        'var(--cb-text-muted)',
+    background:   'var(--cb-bg-elevated)',
+    border:       '1px solid var(--cb-border)',
+    borderRadius: 9999,
+    padding:      '0 5px',
+    minWidth:     16,
+    textAlign:    'center',
+    lineHeight:   '14px',
+    flexShrink:   0,
+  }
 
   return (
     <div
@@ -44,37 +97,81 @@ export function Sidebar(): React.JSX.Element {
             draggable
             onDragStart={(e) => e.dataTransfer.setData('text/plain', s.type)}
             className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
-            style={{
-              background:     'var(--cb-bg-elevated)',
-              border:         '1px solid var(--cb-border)',
-              color:          'var(--cb-text-secondary)',
-              display:        'flex',
-              alignItems:     'center',
-              justifyContent: 'space-between',
-            }}
+            style={serviceRowStyle}
           >
             <span>⬡ {s.label}</span>
             {count > 0 && (
-              <span
-                style={{
-                  fontSize:     10,
-                  color:        'var(--cb-text-muted)',
-                  background:   'var(--cb-bg-elevated)',
-                  border:       '1px solid var(--cb-border)',
-                  borderRadius: 9999,
-                  padding:      '0 5px',
-                  minWidth:     16,
-                  textAlign:    'center',
-                  lineHeight:   '14px',
-                  flexShrink:   0,
-                }}
-              >
+              <span style={badgeStyle}>
                 {count}
               </span>
             )}
           </div>
         )
       })}
+
+      {ssmGroups.length > 0 && (
+        <>
+          <div className="px-2.5 text-[9px] uppercase tracking-widest mt-3 mb-1" style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace' }}>
+            Parameters
+          </div>
+
+          {ssmGroups.map(({ prefix, nodes: groupNodes }) => {
+            if (groupNodes.length === 1) {
+              // Single param — show ungrouped
+              const node = groupNodes[0]
+              return (
+                <div
+                  key={node.id}
+                  draggable
+                  onDragStart={(e) => e.dataTransfer.setData('text/plain', 'ssm-param')}
+                  className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
+                  style={serviceRowStyle}
+                  title={node.label}
+                >
+                  <span className="truncate">⬡ {node.label}</span>
+                </div>
+              )
+            }
+
+            const isExpanded = expandedSsmGroups.has(prefix)
+            return (
+              <div key={prefix}>
+                {/* Group header */}
+                <div
+                  onClick={() => toggleSsmGroup(prefix)}
+                  className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-pointer"
+                  style={{
+                    color:          'var(--cb-text-muted)',
+                    display:        'flex',
+                    alignItems:     'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span className="truncate">{isExpanded ? '⊟' : '⊞'} {prefix}/</span>
+                  <span style={badgeStyle}>{groupNodes.length}</span>
+                </div>
+
+                {/* Expanded param rows */}
+                {isExpanded && groupNodes
+                  .slice()
+                  .sort((a, b) => a.label.localeCompare(b.label))
+                  .map((node) => (
+                    <div
+                      key={node.id}
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData('text/plain', 'ssm-param')}
+                      className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
+                      style={{ ...serviceRowStyle, paddingLeft: 16 }}
+                      title={node.label}
+                    >
+                      <span className="truncate">⬡ {node.label}</span>
+                    </div>
+                  ))}
+              </div>
+            )
+          })}
+        </>
+      )}
 
       <div className="px-2.5 text-[9px] uppercase tracking-widest mt-3 mb-1" style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace' }}>
         Views
