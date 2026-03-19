@@ -18,6 +18,7 @@ export const IPC = {
   CF_UPDATE:       'cloudfront:update',     // invoke → { code: number }
   CF_DELETE:       'cloudfront:delete',     // invoke → { code: number }
   CF_INVALIDATE:   'cloudfront:invalidate', // invoke → { code: number }
+  TERRAFORM_EXPORT: 'terraform:export',     // invoke → { success: boolean }
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]
