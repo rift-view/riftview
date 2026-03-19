@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useRef, useEffect, useState } from 'react'
-import { ReactFlow, Background, MiniMap, useReactFlow, type Node, type Edge, type NodeChange } from '@xyflow/react'
+import { ReactFlow, Background, BackgroundVariant, MiniMap, useReactFlow, type Node, type Edge, type NodeChange } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
@@ -330,7 +330,8 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       maxZoom={2}
       style={{ background: 'var(--cb-canvas-bg)' }}
     >
-      <Background color="var(--cb-canvas-grid)" gap={SNAP_GRID_SIZE} />
+      <Background id="minor" variant={BackgroundVariant.Lines} gap={SNAP_GRID_SIZE} color="rgba(255,255,255,0.04)" />
+      <Background id="major" variant={BackgroundVariant.Lines} gap={100} color="rgba(255,255,255,0.09)" />
       <MiniMap
         style={{ background: 'var(--cb-minimap-bg)', border: '1px solid var(--cb-minimap-border)' }}
         nodeColor="#FF9900"
