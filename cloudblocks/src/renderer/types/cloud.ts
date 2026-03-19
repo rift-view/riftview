@@ -54,6 +54,7 @@ export interface ScanDelta {
 export interface AwsProfile {
   name: string
   region?: string
+  endpoint?: string
 }
 
 export type Theme = 'dark' | 'light' | 'solarized' | 'rose-pine' | 'catppuccin'
