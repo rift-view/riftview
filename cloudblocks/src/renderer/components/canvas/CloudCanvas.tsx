@@ -181,6 +181,28 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
         : <GraphView onNodeContextMenu={onNodeContextMenu} />
       }
 
+      {/* Local endpoint badge */}
+      {profile.endpoint && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '52px',
+            left: '8px',
+            zIndex: 10,
+            background: 'rgba(251, 191, 36, 0.15)',
+            border: '1px solid rgba(251, 191, 36, 0.4)',
+            color: '#f59e0b',
+            fontSize: '11px',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            fontFamily: 'monospace',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          LOCAL · {profile.endpoint}
+        </div>
+      )}
+
       {/* Empty state overlay — shown when no nodes, not scanning, and a profile is connected */}
       {nodes.length === 0 && scanStatus !== 'scanning' && profile && (
         <div
