@@ -244,7 +244,7 @@ export function registerHandlers(win: BrowserWindow): void {
 function restartScanner(win: BrowserWindow, profile: string, region: string, endpoint?: string): void {
   scanner?.stop()
   // Recreate engine to ensure it holds the current win reference after profile/region switch
-  cliEngine = new CliEngine(win)
+  cliEngine = new CliEngine(win, endpoint)
   clients   = createClients(profile, region, endpoint)
   scanner   = new ResourceScanner(clients, region, win)
   scanner.start()
