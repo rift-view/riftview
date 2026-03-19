@@ -203,8 +203,8 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
         </div>
       )}
 
-      {/* Empty state overlay — shown when no nodes, not scanning, and a profile is connected */}
-      {nodes.length === 0 && scanStatus !== 'scanning' && profile && (
+      {/* Empty state overlay — shown when scan completed (idle) and no nodes exist */}
+      {nodes.length === 0 && scanStatus === 'idle' && (
         <div
           style={{
             position:        'absolute',
@@ -221,31 +221,19 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
               textAlign:   'center',
               color:       'var(--cb-text-muted)',
               fontFamily:  'monospace',
-              pointerEvents: 'auto',
             }}
           >
-            <div style={{ fontSize: 32, marginBottom: 12 }}>🌩</div>
-            <div style={{ fontSize: 16, color: 'var(--cb-text)', marginBottom: 8, fontWeight: 600 }}>
-              No resources yet
+            <div style={{ fontSize: 15, color: 'var(--cb-text)', marginBottom: 8, fontWeight: 600 }}>
+              No resources found
             </div>
-            <div style={{ fontSize: 13, color: 'var(--cb-text-muted)', maxWidth: 280, marginBottom: 20, lineHeight: 1.6 }}>
-              Connect an AWS profile and scan your account to visualize your infrastructure.
+            <div style={{ fontSize: 13, color: 'var(--cb-text-muted)', maxWidth: 320, lineHeight: 1.6 }}>
+              Create your first resource from the sidebar, or drag one onto the canvas to get started.
             </div>
-            <button
-              onClick={onScan}
-              style={{
-                fontFamily:   'monospace',
-                fontSize:     '11px',
-                borderRadius: '4px',
-                padding:      '4px 16px',
-                cursor:       'pointer',
-                background:   'var(--cb-bg-elevated)',
-                border:       '1px solid var(--cb-accent)',
-                color:        'var(--cb-accent)',
-              }}
-            >
-              Scan Account
-            </button>
+            {profile.endpoint && (
+              <div style={{ fontSize: 12, color: 'var(--cb-text-muted)', maxWidth: 320, marginTop: 10, lineHeight: 1.6, opacity: 0.75 }}>
+                Running in local mode — make sure floci is running on {profile.endpoint}
+              </div>
+            )}
           </div>
         </div>
       )}
