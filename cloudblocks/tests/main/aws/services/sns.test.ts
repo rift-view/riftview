@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SNSClient } from '@aws-sdk/client-sns'
 import { listTopics } from '../../../../src/main/aws/services/sns'
 
@@ -6,6 +6,10 @@ const mockSend = vi.fn()
 const mockClient = { send: mockSend } as unknown as SNSClient
 
 describe('listTopics', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('maps SNS topics to CloudNodes', async () => {
     mockSend
       .mockResolvedValueOnce({ Topics: [{ TopicArn: 'arn:aws:sns:us-east-1:123456789:my-topic' }] })

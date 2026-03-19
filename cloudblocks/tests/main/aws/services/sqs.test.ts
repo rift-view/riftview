@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SQSClient } from '@aws-sdk/client-sqs'
 import { LambdaClient } from '@aws-sdk/client-lambda'
 import { listQueues } from '../../../../src/main/aws/services/sqs'
@@ -12,6 +12,10 @@ const QUEUE_URL = 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue'
 const QUEUE_ARN = 'arn:aws:sqs:us-east-1:123456789:my-queue'
 
 describe('listQueues', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('maps queue URLs to CloudNodes', async () => {
     mockSqsSend
       .mockResolvedValueOnce({ QueueUrls: [QUEUE_URL] })         // ListQueuesCommand
