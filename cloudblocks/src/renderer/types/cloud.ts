@@ -27,6 +27,11 @@ export type NodeType =
 
 export type EdgeType = 'trigger' | 'origin' | 'subscription'
 
+export interface IntegrationEdgeData {
+  isIntegration: true
+  edgeType: EdgeType
+}
+
 export interface CloudNode {
   id: string
   type: NodeType
