@@ -7,6 +7,7 @@ import { GraphView } from './GraphView'
 import { CanvasContextMenu } from './CanvasContextMenu'
 import { CanvasToast } from '../CanvasToast'
 import { SaveViewModal } from './SaveViewModal'
+import { ScanErrorStrip } from './ScanErrorStrip'
 import type { CloudNode } from '../../types/cloud'
 
 function relativeTime(date: Date): string {
@@ -214,6 +215,8 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
           </span>
         )}
       </div>
+
+      <ScanErrorStrip />
 
       {view === 'topology'
         ? <TopologyView onNodeContextMenu={onNodeContextMenu} />

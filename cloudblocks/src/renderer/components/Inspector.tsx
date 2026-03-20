@@ -3,21 +3,7 @@ import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 import type { CloudNode } from '../types/cloud'
 import { fieldLabel } from '../utils/fieldLabels'
-
-function edgeTypeLabel(edgeId: string, edgeData?: Record<string, unknown>): string {
-  if (edgeData?.isIntegration) {
-    const et = edgeData.edgeType as string | undefined
-    if (et === 'trigger')      return 'Integration: trigger'
-    if (et === 'subscription') return 'Integration: subscription'
-    if (et === 'origin')       return 'Integration: origin'
-    return 'Integration'
-  }
-  if (edgeId.startsWith('cf-origin-'))  return 'CloudFront Origin'
-  if (edgeId.startsWith('cf-cert-'))    return 'ACM Certificate'
-  if (edgeId.startsWith('apigw-route-')) return 'API Gateway Route'
-  if (edgeId.startsWith('route-lambda-')) return 'Route → Lambda'
-  return 'Connection'
-}
+import { edgeTypeLabel } from '../utils/edgeTypeLabel'
 
 interface InspectorProps {
   onDelete: (node: CloudNode) => void
