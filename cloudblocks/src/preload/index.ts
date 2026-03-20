@@ -75,4 +75,8 @@ contextBridge.exposeInMainWorld('cloudblocks', {
     ipcRenderer.on(IPC.UPDATE_AVAILABLE, handler)
     return () => ipcRenderer.removeListener(IPC.UPDATE_AVAILABLE, handler)
   },
+
+  // Annotations — persisted to userData/annotations.json
+  loadAnnotations: (): Promise<Record<string, string>> => ipcRenderer.invoke(IPC.ANNOTATIONS_LOAD),
+  saveAnnotations: (data: Record<string, string>): Promise<void> => ipcRenderer.invoke(IPC.ANNOTATIONS_SAVE, data),
 })

@@ -22,6 +22,8 @@ export const IPC = {
   CANVAS_EXPORT_PNG: 'canvas:export-png',   // invoke → { success: boolean; filePath?: string }
   AWS_LIST_PROFILES: 'aws:list-profiles',   // invoke → string[]
   UPDATE_AVAILABLE: 'update:available',      // push → void (main → renderer)
+  ANNOTATIONS_LOAD: 'annotations:load',      // invoke → Record<string, string>
+  ANNOTATIONS_SAVE: 'annotations:save',      // invoke → void
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]
