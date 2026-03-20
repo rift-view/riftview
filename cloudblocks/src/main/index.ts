@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { autoUpdater } from 'electron-updater'
 import { registerHandlers } from './ipc/handlers'
+import { IPC } from './ipc/channels'
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -27,12 +28,15 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
-  createWindow()
+  const win = createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
   if (app.isPackaged) {
     autoUpdater.checkForUpdatesAndNotify()
+    autoUpdater.on('update-downloaded', () => {
+      win.webContents.send(IPC.UPDATE_AVAILABLE)
+    })
   }
 })
 
