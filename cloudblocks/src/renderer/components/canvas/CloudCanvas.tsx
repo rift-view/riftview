@@ -236,6 +236,20 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
         <div className="w-px h-3.5 bg-gray-700" />
 
         <button
+          onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-settings'))}
+          title="Settings"
+          style={{
+            ...btnBase,
+            background: 'transparent',
+            border: '1px solid var(--cb-border)',
+            color: '#555',
+            minWidth: '20px',
+          }}
+        >
+          ⚙ Settings
+        </button>
+
+        <button
           onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-about'))}
           title="About Cloudblocks"
           style={{
