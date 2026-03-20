@@ -4,6 +4,21 @@ import { useUIStore } from '../store/ui'
 import type { CloudNode } from '../types/cloud'
 import { fieldLabel } from '../utils/fieldLabels'
 
+function edgeTypeLabel(edgeId: string, edgeData?: Record<string, unknown>): string {
+  if (edgeData?.isIntegration) {
+    const et = edgeData.edgeType as string | undefined
+    if (et === 'trigger')      return 'Integration: trigger'
+    if (et === 'subscription') return 'Integration: subscription'
+    if (et === 'origin')       return 'Integration: origin'
+    return 'Integration'
+  }
+  if (edgeId.startsWith('cf-origin-'))  return 'CloudFront Origin'
+  if (edgeId.startsWith('cf-cert-'))    return 'ACM Certificate'
+  if (edgeId.startsWith('apigw-route-')) return 'API Gateway Route'
+  if (edgeId.startsWith('route-lambda-')) return 'Route → Lambda'
+  return 'Connection'
+}
+
 interface InspectorProps {
   onDelete: (node: CloudNode) => void
   onEdit: (node: CloudNode) => void
@@ -13,6 +28,7 @@ interface InspectorProps {
 
 export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: InspectorProps): React.JSX.Element {
   const selectedId      = useUIStore((s) => s.selectedNodeId)
+  const selectedEdgeInfo = useUIStore((s) => s.selectedEdgeInfo)
   const setActiveCreate = useUIStore((s) => s.setActiveCreate)
   const lockedNodes     = useUIStore((s) => s.lockedNodes)
   const toggleLockNode  = useUIStore((s) => s.toggleLockNode)
@@ -36,7 +52,66 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
       className="w-48 flex-shrink-0 p-3 overflow-y-auto"
       style={{ background: 'var(--cb-bg-panel)', borderLeft: '1px solid var(--cb-border-strong)', fontFamily: 'monospace' }}
     >
-      {!node ? (
+      {!node && selectedEdgeInfo ? (
+        <>
+          <div className="text-[9px] font-bold mb-2 pb-1" style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}>
+            EDGE  ·  Selected
+          </div>
+          <div className="mb-3">
+            <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>TYPE</div>
+            <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
+              {edgeTypeLabel(selectedEdgeInfo.id, selectedEdgeInfo.data)}
+            </div>
+          </div>
+          {(() => {
+            const srcNode = nodes.find((n) => n.id === selectedEdgeInfo.source)
+            const tgtNode = nodes.find((n) => n.id === selectedEdgeInfo.target)
+            return (
+              <>
+                <div className="mb-3">
+                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>SOURCE</div>
+                  <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
+                    {srcNode ? srcNode.label : selectedEdgeInfo.source}
+                  </div>
+                  {srcNode && (
+                    <div className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>{srcNode.type.toUpperCase()}</div>
+                  )}
+                </div>
+                <div className="mb-3">
+                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>TARGET</div>
+                  <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
+                    {tgtNode ? tgtNode.label : selectedEdgeInfo.target}
+                  </div>
+                  {tgtNode && (
+                    <div className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>{tgtNode.type.toUpperCase()}</div>
+                  )}
+                </div>
+              </>
+            )
+          })()}
+          {selectedEdgeInfo.data && Object.keys(selectedEdgeInfo.data).filter((k) => k !== 'isIntegration').length > 0 && (
+            <div>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                METADATA
+              </div>
+              {Object.entries(selectedEdgeInfo.data)
+                .filter(([k]) => k !== 'isIntegration')
+                .map(([k, v]) => (
+                  <div key={k} className="mb-1.5">
+                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{fieldLabel(k)}</div>
+                    <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{String(v ?? '—')}</div>
+                  </div>
+                ))}
+            </div>
+          )}
+          {selectedEdgeInfo.label && (
+            <div className="mb-3">
+              <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>LABEL</div>
+              <div className="text-[9px]" style={{ color: 'var(--cb-text-primary)' }}>{selectedEdgeInfo.label}</div>
+            </div>
+          )}
+        </>
+      ) : !node ? (
         <div className="text-[9px] text-center mt-8" style={{ color: 'var(--cb-text-muted)' }}>
           Click a resource to inspect
         </div>
