@@ -56,9 +56,18 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
     return () => clearInterval(id)
   }, [lastScannedAt])
 
-  // CRT turn-on animation key — changes on profile switch, causing the overlay div to remount
-  // and replay the CSS animation. profileKey changing already triggers a re-render via the store.
+  // CRT turn-on animation — only plays on profile CHANGE, not on initial mount.
+  // We store the previous profileKey in state; when it differs AND is not null (initial),
+  // we increment crtRevision so the overlay div remounts and replays the animation.
   const profileKey = profile.name + '|' + (profile.endpoint ?? '')
+  const [prevProfileKey, setPrevProfileKey] = useState<string | null>(null)
+  const [crtRevision, setCrtRevision] = useState(0)
+  if (prevProfileKey !== profileKey) {
+    setPrevProfileKey(profileKey)
+    if (prevProfileKey !== null) {
+      setCrtRevision((r) => r + 1)
+    }
+  }
 
   // Listen for search-palette node selection — fly camera to the selected node
   useEffect(() => {
@@ -371,19 +380,21 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
         </div>
       )}
 
-      {/* CRT turn-on animation overlay — remounts on profile change to replay animation */}
-      <div
-        key={profileKey}
-        style={{
-          position:        'absolute',
-          inset:           0,
-          background:      '#000',
-          pointerEvents:   'none',
-          zIndex:          200,
-          transformOrigin: 'center',
-          animation:       'crt-on 0.7s ease-out forwards',
-        }}
-      />
+      {/* CRT turn-on animation overlay — only shown on profile change (not initial mount) */}
+      {crtRevision > 0 && (
+        <div
+          key={crtRevision}
+          style={{
+            position:        'absolute',
+            inset:           0,
+            background:      '#000',
+            pointerEvents:   'none',
+            zIndex:          200,
+            transformOrigin: 'center',
+            animation:       'crt-on 0.7s ease-out forwards',
+          }}
+        />
+      )}
 
       {contextMenu && (
         <CanvasContextMenu

@@ -14,6 +14,9 @@ export function VpcNode({ data }: NodeProps): React.JSX.Element {
         minHeight:    120,
         fontFamily:   'monospace',
         overflow:     'hidden',
+        width:        '100%',
+        height:       '100%',
+        boxSizing:    'border-box',
       }}
     >
       {/* Header bar */}

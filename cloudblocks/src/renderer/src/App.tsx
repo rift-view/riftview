@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useIpc } from '../hooks/useIpc'
 import { useScanner } from '../hooks/useScanner'
 import { TitleBar } from '../components/TitleBar'
@@ -23,6 +23,43 @@ import type { AwsProfile, CloudNode } from '../types/cloud'
 import { AboutModal } from '../components/AboutModal'
 import { SettingsModal } from '../components/SettingsModal'
 
+function ResizeHandle({ onResize }: { onResize: (delta: number) => void }): React.JSX.Element {
+  const startX = useRef<number | null>(null)
+
+  function onMouseDown(e: React.MouseEvent): void {
+    e.preventDefault()
+    startX.current = e.clientX
+    function onMouseMove(me: MouseEvent): void {
+      if (startX.current === null) return
+      const delta = me.clientX - startX.current
+      startX.current = me.clientX
+      onResize(delta)
+    }
+    function onMouseUp(): void {
+      startX.current = null
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }
+
+  return (
+    <div
+      onMouseDown={onMouseDown}
+      style={{
+        width:      4,
+        flexShrink: 0,
+        cursor:     'col-resize',
+        background: 'var(--cb-border)',
+        transition: 'background 0.15s',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--cb-accent)')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--cb-border)')}
+    />
+  )
+}
+
 export default function App(): React.JSX.Element | null {
   useIpc()
   const { triggerScan } = useScanner()
@@ -43,6 +80,8 @@ export default function App(): React.JSX.Element | null {
   const [deleteTarget, setDeleteTarget] = useState<CloudNode | null>(null)
   const [nodeMenu, setNodeMenu] = useState<{ node: CloudNode; x: number; y: number } | null>(null)
   const [editTarget, setEditTarget] = useState<CloudNode | null>(null)  // placeholder for Task 13
+  const [sidebarWidth, setSidebarWidth] = useState(144)
+  const [inspectorWidth, setInspectorWidth] = useState(192)
 
   const handleSearchSelect = useCallback((nodeId: string) => {
     selectNode(nodeId)
@@ -133,9 +172,15 @@ export default function App(): React.JSX.Element | null {
       <TitleBar onSettingsOpen={() => setSettingsOpen(true)} />
       {errorMessage && <ErrorBanner message={errorMessage} onDismiss={() => setError(null)} />}
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        <div style={{ width: sidebarWidth, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <Sidebar />
+        </div>
+        <ResizeHandle onResize={(delta) => setSidebarWidth((w) => Math.max(80, Math.min(320, w + delta)))} />
         <CloudCanvas onScan={triggerScan} onNodeContextMenu={handleNodeContextMenu} />
-        <Inspector onDelete={handleDeleteRequest} onEdit={node => setEditTarget(node)} onQuickAction={handleQuickAction} />
+        <ResizeHandle onResize={(delta) => setInspectorWidth((w) => Math.max(140, Math.min(400, w - delta)))} />
+        <div style={{ width: inspectorWidth, flexShrink: 0, overflow: 'hidden' }}>
+          <Inspector onDelete={handleDeleteRequest} onEdit={node => setEditTarget(node)} onQuickAction={handleQuickAction} />
+        </div>
       </div>
       <CommandDrawer />
       <CreateModal />

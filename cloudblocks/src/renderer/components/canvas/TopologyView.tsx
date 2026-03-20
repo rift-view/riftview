@@ -173,7 +173,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
         type:     'subnet',
         parentId: vpc.id,
         extent:   'parent',
-        position: { x: subX, y: VPC_LABEL },
+        position: { x: subX, y: VPC_LABEL + VPC_PAD },
         style:    { width: sw, height: sh },
         data:     { label: subnet.label, isPublic: subnet.metadata.mapPublicIp, az: subnet.metadata.availabilityZone as string | undefined, collapsed: isCollapsed },
       })
@@ -200,7 +200,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
       subX += sw + SUB_GAP
     })
 
-    const subnetBottom = VPC_LABEL + VPC_PAD + maxSubH + SUB_GAP
+    const subnetBottom = VPC_LABEL + VPC_PAD + maxSubH + VPC_PAD + SUB_GAP
     directRes.forEach((r, ri) => {
       const col = ri % RES_COLS
       const row = Math.floor(ri / RES_COLS)
