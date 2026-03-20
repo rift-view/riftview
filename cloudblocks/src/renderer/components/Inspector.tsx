@@ -4,6 +4,7 @@ import { useUIStore } from '../store/ui'
 import type { CloudNode } from '../types/cloud'
 import { fieldLabel } from '../utils/fieldLabels'
 import { edgeTypeLabel } from '../utils/edgeTypeLabel'
+import { getMonthlyEstimate, formatPrice } from '../utils/pricing'
 
 interface InspectorProps {
   onDelete: (node: CloudNode) => void
@@ -144,6 +145,13 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_COLORS[node.status] ?? '#666' }} />
               <span className="text-[9px]" style={{ color: STATUS_COLORS[node.status] ?? '#666' }}>{node.status}</span>
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>EST. COST</div>
+            <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginTop: 2 }}>
+              {formatPrice(getMonthlyEstimate(node.type, node.region ?? 'us-east-1'))}
             </div>
           </div>
 

@@ -31,6 +31,7 @@ beforeEach(() => {
     exportTerraform:      vi.fn().mockResolvedValue({ success: true }),
     exportPng:            vi.fn().mockResolvedValue({ success: true }),
     listAwsProfiles:      vi.fn().mockResolvedValue(['default']),
+    onUpdateAvailable:    vi.fn().mockReturnValue(vi.fn()),
   }
   useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })

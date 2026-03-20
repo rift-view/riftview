@@ -85,3 +85,30 @@ describe('loadView', () => {
     expect(useUIStore.getState().activeViewSlot).toBeNull()
   })
 })
+
+describe('useUIStore — annotations', () => {
+  beforeEach(() => {
+    useUIStore.setState({ annotations: {} })
+  })
+
+  it('setAnnotation adds a note for a nodeId', () => {
+    useUIStore.getState().setAnnotation('node-1', 'my note')
+    expect(useUIStore.getState().annotations['node-1']).toBe('my note')
+  })
+
+  it('setAnnotation overwrites an existing note', () => {
+    useUIStore.getState().setAnnotation('node-1', 'first')
+    useUIStore.getState().setAnnotation('node-1', 'second')
+    expect(useUIStore.getState().annotations['node-1']).toBe('second')
+  })
+
+  it('clearAnnotation removes the note', () => {
+    useUIStore.getState().setAnnotation('node-1', 'hello')
+    useUIStore.getState().clearAnnotation('node-1')
+    expect(useUIStore.getState().annotations['node-1']).toBeUndefined()
+  })
+
+  it('clearAnnotation on missing key does not throw', () => {
+    expect(() => useUIStore.getState().clearAnnotation('nonexistent')).not.toThrow()
+  })
+})

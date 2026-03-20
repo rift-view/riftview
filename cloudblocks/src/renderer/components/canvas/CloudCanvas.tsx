@@ -9,6 +9,7 @@ import { CanvasToast } from '../CanvasToast'
 import { SaveViewModal } from './SaveViewModal'
 import { ScanErrorStrip } from './ScanErrorStrip'
 import type { CloudNode } from '../../types/cloud'
+import { getMonthlyEstimate, formatPrice } from '../../utils/pricing'
 
 function relativeTime(date: Date): string {
   const secs = Math.floor((Date.now() - date.getTime()) / 1000)
@@ -42,6 +43,11 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
   const [modalSlot, setModalSlot] = useState<number | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [, forceUpdate] = useState(0)
+
+  const totalCost = nodes.reduce((sum, n) => {
+    const est = getMonthlyEstimate(n.type, n.region ?? 'us-east-1')
+    return sum + (est ?? 0)
+  }, 0)
 
   // Refresh the relative timestamp every 10 seconds
   useEffect(() => {
@@ -108,6 +114,12 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
         {lastScannedAt && (
           <span style={{ fontSize: 11, color: 'var(--cb-text-muted)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
             Scanned {relativeTime(lastScannedAt)}
+          </span>
+        )}
+
+        {nodes.length > 0 && (
+          <span style={{ fontSize: 11, color: 'var(--cb-text-muted)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+            {formatPrice(totalCost)}
           </span>
         )}
 

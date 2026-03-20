@@ -12,7 +12,7 @@ vi.mock('../../../src/main/aws/client', () => ({
   createClients: vi.fn().mockReturnValue({}),
 }))
 vi.mock('../../../src/main/aws/scanner', () => ({
-  ResourceScanner: vi.fn().mockImplementation(() => ({ start: vi.fn(), stop: vi.fn(), triggerManualScan: vi.fn() })),
+  ResourceScanner: vi.fn(function () { return { start: vi.fn(), stop: vi.fn(), triggerManualScan: vi.fn(), updateRegions: vi.fn() } }),
 }))
 vi.mock('../../../src/main/cli/engine', () => ({
   CliEngine: vi.fn(function () { return { execute: vi.fn(), cancel: vi.fn() } }),
@@ -47,5 +47,23 @@ describe('registerHandlers', () => {
     expect(handler).toBeDefined()
     const result = await handler!({} as Electron.IpcMainInvokeEvent)
     expect(result).toEqual([{ name: 'default' }])
+  })
+
+  it('scan:start handler calls updateRegions when selectedRegions provided', async () => {
+    const mockWin = { webContents: { send: vi.fn() } } as unknown as Electron.BrowserWindow
+    registerHandlers(mockWin)
+
+    // Initialize the scanner by calling profile:select first
+    const profileSelectHandler = vi.mocked(ipcMain.handle).mock.calls.find((c) => c[0] === 'profile:select')?.[1]
+    expect(profileSelectHandler).toBeDefined()
+    await profileSelectHandler!({} as Electron.IpcMainInvokeEvent, { name: 'default' })
+
+    const handler = vi.mocked(ipcMain.handle).mock.calls.find((c) => c[0] === 'scan:start')?.[1]
+    expect(handler).toBeDefined()
+    await handler!({} as Electron.IpcMainInvokeEvent, { selectedRegions: ['us-west-2'] })
+
+    const { ResourceScanner } = await import('../../../src/main/aws/scanner')
+    const mockInstance = vi.mocked(ResourceScanner).mock.results[0]?.value
+    expect(mockInstance?.updateRegions).toHaveBeenCalledWith(['us-west-2'])
   })
 })

@@ -77,10 +77,16 @@ export default function App(): React.JSX.Element | null {
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('cloudblocks:show-about', onShowAbout)
     window.addEventListener('cloudblocks:show-settings', onShowSettings)
+
+    const removeUpdateListener = window.cloudblocks.onUpdateAvailable(() => {
+      useUIStore.getState().showToast('Update downloaded — restart to apply', 'success')
+    })
+
     return () => {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('cloudblocks:show-about', onShowAbout)
       window.removeEventListener('cloudblocks:show-settings', onShowSettings)
+      removeUpdateListener()
     }
   }, [])
 

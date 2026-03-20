@@ -21,6 +21,7 @@ export const IPC = {
   TERRAFORM_EXPORT: 'terraform:export',     // invoke → { success: boolean }
   CANVAS_EXPORT_PNG: 'canvas:export-png',   // invoke → { success: boolean; filePath?: string }
   AWS_LIST_PROFILES: 'aws:list-profiles',   // invoke → string[]
+  UPDATE_AVAILABLE: 'update:available',      // push → void (main → renderer)
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]

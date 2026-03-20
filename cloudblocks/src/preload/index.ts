@@ -68,4 +68,11 @@ contextBridge.exposeInMainWorld('cloudblocks', {
 
   // List AWS credential profile names from ~/.aws/credentials
   listAwsProfiles: (): Promise<string[]> => ipcRenderer.invoke(IPC.AWS_LIST_PROFILES),
+
+  // Auto-updater push event
+  onUpdateAvailable: (cb: () => void): (() => void) => {
+    const handler = (): void => cb()
+    ipcRenderer.on(IPC.UPDATE_AVAILABLE, handler)
+    return () => ipcRenderer.removeListener(IPC.UPDATE_AVAILABLE, handler)
+  },
 })
