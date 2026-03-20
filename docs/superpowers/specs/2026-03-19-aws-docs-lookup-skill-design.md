@@ -40,7 +40,12 @@ Services covered: all 24 Cloudblocks `NodeType` services (EC2, VPC, Subnet, SG, 
   iam-patterns.md          # Tier 1: Per-service IAM action requirements
 ```
 
-`SKILL.md` instructs Claude to read the relevant sub-file first before attempting any network fetch. Sub-files are loaded on demand — only the one relevant to the current question.
+`SKILL.md` instructs Claude to read the relevant sub-file first before attempting any network fetch. Sub-file selection is trigger-driven:
+- Error code trigger → read `error-codes.md`
+- LocalStack coverage / service support question → read `localstack-coverage.md`
+- IAM / permissions question → read `iam-patterns.md`
+- CLI syntax / SDK question → skip to Tier 2 directly (no sub-file)
+Multiple triggers in the same question load multiple sub-files.
 
 ---
 
@@ -108,6 +113,13 @@ The skill includes a service-name namespace mapping:
 | eventbridge-bus | `EventBridge` | `events` |
 | ecr-repo | `AmazonECR` | `ecr` |
 | igw | `AWSEC2` | `ec2` |
+| s3 | `AmazonS3` | `s3api` |
+| apigw-route | `apigatewayv2` | `apigatewayv2` |
+
+**URL placeholder mapping:**
+- `AWS CLI reference` → use the **CLI service name** column for `{service}`, command name for `{command}`
+- `AWS API reference` + `AWS developer guide` → use the **AWS doc namespace** column for `{service}`, operation PascalCase for `{Operation}`
+- `LocalStack coverage` + `LocalStack user guide` → use the **CLI service name** column (lowercase) for `{service}`
 
 ### Tier 3 — WebSearch fallback
 
