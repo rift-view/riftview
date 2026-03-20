@@ -220,6 +220,23 @@ export function registerHandlers(win: BrowserWindow): void {
     }
   })
 
+  // Canvas PNG export — capture the window and open a native save dialog
+  ipcMain.handle(IPC.CANVAS_EXPORT_PNG, async () => {
+    try {
+      const image = await win.webContents.capturePage()
+      const { filePath } = await dialog.showSaveDialog(win, {
+        defaultPath: 'cloudblocks-export.png',
+        filters: [{ name: 'PNG Image', extensions: ['png'] }],
+      })
+      if (!filePath) return { success: false }
+      fs.writeFileSync(filePath, image.toPNG())
+      return { success: true, filePath }
+    } catch (err) {
+      console.error('CANVAS_EXPORT_PNG error:', err)
+      return { success: false }
+    }
+  })
+
   // Terraform HCL export — generate file and open native save dialog
   ipcMain.handle(IPC.TERRAFORM_EXPORT, async (_e, nodes: CloudNode[]) => {
     try {

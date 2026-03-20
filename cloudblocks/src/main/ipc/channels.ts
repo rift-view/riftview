@@ -19,6 +19,7 @@ export const IPC = {
   CF_DELETE:       'cloudfront:delete',     // invoke → { code: number }
   CF_INVALIDATE:   'cloudfront:invalidate', // invoke → { code: number }
   TERRAFORM_EXPORT: 'terraform:export',     // invoke → { success: boolean }
+  CANVAS_EXPORT_PNG: 'canvas:export-png',   // invoke → { success: boolean; filePath?: string }
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]

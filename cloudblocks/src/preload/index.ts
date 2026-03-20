@@ -62,4 +62,7 @@ contextBridge.exposeInMainWorld('cloudblocks', {
 
   // Terraform HCL export
   exportTerraform: (nodes: import('../renderer/types/cloud').CloudNode[]) => ipcRenderer.invoke(IPC.TERRAFORM_EXPORT, nodes),
+
+  // Canvas PNG export
+  exportPng: (): Promise<{ success: boolean; filePath?: string }> => ipcRenderer.invoke(IPC.CANVAS_EXPORT_PNG),
 })

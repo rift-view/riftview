@@ -167,6 +167,24 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
           ⬡ HCL
         </button>
 
+        <button
+          onClick={() => {
+            window.cloudblocks.exportPng().then((res) => {
+              if (res.success) useUIStore.getState().showToast('PNG exported', 'success')
+              else useUIStore.getState().showToast('Export cancelled', 'error')
+            }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
+          }}
+          title="Export canvas as PNG"
+          style={{
+            ...btnBase,
+            background: 'var(--cb-bg-elevated)',
+            border: '1px solid var(--cb-border)',
+            color: 'var(--cb-text-secondary)',
+          }}
+        >
+          ↓ PNG
+        </button>
+
         <div className="w-px h-3.5 bg-gray-700" />
 
         {(['topology', 'graph'] as const).map((v) => (
@@ -214,6 +232,22 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
             {activeViewName}
           </span>
         )}
+
+        <div className="w-px h-3.5 bg-gray-700" />
+
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-about'))}
+          title="About Cloudblocks"
+          style={{
+            ...btnBase,
+            background: 'transparent',
+            border: '1px solid var(--cb-border)',
+            color: '#555',
+            minWidth: '20px',
+          }}
+        >
+          ?
+        </button>
       </div>
 
       <ScanErrorStrip />
