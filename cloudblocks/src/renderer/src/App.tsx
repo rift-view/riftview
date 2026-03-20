@@ -21,6 +21,7 @@ import { useUIStore } from '../store/ui'
 import { useCliStore } from '../store/cli'
 import type { AwsProfile, CloudNode } from '../types/cloud'
 import { AboutModal } from '../components/AboutModal'
+import { SettingsModal } from '../components/SettingsModal'
 
 export default function App(): React.JSX.Element | null {
   useIpc()
@@ -36,6 +37,8 @@ export default function App(): React.JSX.Element | null {
   const selectNode        = useUIStore((s) => s.selectNode)
   const showAbout         = useUIStore((s) => s.showAbout)
   const setShowAbout      = useUIStore((s) => s.setShowAbout)
+  const showSettings      = useUIStore((s) => s.showSettings)
+  const setShowSettings   = useUIStore((s) => s.setShowSettings)
 
   const [deleteTarget, setDeleteTarget] = useState<CloudNode | null>(null)
   const [nodeMenu, setNodeMenu] = useState<{ node: CloudNode; x: number; y: number } | null>(null)
@@ -68,11 +71,16 @@ export default function App(): React.JSX.Element | null {
     function onShowAbout(): void {
       useUIStore.getState().setShowAbout(true)
     }
+    function onShowSettings(): void {
+      useUIStore.getState().setShowSettings(true)
+    }
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('cloudblocks:show-about', onShowAbout)
+    window.addEventListener('cloudblocks:show-settings', onShowSettings)
     return () => {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('cloudblocks:show-about', onShowAbout)
+      window.removeEventListener('cloudblocks:show-settings', onShowSettings)
     }
   }, [])
 
@@ -156,6 +164,7 @@ export default function App(): React.JSX.Element | null {
       )}
       <EditModal node={editTarget} onClose={() => setEditTarget(null)} />
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   )
 }

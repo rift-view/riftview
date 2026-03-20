@@ -12,27 +12,29 @@ const DEFAULT_SETTINGS: Settings = {
 }
 
 interface CloudState {
-  nodes:          CloudNode[]
-  scanStatus:     'idle' | 'scanning' | 'error'
-  lastScannedAt:  Date | null
-  profile:        AwsProfile
-  region:         string
-  errorMessage:   string | null
-  pendingNodes:   CloudNode[]
-  keyPairs:       string[]
-  settings:       Settings
-  scanGeneration: number
-  scanErrors:     ScanError[]
+  nodes:           CloudNode[]
+  scanStatus:      'idle' | 'scanning' | 'error'
+  lastScannedAt:   Date | null
+  profile:         AwsProfile
+  region:          string
+  errorMessage:    string | null
+  pendingNodes:    CloudNode[]
+  keyPairs:        string[]
+  settings:        Settings
+  scanGeneration:  number
+  scanErrors:      ScanError[]
+  selectedRegions: string[]
 
-  applyDelta:        (delta: ScanDelta, generation?: number) => void
-  setScanStatus:     (status: 'idle' | 'scanning' | 'error') => void
-  setProfile:        (profile: AwsProfile) => void
-  setRegion:         (region: string) => void
-  setError:          (msg: string | null) => void
+  applyDelta:          (delta: ScanDelta, generation?: number) => void
+  setScanStatus:       (status: 'idle' | 'scanning' | 'error') => void
+  setProfile:          (profile: AwsProfile) => void
+  setRegion:           (region: string) => void
+  setSelectedRegions:  (regions: string[]) => void
+  setError:            (msg: string | null) => void
   incrementGeneration: () => void
-  addPendingNode:    (node: CloudNode) => void
-  removePendingNode: (id: string) => void
-  clearPendingNodes: () => void
+  addPendingNode:      (node: CloudNode) => void
+  removePendingNode:   (id: string) => void
+  clearPendingNodes:   () => void
   setKeyPairs:          (pairs: string[]) => void
   loadSettings:         () => Promise<void>
   saveSettings:         (s: Settings) => Promise<void>
@@ -43,17 +45,18 @@ interface CloudState {
 }
 
 export const useCloudStore = create<CloudState>((set) => ({
-  nodes:          [],
-  scanStatus:     'idle',
-  lastScannedAt:  null,
-  profile:        { name: 'default' },
-  region:         'us-east-1',
-  errorMessage:   null,
-  pendingNodes:   [],
-  keyPairs:       [],
-  settings:       DEFAULT_SETTINGS,
-  scanGeneration: 0,
-  scanErrors:     [],
+  nodes:           [],
+  scanStatus:      'idle',
+  lastScannedAt:   null,
+  profile:         { name: 'default' },
+  region:          'us-east-1',
+  errorMessage:    null,
+  pendingNodes:    [],
+  keyPairs:        [],
+  settings:        DEFAULT_SETTINGS,
+  scanGeneration:  0,
+  scanErrors:      [],
+  selectedRegions: ['us-east-1'],
 
   applyDelta: (delta, generation) =>
     set((state) => {
@@ -71,11 +74,12 @@ export const useCloudStore = create<CloudState>((set) => ({
       return { nodes: Array.from(nodeMap.values()), lastScannedAt: new Date() }
     }),
 
-  setScanStatus:     (status)  => set({ scanStatus: status }),
-  setProfile:        (profile) => set((state) => ({ profile, nodes: [], scanStatus: 'idle', lastScannedAt: null, scanGeneration: state.scanGeneration + 1 })),
-  setRegion:         (region)  => set((state) => ({ region, nodes: [], scanStatus: 'idle', lastScannedAt: null, scanGeneration: state.scanGeneration + 1 })),
-  setError:          (msg)     => set({ errorMessage: msg }),
-  incrementGeneration:         () => set((state) => ({ scanGeneration: state.scanGeneration + 1 })),
+  setScanStatus:      (status)  => set({ scanStatus: status }),
+  setProfile:         (profile) => set((state) => ({ profile, nodes: [], scanStatus: 'idle', lastScannedAt: null, scanGeneration: state.scanGeneration + 1 })),
+  setRegion:          (region)  => set((state) => ({ region, nodes: [], scanStatus: 'idle', lastScannedAt: null, scanGeneration: state.scanGeneration + 1 })),
+  setSelectedRegions: (regions) => set({ selectedRegions: regions }),
+  setError:           (msg)     => set({ errorMessage: msg }),
+  incrementGeneration:           () => set((state) => ({ scanGeneration: state.scanGeneration + 1 })),
 
   addPendingNode: (node) =>
     set((state) => ({ pendingNodes: [...state.pendingNodes, node] })),
@@ -110,17 +114,18 @@ export const useCloudStore = create<CloudState>((set) => ({
 // test-only factory — allows isolated store instances in unit tests
 export function createCloudStore(): StoreApi<CloudState> {
   return createStore<CloudState>((set) => ({
-    nodes:          [],
-    scanStatus:     'idle',
-    lastScannedAt:  null,
-    profile:        { name: 'default' },
-    region:         'us-east-1',
-    errorMessage:   null,
-    pendingNodes:   [],
-    keyPairs:       [],
-    settings:       DEFAULT_SETTINGS,
-    scanGeneration: 0,
-    scanErrors:     [],
+    nodes:           [],
+    scanStatus:      'idle',
+    lastScannedAt:   null,
+    profile:         { name: 'default' },
+    region:          'us-east-1',
+    errorMessage:    null,
+    pendingNodes:    [],
+    keyPairs:        [],
+    settings:        DEFAULT_SETTINGS,
+    scanGeneration:  0,
+    scanErrors:      [],
+    selectedRegions: ['us-east-1'],
 
     applyDelta: (delta, generation) =>
       set((state) => {
@@ -138,11 +143,12 @@ export function createCloudStore(): StoreApi<CloudState> {
         return { nodes: Array.from(nodeMap.values()), lastScannedAt: new Date() }
       }),
 
-    setScanStatus:     (status)  => set({ scanStatus: status }),
-    setProfile:        (profile) => set((state) => ({ profile, scanGeneration: state.scanGeneration + 1 })),
-    setRegion:         (region)  => set((state) => ({ region, scanGeneration: state.scanGeneration + 1 })),
-    setError:          (msg)     => set({ errorMessage: msg }),
-    incrementGeneration:         () => set((state) => ({ scanGeneration: state.scanGeneration + 1 })),
+    setScanStatus:      (status)  => set({ scanStatus: status }),
+    setProfile:         (profile) => set((state) => ({ profile, scanGeneration: state.scanGeneration + 1 })),
+    setRegion:          (region)  => set((state) => ({ region, scanGeneration: state.scanGeneration + 1 })),
+    setSelectedRegions: (regions) => set({ selectedRegions: regions }),
+    setError:           (msg)     => set({ errorMessage: msg }),
+    incrementGeneration:           () => set((state) => ({ scanGeneration: state.scanGeneration + 1 })),
 
     addPendingNode: (node) =>
       set((state) => ({ pendingNodes: [...state.pendingNodes, node] })),

@@ -1,6 +1,7 @@
 import fs from 'fs'
 import fsp from 'fs/promises'
 import path from 'path'
+import os from 'os'
 import { ipcMain, BrowserWindow, app, dialog } from 'electron'
 import { IPC } from './channels'
 import { listProfiles, getDefaultRegion } from '../aws/credentials'
@@ -251,6 +252,22 @@ export function registerHandlers(win: BrowserWindow): void {
     } catch (err) {
       console.error('TERRAFORM_EXPORT error:', err)
       return { success: false }
+    }
+  })
+
+  // List AWS credential profiles from ~/.aws/credentials
+  ipcMain.handle(IPC.AWS_LIST_PROFILES, (): string[] => {
+    const credFile = path.join(os.homedir(), '.aws', 'credentials')
+    try {
+      const raw = fs.readFileSync(credFile, 'utf-8')
+      const profiles: string[] = []
+      for (const line of raw.split('\n')) {
+        const match = /^\[([^\]]+)\]/.exec(line.trim())
+        if (match) profiles.push(match[1])
+      }
+      return profiles.length > 0 ? profiles : ['default']
+    } catch {
+      return ['default']
     }
   })
 
