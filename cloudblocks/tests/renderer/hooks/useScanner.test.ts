@@ -29,6 +29,8 @@ beforeEach(() => {
     exportPng:            vi.fn().mockResolvedValue({ success: true }),
     listAwsProfiles:      vi.fn().mockResolvedValue(['default']),
     onUpdateAvailable:    vi.fn().mockReturnValue(vi.fn()),
+    loadAnnotations:      vi.fn().mockResolvedValue({}),
+    saveAnnotations:      vi.fn().mockResolvedValue(undefined),
   }
   useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })
