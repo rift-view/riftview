@@ -214,7 +214,7 @@ export function CreateModal(): React.JSX.Element | null {
   }
 
   return (
-    <div style={overlayStyle}>
+    <div style={overlayStyle} onKeyDown={(e) => { if (e.key === 'Escape') handleCancel() }} tabIndex={-1}>
       <div style={modalStyle}>
         <div style={{ color: 'var(--cb-accent)', fontSize: '12px', fontWeight: 'bold', marginBottom: '14px', borderBottom: '1px solid var(--cb-border-strong)', paddingBottom: '8px' }}>
           {TITLES[activeCreate.resource] ?? 'New Resource'}

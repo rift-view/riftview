@@ -97,7 +97,7 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
   }
 
   return (
-    <div style={overlay} onClick={e => e.target === e.currentTarget && !isRunning && onClose()}>
+    <div style={overlay} onClick={e => e.target === e.currentTarget && !isRunning && onClose()} onKeyDown={(e) => { if (e.key === 'Escape' && !isRunning) onClose() }} tabIndex={-1}>
       <div style={modal}>
         <div style={{ color: 'var(--cb-accent)', fontWeight: 'bold', fontSize: 13, marginBottom: 12, borderBottom: '1px solid var(--cb-border-strong)', paddingBottom: 8 }}>
           Edit {RESOURCE_LABELS[node.type] ?? node.type}
