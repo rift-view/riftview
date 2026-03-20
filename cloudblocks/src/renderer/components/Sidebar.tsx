@@ -82,7 +82,7 @@ export function Sidebar(): React.JSX.Element {
 
   return (
     <div
-      className="w-36 flex-shrink-0 flex flex-col py-2 overflow-y-auto"
+      className="flex flex-col py-2 overflow-y-auto h-full"
       style={{ background: 'var(--cb-bg-panel)', borderRight: '1px solid var(--cb-border-strong)' }}
     >
       <div className="px-2.5 text-[9px] uppercase tracking-widest mb-1" style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace' }}>
