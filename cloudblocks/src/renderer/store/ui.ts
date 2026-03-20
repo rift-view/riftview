@@ -31,6 +31,7 @@ interface UIState {
   snapToGrid:         boolean
   expandedSsmGroups:  Set<string>
   lockedNodes:        Set<string>
+  collapsedSubnets:   Set<string>
   showAbout:          boolean
   showSettings:       boolean
   annotations:        Record<string, string>
@@ -49,6 +50,8 @@ interface UIState {
   toggleSsmGroup:       (prefix: string) => void
   toggleLockNode:       (id: string) => void
   isNodeLocked:         (id: string) => boolean
+  toggleSubnet:         (id: string) => void
+  isSubnetCollapsed:    (id: string) => boolean
   setShowAbout:         (v: boolean) => void
   setShowSettings:      (v: boolean) => void
   setAnnotation:        (nodeId: string, text: string) => void
@@ -71,6 +74,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   snapToGrid:        false,
   expandedSsmGroups: new Set<string>(),
   lockedNodes:       new Set<string>(),
+  collapsedSubnets:  new Set<string>(),
   showAbout:         false,
   showSettings:      false,
   annotations:       {},
@@ -135,6 +139,14 @@ export const useUIStore = create<UIState>((set, get) => ({
       return { lockedNodes: next }
     }),
   isNodeLocked: (id) => get().lockedNodes.has(id),
+  toggleSubnet: (id) =>
+    set((s) => {
+      const next = new Set(s.collapsedSubnets)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return { collapsedSubnets: next }
+    }),
+  isSubnetCollapsed: (id) => get().collapsedSubnets.has(id),
   setShowAbout:     (v) => set({ showAbout: v }),
   setShowSettings:  (v) => set({ showSettings: v }),
   setAnnotation: (nodeId, text) =>
