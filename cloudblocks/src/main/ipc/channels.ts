@@ -20,6 +20,7 @@ export const IPC = {
   CF_INVALIDATE:   'cloudfront:invalidate', // invoke → { code: number }
   TERRAFORM_EXPORT: 'terraform:export',     // invoke → { success: boolean }
   CANVAS_EXPORT_PNG: 'canvas:export-png',   // invoke → { success: boolean; filePath?: string }
+  AWS_LIST_PROFILES: 'aws:list-profiles',   // invoke → string[]
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]

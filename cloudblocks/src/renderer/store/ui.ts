@@ -32,6 +32,7 @@ interface UIState {
   expandedSsmGroups:  Set<string>
   lockedNodes:        Set<string>
   showAbout:          boolean
+  showSettings:       boolean
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -48,6 +49,7 @@ interface UIState {
   toggleLockNode:       (id: string) => void
   isNodeLocked:         (id: string) => boolean
   setShowAbout:         (v: boolean) => void
+  setShowSettings:      (v: boolean) => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -67,6 +69,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   expandedSsmGroups: new Set<string>(),
   lockedNodes:       new Set<string>(),
   showAbout:         false,
+  showSettings:      false,
 
   setView:         (view) => set({ view }),
   selectNode:      (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -128,5 +131,6 @@ export const useUIStore = create<UIState>((set, get) => ({
       return { lockedNodes: next }
     }),
   isNodeLocked: (id) => get().lockedNodes.has(id),
-  setShowAbout: (v) => set({ showAbout: v }),
+  setShowAbout:     (v) => set({ showAbout: v }),
+  setShowSettings:  (v) => set({ showSettings: v }),
 }))

@@ -65,4 +65,7 @@ contextBridge.exposeInMainWorld('cloudblocks', {
 
   // Canvas PNG export
   exportPng: (): Promise<{ success: boolean; filePath?: string }> => ipcRenderer.invoke(IPC.CANVAS_EXPORT_PNG),
+
+  // List AWS credential profile names from ~/.aws/credentials
+  listAwsProfiles: (): Promise<string[]> => ipcRenderer.invoke(IPC.AWS_LIST_PROFILES),
 })
