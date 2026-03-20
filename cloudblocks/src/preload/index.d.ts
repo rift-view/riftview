@@ -21,5 +21,6 @@ interface Window {
     invalidateCloudFront(id: string, path: string): Promise<{ code: number }>
     deleteAcm(arn: string): Promise<{ code: number }>
     exportTerraform(nodes: import('../renderer/types/cloud').CloudNode[]): Promise<{ success: boolean }>
+    exportPng(): Promise<{ success: boolean; filePath?: string }>
   }
 }

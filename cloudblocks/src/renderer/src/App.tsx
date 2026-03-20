@@ -20,6 +20,7 @@ import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 import { useCliStore } from '../store/cli'
 import type { AwsProfile, CloudNode } from '../types/cloud'
+import { AboutModal } from '../components/AboutModal'
 
 export default function App(): React.JSX.Element | null {
   useIpc()
@@ -33,6 +34,8 @@ export default function App(): React.JSX.Element | null {
   const setCommandPreview = useCliStore((s) => s.setCommandPreview)
   const setPendingCommand = useCliStore((s) => s.setPendingCommand)
   const selectNode        = useUIStore((s) => s.selectNode)
+  const showAbout         = useUIStore((s) => s.showAbout)
+  const setShowAbout      = useUIStore((s) => s.setShowAbout)
 
   const [deleteTarget, setDeleteTarget] = useState<CloudNode | null>(null)
   const [nodeMenu, setNodeMenu] = useState<{ node: CloudNode; x: number; y: number } | null>(null)
@@ -62,8 +65,15 @@ export default function App(): React.JSX.Element | null {
         setSearchOpen(true)
       }
     }
+    function onShowAbout(): void {
+      useUIStore.getState().setShowAbout(true)
+    }
     window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
+    window.addEventListener('cloudblocks:show-about', onShowAbout)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('cloudblocks:show-about', onShowAbout)
+    }
   }, [])
 
   const handleDeleteConfirm = (node: CloudNode, opts: DeleteOptions): void => {
@@ -145,6 +155,7 @@ export default function App(): React.JSX.Element | null {
         />
       )}
       <EditModal node={editTarget} onClose={() => setEditTarget(null)} />
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
     </div>
   )
 }
