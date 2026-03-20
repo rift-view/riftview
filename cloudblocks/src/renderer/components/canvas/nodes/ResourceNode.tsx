@@ -117,7 +117,8 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
       {/* Resource label */}
       <div
         className="text-[11px] font-medium leading-tight"
-        style={{ color: 'var(--cb-text-primary)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        title={d.label}
+        style={{ color: 'var(--cb-text-primary)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
       >
         {d.label}
       </div>
@@ -137,7 +138,8 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
           />
           <span
             className="text-[8px] tracking-wide"
-            style={{ color: d.vpcColor ?? '#1976D2', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            title={d.vpcLabel}
+            style={{ color: d.vpcColor ?? '#1976D2', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
           >
             {d.vpcLabel}
           </span>

@@ -500,8 +500,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       maxZoom={2}
       style={{ background: 'var(--cb-canvas-bg)' }}
     >
-      <Background id="minor" variant={BackgroundVariant.Lines} gap={SNAP_GRID_SIZE} color="rgba(255,255,255,0.04)" />
-      <Background id="major" variant={BackgroundVariant.Lines} gap={100} color="rgba(255,255,255,0.09)" />
+      <Background id="minor" variant={BackgroundVariant.Lines} gap={SNAP_GRID_SIZE} color="rgba(255,255,255,0.015)" />
+      <Background id="major" variant={BackgroundVariant.Lines} gap={100} color="rgba(255,255,255,0.035)" />
       <MiniMap
         style={{ background: 'var(--cb-minimap-bg)', border: '1px solid var(--cb-minimap-border)' }}
         nodeColor="#FF9900"
