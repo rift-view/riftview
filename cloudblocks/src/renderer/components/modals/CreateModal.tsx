@@ -149,7 +149,10 @@ export function CreateModal(): React.JSX.Element | null {
     setShowErrors(false)
 
     // Optimistic node — goes into the main nodes array so the next scan can replace it
-    const optimisticId = `optimistic-${Date.now()}`
+    // For S3, use the bucket name as the ID so applyDelta overwrites it cleanly (scanner uses b.Name as ID)
+    const optimisticId = activeCreate.resource === 's3'
+      ? (paramsRef.current as { bucketName: string }).bucketName
+      : `optimistic-${Date.now()}`
     optimisticIdRef.current = optimisticId
     addOptimisticNode({
       id:       optimisticId,
@@ -181,9 +184,9 @@ export function CreateModal(): React.JSX.Element | null {
       .then((result) => {
         if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
         pendingIdRef.current = null
-        // On success: leave optimistic node; next scan will replace it
         optimisticIdRef.current = null
         if (result.code === 0) {
+          removeOptimisticNode(optimisticId)   // remove before scan — real node arrives via applyDelta
           setCommandPreview([])
           setActiveCreate(null)
           window.cloudblocks.startScan()

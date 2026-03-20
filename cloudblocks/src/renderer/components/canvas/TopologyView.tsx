@@ -370,6 +370,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const view               = useUIStore((s) => s.view)
   const showIntegrations   = useUIStore((s) => s.showIntegrations)
   const snapToGrid         = useUIStore((s) => s.snapToGrid)
+  const lockedNodes        = useUIStore((s) => s.lockedNodes)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const topologyPositions = useUIStore((s) => s.nodePositions.topology)
   const setNodePosition   = useUIStore((s) => s.setNodePosition)
@@ -418,13 +419,32 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const flowNodes: Node[] = useMemo(() => {
     const raw = buildFlowNodes(allNodes, selectedId, highlightedIds)
     return raw.map((n) => {
-      if (n.extent === 'parent') return n  // never override child nodes
+      const isLocked = lockedNodes.has(n.id)
+      // Apply lock properties to all nodes (container nodes never get locked draggable/selectable
+      // overrides since they already have those set to false in buildFlowNodes)
+      const lockProps = isLocked
+        ? { draggable: false, selectable: false, zIndex: -1 }
+        : {}
+
+      if (n.extent === 'parent') {
+        // Child nodes: only patch data for lock indicator, no position override
+        return isLocked
+          ? { ...n, ...lockProps, data: { ...n.data, locked: true } }
+          : n
+      }
+
       const live  = livePositions[n.id]
-      if (live) return { ...n, position: live }
       const saved = topologyPositions[n.id]
-      return saved ? { ...n, position: saved } : n
+      const position = live ?? saved ?? n.position
+
+      return {
+        ...n,
+        position,
+        ...lockProps,
+        data: { ...n.data, ...(isLocked ? { locked: true } : {}) },
+      }
     })
-  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions])
+  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
@@ -483,7 +503,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       nodes={flowNodes}
       edges={flowEdges}
       nodeTypes={NODE_TYPES}
-      onNodeClick={(_e, node) => selectNode(node.id)}
+      onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
+      onNodeDoubleClick={(_e, node) => selectNode(node.id)}
       onPaneClick={() => selectNode(null)}
       onNodeContextMenu={(event, rfNode) => {
         event.preventDefault()

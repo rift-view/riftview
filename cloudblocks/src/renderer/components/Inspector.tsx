@@ -14,6 +14,8 @@ interface InspectorProps {
 export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: InspectorProps): React.JSX.Element {
   const selectedId      = useUIStore((s) => s.selectedNodeId)
   const setActiveCreate = useUIStore((s) => s.setActiveCreate)
+  const lockedNodes     = useUIStore((s) => s.lockedNodes)
+  const toggleLockNode  = useUIStore((s) => s.toggleLockNode)
   const nodes           = useCloudStore((s) => s.nodes)
   const node          = nodes.find((n) => n.id === selectedId)
 
@@ -43,6 +45,24 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
           <div className="text-[9px] font-bold mb-2 pb-1" style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}>
             {node.type.toUpperCase()}  ·  Selected
           </div>
+
+          <button
+            onClick={() => toggleLockNode(node.id)}
+            style={{
+              width: '100%',
+              marginBottom: 8,
+              background: 'var(--cb-bg-elevated)',
+              border: `1px solid ${lockedNodes.has(node.id) ? '#febc2e' : 'var(--cb-border)'}`,
+              borderRadius: 2,
+              padding: '3px 0',
+              color: lockedNodes.has(node.id) ? '#febc2e' : 'var(--cb-text-muted)',
+              fontFamily: 'monospace',
+              fontSize: 9,
+              cursor: 'pointer',
+            }}
+          >
+            {lockedNodes.has(node.id) ? '⊠ Locked' : '◈ Lock'}
+          </button>
 
           {[
             { key: 'ID',     val: node.id },
