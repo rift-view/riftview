@@ -53,3 +53,26 @@ describe('computeDelta', () => {
     expect(delta.changed[0].label).toBe('new-name')
   })
 })
+
+vi.mock('../../../src/main/aws/client', () => ({
+  createClients: vi.fn().mockReturnValue({}),
+}))
+vi.mock('../../../src/main/aws/provider', () => ({
+  awsProvider: { scan: vi.fn().mockResolvedValue({ nodes: [], scanErrors: [] }) },
+}))
+vi.mock('../../../src/main/aws/services/ec2', () => ({
+  describeKeyPairs: vi.fn().mockResolvedValue([]),
+}))
+
+import { ResourceScanner } from '../../../src/main/aws/scanner'
+
+describe('ResourceScanner', () => {
+  it('updateRegions does not throw and scanner remains usable', () => {
+    const mockWin = { webContents: { send: vi.fn() } } as unknown as Electron.BrowserWindow
+    const scanner = new ResourceScanner('default', ['us-east-1'], undefined, mockWin)
+    expect(() => scanner.updateRegions(['eu-west-1', 'ap-southeast-1'])).not.toThrow()
+    expect(typeof scanner.start).toBe('function')
+    expect(typeof scanner.stop).toBe('function')
+    expect(typeof scanner.triggerManualScan).toBe('function')
+  })
+})

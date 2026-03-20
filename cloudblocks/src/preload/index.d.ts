@@ -23,5 +23,6 @@ interface Window {
     exportTerraform(nodes: import('../renderer/types/cloud').CloudNode[]): Promise<{ success: boolean }>
     exportPng(): Promise<{ success: boolean; filePath?: string }>
     listAwsProfiles(): Promise<string[]>
+    onUpdateAvailable(cb: () => void): () => void
   }
 }
