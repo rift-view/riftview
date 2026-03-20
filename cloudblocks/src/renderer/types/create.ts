@@ -48,6 +48,7 @@ export interface RdsParams {
   multiAZ: boolean
   publiclyAccessible: boolean
   vpcId: string
+  dbSubnetGroupName?: string
 }
 
 export interface LambdaParams {

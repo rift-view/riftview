@@ -2,6 +2,14 @@ import { SNSClient, ListTopicsCommand, ListSubscriptionsByTopicCommand } from '@
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 import { scanFlatService } from './scanFlatService'
 
+function sqsArnToUrl(arn: string): string {
+  // arn:aws:sqs:{region}:{accountId}:{queueName}
+  const parts = arn.split(':')
+  if (parts.length < 6) return arn
+  const [, , , region, accountId, queueName] = parts
+  return `https://sqs.${region}.amazonaws.com/${accountId}/${queueName}`
+}
+
 export async function listTopics(client: SNSClient, region: string): Promise<CloudNode[]> {
   const nodes = await scanFlatService<SNSClient, { TopicArn?: string }>(client, region, {
     fetch: async (c) => {
@@ -26,7 +34,10 @@ export async function listTopics(client: SNSClient, region: string): Promise<Clo
 
       const integrations: { targetId: string; edgeType: EdgeType }[] = (subs.Subscriptions ?? [])
         .filter((s): s is typeof s & { Endpoint: string } => typeof s.Endpoint === 'string' && s.Endpoint.startsWith('arn:'))
-        .map((s) => ({ targetId: s.Endpoint, edgeType: 'subscription' as EdgeType }))
+        .map((s) => ({
+          targetId: s.Protocol === 'sqs' ? sqsArnToUrl(s.Endpoint) : s.Endpoint,
+          edgeType: 'subscription' as EdgeType,
+        }))
 
       if (integrations.length > 0) {
         return { ...node, integrations }

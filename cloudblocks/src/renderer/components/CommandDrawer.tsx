@@ -7,6 +7,8 @@ export function CommandDrawer(): React.JSX.Element {
   const cliOutput         = useCliStore((s) => s.cliOutput)
   const commandPreview    = useCliStore((s) => s.commandPreview)
   const pendingCommand    = useCliStore((s) => s.pendingCommand)
+  const logHistory        = useCliStore((s) => s.logHistory)
+  const clearLogHistory   = useCliStore((s) => s.clearLogHistory)
   const activeCreate      = useUIStore((s) => s.activeCreate)
   const appendCliOutput   = useCliStore((s) => s.appendCliOutput)
   const clearCliOutput    = useCliStore((s) => s.clearCliOutput)
@@ -14,15 +16,22 @@ export function CommandDrawer(): React.JSX.Element {
   const setPendingCommand = useCliStore((s) => s.setPendingCommand)
   const setCommandPreview = useCliStore((s) => s.setCommandPreview)
 
-  const [expanded, setExpanded] = useState(false)
-  const [running,  setRunning]  = useState(false)
-  const [exitCode, setExitCode] = useState<number | null>(null)
-  const logRef = useRef<HTMLDivElement>(null)
+  const [expanded,  setExpanded]  = useState(false)
+  const [running,   setRunning]   = useState(false)
+  const [exitCode,  setExitCode]  = useState<number | null>(null)
+  const [showLogs,  setShowLogs]  = useState(false)
+  const logRef     = useRef<HTMLDivElement>(null)
+  const historyRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll log to bottom on new output
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
   }, [cliOutput])
+
+  // Auto-scroll history panel to bottom on new entries
+  useEffect(() => {
+    if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight
+  }, [logHistory])
 
   // Reset drawer when modal closes
   useEffect(() => {
@@ -94,6 +103,13 @@ export function CommandDrawer(): React.JSX.Element {
     setExitCode(null)
   }
 
+  function handleToggleLogs(): void {
+    setShowLogs((prev) => {
+      if (!prev) setExpanded(false)
+      return !prev
+    })
+  }
+
   const showRun     = (!!activeCreate || !!pendingCommand) && !running && exitCode === null && commandPreview.length > 0
   const showSuccess = exitCode === 0
   const showError   = exitCode !== null && exitCode !== 0
@@ -134,6 +150,37 @@ export function CommandDrawer(): React.JSX.Element {
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {/* Log history panel */}
+      {showLogs && (
+        <div style={{ height: '160px', overflowY: 'auto', background: 'var(--cb-bg-panel)', borderBottom: '1px solid var(--cb-border-strong)', fontSize: '10px', lineHeight: '1.6' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 10px', borderBottom: '1px solid var(--cb-border-strong)' }}>
+            <span style={{ color: 'var(--cb-text-muted)', fontSize: '9px', fontFamily: 'monospace' }}>Session Log</span>
+            <button
+              onClick={clearLogHistory}
+              style={{ background: 'transparent', border: '1px solid #ff5f57', borderRadius: '2px', color: '#ff5f57', fontSize: '9px', cursor: 'pointer', fontFamily: 'monospace', padding: '0px 5px' }}
+            >
+              ✕ Clear
+            </button>
+          </div>
+          <div ref={historyRef} style={{ height: 'calc(160px - 24px)', overflowY: 'auto', padding: '6px 10px' }}>
+            {logHistory.length === 0 ? (
+              <span style={{ color: 'var(--cb-text-muted)' }}>No commands run this session.</span>
+            ) : (
+              logHistory.map((entry, i) => (
+                <div key={i} style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                  <span style={{ color: 'var(--cb-text-muted)', fontSize: '9px', marginRight: '6px' }}>
+                    {new Date(entry.ts).toLocaleTimeString()}
+                  </span>
+                  <span style={{ color: entry.stream === 'stderr' ? '#febc2e' : 'var(--cb-text-primary)' }}>
+                    {entry.line}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
 
@@ -189,6 +236,13 @@ export function CommandDrawer(): React.JSX.Element {
             ▼
           </button>
         )}
+
+        <button
+          onClick={handleToggleLogs}
+          style={{ background: 'transparent', border: 'none', color: showLogs ? '#febc2e' : 'var(--cb-text-muted)', fontSize: '9px', cursor: 'pointer', fontFamily: 'monospace' }}
+        >
+          ⊟ Logs
+        </button>
       </div>
     </div>
   )
