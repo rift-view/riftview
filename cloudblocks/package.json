@@ -44,6 +44,7 @@
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@xyflow/react": "^12.10.1",
+    "electron-updater": "^6.3.9",
     "ini": "^6.0.0",
     "zustand": "^5.0.11"
   },
