@@ -43,17 +43,20 @@ export function registerHandlers(win: BrowserWindow): void {
   // Select a profile — recreates clients + restarts scanner
   ipcMain.handle(IPC.PROFILE_SELECT, (_event, profile: AwsProfile) => {
     const region = getDefaultRegion(profile.name)
-    restartScanner(win, profile.name, region, profile.endpoint)
+    restartScanner(win, profile.name, [region], profile.endpoint)
   })
 
   // Select a region — recreates clients + restarts scanner with current profile
   ipcMain.handle(IPC.REGION_SELECT, (_event, { region, endpoint }: { region: string; endpoint?: string }) => {
     const profile = process.env.AWS_PROFILE ?? 'default'
-    restartScanner(win, profile, region, endpoint)
+    restartScanner(win, profile, [region], endpoint)
   })
 
-  // Manual scan trigger
-  ipcMain.handle(IPC.SCAN_START, () => {
+  // Manual scan trigger — renderer may pass selectedRegions to refresh the scanner's region list
+  ipcMain.handle(IPC.SCAN_START, (_event, payload?: { selectedRegions?: string[] }) => {
+    if (payload?.selectedRegions && payload.selectedRegions.length > 0 && scanner) {
+      scanner.updateRegions(payload.selectedRegions)
+    }
     scanner?.triggerManualScan()
   })
 
@@ -275,11 +278,12 @@ export function registerHandlers(win: BrowserWindow): void {
   cliEngine = new CliEngine(win)
 }
 
-function restartScanner(win: BrowserWindow, profile: string, region: string, endpoint?: string): void {
+function restartScanner(win: BrowserWindow, profile: string, regions: string[], endpoint?: string): void {
   scanner?.stop()
   // Recreate engine to ensure it holds the current win reference after profile/region switch
   cliEngine = new CliEngine(win, endpoint)
-  clients   = createClients(profile, region, endpoint)
-  scanner   = new ResourceScanner(clients, region, win)
+  // Keep a single client set for the primary region (used by CF, etc.)
+  clients   = createClients(profile, regions[0] ?? 'us-east-1', endpoint)
+  scanner   = new ResourceScanner(profile, regions, endpoint, win)
   scanner.start()
 }

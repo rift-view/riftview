@@ -76,6 +76,7 @@ export const awsProvider: CloudProvider = {
       listStateMachines(clients.sfn, region).catch(catch_('sfn')),
       listEventBuses(clients.eventbridge, region).catch(catch_('eventbridge')),
     ])
-    return { nodes: results.flat(), scanErrors: errors }
+    const nodes = results.flat().map((node) => ({ ...node, region: node.region ?? region }))
+    return { nodes, scanErrors: errors }
   },
 }

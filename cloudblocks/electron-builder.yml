@@ -37,5 +37,6 @@ appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
-  provider: generic
-  url: https://releases.cloudblocks.app/auto-updates
+  provider: github
+  owner: juliushamm
+  repo: cloudblocks

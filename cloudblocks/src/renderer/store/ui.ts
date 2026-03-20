@@ -33,6 +33,7 @@ interface UIState {
   lockedNodes:        Set<string>
   showAbout:          boolean
   showSettings:       boolean
+  annotations:        Record<string, string>
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -50,6 +51,8 @@ interface UIState {
   isNodeLocked:         (id: string) => boolean
   setShowAbout:         (v: boolean) => void
   setShowSettings:      (v: boolean) => void
+  setAnnotation:        (nodeId: string, text: string) => void
+  clearAnnotation:      (nodeId: string) => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -70,6 +73,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   lockedNodes:       new Set<string>(),
   showAbout:         false,
   showSettings:      false,
+  annotations:       {},
 
   setView:         (view) => set({ view }),
   selectNode:      (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -133,4 +137,12 @@ export const useUIStore = create<UIState>((set, get) => ({
   isNodeLocked: (id) => get().lockedNodes.has(id),
   setShowAbout:     (v) => set({ showAbout: v }),
   setShowSettings:  (v) => set({ showSettings: v }),
+  setAnnotation: (nodeId, text) =>
+    set((s) => ({ annotations: { ...s.annotations, [nodeId]: text } })),
+  clearAnnotation: (nodeId) =>
+    set((s) => {
+      const next = { ...s.annotations }
+      delete next[nodeId]
+      return { annotations: next }
+    }),
 }))

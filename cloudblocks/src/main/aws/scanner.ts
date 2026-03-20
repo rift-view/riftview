@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron'
 import { IPC } from '../ipc/channels'
-import type { AwsClients } from './client'
+import { createClients } from './client'
 import type { CloudNode, ScanDelta } from '../../renderer/types/cloud'
 import { describeKeyPairs } from './services/ec2'
 import { awsProvider } from './provider'
@@ -46,8 +46,9 @@ export class ResourceScanner {
   private currentNodes: CloudNode[] = []
 
   constructor(
-    private clients: AwsClients,
-    private region: string,
+    private profile: string,
+    private regions: string[],
+    private endpoint: string | undefined,
     private window: BrowserWindow,
   ) {}
 
@@ -67,11 +68,25 @@ export class ResourceScanner {
     this.scan()
   }
 
+  updateRegions(regions: string[]): void {
+    this.regions = regions
+  }
+
   private async scan(): Promise<void> {
     this.window.webContents.send(IPC.SCAN_STATUS, 'scanning')
 
     try {
-      const { nodes: nextNodes, scanErrors } = await awsProvider.scan(this.clients, this.region)
+      // Fan out across all selected regions in parallel
+      const regionResults = await Promise.all(
+        this.regions.map((region) => {
+          const clients = createClients(this.profile, region, this.endpoint)
+          return awsProvider.scan(clients, region)
+        }),
+      )
+
+      const nextNodes  = regionResults.flatMap((r) => r.nodes)
+      const scanErrors = regionResults.flatMap((r) => r.scanErrors)
+
       const delta = computeDelta(this.currentNodes, nextNodes)
 
       this.currentNodes = nextNodes
@@ -80,9 +95,11 @@ export class ResourceScanner {
 
       // Key pairs are AWS-specific and consumed by the renderer's create-node
       // flow (not part of the topology graph), so they live outside awsProvider.
+      // Use the first region's clients for key-pair lookup (key pairs are global per account).
       // TODO(M6): if ResourceScanner becomes provider-agnostic, move this into
       //           a provider-level `scanExtras()` hook or guard with provider.id.
-      const keyPairs = await describeKeyPairs(this.clients.ec2)
+      const primaryClients = createClients(this.profile, this.regions[0], this.endpoint)
+      const keyPairs = await describeKeyPairs(primaryClients.ec2)
       this.window.webContents.send(IPC.SCAN_KEYPAIRS, keyPairs)
 
       // Signal successful connection on the first scan that completes

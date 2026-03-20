@@ -18,6 +18,9 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
   const setActiveCreate = useUIStore((s) => s.setActiveCreate)
   const lockedNodes     = useUIStore((s) => s.lockedNodes)
   const toggleLockNode  = useUIStore((s) => s.toggleLockNode)
+  const annotations     = useUIStore((s) => s.annotations)
+  const setAnnotation   = useUIStore((s) => s.setAnnotation)
+  const clearAnnotation = useUIStore((s) => s.clearAnnotation)
   const nodes           = useCloudStore((s) => s.nodes)
   const node          = nodes.find((n) => n.id === selectedId)
 
@@ -413,6 +416,39 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
               )}
             </>
           )}
+
+          {/* Notes section — always shown for any selected node */}
+          <div style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <div className="text-[8px]" style={{ color: 'var(--cb-text-muted)', textTransform: 'uppercase' }}>Notes</div>
+              {annotations[node.id] && (
+                <button
+                  onClick={() => clearAnnotation(node.id)}
+                  style={{ background: 'none', border: 'none', color: 'var(--cb-text-muted)', cursor: 'pointer', fontSize: 9, padding: 0, lineHeight: 1 }}
+                  title="Clear note"
+                >✕</button>
+              )}
+            </div>
+            <textarea
+              value={annotations[node.id] ?? ''}
+              onChange={(e) => setAnnotation(node.id, e.target.value)}
+              placeholder="Add a note about this resource..."
+              rows={4}
+              style={{
+                width: '100%',
+                background: 'var(--cb-bg-elevated)',
+                border: '1px solid var(--cb-border)',
+                borderRadius: 2,
+                padding: '4px 6px',
+                color: 'var(--cb-text-primary)',
+                fontFamily: 'monospace',
+                fontSize: 9,
+                resize: 'vertical',
+                boxSizing: 'border-box',
+                outline: 'none',
+              }}
+            />
+          </div>
         </>
       )}
     </div>
