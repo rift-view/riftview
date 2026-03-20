@@ -20,6 +20,7 @@ interface UIState {
   showIntegrations:   boolean
   snapToGrid:         boolean
   expandedSsmGroups:  Set<string>
+  lockedNodes:        Set<string>
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -32,6 +33,8 @@ interface UIState {
   toggleIntegrations:   () => void
   toggleSnapToGrid:     () => void
   toggleSsmGroup:       (prefix: string) => void
+  toggleLockNode:       (id: string) => void
+  isNodeLocked:         (id: string) => boolean
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -47,6 +50,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   showIntegrations:  true,
   snapToGrid:        false,
   expandedSsmGroups: new Set<string>(),
+  lockedNodes:       new Set<string>(),
 
   setView:         (view) => set({ view }),
   selectNode:      (id)   => set({ selectedNodeId: id }),
@@ -99,4 +103,12 @@ export const useUIStore = create<UIState>((set, get) => ({
       else next.add(prefix)
       return { expandedSsmGroups: next }
     }),
+  toggleLockNode: (id) =>
+    set((s) => {
+      const next = new Set(s.lockedNodes)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return { lockedNodes: next }
+    }),
+  isNodeLocked: (id) => get().lockedNodes.has(id),
 }))
