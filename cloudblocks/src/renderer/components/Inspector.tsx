@@ -39,7 +39,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
 
   return (
     <div
-      className="w-48 flex-shrink-0 p-3 overflow-y-auto"
+      className="p-3 overflow-y-auto h-full"
       style={{ background: 'var(--cb-bg-panel)', borderLeft: '1px solid var(--cb-border-strong)', fontFamily: 'monospace' }}
     >
       {!node && selectedEdgeInfo ? (
