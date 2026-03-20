@@ -73,6 +73,7 @@ interface ResourceNodeData {
   vpcLabel?:  string   // graph view only — VPC membership indicator
   vpcColor?:  string   // graph view only — color assigned to that VPC
   dimmed?:    boolean  // focus mode — node is not in the highlighted subgraph
+  locked?:    boolean  // lock mode — node cannot be dragged or selected
 }
 
 export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
@@ -94,8 +95,8 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
         fontFamily:  'monospace',
         minWidth:    130,
         padding:     '6px 10px 6px 8px',
-        opacity:     d.dimmed ? 0.25 : 1,
-        filter:      d.dimmed ? 'grayscale(60%)' : 'none',
+        opacity:     d.dimmed ? 0.25 : d.locked ? 0.6 : 1,
+        filter:      d.dimmed ? 'grayscale(60%)' : d.locked ? 'grayscale(30%)' : 'none',
         transition:  'opacity 0.2s, filter 0.2s',
       }}
     >
@@ -112,6 +113,9 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
         >
           {typeLabel}
         </span>
+        {d.locked && (
+          <span style={{ fontSize: 8, color: 'var(--cb-text-muted)', marginLeft: 'auto' }}>🔒</span>
+        )}
       </div>
 
       {/* Resource label */}

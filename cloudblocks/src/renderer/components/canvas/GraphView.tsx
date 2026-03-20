@@ -171,6 +171,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const view               = useUIStore((s) => s.view)
   const showIntegrations   = useUIStore((s) => s.showIntegrations)
   const snapToGrid         = useUIStore((s) => s.snapToGrid)
+  const lockedNodes        = useUIStore((s) => s.lockedNodes)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const graphPositions  = useUIStore((s) => s.nodePositions.graph)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
@@ -271,10 +272,14 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
         n.type === 'apigw-route'  ? 'apigw-route' :
         'resource'
 
+      const isLocked = lockedNodes.has(n.id)
       return {
-        id:       n.id,
-        type:     rfType,
-        position: livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: Math.floor(i / 5) * 110 + 60 },
+        id:         n.id,
+        type:       rfType,
+        position:   livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: Math.floor(i / 5) * 110 + 60 },
+        draggable:  !isLocked,
+        selectable: !isLocked,
+        zIndex:     isLocked ? -1 : 0,
         data:     {
           label:     n.label,
           nodeType:  n.type,
@@ -289,11 +294,13 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           endpoint:  n.type === 'apigw' ? n.metadata.endpoint as string | undefined : undefined,
           // Focus mode
           dimmed:    highlightedIds !== null && !highlightedIds.has(n.id),
+          // Lock mode
+          locked:    isLocked,
         },
         selected: n.id === selectedId,
       }
     }),
-    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions],
+    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes],
   )
 
   const flowEdges: Edge[] = useMemo(() => {
@@ -313,7 +320,8 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       nodes={flowNodes}
       edges={flowEdges}
       nodeTypes={NODE_TYPES}
-      onNodeClick={(_e, node) => selectNode(node.id)}
+      onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
+      onNodeDoubleClick={(_e, node) => selectNode(node.id)}
       onPaneClick={() => selectNode(null)}
       onNodeContextMenu={(event, rfNode) => {
         event.preventDefault()
