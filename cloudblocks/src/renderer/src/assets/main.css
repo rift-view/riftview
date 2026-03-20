@@ -173,9 +173,9 @@ code {
 }
 
 @keyframes crt-on {
-  0%   { transform: scaleY(1);     opacity: 1; box-shadow: none; }
-  12%  { transform: scaleY(0.002); opacity: 1; box-shadow: 0 0 40px 20px rgba(180, 255, 180, 0.9); }
-  28%  { transform: scaleY(0.002); opacity: 1; box-shadow: 0 0 60px 30px rgba(140, 255, 140, 0.7); }
-  62%  { transform: scaleY(1);     opacity: 1; box-shadow: none; }
-  100% { transform: scaleY(1);     opacity: 0; box-shadow: none; }
+  0%   { opacity: 1; filter: brightness(1); }
+  20%  { opacity: 1; filter: brightness(4) saturate(2) hue-rotate(80deg); }
+  40%  { opacity: 1; filter: brightness(2) hue-rotate(80deg); }
+  65%  { opacity: 1; filter: brightness(1); }
+  100% { opacity: 0; filter: brightness(1); }
 }
