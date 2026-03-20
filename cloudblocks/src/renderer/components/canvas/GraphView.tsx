@@ -54,6 +54,7 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
   // CloudFront → origin edges + CloudFront → ACM cert edges
   const s3Nodes     = nodes.filter((n) => n.type === 's3')
   const albNodes    = nodes.filter((n) => n.type === 'alb')
+  const apigwNodes  = nodes.filter((n) => n.type === 'apigw')
   const acmNodes    = nodes.filter((n) => n.type === 'acm')
   const cfNodes     = nodes.filter((n) => n.type === 'cloudfront')
   const lambdaNodes = nodes.filter((n) => n.type === 'lambda')
@@ -80,6 +81,21 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
           id:     `cf-origin-${cf.id}-${albMatch.id}`,
           source: cf.id,
           target: albMatch.id,
+          type:   'step',
+          style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
+        })
+        return
+      }
+      // APIGW match: strip protocol from metadata.endpoint and compare to origin domainName
+      const apigwMatch = apigwNodes.find((a) => {
+        const endpoint = (a.metadata.endpoint as string | undefined) ?? ''
+        return endpoint.replace(/^https?:\/\//, '') === origin.domainName
+      })
+      if (apigwMatch) {
+        edges.push({
+          id:     `cf-origin-${cf.id}-${apigwMatch.id}`,
+          source: cf.id,
+          target: apigwMatch.id,
           type:   'step',
           style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
         })
