@@ -224,6 +224,46 @@ describe('scanGeneration', () => {
   })
 })
 
+describe('scanErrors', () => {
+  it('starts empty', () => {
+    const store = createCloudStore()
+    expect(store.getState().scanErrors).toEqual([])
+  })
+
+  it('setScanErrors stores errors', () => {
+    const store = createCloudStore()
+    store.getState().setScanErrors([
+      { service: 'sqs', region: 'us-east-1', message: 'AccessDenied' },
+      { service: 'ecr', region: 'us-east-1', message: 'ThrottlingException' },
+    ])
+    expect(store.getState().scanErrors).toHaveLength(2)
+    expect(store.getState().scanErrors[0].service).toBe('sqs')
+    expect(store.getState().scanErrors[1].message).toBe('ThrottlingException')
+  })
+
+  it('clearScanErrors empties the array', () => {
+    const store = createCloudStore()
+    store.getState().setScanErrors([{ service: 'lambda', region: 'us-east-1', message: 'Forbidden' }])
+    store.getState().clearScanErrors()
+    expect(store.getState().scanErrors).toEqual([])
+  })
+
+  it('setScanErrors replaces previous errors (not appended)', () => {
+    const store = createCloudStore()
+    store.getState().setScanErrors([{ service: 'sqs', region: 'us-east-1', message: 'err1' }])
+    store.getState().setScanErrors([{ service: 'sns', region: 'eu-west-1', message: 'err2' }])
+    expect(store.getState().scanErrors).toHaveLength(1)
+    expect(store.getState().scanErrors[0].service).toBe('sns')
+  })
+
+  it('setScanErrors with empty array clears errors', () => {
+    const store = createCloudStore()
+    store.getState().setScanErrors([{ service: 'rds', region: 'us-east-1', message: 'err' }])
+    store.getState().setScanErrors([])
+    expect(store.getState().scanErrors).toEqual([])
+  })
+})
+
 describe('theme defaults', () => {
   it('DEFAULT_SETTINGS includes theme: dark', () => {
     const store = createCloudStore()

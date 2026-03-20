@@ -1,6 +1,6 @@
 import { create, createStore } from 'zustand'
 import type { StoreApi } from 'zustand'
-import type { AwsProfile, CloudNode, NodeStatus, ScanDelta, Settings } from '../types/cloud'
+import type { AwsProfile, CloudNode, NodeStatus, ScanDelta, ScanError, Settings } from '../types/cloud'
 import { applyTheme } from '../utils/applyTheme'
 
 export type { Settings }
@@ -22,6 +22,7 @@ interface CloudState {
   keyPairs:       string[]
   settings:       Settings
   scanGeneration: number
+  scanErrors:     ScanError[]
 
   applyDelta:        (delta: ScanDelta, generation?: number) => void
   setScanStatus:     (status: 'idle' | 'scanning' | 'error') => void
@@ -37,6 +38,8 @@ interface CloudState {
   saveSettings:         (s: Settings) => Promise<void>
   addOptimisticNode:    (node: CloudNode) => void
   removeOptimisticNode: (id: string) => void
+  setScanErrors:     (errors: ScanError[]) => void
+  clearScanErrors:   () => void
 }
 
 export const useCloudStore = create<CloudState>((set) => ({
@@ -50,6 +53,7 @@ export const useCloudStore = create<CloudState>((set) => ({
   keyPairs:       [],
   settings:       DEFAULT_SETTINGS,
   scanGeneration: 0,
+  scanErrors:     [],
 
   applyDelta: (delta, generation) =>
     set((state) => {
@@ -98,6 +102,9 @@ export const useCloudStore = create<CloudState>((set) => ({
 
   removeOptimisticNode: (id) =>
     set((state) => ({ nodes: state.nodes.filter((n) => n.id !== id) })),
+
+  setScanErrors:   (errors) => set({ scanErrors: errors }),
+  clearScanErrors: ()       => set({ scanErrors: [] }),
 }))
 
 // test-only factory — allows isolated store instances in unit tests
@@ -113,6 +120,7 @@ export function createCloudStore(): StoreApi<CloudState> {
     keyPairs:       [],
     settings:       DEFAULT_SETTINGS,
     scanGeneration: 0,
+    scanErrors:     [],
 
     applyDelta: (delta, generation) =>
       set((state) => {
@@ -154,5 +162,8 @@ export function createCloudStore(): StoreApi<CloudState> {
 
     removeOptimisticNode: (id) =>
       set((state) => ({ nodes: state.nodes.filter((n) => n.id !== id) })),
+
+    setScanErrors:   (errors) => set({ scanErrors: errors }),
+    clearScanErrors: ()       => set({ scanErrors: [] }),
   }))
 }

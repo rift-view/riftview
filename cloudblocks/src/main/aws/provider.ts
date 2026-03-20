@@ -1,5 +1,5 @@
 // src/main/aws/provider.ts
-import type { CloudNode } from '../../renderer/types/cloud'
+import type { CloudNode, ScanError } from '../../renderer/types/cloud'
 import type { AwsClients } from './client'
 import { describeInstances, describeVpcs, describeSubnets, describeSecurityGroups } from './services/ec2'
 import { describeDBInstances } from './services/rds'
@@ -27,40 +27,55 @@ import { listEventBuses } from './services/eventbridge'
  *
  * TODO(M6): `scan` currently accepts `AwsClients` which pins the interface to AWS.
  * Before adding a second provider, change to constructor injection so the interface
- * becomes `scan(region: string): Promise<CloudNode[]>` with clients bound at creation.
+ * becomes `scan(region: string): Promise<ScanResult>` with clients bound at creation.
  */
+export interface ScanResult {
+  nodes: CloudNode[]
+  scanErrors: ScanError[]
+}
+
 export interface CloudProvider {
   readonly id: string
-  scan(clients: AwsClients, region: string): Promise<CloudNode[]>
+  scan(clients: AwsClients, region: string): Promise<ScanResult>
+}
+
+function errCatch(service: string, region: string, errors: ScanError[]) {
+  return (e: unknown): CloudNode[] => {
+    errors.push({ service, region, message: (e as Error)?.message ?? String(e) })
+    return []
+  }
 }
 
 export const awsProvider: CloudProvider = {
   id: 'aws',
   async scan(clients, region) {
+    const errors: ScanError[] = []
+    const catch_ = (service: string) => errCatch(service, region, errors)
+
     const results = await Promise.all([
-      describeInstances(clients.ec2, region),
-      describeVpcs(clients.ec2, region),
-      describeSubnets(clients.ec2, region),
-      describeSecurityGroups(clients.ec2, region),
-      describeDBInstances(clients.rds, region),
-      listBuckets(clients.s3, region),
-      listFunctions(clients.lambda, region),
-      describeLoadBalancers(clients.alb, region),
-      listCertificates(clients.acm),
-      listDistributions(clients.cloudfront),
-      listApis(clients.apigw, region),
-      listInternetGateways(clients.ec2, region).catch(() => [] as CloudNode[]),
-      listQueues(clients.sqs, clients.lambda, region).catch(() => [] as CloudNode[]),
-      listSecrets(clients.secrets, region).catch(() => [] as CloudNode[]),
-      listRepositories(clients.ecr, region).catch(() => [] as CloudNode[]),
-      listTopics(clients.sns, region).catch(() => [] as CloudNode[]),
-      listTables(clients.dynamo, region).catch(() => [] as CloudNode[]),
-      listParameters(clients.ssm, region).catch(() => [] as CloudNode[]),
-      listNatGateways(clients.ec2, region).catch(() => [] as CloudNode[]),
-      listHostedZones(clients.r53).catch(() => [] as CloudNode[]),
-      listStateMachines(clients.sfn, region).catch(() => [] as CloudNode[]),
-      listEventBuses(clients.eventbridge, region).catch(() => [] as CloudNode[]),
+      describeInstances(clients.ec2, region).catch(catch_('ec2:instances')),
+      describeVpcs(clients.ec2, region).catch(catch_('ec2:vpcs')),
+      describeSubnets(clients.ec2, region).catch(catch_('ec2:subnets')),
+      describeSecurityGroups(clients.ec2, region).catch(catch_('ec2:security-groups')),
+      describeDBInstances(clients.rds, region).catch(catch_('rds')),
+      listBuckets(clients.s3, region).catch(catch_('s3')),
+      listFunctions(clients.lambda, region).catch(catch_('lambda')),
+      describeLoadBalancers(clients.alb, region).catch(catch_('alb')),
+      listCertificates(clients.acm).catch(catch_('acm')),
+      listDistributions(clients.cloudfront).catch(catch_('cloudfront')),
+      listApis(clients.apigw, region).catch(catch_('apigw')),
+      listInternetGateways(clients.ec2, region).catch(catch_('igw')),
+      listQueues(clients.sqs, clients.lambda, region).catch(catch_('sqs')),
+      listSecrets(clients.secrets, region).catch(catch_('secrets')),
+      listRepositories(clients.ecr, region).catch(catch_('ecr')),
+      listTopics(clients.sns, region).catch(catch_('sns')),
+      listTables(clients.dynamo, region).catch(catch_('dynamo')),
+      listParameters(clients.ssm, region).catch(catch_('ssm')),
+      listNatGateways(clients.ec2, region).catch(catch_('nat')),
+      listHostedZones(clients.r53).catch(catch_('r53')),
+      listStateMachines(clients.sfn, region).catch(catch_('sfn')),
+      listEventBuses(clients.eventbridge, region).catch(catch_('eventbridge')),
     ])
-    return results.flat()
+    return { nodes: results.flat(), scanErrors: errors }
   },
 }

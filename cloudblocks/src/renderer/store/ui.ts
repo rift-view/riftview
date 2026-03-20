@@ -9,9 +9,19 @@ interface SavedView {
   positions: Record<string, { x: number; y: number }>
 }
 
+export interface SelectedEdgeInfo {
+  id:     string
+  source: string
+  target: string
+  label?: string
+  data?:  Record<string, unknown>
+}
+
 interface UIState {
   view:               ViewKey
   selectedNodeId:     string | null
+  selectedEdgeId:     string | null
+  selectedEdgeInfo:   SelectedEdgeInfo | null
   activeCreate:       { resource: string; view: ViewKey; dropPosition?: { x: number; y: number } } | null
   toast:              { message: string; type: 'success' | 'error' } | null
   nodePositions:      { topology: Record<string, { x: number; y: number }>; graph: Record<string, { x: number; y: number }> }
@@ -24,6 +34,7 @@ interface UIState {
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
+  selectEdge:           (info: SelectedEdgeInfo | null) => void
   setActiveCreate:      (val: UIState['activeCreate']) => void
   showToast:            (message: string, type?: 'success' | 'error') => void
   clearToast:           () => void
@@ -42,6 +53,8 @@ let toastTimer: ReturnType<typeof setTimeout> | null = null
 export const useUIStore = create<UIState>((set, get) => ({
   view:              'topology',
   selectedNodeId:    null,
+  selectedEdgeId:    null,
+  selectedEdgeInfo:  null,
   activeCreate:      null,
   toast:             null,
   nodePositions:     { topology: {}, graph: {} },
@@ -53,7 +66,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   lockedNodes:       new Set<string>(),
 
   setView:         (view) => set({ view }),
-  selectNode:      (id)   => set({ selectedNodeId: id }),
+  selectNode:      (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
+  selectEdge:      (info) => set({ selectedEdgeId: info?.id ?? null, selectedEdgeInfo: info, selectedNodeId: null }),
   setActiveCreate: (val)  => set({ activeCreate: val }),
   showToast: (message, type = 'success') => {
     if (toastTimer) clearTimeout(toastTimer)

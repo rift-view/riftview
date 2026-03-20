@@ -36,6 +36,10 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
       return [['apigatewayv2', 'delete-route', '--api-id', meta.apiId, '--route-id', meta.routeId]]
     }
     default:
+      // Intentionally partial: subnet, igw, cloudfront, sqs, secret, ecr-repo, sns,
+      // dynamo, ssm-param, nat-gateway, r53-zone, sfn, eventbridge-bus do not yet have
+      // delete commands wired up. Returning [] means the DeleteDialog will show no
+      // preview command, which is the intended safe behaviour until each is implemented.
       return []
   }
 }

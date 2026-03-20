@@ -14,7 +14,7 @@ function statusStripeColor(status: NodeStatus): string {
   }
 }
 
-const TYPE_BORDER: Record<NodeType, string> = {
+const TYPE_BORDER = {
   ec2:              '#FF9900',
   vpc:              '#1976D2',
   subnet:           '#4CAF50',
@@ -38,9 +38,9 @@ const TYPE_BORDER: Record<NodeType, string> = {
   'r53-zone':       '#FF9900',
   sfn:              '#FF9900',
   'eventbridge-bus': '#FF9900',
-}
+} satisfies Record<NodeType, string>
 
-const TYPE_LABEL: Record<NodeType, string> = {
+const TYPE_LABEL = {
   ec2:              'EC2',
   vpc:              'VPC',
   subnet:           'SUBNET',
@@ -64,7 +64,7 @@ const TYPE_LABEL: Record<NodeType, string> = {
   'r53-zone':       'R53',
   sfn:              'SFN',
   'eventbridge-bus': 'EB',
-}
+} satisfies Record<NodeType, string>
 
 interface ResourceNodeData {
   label:      string

@@ -71,11 +71,11 @@ export class ResourceScanner {
     this.window.webContents.send(IPC.SCAN_STATUS, 'scanning')
 
     try {
-      const nextNodes = await awsProvider.scan(this.clients, this.region)
+      const { nodes: nextNodes, scanErrors } = await awsProvider.scan(this.clients, this.region)
       const delta = computeDelta(this.currentNodes, nextNodes)
 
       this.currentNodes = nextNodes
-      this.window.webContents.send(IPC.SCAN_DELTA, delta)
+      this.window.webContents.send(IPC.SCAN_DELTA, { ...delta, scanErrors })
       this.window.webContents.send(IPC.SCAN_STATUS, 'idle')
 
       // Key pairs are AWS-specific and consumed by the renderer's create-node

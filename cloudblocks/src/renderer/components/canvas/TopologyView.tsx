@@ -386,6 +386,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const cloudNodes         = useCloudStore((s) => s.nodes)
   const pendingNodes       = useCloudStore((s) => s.pendingNodes)
   const selectNode         = useUIStore((s) => s.selectNode)
+  const selectEdge         = useUIStore((s) => s.selectEdge)
   const selectedId         = useUIStore((s) => s.selectedNodeId)
   const setActiveCreate    = useUIStore((s) => s.setActiveCreate)
   const view               = useUIStore((s) => s.view)
@@ -526,7 +527,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       nodeTypes={NODE_TYPES}
       onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
       onNodeDoubleClick={(_e, node) => selectNode(node.id)}
-      onPaneClick={() => selectNode(null)}
+      onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
+      onPaneClick={() => { selectNode(null); selectEdge(null) }}
       onNodeContextMenu={(event, rfNode) => {
         event.preventDefault()
         const cloudNode = allNodes.find((n) => n.id === rfNode.id)
