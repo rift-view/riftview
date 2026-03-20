@@ -54,6 +54,12 @@ export default function App(): React.JSX.Element | null {
     window.cloudblocks.listProfiles().then(setProfiles)
     useCloudStore.getState().loadSettings()
 
+    window.cloudblocks.loadAnnotations().then((saved) => {
+      if (Object.keys(saved).length > 0) {
+        useUIStore.setState({ annotations: saved })
+      }
+    })
+
     window.cloudblocks.getThemeOverrides().then((overrides) => {
       if (Object.keys(overrides).length === 0) return
       const el = document.getElementById('cb-theme-overrides') ?? document.createElement('style')

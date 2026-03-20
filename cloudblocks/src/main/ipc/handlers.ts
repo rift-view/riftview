@@ -258,6 +258,18 @@ export function registerHandlers(win: BrowserWindow): void {
     }
   })
 
+  // Annotations — persist to userData/annotations.json
+  ipcMain.handle(IPC.ANNOTATIONS_LOAD, (): Record<string, string> => {
+    const file = path.join(app.getPath('userData'), 'annotations.json')
+    if (!fs.existsSync(file)) return {}
+    try { return JSON.parse(fs.readFileSync(file, 'utf-8')) } catch { return {} }
+  })
+
+  ipcMain.handle(IPC.ANNOTATIONS_SAVE, (_event, data: Record<string, string>): void => {
+    const file = path.join(app.getPath('userData'), 'annotations.json')
+    fs.writeFileSync(file, JSON.stringify(data), 'utf-8')
+  })
+
   // List AWS credential profiles from ~/.aws/credentials
   ipcMain.handle(IPC.AWS_LIST_PROFILES, (): string[] => {
     const credFile = path.join(os.homedir(), '.aws', 'credentials')

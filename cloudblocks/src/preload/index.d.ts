@@ -24,5 +24,7 @@ interface Window {
     exportPng(): Promise<{ success: boolean; filePath?: string }>
     listAwsProfiles(): Promise<string[]>
     onUpdateAvailable(cb: () => void): () => void
+    loadAnnotations(): Promise<Record<string, string>>
+    saveAnnotations(data: Record<string, string>): Promise<void>
   }
 }
