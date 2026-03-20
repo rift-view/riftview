@@ -20,18 +20,20 @@ export function buildCommands(params: CreateParams): string[][] {
         `ResourceType=vpc,Tags=[{Key=Name,Value=${params.name}}]`,
       ]]
 
-    case 'ec2':
-      return [[
+    case 'ec2': {
+      const ec2Args: string[] = [
         'ec2', 'run-instances',
         '--image-id',       params.amiId,
         '--instance-type',  params.instanceType,
-        '--key-name',       params.keyName,
         '--subnet-id',      params.subnetId,
-        '--security-group-ids', ...params.securityGroupIds,
         '--count', '1',
         '--tag-specifications',
         `ResourceType=instance,Tags=[{Key=Name,Value=${params.name}}]`,
-      ]]
+      ]
+      if (params.keyName) ec2Args.splice(4, 0, '--key-name', params.keyName)
+      if (params.securityGroupIds.length > 0) ec2Args.push('--security-group-ids', ...params.securityGroupIds)
+      return [ec2Args]
+    }
 
     case 'sg':
       return buildSgCommands(params)
@@ -62,6 +64,7 @@ function buildRdsCommands(p: RdsParams): string[][] {
   if (p.multiAZ) args.push('--multi-az')
   if (p.publiclyAccessible) args.push('--publicly-accessible')
   else args.push('--no-publicly-accessible')
+  if (p.dbSubnetGroupName) args.push('--db-subnet-group-name', p.dbSubnetGroupName)
   return [args]
 }
 

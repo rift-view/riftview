@@ -16,7 +16,7 @@ export function RdsForm({ onChange, showErrors }: Props): React.JSX.Element {
   const [form, setForm] = useState<Omit<RdsParams, 'resource'>>({
     identifier: '', engine: 'mysql', instanceClass: 'db.t3.micro',
     masterUsername: '', masterPassword: '', allocatedStorage: 20,
-    multiAZ: false, publiclyAccessible: false, vpcId: '',
+    multiAZ: false, publiclyAccessible: false, vpcId: '', dbSubnetGroupName: '',
   })
 
   const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]): void => {
@@ -56,6 +56,8 @@ export function RdsForm({ onChange, showErrors }: Props): React.JSX.Element {
           </select>
         </>
       )}
+      <div style={lbl}>DB Subnet Group</div>
+      <input style={inp(false)} value={form.dbSubnetGroupName ?? ''} onChange={e => update('dbSubnetGroupName', e.target.value)} />
       <label style={row}><input type="checkbox" checked={form.multiAZ} onChange={e => update('multiAZ', e.target.checked)} /><span style={{ fontSize: 10, color: 'var(--cb-text-secondary)' }}>Multi-AZ</span></label>
       <label style={row}><input type="checkbox" checked={form.publiclyAccessible} onChange={e => update('publiclyAccessible', e.target.checked)} /><span style={{ fontSize: 10, color: 'var(--cb-text-secondary)' }}>Publicly accessible</span></label>
     </div>

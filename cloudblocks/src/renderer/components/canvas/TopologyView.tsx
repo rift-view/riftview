@@ -87,6 +87,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
       data:     {},
       selectable: false,
       draggable:  false,
+      zIndex:   0,
     })
 
     // Place global resource nodes inside the zone
@@ -105,6 +106,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
         },
         data:     { label: n.label, nodeType: n.type, status: n.status, dimmed: highlightedIds !== null && !highlightedIds.has(n.id) },
         selected: n.id === selectedId,
+        zIndex:   1,
       })
     })
 
@@ -298,6 +300,7 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
           target: s3Match.id,
           type:   'step',
           style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
+          zIndex: 10,
         })
         return
       }
@@ -310,6 +313,7 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
           target: albMatch.id,
           type:   'step',
           style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
+          zIndex: 10,
         })
       }
     })
