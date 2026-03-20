@@ -109,6 +109,31 @@ describe('CliEngine', () => {
     )
   })
 
+  it('rejects unsupported LocalStack services before spawning', async () => {
+    const engine = new CliEngine(mockWin, 'http://localhost:4566')
+    const result = await engine.execute([['rds', 'create-db-instance', '--db-instance-identifier', 'mydb']])
+    expect(result.code).toBe(1)
+    expect(mockSpawn).not.toHaveBeenCalled()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const outputCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:output')
+    expect(outputCalls).toHaveLength(1)
+    expect(outputCalls[0][1].stream).toBe('stderr')
+    expect(outputCalls[0][1].line).toContain('rds')
+    expect(outputCalls[0][1].line).toContain('LocalStack Community')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const doneCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:done')
+    expect(doneCalls).toHaveLength(1)
+    expect(doneCalls[0][1]).toEqual({ code: 1 })
+  })
+
+  it('allows non-local endpoints to pass through to rds without gate', async () => {
+    mockSpawn.mockReturnValue(makeProcess(0))
+    const engine = new CliEngine(mockWin, 'https://rds.amazonaws.com')
+    const result = await engine.execute([['rds', 'create-db-instance']])
+    expect(result.code).toBe(0)
+    expect(mockSpawn).toHaveBeenCalledTimes(1)
+  })
+
   it('cancel() kills the in-flight process', async () => {
     const proc = makeProcess(0)
     proc.kill = vi.fn(() => proc.emit('close', -1))
