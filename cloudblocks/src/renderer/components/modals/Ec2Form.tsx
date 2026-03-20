@@ -33,7 +33,7 @@ export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Elem
 
   const isLocal = !!profile.endpoint
   const [name,             setName]             = useState('')
-  const [amiId,            setAmiId]            = useState(isLocal ? 'ami-12345678' : '')
+  const [amiId,            setAmiId]            = useState('')
   const [instanceType,     setInstanceType]     = useState('t3.micro')
   const [keyName,          setKeyName]          = useState('')
   const [selectedVpc,      setSelectedVpc]      = useState('')
@@ -66,8 +66,8 @@ export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Elem
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       <label><span style={labelStyle}>Name</span>
         <input style={fieldStyle(name, showErrors)} value={name} onChange={(e) => update({ name: e.target.value })} placeholder="web-server" /></label>
-      <label><span style={labelStyle}>AMI ID{isLocal && <span style={{ color: 'var(--cb-text-muted)', fontWeight: 'normal', textTransform: 'none', letterSpacing: 0 }}> — any valid format works on LocalStack</span>}</span>
-        <input style={fieldStyle(amiId, showErrors)} value={amiId} onChange={(e) => update({ amiId: e.target.value })} placeholder="ami-0abcdef1234567890" /></label>
+      <label><span style={labelStyle}>AMI ID</span>
+        <input style={fieldStyle(amiId, showErrors)} value={amiId} onChange={(e) => update({ amiId: e.target.value })} placeholder={isLocal ? 'ami-xxxxxxxx  (must exist in LocalStack)' : 'ami-0abcdef1234567890'} /></label>
       <label><span style={labelStyle}>Instance Type</span>
         <select style={fieldStyle(instanceType, showErrors)} value={instanceType} onChange={(e) => update({ instanceType: e.target.value })}>
           {INSTANCE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}

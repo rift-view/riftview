@@ -47,6 +47,21 @@ export class CliEngine {
   async execute(commandChain: string[][]): Promise<ExitResult> {
     let groupId: string | null = null
 
+    // Gate: some AWS services are not supported by LocalStack Community.
+    // If running against a local endpoint and the first command targets one
+    // of these services, fail fast with an explanatory message rather than
+    // letting the CLI bleed through to real AWS with dummy credentials.
+    const LOCAL_UNSUPPORTED = new Set(['rds'])
+    if (this.endpoint && isLocalEndpoint(this.endpoint)) {
+      const firstService = commandChain[0]?.[0]
+      if (firstService && LOCAL_UNSUPPORTED.has(firstService)) {
+        const msg = `[cloudblocks] "${firstService}" is not supported by LocalStack Community. Use LocalStack Pro or switch to a real AWS profile.`
+        this.win.webContents.send(IPC.CLI_OUTPUT, { line: msg, stream: 'stderr' })
+        this.win.webContents.send(IPC.CLI_DONE, { code: 1 })
+        return { code: 1 }
+      }
+    }
+
     for (const rawArgv of commandChain) {
       const argv = groupId
         ? rawArgv.map((arg) => (arg === '{GroupId}' ? groupId! : arg))
