@@ -1,6 +1,6 @@
 {
   "name": "cloudblocks",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "description": "Visual AWS infrastructure management desktop app",
   "main": "./out/main/index.js",
   "author": "cloudblocks",

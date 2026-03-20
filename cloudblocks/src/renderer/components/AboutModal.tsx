@@ -1,6 +1,7 @@
 import React from 'react'
+import pkg from '../../../package.json'
 
-const APP_VERSION = '1.0.0'
+const APP_VERSION = pkg.version
 
 interface AboutModalProps {
   onClose: () => void

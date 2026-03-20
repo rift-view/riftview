@@ -246,7 +246,7 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
             minWidth: '20px',
           }}
         >
-          ?
+          ? About
         </button>
       </div>
 
