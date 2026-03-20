@@ -61,7 +61,9 @@ function subnetSize(resourceCount: number): { w: number; h: number } {
   }
 }
 
-function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, highlightedIds: Set<string> | null): Node[] {
+const SUBNET_COLLAPSED_H = 32
+
+function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, highlightedIds: Set<string> | null, collapsedSubnets: Set<string>): Node[] {
   const nodes: Node[] = []
 
   // Separate global nodes from regional nodes
@@ -141,7 +143,10 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
   let maxVpcHeight = 0
   vpcs.forEach((vpc) => {
     const vpcSubnets = subnetsByVpc.get(vpc.id) ?? []
-    const subSizes   = vpcSubnets.map((s) => subnetSize((resourcesByParent.get(s.id) ?? []).length))
+    const subSizes   = vpcSubnets.map((s) => {
+      if (collapsedSubnets.has(s.id)) return { w: subnetSize((resourcesByParent.get(s.id) ?? []).length).w, h: SUBNET_COLLAPSED_H }
+      return subnetSize((resourcesByParent.get(s.id) ?? []).length)
+    })
     const totalSubW  = subSizes.reduce((sum, s) => sum + s.w, 0) + Math.max(0, vpcSubnets.length - 1) * SUB_GAP
     const maxSubH    = subSizes.length > 0 ? Math.max(...subSizes.map((s) => s.h)) : 120
     const directRes  = resourcesByParent.get(vpc.id) ?? []
@@ -162,6 +167,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
     let subX = VPC_PAD
     vpcSubnets.forEach((subnet, si) => {
       const { w: sw, h: sh } = subSizes[si]
+      const isCollapsed = collapsedSubnets.has(subnet.id)
       nodes.push({
         id:       subnet.id,
         type:     'subnet',
@@ -169,26 +175,28 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
         extent:   'parent',
         position: { x: subX, y: VPC_LABEL },
         style:    { width: sw, height: sh },
-        data:     { label: subnet.label, isPublic: subnet.metadata.mapPublicIp, az: subnet.metadata.availabilityZone as string | undefined },
+        data:     { label: subnet.label, isPublic: subnet.metadata.mapPublicIp, az: subnet.metadata.availabilityZone as string | undefined, collapsed: isCollapsed },
       })
 
-      const rNodes = resourcesByParent.get(subnet.id) ?? []
-      rNodes.forEach((r, ri) => {
-        const col = ri % RES_COLS
-        const row = Math.floor(ri / RES_COLS)
-        nodes.push({
-          id:       r.id,
-          type:     'resource',
-          parentId: subnet.id,
-          extent:   'parent',
-          position: {
-            x: SUB_PAD_X + col * (RES_W + RES_GAP_X),
-            y: SUB_PAD_Y + row * (RES_H + RES_GAP_Y),
-          },
-          data:     { label: r.label, nodeType: r.type, status: r.status, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
-          selected: r.id === selectedId,
+      if (!isCollapsed) {
+        const rNodes = resourcesByParent.get(subnet.id) ?? []
+        rNodes.forEach((r, ri) => {
+          const col = ri % RES_COLS
+          const row = Math.floor(ri / RES_COLS)
+          nodes.push({
+            id:       r.id,
+            type:     'resource',
+            parentId: subnet.id,
+            extent:   'parent',
+            position: {
+              x: SUB_PAD_X + col * (RES_W + RES_GAP_X),
+              y: SUB_PAD_Y + row * (RES_H + RES_GAP_Y),
+            },
+            data:     { label: r.label, nodeType: r.type, status: r.status, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
+            selected: r.id === selectedId,
+          })
         })
-      })
+      }
       subX += sw + SUB_GAP
     })
 
@@ -393,6 +401,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const showIntegrations   = useUIStore((s) => s.showIntegrations)
   const snapToGrid         = useUIStore((s) => s.snapToGrid)
   const lockedNodes        = useUIStore((s) => s.lockedNodes)
+  const collapsedSubnets   = useUIStore((s) => s.collapsedSubnets)
+  const toggleSubnet       = useUIStore((s) => s.toggleSubnet)
   const annotations        = useUIStore((s) => s.annotations)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const topologyPositions = useUIStore((s) => s.nodePositions.topology)
@@ -440,7 +450,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   }, [allNodes])
 
   const flowNodes: Node[] = useMemo(() => {
-    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds)
+    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets)
     return raw.map((n) => {
       const isLocked = lockedNodes.has(n.id)
       // Apply lock properties to all nodes (container nodes never get locked draggable/selectable
@@ -451,6 +461,10 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
 
       if (n.extent === 'parent') {
         // Child nodes: only patch data for lock indicator, no position override
+        // For subnet nodes, inject the toggleSubnet callback
+        if (n.type === 'subnet') {
+          return { ...n, data: { ...n.data, onToggleCollapse: () => toggleSubnet(n.id), ...(isLocked ? { locked: true } : {}) }, ...(isLocked ? lockProps : {}) }
+        }
         return isLocked
           ? { ...n, ...lockProps, data: { ...n.data, locked: true } }
           : n
@@ -460,6 +474,16 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       const saved = topologyPositions[n.id]
       const position = live ?? saved ?? n.position
 
+      // For top-level subnet nodes (no parentId), also inject toggleSubnet
+      if (n.type === 'subnet') {
+        return {
+          ...n,
+          position,
+          ...lockProps,
+          data: { ...n.data, onToggleCollapse: () => toggleSubnet(n.id), ...(isLocked ? { locked: true } : {}), annotation: annotations[n.id] },
+        }
+      }
+
       return {
         ...n,
         position,
@@ -467,7 +491,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         data: { ...n.data, ...(isLocked ? { locked: true } : {}), annotation: annotations[n.id] },
       }
     })
-  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, annotations])
+  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
