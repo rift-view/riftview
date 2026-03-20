@@ -173,9 +173,9 @@ code {
 }
 
 @keyframes crt-on {
-  0%   { opacity: 1; filter: brightness(1); }
-  20%  { opacity: 1; filter: brightness(4) saturate(2) hue-rotate(80deg); }
-  40%  { opacity: 1; filter: brightness(2) hue-rotate(80deg); }
-  65%  { opacity: 1; filter: brightness(1); }
-  100% { opacity: 0; filter: brightness(1); }
+  0%   { background: #000;                       opacity: 1; }
+  18%  { background: rgba(160, 255, 160, 0.95);  opacity: 1; }
+  32%  { background: rgba(60,  200, 60,  0.85);  opacity: 1; }
+  60%  { background: #000;                       opacity: 1; }
+  100% { background: #000;                       opacity: 0; }
 }
