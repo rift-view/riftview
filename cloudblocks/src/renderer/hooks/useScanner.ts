@@ -27,6 +27,9 @@ export function useScanner(): { triggerScan: () => void } {
   }, [setProfile, setRegion])
 
   return {
-    triggerScan: () => window.cloudblocks.startScan(),
+    triggerScan: () => {
+      const { selectedRegions } = useCloudStore.getState()
+      window.cloudblocks.startScan(selectedRegions)
+    },
   }
 }

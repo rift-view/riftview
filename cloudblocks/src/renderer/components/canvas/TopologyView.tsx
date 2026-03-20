@@ -271,7 +271,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
       id:       r.id,
       type:     'resource',
       position: { x: 40 + (i % ROOT_COLS) * (RES_W + RES_GAP_X + 40), y: rootY + Math.floor(i / ROOT_COLS) * (RES_H + RES_GAP_Y + 20) },
-      data:     { label: r.label, nodeType: r.type, status: r.status, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
+      data:     { label: r.label, nodeType: r.type, status: r.status, region: r.region, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
       selected: r.id === selectedId,
     })
   })
@@ -393,6 +393,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const showIntegrations   = useUIStore((s) => s.showIntegrations)
   const snapToGrid         = useUIStore((s) => s.snapToGrid)
   const lockedNodes        = useUIStore((s) => s.lockedNodes)
+  const annotations        = useUIStore((s) => s.annotations)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const topologyPositions = useUIStore((s) => s.nodePositions.topology)
   const setNodePosition   = useUIStore((s) => s.setNodePosition)
@@ -463,10 +464,10 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         ...n,
         position,
         ...lockProps,
-        data: { ...n.data, ...(isLocked ? { locked: true } : {}) },
+        data: { ...n.data, ...(isLocked ? { locked: true } : {}), annotation: annotations[n.id] },
       }
     })
-  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes])
+  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, annotations])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)

@@ -3,7 +3,7 @@ interface Window {
     listProfiles(): Promise<import('../renderer/types/cloud').AwsProfile[]>
     selectProfile(profile: import('../renderer/types/cloud').AwsProfile): Promise<void>
     selectRegion(region: string, endpoint?: string): Promise<void>
-    startScan(): Promise<void>
+    startScan(selectedRegions?: string[]): Promise<void>
     onScanDelta(cb: (delta: import('../renderer/types/cloud').ScanDelta) => void): () => void
     onScanStatus(cb: (status: string) => void): () => void
     onConnStatus(cb: (status: string) => void): () => void
