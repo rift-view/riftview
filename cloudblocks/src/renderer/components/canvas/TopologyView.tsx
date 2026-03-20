@@ -284,6 +284,7 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
   const edges: Edge[] = []
   const s3Nodes     = cloudNodes.filter((n) => n.type === 's3')
   const albNodes    = cloudNodes.filter((n) => n.type === 'alb')
+  const apigwNodes  = cloudNodes.filter((n) => n.type === 'apigw')
   const cfNodes     = cloudNodes.filter((n) => n.type === 'cloudfront')
   const lambdaNodes = cloudNodes.filter((n) => n.type === 'lambda')
   const routeNodes  = cloudNodes.filter((n) => n.type === 'apigw-route')
@@ -311,6 +312,22 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
           id:     `cf-origin-${cf.id}-${albMatch.id}`,
           source: cf.id,
           target: albMatch.id,
+          type:   'step',
+          style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
+          zIndex: 10,
+        })
+        return
+      }
+      // APIGW match: strip protocol from metadata.endpoint and compare to origin domainName
+      const apigwMatch = apigwNodes.find((a) => {
+        const endpoint = (a.metadata.endpoint as string | undefined) ?? ''
+        return endpoint.replace(/^https?:\/\//, '') === origin.domainName
+      })
+      if (apigwMatch) {
+        edges.push({
+          id:     `cf-origin-${cf.id}-${apigwMatch.id}`,
+          source: cf.id,
+          target: apigwMatch.id,
           type:   'step',
           style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
           zIndex: 10,
