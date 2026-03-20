@@ -31,7 +31,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
 
   return (
     <div
-      className="w-44 flex-shrink-0 p-2 overflow-y-auto"
+      className="w-48 flex-shrink-0 p-3 overflow-y-auto"
       style={{ background: 'var(--cb-bg-panel)', borderLeft: '1px solid var(--cb-border-strong)', fontFamily: 'monospace' }}
     >
       {!node ? (
@@ -49,13 +49,13 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             { key: 'NAME',   val: node.label },
             { key: 'REGION', val: node.region },
           ].map(({ key, val }) => (
-            <div key={key} className="mb-2">
+            <div key={key} className="mb-3">
               <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>{key}</div>
               <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>{val}</div>
             </div>
           ))}
 
-          <div className="mb-2">
+          <div className="mb-3">
             <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>STATE</div>
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_COLORS[node.status] ?? '#666' }} />
@@ -66,7 +66,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
           {/* ACM-specific metadata */}
           {node.type === 'acm' && (
             <div>
-              <div className="text-[8px] mb-1 mt-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
                 METADATA
               </div>
               {[
@@ -133,7 +133,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
           {/* CloudFront-specific metadata */}
           {node.type === 'cloudfront' && (
             <div>
-              <div className="text-[8px] mb-1 mt-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
                 METADATA
               </div>
               {[
@@ -189,7 +189,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
           {/* API Gateway specific metadata */}
           {node.type === 'apigw' && (
             <div>
-              <div className="text-[8px] mb-1 mt-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
                 METADATA
               </div>
               <div className="mb-1.5">
@@ -244,7 +244,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
           {/* API Gateway Route specific metadata */}
           {node.type === 'apigw-route' && (
             <div>
-              <div className="text-[8px] mb-1 mt-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
                 METADATA
               </div>
               {[
@@ -280,7 +280,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             <>
               {Object.entries(node.metadata).length > 0 && (
                 <div>
-                  <div className="text-[8px] mb-1 mt-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                  <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
                     METADATA
                   </div>
                   {Object.entries(node.metadata).slice(0, 6).map(([k, v]) => (

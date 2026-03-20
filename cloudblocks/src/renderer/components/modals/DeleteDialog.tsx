@@ -30,7 +30,7 @@ export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogP
   }
 
   return (
-    <div style={overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div style={overlay} onClick={e => e.target === e.currentTarget && onClose()} onKeyDown={(e) => { if (e.key === 'Escape') onClose() }} tabIndex={-1}>
       <div style={dialog}>
         <div style={{ color: '#ff5f57', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>
           Delete {RESOURCE_LABELS[node.type] ?? node.type}?

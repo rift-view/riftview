@@ -41,6 +41,7 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
   const [modalSlot, setModalSlot] = useState<number | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [, forceUpdate] = useState(0)
+  const [crtKey, setCrtKey] = useState(0)
 
   // Refresh the relative timestamp every 10 seconds
   useEffect(() => {
@@ -48,6 +49,12 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
     const id = setInterval(() => forceUpdate(n => n + 1), 10_000)
     return () => clearInterval(id)
   }, [lastScannedAt])
+
+  // Trigger CRT turn-on animation on mount and profile change
+  const profileKey = profile.name + '|' + (profile.endpoint ?? '')
+  useEffect(() => {
+    setCrtKey((k) => k + 1)
+  }, [profileKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for search-palette node selection — fly camera to the selected node
   useEffect(() => {
@@ -271,6 +278,53 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
             )}
           </div>
         </div>
+      )}
+
+      {/* Scanning overlay */}
+      {scanStatus === 'scanning' && (
+        <div
+          style={{
+            position:       'absolute',
+            inset:          0,
+            display:        'flex',
+            alignItems:     'center',
+            justifyContent: 'center',
+            background:     'rgba(0, 0, 0, 0.45)',
+            pointerEvents:  'none',
+            zIndex:         20,
+          }}
+        >
+          <div
+            style={{
+              fontFamily:    'monospace',
+              fontSize:      '13px',
+              color:         'var(--cb-text-muted)',
+              letterSpacing: '0.05em',
+              border:        '1px solid var(--cb-border)',
+              background:    'var(--cb-bg-elevated)',
+              padding:       '8px 20px',
+              borderRadius:  '4px',
+            }}
+          >
+            ⟳ Scanning…
+          </div>
+        </div>
+      )}
+
+      {/* CRT turn-on animation overlay */}
+      {crtKey > 0 && (
+        <div
+          key={crtKey}
+          style={{
+            position:        'absolute',
+            inset:           0,
+            background:      '#000',
+            pointerEvents:   'none',
+            zIndex:          200,
+            transformOrigin: 'center',
+            animation:       'crt-on 0.7s ease-out forwards',
+          }}
+        />
       )}
 
       {contextMenu && (
