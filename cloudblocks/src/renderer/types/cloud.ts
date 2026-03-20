@@ -50,10 +50,17 @@ export interface CloudEdge {
   label?: string
 }
 
+export interface ScanError {
+  service: string
+  region: string
+  message: string
+}
+
 export interface ScanDelta {
   added: CloudNode[]
   changed: CloudNode[]
   removed: string[]
+  scanErrors?: ScanError[]
 }
 
 export interface AwsProfile {

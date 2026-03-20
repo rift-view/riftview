@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useCloudStore } from '../store/cloud'
-import type { NodeType } from '../types/cloud'
+import type { CloudNode, NodeType } from '../types/cloud'
 
-const TYPE_BADGE_COLOR: Record<NodeType, string> = {
+const TYPE_BADGE_COLOR = {
   ec2:              '#FF9900',
   vpc:              '#1976D2',
   subnet:           '#4CAF50',
@@ -26,9 +26,9 @@ const TYPE_BADGE_COLOR: Record<NodeType, string> = {
   'r53-zone':       '#FF9900',
   sfn:              '#FF9900',
   'eventbridge-bus': '#FF9900',
-}
+} satisfies Record<NodeType, string>
 
-const TYPE_SHORT: Record<NodeType, string> = {
+const TYPE_SHORT = {
   ec2:              'EC2',
   vpc:              'VPC',
   subnet:           'SUB',
@@ -52,12 +52,36 @@ const TYPE_SHORT: Record<NodeType, string> = {
   'r53-zone':       'R53',
   sfn:              'SFN',
   'eventbridge-bus': 'EB',
+} satisfies Record<NodeType, string>
+
+// Metadata field keys to search and how to label them in the subtitle
+const META_FIELDS: { key: string; label: string }[] = [
+  { key: 'arn',        label: 'ARN' },
+  { key: 'region',     label: 'Region' },
+  { key: 'endpoint',   label: 'Endpoint' },
+  { key: 'dnsName',    label: 'DNS' },
+  { key: 'bucketName', label: 'Bucket' },
+]
+
+function getMetaMatch(node: CloudNode, q: string): string | null {
+  // node.id is often the ARN
+  if (node.id.toLowerCase().includes(q)) return node.id
+  for (const { key } of META_FIELDS) {
+    const val = node.metadata[key]
+    if (typeof val === 'string' && val.toLowerCase().includes(q)) return val
+  }
+  return null
 }
 
 interface Props {
   open: boolean
   onClose: () => void
   onSelect: (nodeId: string) => void
+}
+
+interface SearchResult {
+  node: CloudNode
+  matchedField: string | null // null = label/type matched
 }
 
 export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Element | null {
@@ -67,17 +91,24 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
-  const results = query.trim() === ''
+  const results: SearchResult[] = query.trim() === ''
     ? []
     : nodes
-        .filter((n) => {
+        .reduce<SearchResult[]>((acc, n) => {
           const q = query.toLowerCase()
-          return (
+          if (
             n.label.toLowerCase().includes(q) ||
-            n.type.toLowerCase().includes(q) ||
-            n.id.toLowerCase().includes(q)
-          )
-        })
+            n.type.toLowerCase().includes(q)
+          ) {
+            acc.push({ node: n, matchedField: null })
+          } else {
+            const metaMatch = getMetaMatch(n, q)
+            if (metaMatch !== null) {
+              acc.push({ node: n, matchedField: metaMatch })
+            }
+          }
+          return acc
+        }, [])
         .slice(0, 8)
 
   // Reset on open
@@ -119,7 +150,7 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
         e.preventDefault()
         const hit = results[cursor]
         if (hit) {
-          onSelect(hit.id)
+          onSelect(hit.node.id)
           onClose()
         }
         return
@@ -207,7 +238,7 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
               No matching resources
             </div>
           )}
-          {results.map((node, i) => {
+          {results.map(({ node, matchedField }, i) => {
             const isActive = i === cursor
             const badgeColor = TYPE_BADGE_COLOR[node.type] ?? '#666'
             const typeShort  = TYPE_SHORT[node.type] ?? node.type.toUpperCase()
@@ -249,18 +280,40 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
                   {typeShort}
                 </span>
 
-                {/* Label */}
+                {/* Label + optional metadata subtitle */}
                 <span
                   style={{
-                    flex:         1,
-                    fontSize:     11,
-                    color:        'var(--cb-text-primary)',
-                    overflow:     'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace:   'nowrap',
+                    flex:     1,
+                    minWidth: 0,
+                    display:  'flex',
+                    flexDirection: 'column',
+                    gap:      1,
                   }}
                 >
-                  {node.label}
+                  <span
+                    style={{
+                      fontSize:     11,
+                      color:        'var(--cb-text-primary)',
+                      overflow:     'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace:   'nowrap',
+                    }}
+                  >
+                    {node.label}
+                  </span>
+                  {matchedField !== null && (
+                    <span
+                      style={{
+                        fontSize:     9,
+                        color:        'var(--cb-text-muted)',
+                        overflow:     'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace:   'nowrap',
+                      }}
+                    >
+                      {matchedField}
+                    </span>
+                  )}
                 </span>
 
                 {/* Region */}

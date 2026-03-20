@@ -8,6 +8,7 @@ export function useIpc(): void {
   const setScanStatus = useCloudStore((s) => s.setScanStatus)
   const setError      = useCloudStore((s) => s.setError)
   const setKeyPairs   = useCloudStore((s) => s.setKeyPairs)
+  const setScanErrors = useCloudStore((s) => s.setScanErrors)
 
   useEffect(() => {
     const unsubDelta  = window.cloudblocks.onScanDelta((delta) => {
@@ -15,6 +16,7 @@ export function useIpc(): void {
       // deltas from a previous profile/region scan are discarded.
       const generation = useCloudStore.getState().scanGeneration
       applyDelta(delta, generation)
+      setScanErrors(delta.scanErrors ?? [])
     })
     const unsubStatus = window.cloudblocks.onScanStatus((status) => {
       setScanStatus(status as 'idle' | 'scanning' | 'error')
@@ -27,5 +29,5 @@ export function useIpc(): void {
       setKeyPairs(pairs)
     })
     return () => { unsubDelta(); unsubStatus(); unsubConn(); unsubKeypairs() }
-  }, [applyDelta, setScanStatus, setError, setKeyPairs])
+  }, [applyDelta, setScanStatus, setError, setKeyPairs, setScanErrors])
 }

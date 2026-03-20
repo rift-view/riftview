@@ -98,7 +98,7 @@
 
   ## NodeType Completeness
 
-  Any `Record<NodeType, string>` map **must** include all 24 values. When adding a new NodeType, update:
+  Any `Record<NodeType, string>` map **must** include all 22 values. When adding a new NodeType, update:
   - `src/renderer/types/cloud.ts` (the union)
   - `src/renderer/components/canvas/nodes/ResourceNode.tsx` (TYPE_BORDER, TYPE_LABEL)
   - `src/renderer/components/canvas/nodes/SearchPalette.tsx` (TYPE_BADGE_COLOR, TYPE_SHORT)
