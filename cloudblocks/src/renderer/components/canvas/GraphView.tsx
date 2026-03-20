@@ -189,6 +189,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const showIntegrations   = useUIStore((s) => s.showIntegrations)
   const snapToGrid         = useUIStore((s) => s.snapToGrid)
   const lockedNodes        = useUIStore((s) => s.lockedNodes)
+  const annotations        = useUIStore((s) => s.annotations)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const graphPositions  = useUIStore((s) => s.nodePositions.graph)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
@@ -303,6 +304,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           status:    n.status,
           vpcLabel:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcLabel : undefined,
           vpcColor:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcColor : undefined,
+          region:    n.region,
           // API Gateway route extra fields
           method:    n.type === 'apigw-route' ? n.metadata.method as string | undefined : undefined,
           path:      n.type === 'apigw-route' ? n.metadata.path   as string | undefined : undefined,
@@ -310,14 +312,16 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           // API Gateway container extra fields
           endpoint:  n.type === 'apigw' ? n.metadata.endpoint as string | undefined : undefined,
           // Focus mode
-          dimmed:    highlightedIds !== null && !highlightedIds.has(n.id),
+          dimmed:      highlightedIds !== null && !highlightedIds.has(n.id),
           // Lock mode
-          locked:    isLocked,
+          locked:      isLocked,
+          // User annotation
+          annotation:  annotations[n.id],
         },
         selected: n.id === selectedId,
       }
     }),
-    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes],
+    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations],
   )
 
   const flowEdges: Edge[] = useMemo(() => {
