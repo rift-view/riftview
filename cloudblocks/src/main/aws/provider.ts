@@ -50,7 +50,7 @@ export const awsProvider: CloudProvider = {
   id: 'aws',
   async scan(clients, region) {
     const errors: ScanError[] = []
-    const catch_ = (service: string) => errCatch(service, region, errors)
+    const catch_ = (service: string): ((_e: unknown) => CloudNode[]) => errCatch(service, region, errors)
 
     const results = await Promise.all([
       describeInstances(clients.ec2, region).catch(catch_('ec2:instances')),
