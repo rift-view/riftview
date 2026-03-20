@@ -32,3 +32,11 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
+
+## Legal
+
+Cloudblocks is not affiliated with, endorsed by, or sponsored by Amazon Web
+Services, Inc. AWS, Amazon EC2, and all related marks are trademarks of
+Amazon.com, Inc. or its affiliates.
+
+See [NOTICE.md](./NOTICE.md) for third-party license acknowledgments.
