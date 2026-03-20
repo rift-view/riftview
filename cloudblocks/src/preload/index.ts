@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld('cloudblocks', {
   listProfiles: () => ipcRenderer.invoke(IPC.PROFILES_LIST),
   selectProfile: (profile: AwsProfile) => ipcRenderer.invoke(IPC.PROFILE_SELECT, profile),
   selectRegion: (region: string, endpoint?: string) => ipcRenderer.invoke(IPC.REGION_SELECT, { region, endpoint }),
-  startScan: () => ipcRenderer.invoke(IPC.SCAN_START),
+  startScan: (selectedRegions?: string[]) => ipcRenderer.invoke(IPC.SCAN_START, selectedRegions ? { selectedRegions } : undefined),
 
   onScanDelta: (cb: (delta: ScanDelta) => void): (() => void) => {
     const handler = (_e: Electron.IpcRendererEvent, delta: ScanDelta): void => cb(delta)
