@@ -25,12 +25,12 @@ export function buildCommands(params: CreateParams): string[][] {
         'ec2', 'run-instances',
         '--image-id',       params.amiId,
         '--instance-type',  params.instanceType,
-        '--subnet-id',      params.subnetId,
         '--count', '1',
         '--tag-specifications',
         `ResourceType=instance,Tags=[{Key=Name,Value=${params.name}}]`,
       ]
-      if (params.keyName) ec2Args.splice(4, 0, '--key-name', params.keyName)
+      if (params.keyName) ec2Args.push('--key-name', params.keyName)
+      if (params.subnetId) ec2Args.push('--subnet-id', params.subnetId)
       if (params.securityGroupIds.length > 0) ec2Args.push('--security-group-ids', ...params.securityGroupIds)
       return [ec2Args]
     }
