@@ -67,13 +67,15 @@ const TYPE_LABEL = {
 } satisfies Record<NodeType, string>
 
 interface ResourceNodeData {
-  label:      string
-  nodeType:   NodeType
-  status:     NodeStatus
-  vpcLabel?:  string   // graph view only — VPC membership indicator
-  vpcColor?:  string   // graph view only — color assigned to that VPC
-  dimmed?:    boolean  // focus mode — node is not in the highlighted subgraph
-  locked?:    boolean  // lock mode — node cannot be dragged or selected
+  label:       string
+  nodeType:    NodeType
+  status:      NodeStatus
+  vpcLabel?:   string   // graph view only — VPC membership indicator
+  vpcColor?:   string   // graph view only — color assigned to that VPC
+  region?:     string   // shown as muted secondary label when node is not inside a VPC
+  dimmed?:     boolean  // focus mode — node is not in the highlighted subgraph
+  locked?:     boolean  // lock mode — node cannot be dragged or selected
+  annotation?: string  // user note — shows indicator badge if non-empty
 }
 
 export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
@@ -104,6 +106,23 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
       <Handle type="target" position={Position.Left}   style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Right}  style={{ opacity: 0 }} />
+
+      {/* Annotation indicator — amber dot in top-right, non-interactive */}
+      {d.annotation && (
+        <span
+          style={{
+            position:      'absolute',
+            top:           4,
+            right:         4,
+            width:         7,
+            height:        7,
+            borderRadius:  '50%',
+            background:    '#f59e0b',
+            pointerEvents: 'none',
+          }}
+          title={d.annotation}
+        />
+      )}
 
       {/* Type label row */}
       <div className="flex items-center justify-between mb-1">
@@ -147,6 +166,16 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
           >
             {d.vpcLabel}
           </span>
+        </div>
+      )}
+
+      {/* Region label — shown only when not inside a VPC container */}
+      {!d.vpcLabel && d.region && (
+        <div
+          className="mt-1"
+          style={{ fontSize: 8, color: 'var(--cb-text-muted)', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}
+        >
+          {d.region}
         </div>
       )}
     </div>
