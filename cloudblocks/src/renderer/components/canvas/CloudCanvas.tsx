@@ -41,7 +41,6 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
   const [modalSlot, setModalSlot] = useState<number | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [, forceUpdate] = useState(0)
-  const [crtKey, setCrtKey] = useState(0)
 
   // Refresh the relative timestamp every 10 seconds
   useEffect(() => {
@@ -50,11 +49,9 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
     return () => clearInterval(id)
   }, [lastScannedAt])
 
-  // Trigger CRT turn-on animation on mount and profile change
+  // CRT turn-on animation key — changes on profile switch, causing the overlay div to remount
+  // and replay the CSS animation. profileKey changing already triggers a re-render via the store.
   const profileKey = profile.name + '|' + (profile.endpoint ?? '')
-  useEffect(() => {
-    setCrtKey((k) => k + 1)
-  }, [profileKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for search-palette node selection — fly camera to the selected node
   useEffect(() => {
@@ -311,21 +308,19 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
         </div>
       )}
 
-      {/* CRT turn-on animation overlay */}
-      {crtKey > 0 && (
-        <div
-          key={crtKey}
-          style={{
-            position:        'absolute',
-            inset:           0,
-            background:      '#000',
-            pointerEvents:   'none',
-            zIndex:          200,
-            transformOrigin: 'center',
-            animation:       'crt-on 0.7s ease-out forwards',
-          }}
-        />
-      )}
+      {/* CRT turn-on animation overlay — remounts on profile change to replay animation */}
+      <div
+        key={profileKey}
+        style={{
+          position:        'absolute',
+          inset:           0,
+          background:      '#000',
+          pointerEvents:   'none',
+          zIndex:          200,
+          transformOrigin: 'center',
+          animation:       'crt-on 0.7s ease-out forwards',
+        }}
+      />
 
       {contextMenu && (
         <CanvasContextMenu
