@@ -9,6 +9,7 @@ function statusStripeColor(status: NodeStatus): string {
     case 'creating': return 'var(--cb-warning, #f59e0b)'
     case 'error':
     case 'deleting': return 'var(--cb-error, #ef4444)'
+    case 'imported': return '#7c3aed'
     case 'unknown':
     default:         return 'var(--cb-border, #374151)'
   }
@@ -85,6 +86,7 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
   const borderColor = TYPE_BORDER[d.nodeType] ?? '#555'
   const stripeColor = statusStripeColor(d.status)
   const typeLabel   = TYPE_LABEL[d.nodeType] ?? d.nodeType.toUpperCase()
+  const isImported  = d.status === 'imported'
 
   return (
     <div
@@ -92,10 +94,10 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
       data-status={d.status}
       className={`relative rounded${d.status === 'creating' ? ' animate-pulse' : ''}`}
       style={{
-        background:  'var(--cb-bg-panel)',
-        border:      `${selected ? '2px' : '1px'} solid ${borderColor}`,
-        borderLeft:  `3px solid ${stripeColor}`,
-        boxShadow:   selected ? `0 0 10px ${borderColor}55` : 'none',
+        background:       'var(--cb-bg-panel)',
+        border:           `${selected ? '2px' : '1px'} ${isImported ? 'dashed' : 'solid'} ${borderColor}`,
+        borderLeft:       `3px ${isImported ? 'dashed' : 'solid'} ${stripeColor}`,
+        boxShadow:        selected ? `0 0 10px ${borderColor}55` : 'none',
         fontFamily:  'monospace',
         minWidth:    130,
         padding:     '6px 10px 6px 8px',
@@ -178,6 +180,25 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
           style={{ fontSize: 8, color: 'var(--cb-text-muted)', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}
         >
           {d.region}
+        </div>
+      )}
+
+      {/* TF badge — shown for imported nodes */}
+      {isImported && (
+        <div style={{
+          position: 'absolute',
+          top: -6,
+          right: -6,
+          background: '#7c3aed',
+          color: '#fff',
+          fontSize: 8,
+          fontWeight: 700,
+          padding: '1px 4px',
+          borderRadius: 3,
+          fontFamily: 'monospace',
+          letterSpacing: '0.05em',
+        }}>
+          TF
         </div>
       )}
     </div>

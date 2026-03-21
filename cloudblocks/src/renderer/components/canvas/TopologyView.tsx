@@ -393,6 +393,7 @@ interface TopologyViewProps {
 export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JSX.Element {
   const cloudNodes         = useCloudStore((s) => s.nodes)
   const pendingNodes       = useCloudStore((s) => s.pendingNodes)
+  const importedNodes      = useCloudStore((s) => s.importedNodes)
   const selectNode         = useUIStore((s) => s.selectNode)
   const selectEdge         = useUIStore((s) => s.selectEdge)
   const selectedId         = useUIStore((s) => s.selectedNodeId)
@@ -446,12 +447,14 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
     allNodes.forEach((n) => {
       if (!n.parentId && n.region !== 'global') set.add(n.id)
     })
+    // Also include imported nodes that render at the top level (no parentId)
+    importedNodes.forEach((n) => { if (!n.parentId) set.add(n.id) })
     return set
-  }, [allNodes])
+  }, [allNodes, importedNodes])
 
   const flowNodes: Node[] = useMemo(() => {
     const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets)
-    return raw.map((n) => {
+    const mapped = raw.map((n) => {
       const isLocked = lockedNodes.has(n.id)
       // Apply lock properties to all nodes (container nodes never get locked draggable/selectable
       // overrides since they already have those set to false in buildFlowNodes)
@@ -491,7 +494,29 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         data: { ...n.data, ...(isLocked ? { locked: true } : {}), annotation: annotations[n.id] },
       }
     })
-  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations])
+
+    // Append imported nodes (from Terraform state import) as resource nodes
+    const existingIds = new Set(mapped.map((n) => n.id))
+    const importedFlowNodes: Node[] = importedNodes
+      .filter((n) => !existingIds.has(n.id))
+      .map((n) => {
+        // Only keep parentId if the parent already exists in the flow nodes
+        const parentExists = n.parentId != null && mapped.some((fn) => fn.id === n.parentId)
+        const base: Node = {
+          id:       n.id,
+          type:     'resource',
+          position: topologyPositions[n.id] ?? { x: 50, y: 50 },
+          data:     { label: n.label, nodeType: n.type, status: n.status },
+          selected: n.id === selectedId,
+        }
+        if (parentExists) {
+          return { ...base, parentId: n.parentId as string }
+        }
+        return base
+      })
+
+    return [...mapped, ...importedFlowNodes]
+  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
