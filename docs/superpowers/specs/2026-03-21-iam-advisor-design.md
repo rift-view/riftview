@@ -119,7 +119,24 @@ interface PolicyDocument {
 
 // policyName passed from fetcher — used to detect 'AdministratorAccess' by name
 export function evaluatePolicy(doc: PolicyDocument, policyName?: string): IamFinding[]
+
+// Action normalization contract: before evaluating any rule, normalize Action and Resource
+// to string[] using [value].flat() — handles both single string and array forms.
+// All rules must use the normalized array, never the raw string | string[] value.
+// Example: const actions = [stmt.Action].flat()
 ```
+
+**Call-site pattern in handler (fetchers return `PolicyDocument[]`, not a single doc):**
+
+```typescript
+// In the IAM_ANALYZE handler, after fetch:
+const allFindings: IamFinding[] = policies.flatMap(({ doc, policyName }) =>
+  evaluatePolicy(doc, policyName)
+)
+return { nodeId, findings: allFindings, fetchedAt: Date.now() }
+```
+
+Each fetcher returns `Array<{ doc: PolicyDocument; policyName: string }>` — not just `PolicyDocument[]`. The policyName is needed to detect `AdministratorAccess` by managed policy name.
 
 ### Ruleset v1
 

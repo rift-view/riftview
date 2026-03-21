@@ -199,6 +199,10 @@ clearImportedNodes(): void
 
 `applyDelta()` must never touch `importedNodes`. The canvas renders `[...nodes, ...importedNodes]` — merged only at render time in `flowNodes` memo.
 
+**`createCloudStore()` test factory:** `cloud.ts` exports a `createCloudStore()` factory used by unit tests. This factory must also receive `importedNodes: []`, `setImportedNodes`, and `clearImportedNodes` entries — otherwise existing tests will fail TypeScript compilation once the main store interface changes.
+
+**Inspector node lookup:** `Inspector.tsx` currently resolves the selected node via `nodes.find((n) => n.id === selectedId)` where `nodes` is the live-scan slice only. When an imported node is selected, this lookup returns `undefined`. The fix: `const node = nodes.find(...) ?? importedNodes.find(...)`. The same expansion applies to edge-resolution code that looks up source/target nodes.
+
 ---
 
 ## Canvas Rendering
@@ -210,7 +214,7 @@ clearImportedNodes(): void
 - Color: same as node type (no color change — just border style)
 
 ### Layout
-Imported nodes use the same topology layout as scanned nodes. `parentId` relationships parsed from tfstate (e.g. subnet → vpc) drive hierarchy. Imported nodes with no matching parent float in the global zone.
+Imported nodes use the same topology layout as scanned nodes. `parentId` relationships parsed from tfstate (e.g. subnet → vpc) drive hierarchy. Imported nodes with no matching parent appear in the **root resource row** (below VPCs) — not the global zone. Only CloudFront/ACM/R53-type nodes appear in the global zone.
 
 ---
 
