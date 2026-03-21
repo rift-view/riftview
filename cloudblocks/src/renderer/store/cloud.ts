@@ -24,6 +24,7 @@ interface CloudState {
   scanGeneration:  number
   scanErrors:      ScanError[]
   selectedRegions: string[]
+  importedNodes:   CloudNode[]
 
   applyDelta:          (delta: ScanDelta, generation?: number) => void
   setScanStatus:       (status: 'idle' | 'scanning' | 'error') => void
@@ -42,6 +43,8 @@ interface CloudState {
   removeOptimisticNode: (id: string) => void
   setScanErrors:     (errors: ScanError[]) => void
   clearScanErrors:   () => void
+  setImportedNodes:  (nodes: CloudNode[]) => void
+  clearImportedNodes: () => void
 }
 
 export const useCloudStore = create<CloudState>((set) => ({
@@ -57,6 +60,7 @@ export const useCloudStore = create<CloudState>((set) => ({
   scanGeneration:  0,
   scanErrors:      [],
   selectedRegions: ['us-east-1'],
+  importedNodes:   [],
 
   applyDelta: (delta, generation) =>
     set((state) => {
@@ -109,6 +113,9 @@ export const useCloudStore = create<CloudState>((set) => ({
 
   setScanErrors:   (errors) => set({ scanErrors: errors }),
   clearScanErrors: ()       => set({ scanErrors: [] }),
+
+  setImportedNodes:  (nodes) => set({ importedNodes: nodes }),
+  clearImportedNodes: ()     => set({ importedNodes: [] }),
 }))
 
 // test-only factory — allows isolated store instances in unit tests
@@ -126,6 +133,7 @@ export function createCloudStore(): StoreApi<CloudState> {
     scanGeneration:  0,
     scanErrors:      [],
     selectedRegions: ['us-east-1'],
+    importedNodes:   [],
 
     applyDelta: (delta, generation) =>
       set((state) => {
@@ -171,5 +179,8 @@ export function createCloudStore(): StoreApi<CloudState> {
 
     setScanErrors:   (errors) => set({ scanErrors: errors }),
     clearScanErrors: ()       => set({ scanErrors: [] }),
+
+    setImportedNodes:  (nodes) => set({ importedNodes: nodes }),
+    clearImportedNodes: ()     => set({ importedNodes: [] }),
   }))
 }
