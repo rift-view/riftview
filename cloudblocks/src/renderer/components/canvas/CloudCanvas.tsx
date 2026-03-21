@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
@@ -43,6 +43,8 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
   const toggleSnapToGrid   = useUIStore((s) => s.toggleSnapToGrid)
   const [modalSlot, setModalSlot] = useState<number | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
   const [, forceUpdate] = useState(0)
 
   const totalCost = nodes.reduce((sum, n) => {
@@ -59,6 +61,25 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
 
   // CRT turn-on animation key — remounts the overlay on profile switch to replay the animation.
   const profileKey = profile.name + '|' + (profile.endpoint ?? '')
+
+  // Close export dropdown on outside click
+  useEffect(() => {
+    if (!exportOpen) return
+    function onClickOutside(e: MouseEvent): void {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportOpen(false)
+      }
+    }
+    function onKeyDown(e: KeyboardEvent): void {
+      if (e.key === 'Escape') setExportOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [exportOpen])
 
   // Listen for search-palette node selection — fly camera to the selected node
   useEffect(() => {
@@ -168,43 +189,57 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
           ▦ Grid
         </button>
 
-        <button
-          onClick={() => {
-            window.cloudblocks.exportTerraform(nodes).then((res) => {
-              if (res.success) useUIStore.getState().showToast('HCL exported', 'success')
-            }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
-          }}
-          disabled={nodes.length === 0}
-          title="Export Terraform HCL"
-          style={{
-            ...btnBase,
-            background: 'var(--cb-bg-elevated)',
-            border: '1px solid var(--cb-border)',
-            color: 'var(--cb-text-secondary)',
-            opacity: nodes.length === 0 ? 0.4 : 1,
-            cursor: nodes.length === 0 ? 'not-allowed' : 'pointer',
-          }}
-        >
-          ⬡ HCL
-        </button>
-
-        <button
-          onClick={() => {
-            window.cloudblocks.exportPng().then((res) => {
-              if (res.success) useUIStore.getState().showToast('PNG exported', 'success')
-              else useUIStore.getState().showToast('Export cancelled', 'error')
-            }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
-          }}
-          title="Export canvas as PNG"
-          style={{
-            ...btnBase,
-            background: 'var(--cb-bg-elevated)',
-            border: '1px solid var(--cb-border)',
-            color: 'var(--cb-text-secondary)',
-          }}
-        >
-          ↓ PNG
-        </button>
+        {/* Export dropdown */}
+        <div ref={exportRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setExportOpen((o) => !o)}
+            title="Export"
+            style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}
+          >
+            ↓ Export ▾
+          </button>
+          {exportOpen && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 50,
+              background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border-strong)',
+              borderRadius: 4, overflow: 'hidden', minWidth: 110,
+            }}>
+              <button
+                onClick={() => {
+                  setExportOpen(false)
+                  window.cloudblocks.exportTerraform(nodes).then((res) => {
+                    if (res.success) useUIStore.getState().showToast('HCL exported', 'success')
+                  }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
+                }}
+                disabled={nodes.length === 0}
+                style={{
+                  display: 'block', width: '100%', textAlign: 'left',
+                  ...btnBase, flex: 'none', borderRadius: 0, border: 'none',
+                  borderBottom: '1px solid var(--cb-border)',
+                  opacity: nodes.length === 0 ? 0.4 : 1,
+                  cursor: nodes.length === 0 ? 'not-allowed' : 'pointer',
+                }}
+              >
+                ⬡ Terraform HCL
+              </button>
+              <button
+                onClick={() => {
+                  setExportOpen(false)
+                  window.cloudblocks.exportPng().then((res) => {
+                    if (res.success) useUIStore.getState().showToast('PNG exported', 'success')
+                    else useUIStore.getState().showToast('Export cancelled', 'error')
+                  }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
+                }}
+                style={{
+                  display: 'block', width: '100%', textAlign: 'left',
+                  ...btnBase, flex: 'none', borderRadius: 0, border: 'none',
+                }}
+              >
+                ↓ PNG
+              </button>
+            </div>
+          )}
+        </div>
 
         {importedNodes.length > 0 && (
           <button
@@ -269,35 +304,6 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
           </span>
         )}
 
-        <div className="w-px h-3.5 bg-gray-700" />
-
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-settings'))}
-          title="Settings"
-          style={{
-            ...btnBase,
-            background: 'transparent',
-            border: '1px solid var(--cb-border)',
-            color: '#555',
-            minWidth: '20px',
-          }}
-        >
-          ⚙ Settings
-        </button>
-
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-about'))}
-          title="About Cloudblocks"
-          style={{
-            ...btnBase,
-            background: 'transparent',
-            border: '1px solid var(--cb-border)',
-            color: '#555',
-            minWidth: '20px',
-          }}
-        >
-          ? About
-        </button>
       </div>
 
       <ScanErrorStrip />

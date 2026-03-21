@@ -161,6 +161,24 @@ export function TitleBar(): React.JSX.Element {
         TF Import
       </button>
 
+      {/* Settings + About */}
+      <button
+        onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-settings'))}
+        title="Settings"
+        className="text-[10px] font-mono px-2 py-0.5 rounded"
+        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)', cursor: 'pointer' }}
+      >
+        ⚙
+      </button>
+      <button
+        onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-about'))}
+        title="About Cloudblocks"
+        className="text-[10px] font-mono px-2 py-0.5 rounded"
+        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)', cursor: 'pointer' }}
+      >
+        ?
+      </button>
+
     </div>
   )
 }
