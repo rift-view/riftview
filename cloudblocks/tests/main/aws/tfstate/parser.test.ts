@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { parseTfState } from '../../../../src/main/aws/tfstate/parser'
 
-const minimal = (type: string, attrs: Record<string, unknown>) =>
+const minimal = (type: string, attrs: Record<string, unknown>): string =>
   JSON.stringify({
     version: 4,
     resources: [{ type, name: 'main', instances: [{ attributes: attrs }] }],
