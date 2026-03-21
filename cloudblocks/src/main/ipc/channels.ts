@@ -26,6 +26,7 @@ export const IPC = {
   ANNOTATIONS_SAVE: 'annotations:save',      // invoke → void
   TFSTATE_IMPORT:   'tfstate:import',         // invoke → { nodes: CloudNode[]; error?: string }
   TFSTATE_CLEAR:    'tfstate:clear',          // invoke → { ok: boolean }
+  IAM_ANALYZE:      'iam:analyze',            // invoke → IamAnalysisResult
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]
