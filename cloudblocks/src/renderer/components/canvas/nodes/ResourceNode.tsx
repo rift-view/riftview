@@ -38,6 +38,7 @@ const TYPE_BORDER = {
   'r53-zone':       '#FF9900',
   sfn:              '#FF9900',
   'eventbridge-bus': '#FF9900',
+  'unknown':         '#6b7280',
 } satisfies Record<NodeType, string>
 
 const TYPE_LABEL = {
@@ -64,6 +65,7 @@ const TYPE_LABEL = {
   'r53-zone':       'R53',
   sfn:              'SFN',
   'eventbridge-bus': 'EB',
+  'unknown':         'Unknown',
 } satisfies Record<NodeType, string>
 
 interface ResourceNodeData {
