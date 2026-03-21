@@ -9,7 +9,6 @@ import { CommandDrawer } from '../components/CommandDrawer'
 import { CreateModal } from '../components/modals/CreateModal'
 import { Onboarding } from '../components/Onboarding'
 import { ErrorBanner } from '../components/ErrorBanner'
-import SettingsPanel from '../components/SettingsPanel'
 import NodeContextMenu from '../components/canvas/NodeContextMenu'
 import DeleteDialog from '../components/modals/DeleteDialog'
 import EditModal from '../components/modals/EditModal'
@@ -64,7 +63,6 @@ export default function App(): React.JSX.Element | null {
   useIpc()
   const { triggerScan } = useScanner()
   const [profiles, setProfiles] = useState<AwsProfile[] | null>(null)
-  const [settingsOpen, setSettingsOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const errorMessage      = useCloudStore((s) => s.errorMessage)
   const setError          = useCloudStore((s) => s.setError)
@@ -169,7 +167,7 @@ export default function App(): React.JSX.Element | null {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden" style={{ background: 'var(--cb-bg-app)' }}>
-      <TitleBar onSettingsOpen={() => setSettingsOpen(true)} />
+      <TitleBar />
       {errorMessage && <ErrorBanner message={errorMessage} onDismiss={() => setError(null)} />}
       <div className="flex flex-1 overflow-hidden">
         <div style={{ width: sidebarWidth, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -184,7 +182,6 @@ export default function App(): React.JSX.Element | null {
       </div>
       <CommandDrawer />
       <CreateModal />
-      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
       <SearchPalette
         open={searchOpen}
         onClose={() => setSearchOpen(false)}

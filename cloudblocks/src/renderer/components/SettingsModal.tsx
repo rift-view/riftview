@@ -7,7 +7,7 @@ interface SettingsModalProps {
   onClose: () => void
 }
 
-type TabKey = 'profile' | 'regions' | 'appearance' | 'localstack'
+type TabKey = 'profile' | 'regions' | 'appearance' | 'localstack' | 'general'
 
 const ALL_REGIONS: string[] = [
   'us-east-1',
@@ -34,6 +34,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'profile',     label: 'Profile'    },
   { key: 'regions',     label: 'Regions'    },
   { key: 'appearance',  label: 'Appearance' },
+  { key: 'general',     label: 'General'    },
   { key: 'localstack',  label: 'LocalStack' },
 ]
 
@@ -67,6 +68,10 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
     const next: Settings = { ...settings, theme }
     applyTheme(theme)
     saveSettings(next).catch(() => {/* best-effort */})
+  }
+
+  function handleSettingChange<K extends keyof Settings>(key: K, val: Settings[K]): void {
+    saveSettings({ ...settings, [key]: val }).catch(() => {/* best-effort */})
   }
 
   function toggleRegion(region: string): void {
@@ -391,6 +396,62 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                         {active && (
                           <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>active</span>
                         )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── General tab ── */}
+            {tab === 'general' && (
+              <div>
+                <div style={sectionLabel}>Delete Confirmation</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
+                  {(['type-to-confirm', 'command-drawer'] as const).map((val) => {
+                    const active = settings.deleteConfirmStyle === val
+                    const label = val === 'type-to-confirm' ? 'Type to confirm' : 'Command Drawer'
+                    return (
+                      <button
+                        key={val}
+                        onClick={(): void => handleSettingChange('deleteConfirmStyle', val)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px',
+                          borderRadius: 4, border: `1px solid ${active ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
+                          background: active ? 'var(--cb-accent-subtle)' : 'transparent',
+                          color: active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)',
+                          fontFamily: 'monospace', fontSize: 11, cursor: 'pointer', textAlign: 'left',
+                        }}
+                      >
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? 'var(--cb-accent)' : 'var(--cb-border-strong)', flexShrink: 0 }} />
+                        {label}
+                        {active && <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>active</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div style={sectionLabel}>Scan Interval</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {(['15', '30', '60', 'manual'] as const).map((val) => {
+                    const numVal = val === 'manual' ? 'manual' : Number(val) as 15 | 30 | 60
+                    const active = String(settings.scanInterval) === val
+                    const label = val === 'manual' ? 'Manual only' : `${val}s`
+                    return (
+                      <button
+                        key={val}
+                        onClick={(): void => handleSettingChange('scanInterval', numVal)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px',
+                          borderRadius: 4, border: `1px solid ${active ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
+                          background: active ? 'var(--cb-accent-subtle)' : 'transparent',
+                          color: active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)',
+                          fontFamily: 'monospace', fontSize: 11, cursor: 'pointer', textAlign: 'left',
+                        }}
+                      >
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? 'var(--cb-accent)' : 'var(--cb-border-strong)', flexShrink: 0 }} />
+                        {label}
+                        {active && <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>active</span>}
                       </button>
                     )
                   })}
