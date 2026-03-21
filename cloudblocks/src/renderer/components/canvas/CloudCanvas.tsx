@@ -31,6 +31,7 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
   const scanStatus         = useCloudStore((s) => s.scanStatus)
   const lastScannedAt      = useCloudStore((s) => s.lastScannedAt)
   const nodes              = useCloudStore((s) => s.nodes)
+  const importedNodes      = useCloudStore((s) => s.importedNodes)
   const profile            = useCloudStore((s) => s.profile)
   const savedViews         = useUIStore((s) => s.savedViews)
   const activeViewSlot     = useUIStore((s) => s.activeViewSlot)
@@ -91,6 +92,15 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
     if (modalSlot === null) return
     saveView(modalSlot, name, view)
     setModalSlot(null)
+  }
+
+  async function handleClearImport(): Promise<void> {
+    try {
+      await window.cloudblocks.clearTfState()
+      useCloudStore.getState().clearImportedNodes()
+    } catch {
+      useUIStore.getState().showToast('Failed to clear Terraform import', 'error')
+    }
   }
 
   const activeViewName = activeViewSlot !== null
@@ -195,6 +205,21 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
         >
           ↓ PNG
         </button>
+
+        {importedNodes.length > 0 && (
+          <button
+            onClick={() => { void handleClearImport() }}
+            title="Clear imported Terraform nodes"
+            style={{
+              ...btnBase,
+              background: 'var(--cb-bg-elevated)',
+              border: '1px solid #f59e0b',
+              color: '#f59e0b',
+            }}
+          >
+            Clear TF ({importedNodes.length})
+          </button>
+        )}
 
         <div className="w-px h-3.5 bg-gray-700" />
 
