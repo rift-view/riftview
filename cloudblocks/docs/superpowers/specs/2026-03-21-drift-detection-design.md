@@ -13,9 +13,11 @@ Compare live AWS scan results against imported Terraform state nodes to surface:
 
 Drift comparison runs automatically in two cases:
 1. When `setImportedNodes()` is called (after TF import)
-2. After every successful scan, if `importedNodes.length > 0`
+2. After every successful scan — inside `applyDelta()`, if `importedNodes.length > 0`
 
-Drift UI is hidden entirely when no imported nodes are present. `clearImportedNodes()` strips all drift state from live nodes and clears `importedNodes`.
+In both cases, the drift logic runs **inside** the existing `set()` call (not as a separate store action) to guarantee atomic state updates. See Store Actions below.
+
+Drift UI is hidden entirely when `importedNodes` is empty. `clearImportedNodes()` resets all drift state atomically.
 
 ---
 
@@ -51,7 +53,7 @@ Pure function in `src/renderer/utils/compareDrift.ts`:
 export interface DriftResult {
   matched:   string[]  // IDs in both live and imported
   unmanaged: string[]  // IDs in live only
-  missing:   string[]  // IDs in imported only
+  missing:   string[]  // IDs in imported only (excluding type: 'unknown')
 }
 
 export function compareDrift(
@@ -62,19 +64,49 @@ export function compareDrift(
 
 **Matching strategy: strict ID equality only.** No heuristics. `liveNode.id === importedNode.id` = match.
 
-Known ID conventions (from parser.ts):
+**`type: 'unknown'` nodes are excluded inside `compareDrift()`** — filtered from `importedNodes` before matching. They never contribute to `matched`, `unmanaged`, or `missing` buckets.
+
+Known ID conventions (from `parser.ts` — only these 10 types are mapped; all others emit `type: 'unknown'`):
 - EC2, VPC, Subnet, SG, RDS, CloudFront, API GW → `attrs['id']` (AWS resource ID)
 - Lambda → `attrs['function_name']` (same as live scanner)
 - ALB → `attrs['arn']` (same as live scanner)
 - S3 → `attrs['id']` (bucket name, same as live scanner)
 
-Unrecognized tfstate types (`type: 'unknown'`) are excluded from comparison.
+**Known limitation:** The codebase has 24 `NodeType` values. `parser.ts` maps 10 Terraform resource types; 13 non-`unknown` types (igw, acm, apigw-route, sqs, secret, ecr-repo, sns, dynamo, ssm-param, nat-gateway, r53-zone, sfn, eventbridge-bus) have no parser mapping. Terraform-managed resources of these types will emit `type: 'unknown'` from the parser and be excluded from comparison — meaning they will incorrectly appear as `unmanaged` in live AWS even when Terraform-managed. This is a known false-positive source. Expanding `parser.ts` is deferred to a future sprint.
 
-A separate `applyDrift()` utility applies results to the store:
-- Matched live nodes: `driftStatus = 'matched'`, `tfMetadata = importedNode.metadata`
-- Unmanaged live nodes: `driftStatus = 'unmanaged'`
-- Missing imported nodes: `driftStatus = 'missing'` (stay in `importedNodes`, visually updated)
-- Matched imported nodes: removed from `importedNodes` (absorbed into live node)
+---
+
+## Store Actions
+
+**`applyDrift()` is an internal helper function** (`src/renderer/utils/compareDrift.ts`), not a standalone store action. It is called **inside** the `set()` callbacks of `setImportedNodes()` and `applyDelta()` to keep state changes atomic (one React re-render per trigger):
+
+```typescript
+// Helper — pure, no set() calls:
+export function applyDriftToState(
+  liveNodes: CloudNode[],
+  importedNodes: CloudNode[],
+): { nodes: CloudNode[]; importedNodes: CloudNode[] }
+// For each matched ID:
+//   - copy importedNode.metadata into liveNode.tfMetadata
+//   - set liveNode.driftStatus = 'matched'
+//   - remove importedNode from importedNodes
+// For each unmanaged ID: set liveNode.driftStatus = 'unmanaged'
+// For each missing ID: set importedNode.driftStatus = 'missing'
+// Returns new nodes[] and new importedNodes[]
+```
+
+**`setImportedNodes(nodes)`** — sets `importedNodes`, then immediately calls `applyDriftToState()` on the new arrays and returns both in a single `set({ nodes: ..., importedNodes: ... })`.
+
+**`applyDelta(delta)`** — after computing the new `nodes` array from the delta, checks if `importedNodes.length > 0`. If so, calls `applyDriftToState()` and includes the result in the same `set()` call. If not, skips drift entirely.
+
+**`clearImportedNodes()`** — single atomic `set()` call:
+1. Sets `importedNodes: []`
+2. Strips `driftStatus` and `tfMetadata` from every live node:
+   ```typescript
+   nodes: state.nodes.map(({ driftStatus: _, tfMetadata: __, ...rest }) => rest)
+   ```
+
+The `createCloudStore()` test factory in `cloud.ts` must be updated identically to the main store for all three of the above actions.
 
 ---
 
@@ -104,14 +136,20 @@ New toggle in `CloudCanvas.tsx` between Grid and Export:
 ```
 
 - Hidden when `importedNodes.length === 0`
-- When active: `flowNodes` filtered to nodes where `driftStatus === 'unmanaged' || driftStatus === 'missing'`
+- When active: `flowNodes` is filtered to nodes where `driftStatus === 'unmanaged' || driftStatus === 'missing'`
+- `flowNodes` in both `TopologyView` and `GraphView` already merges `nodes` and `importedNodes` into one array. The filter applies to this merged set — `missing` nodes (in `importedNodes`) are correctly included since they have `driftStatus === 'missing'`
+- **Container nodes (`vpc`, `subnet`, `apigw`) are always included** regardless of drift status — React Flow requires parent nodes to be present for child layout. Only resource leaf nodes are filtered.
 - State stored as `driftFilterActive` in `useUIStore`
 
 ---
 
 ## Inspector Panel
 
-A `DRIFT STATUS` section renders below the node header, above metadata fields. Replaces the existing "Imported from Terraform — read-only" banner for imported nodes.
+A `DRIFT STATUS` section renders below the node header, above metadata fields.
+
+**For nodes with `driftStatus` set**, the new drift section replaces any existing drift-related banners:
+- For `missing` nodes (`status === 'imported'`, `driftStatus === 'missing'`): the new red drift banner replaces the existing "Imported from Terraform — read-only" banner. The read-only constraint is communicated within the new banner.
+- For `matched` and `unmanaged` nodes: live nodes (`status !== 'imported'`), so no overlap with the old banner.
 
 ### Unmanaged
 ```
@@ -126,12 +164,12 @@ Action buttons (Edit, Delete, Quick Actions) remain available — it's a live no
 ### Missing
 ```
 ┌─ red banner ────────────────────────┐
-│ ✕ MISSING                           │
+│ ✕ MISSING — read-only               │
 │ Declared in Terraform but not       │
 │ found in live AWS.                  │
 └─────────────────────────────────────┘
 ```
-Read-only. Existing imported node behavior unchanged.
+Read-only. Replaces the old "Imported from Terraform — read-only" banner.
 
 ### Matched
 ```
@@ -151,14 +189,14 @@ Two-column diff table: only attributes where `metadata[key] !== tfMetadata[key]`
 | File | Change |
 |------|--------|
 | `src/renderer/types/cloud.ts` | Add `DriftStatus`, `driftStatus?`, `tfMetadata?` to `CloudNode` |
-| `src/renderer/utils/compareDrift.ts` | New — pure `compareDrift()` + `applyDrift()` |
-| `src/renderer/store/cloud.ts` | Call `applyDrift()` in `setImportedNodes()`; strip drift fields in `clearImportedNodes()`; call after scan if importedNodes present |
+| `src/renderer/utils/compareDrift.ts` | New — `compareDrift()` and `applyDriftToState()` pure functions |
+| `src/renderer/store/cloud.ts` | Wire `applyDriftToState()` into `setImportedNodes()`, `applyDelta()`, `clearImportedNodes()`; update `createCloudStore()` factory identically |
 | `src/renderer/store/ui.ts` | Add `driftFilterActive`, `toggleDriftFilter` |
 | `src/renderer/components/canvas/nodes/ResourceNode.tsx` | Drift stripe + corner badge |
 | `src/renderer/components/canvas/CloudCanvas.tsx` | Drift filter toolbar button |
-| `src/renderer/components/canvas/TopologyView.tsx` | Apply `driftFilterActive` to `flowNodes` |
+| `src/renderer/components/canvas/TopologyView.tsx` | Apply `driftFilterActive` to merged `flowNodes` (leaf nodes only; vpc/subnet/apigw always included) |
 | `src/renderer/components/canvas/GraphView.tsx` | Same |
-| `src/renderer/components/Inspector.tsx` | Drift status section (three states) |
+| `src/renderer/components/Inspector.tsx` | Drift status section (three states); `missing` drift banner replaces old `isImported` banner |
 | `tests/renderer/utils/compareDrift.test.ts` | New — pure function unit tests |
 
 ---
@@ -169,15 +207,15 @@ Two-column diff table: only attributes where `metadata[key] !== tfMetadata[key]`
 - Matched: ID in both arrays → appears in `matched`
 - Unmanaged: ID in live only → appears in `unmanaged`
 - Missing: ID in imported only → appears in `missing`
-- Unknown type imported nodes excluded
+- `type: 'unknown'` imported nodes excluded before matching
 - Empty arrays → all empty results
-- Duplicate IDs handled gracefully
 
 ---
 
 ## Out of Scope
 
 - Heuristic/fuzzy matching (name-based, tag-based) — deferred
+- Expanding `parser.ts` to cover all 24 `NodeType`s — deferred
 - Multi-resource diff (e.g. SG rules comparison) — deferred
 - Export drift report — deferred
 - Multi-region drift — deferred
