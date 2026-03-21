@@ -28,5 +28,6 @@ interface Window {
     saveAnnotations(data: Record<string, string>): Promise<void>
     importTfState(): Promise<{ nodes: import('../renderer/types/cloud').CloudNode[]; error?: string }>
     clearTfState(): Promise<{ ok: boolean }>
+    analyzeIam(nodeId: string, nodeType: import('../renderer/types/cloud').NodeType, metadata: Record<string, unknown>): Promise<import('../renderer/types/iam').IamAnalysisResult>
   }
 }

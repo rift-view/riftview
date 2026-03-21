@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { ScanDelta, AwsProfile } from '../renderer/types/cloud'
+import type { ScanDelta, AwsProfile, NodeType } from '../renderer/types/cloud'
 import type { CloudFrontParams } from '../renderer/types/create'
 import type { CloudFrontEditParams } from '../renderer/types/edit'
 import { IPC } from '../main/ipc/channels'
@@ -83,4 +83,8 @@ contextBridge.exposeInMainWorld('cloudblocks', {
   // Terraform state import
   importTfState: () => ipcRenderer.invoke(IPC.TFSTATE_IMPORT),
   clearTfState:  () => ipcRenderer.invoke(IPC.TFSTATE_CLEAR),
+
+  // IAM Least-Privilege Advisor
+  analyzeIam: (nodeId: string, nodeType: NodeType, metadata: Record<string, unknown>) =>
+    ipcRenderer.invoke(IPC.IAM_ANALYZE, { nodeId, nodeType, metadata }),
 })

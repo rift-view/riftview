@@ -33,6 +33,7 @@ beforeEach(() => {
     saveAnnotations:      vi.fn().mockResolvedValue(undefined),
     importTfState:        vi.fn().mockResolvedValue({ nodes: [] }),
     clearTfState:         vi.fn().mockResolvedValue({ ok: true }),
+    analyzeIam:           vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 }),
   }
   useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })
