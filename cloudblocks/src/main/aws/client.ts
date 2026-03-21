@@ -15,6 +15,7 @@ import { SSMClient } from '@aws-sdk/client-ssm'
 import { Route53Client } from '@aws-sdk/client-route-53'
 import { SFNClient } from '@aws-sdk/client-sfn'
 import { EventBridgeClient } from '@aws-sdk/client-eventbridge'
+import { IAMClient } from '@aws-sdk/client-iam'
 
 export interface AwsClients {
   ec2: EC2Client
@@ -34,6 +35,7 @@ export interface AwsClients {
   r53: Route53Client
   sfn: SFNClient
   eventbridge: EventBridgeClient
+  iam: IAMClient
 }
 
 // Creates a fresh set of AWS SDK clients for the given profile + region.
@@ -75,5 +77,6 @@ export function createClients(profile: string, region: string, endpoint?: string
     r53:        new Route53Client({ region: globalRegion, ...endpointConfig, ...credentialsConfig }),
     sfn:        new SFNClient(config),
     eventbridge: new EventBridgeClient(config),
+    iam:         new IAMClient(config),
   }
 }
