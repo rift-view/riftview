@@ -12,11 +12,7 @@ const REGIONS = [
   'ap-southeast-1','ap-northeast-1',
 ]
 
-interface TitleBarProps {
-  onSettingsOpen: () => void
-}
-
-export function TitleBar({ onSettingsOpen }: TitleBarProps): React.JSX.Element {
+export function TitleBar(): React.JSX.Element {
   const [profiles, setProfiles]             = useState<AwsProfile[]>([])
   const [connStatus, setConnStatus]         = useState<'unknown' | 'connected' | 'error'>('unknown')
   const [endpointInput, setEndpointInput]   = useState<string>(() => useCloudStore.getState().profile.endpoint ?? '')
@@ -165,17 +161,6 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps): React.JSX.Element {
         TF Import
       </button>
 
-      {/* Settings gear */}
-      <button
-        onClick={onSettingsOpen}
-        title="Settings"
-        style={{
-          background: 'none', border: 'none', color: 'var(--cb-text-secondary)', cursor: 'pointer',
-          fontSize: 14, padding: '0 8px', marginLeft: 'auto',
-        }}
-      >
-        ⚙
-      </button>
     </div>
   )
 }
