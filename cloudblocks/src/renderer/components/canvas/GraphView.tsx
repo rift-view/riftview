@@ -181,6 +181,7 @@ interface GraphViewProps {
 export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Element {
   const cloudNodes         = useCloudStore((s) => s.nodes)
   const pendingNodes       = useCloudStore((s) => s.pendingNodes)
+  const importedNodes      = useCloudStore((s) => s.importedNodes)
   const selectNode         = useUIStore((s) => s.selectNode)
   const selectEdge         = useUIStore((s) => s.selectEdge)
   const selectedId         = useUIStore((s) => s.selectedNodeId)
@@ -277,51 +278,67 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const [livePositions, setLivePositions] = useState<Record<string, { x: number; y: number }>>({})
 
   const flowNodes: Node[] = useMemo(
-    () => allNodes.map((n, i) => {
-      const vpc      = findVpcAncestor(n, byId)
-      const vpcColor = vpc ? (vpcColorMap.get(vpc.id) ?? undefined) : undefined
-      const vpcLabel = vpc ? vpc.label : undefined
+    () => {
+      const mapped = allNodes.map((n, i) => {
+        const vpc      = findVpcAncestor(n, byId)
+        const vpcColor = vpc ? (vpcColorMap.get(vpc.id) ?? undefined) : undefined
+        const vpcLabel = vpc ? vpc.label : undefined
 
-      // Use dedicated node types for ACM, CloudFront, and API Gateway
-      const rfType =
-        n.type === 'acm'          ? 'acm' :
-        n.type === 'cloudfront'   ? 'cloudfront' :
-        n.type === 'apigw'        ? 'apigw' :
-        n.type === 'apigw-route'  ? 'apigw-route' :
-        'resource'
+        // Use dedicated node types for ACM, CloudFront, and API Gateway
+        const rfType =
+          n.type === 'acm'          ? 'acm' :
+          n.type === 'cloudfront'   ? 'cloudfront' :
+          n.type === 'apigw'        ? 'apigw' :
+          n.type === 'apigw-route'  ? 'apigw-route' :
+          'resource'
 
-      const isLocked = lockedNodes.has(n.id)
-      return {
-        id:         n.id,
-        type:       rfType,
-        position:   livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: Math.floor(i / 5) * 110 + 60 },
-        draggable:  !isLocked,
-        selectable: !isLocked,
-        zIndex:     isLocked ? -1 : 0,
-        data:     {
-          label:     n.label,
-          nodeType:  n.type,
-          status:    n.status,
-          vpcLabel:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcLabel : undefined,
-          vpcColor:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcColor : undefined,
-          region:    n.region,
-          // API Gateway route extra fields
-          method:    n.type === 'apigw-route' ? n.metadata.method as string | undefined : undefined,
-          path:      n.type === 'apigw-route' ? n.metadata.path   as string | undefined : undefined,
-          hasLambda: n.type === 'apigw-route' ? !!(n.metadata.lambdaArn) : undefined,
-          // API Gateway container extra fields
-          endpoint:  n.type === 'apigw' ? n.metadata.endpoint as string | undefined : undefined,
-          // Focus mode
-          dimmed:      highlightedIds !== null && !highlightedIds.has(n.id),
-          // Lock mode
-          locked:      isLocked,
-          // User annotation
-          annotation:  annotations[n.id],
-        },
-        selected: n.id === selectedId,
-      }
-    }),
-    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations],
+        const isLocked = lockedNodes.has(n.id)
+        return {
+          id:         n.id,
+          type:       rfType,
+          position:   livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: Math.floor(i / 5) * 110 + 60 },
+          draggable:  !isLocked,
+          selectable: !isLocked,
+          zIndex:     isLocked ? -1 : 0,
+          data:     {
+            label:     n.label,
+            nodeType:  n.type,
+            status:    n.status,
+            vpcLabel:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcLabel : undefined,
+            vpcColor:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcColor : undefined,
+            region:    n.region,
+            // API Gateway route extra fields
+            method:    n.type === 'apigw-route' ? n.metadata.method as string | undefined : undefined,
+            path:      n.type === 'apigw-route' ? n.metadata.path   as string | undefined : undefined,
+            hasLambda: n.type === 'apigw-route' ? !!(n.metadata.lambdaArn) : undefined,
+            // API Gateway container extra fields
+            endpoint:  n.type === 'apigw' ? n.metadata.endpoint as string | undefined : undefined,
+            // Focus mode
+            dimmed:      highlightedIds !== null && !highlightedIds.has(n.id),
+            // Lock mode
+            locked:      isLocked,
+            // User annotation
+            annotation:  annotations[n.id],
+          },
+          selected: n.id === selectedId,
+        }
+      })
+
+      // Append imported nodes (from Terraform state import) as resource nodes
+      const existingIds = new Set(mapped.map((n) => n.id))
+      const importedFlowNodes: Node[] = importedNodes
+        .filter((n) => !existingIds.has(n.id))
+        .map((n, i) => ({
+          id:       n.id,
+          type:     'resource' as const,
+          position: livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: 50 },
+          data:     { label: n.label, nodeType: n.type, status: n.status, region: n.region },
+          selected: n.id === selectedId,
+        }))
+
+      return [...mapped, ...importedFlowNodes]
+    },
+    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes],
   )
 
   const flowEdges: Edge[] = useMemo(() => {
