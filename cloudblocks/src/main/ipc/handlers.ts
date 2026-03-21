@@ -22,6 +22,9 @@ import type { CloudFrontEditParams } from '../../renderer/types/edit'
 import type { AwsProfile, CloudNode } from '../../renderer/types/cloud'
 import { generateTerraformFile } from '../terraform/index'
 import { parseTfState } from '../aws/tfstate/parser'
+import { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from '../aws/iam/fetcher'
+import type { IamAnalysisResult } from '../../renderer/types/iam'
+import type { NodeType } from '../../renderer/types/cloud'
 
 function settingsPath(): string {
   return path.join(app.getPath('userData'), 'settings.json')
@@ -304,6 +307,43 @@ export function registerHandlers(win: BrowserWindow): void {
       return ['default']
     }
   })
+
+  // IAM Least-Privilege Advisor
+  ipcMain.handle(
+    IPC.IAM_ANALYZE,
+    async (
+      _event,
+      { nodeId, nodeType, metadata }: { nodeId: string; nodeType: NodeType; metadata: Record<string, unknown> }
+    ): Promise<IamAnalysisResult> => {
+      if (!clients) {
+        return { nodeId, findings: [], error: 'No AWS client — connect first', fetchedAt: Date.now() }
+      }
+
+      const node = { id: nodeId, type: nodeType, metadata } as import('../../renderer/types/cloud').CloudNode
+
+      const timeoutPromise = new Promise<IamAnalysisResult>((resolve) =>
+        setTimeout(
+          () => resolve({ nodeId, findings: [], error: 'IAM analysis timed out after 10s', fetchedAt: Date.now() }),
+          10_000
+        )
+      )
+
+      const analyzePromise = (async (): Promise<IamAnalysisResult> => {
+        try {
+          let findings
+          if (nodeType === 'ec2') findings = await fetchEc2IamData(node, clients!)
+          else if (nodeType === 'lambda') findings = await fetchLambdaIamData(node, clients!)
+          else if (nodeType === 's3') findings = await fetchS3IamData(node, clients!)
+          else findings = []
+          return { nodeId, findings, fetchedAt: Date.now() }
+        } catch (err) {
+          return { nodeId, findings: [], error: (err as Error).message, fetchedAt: Date.now() }
+        }
+      })()
+
+      return Promise.race([analyzePromise, timeoutPromise])
+    }
+  )
 
   // Initialise engine for the default session
   cliEngine = new CliEngine(win)
