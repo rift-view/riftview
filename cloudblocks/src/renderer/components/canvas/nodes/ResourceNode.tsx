@@ -65,7 +65,7 @@ const TYPE_LABEL = {
   'r53-zone':       'R53',
   sfn:              'SFN',
   'eventbridge-bus': 'EB',
-  'unknown':         'Unknown',
+  'unknown':         '?',
 } satisfies Record<NodeType, string>
 
 interface ResourceNodeData {
