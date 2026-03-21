@@ -37,17 +37,19 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
   const [iamResult, setIamResult] = useState<IamAnalysisResult | null | undefined>(undefined)
 
   useEffect(() => {
-    if (!node || !IAM_SUPPORTED_TYPES.includes(node.type as NodeType)) {
-      setIamResult(undefined)
-      return
-    }
-    setIamResult(null)  // show loading state
-    window.cloudblocks
-      .analyzeIam(node.id, node.type as NodeType, node.metadata ?? {})
-      .then(setIamResult)
-      .catch((err: unknown) =>
-        setIamResult({ nodeId: node.id, findings: [], error: String(err), fetchedAt: Date.now() })
-      )
+    if (!node || !IAM_SUPPORTED_TYPES.includes(node.type as NodeType)) return
+    const nodeId = node.id
+    const nodeType = node.type as NodeType
+    const metadata = node.metadata ?? {}
+    Promise.resolve().then(() => {
+      setIamResult(null)
+      window.cloudblocks
+        .analyzeIam(nodeId, nodeType, metadata)
+        .then(setIamResult)
+        .catch((err: unknown) =>
+          setIamResult({ nodeId, findings: [], error: String(err), fetchedAt: Date.now() })
+        )
+    })
   }, [node?.id])
 
   function handleIamRecheck(): void {
