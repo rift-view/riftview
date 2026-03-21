@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useCloudStore } from '../store/cloud'
+import { useUIStore } from '../store/ui'
 import type { AwsProfile } from '../types/cloud'
 
 const LOCAL_PROFILE_NAME = 'local'
@@ -61,6 +62,22 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps): React.JSX.Element {
     setProfile(newProfile)
     setConnStatus('unknown')
     window.cloudblocks.selectProfile(newProfile)
+  }
+
+  async function handleImportTfState(): Promise<void> {
+    try {
+      const result = await window.cloudblocks.importTfState()
+      if (result.error) {
+        useUIStore.getState().showToast(result.error, 'error')
+        return
+      }
+      if (result.nodes.length > 0) {
+        useCloudStore.getState().setImportedNodes(result.nodes)
+        useUIStore.getState().showToast(`Imported ${result.nodes.length} resources from Terraform state`, 'success')
+      }
+    } catch {
+      useUIStore.getState().showToast('Failed to import Terraform state', 'error')
+    }
   }
 
   const statusColor  = connStatus === 'connected' ? '#28c840' : connStatus === 'error' ? '#ff5f57' : '#febc2e'
@@ -137,6 +154,16 @@ export function TitleBar({ onSettingsOpen }: TitleBarProps): React.JSX.Element {
         <div className="w-2 h-2 rounded-full" style={{ background: statusColor, boxShadow: statusGlow }} />
         <span className="text-[9px] font-mono" style={{ color: statusColor }}>{statusLabel}</span>
       </div>
+
+      {/* TF Import button */}
+      <button
+        onClick={() => { void handleImportTfState() }}
+        title="Import .tfstate file"
+        className="text-[10px] font-mono px-2 py-0.5 rounded"
+        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)', cursor: 'pointer' }}
+      >
+        TF Import
+      </button>
 
       {/* Settings gear */}
       <button

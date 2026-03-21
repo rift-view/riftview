@@ -21,6 +21,7 @@ import type { CloudFrontParams } from '../../renderer/types/create'
 import type { CloudFrontEditParams } from '../../renderer/types/edit'
 import type { AwsProfile, CloudNode } from '../../renderer/types/cloud'
 import { generateTerraformFile } from '../terraform/index'
+import { parseTfState } from '../aws/tfstate/parser'
 
 function settingsPath(): string {
   return path.join(app.getPath('userData'), 'settings.json')
@@ -269,6 +270,24 @@ export function registerHandlers(win: BrowserWindow): void {
     const file = path.join(app.getPath('userData'), 'annotations.json')
     fs.writeFileSync(file, JSON.stringify(data), 'utf-8')
   })
+
+  // Terraform state import — open a native file dialog and parse the .tfstate
+  ipcMain.handle(IPC.TFSTATE_IMPORT, async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      filters: [{ name: 'Terraform State', extensions: ['tfstate', 'json'] }],
+      properties: ['openFile'],
+    })
+    if (canceled || !filePaths[0]) return { nodes: [] }
+    try {
+      const raw = await fsp.readFile(filePaths[0], 'utf-8')
+      const nodes = parseTfState(raw)
+      return { nodes }
+    } catch (err) {
+      return { nodes: [], error: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle(IPC.TFSTATE_CLEAR, () => ({ ok: true }))
 
   // List AWS credential profiles from ~/.aws/credentials
   ipcMain.handle(IPC.AWS_LIST_PROFILES, (): string[] => {

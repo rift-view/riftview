@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import type { CloudNode, ScanDelta } from '../../../src/renderer/types/cloud'
+import type { CloudNode, NodeStatus, ScanDelta } from '../../../src/renderer/types/cloud'
+
+describe('NodeStatus includes imported', () => {
+  it('imported is a valid NodeStatus', () => {
+    const s: NodeStatus = 'imported'
+    expect(s).toBe('imported')
+  })
+})
 
 describe('CloudNode type', () => {
   it('accepts a valid CloudNode object', () => {

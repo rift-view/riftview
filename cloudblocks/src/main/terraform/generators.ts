@@ -74,4 +74,5 @@ export const terraformGenerators: TerraformGeneratorMap = {
   'r53-zone': () => '',
   'sfn': () => '',
   'eventbridge-bus': () => '',
+  'unknown': () => '',
 }

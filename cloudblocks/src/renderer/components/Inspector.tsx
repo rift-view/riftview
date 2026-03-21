@@ -23,7 +23,10 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
   const setAnnotation   = useUIStore((s) => s.setAnnotation)
   const clearAnnotation = useUIStore((s) => s.clearAnnotation)
   const nodes           = useCloudStore((s) => s.nodes)
-  const node          = nodes.find((n) => n.id === selectedId)
+  const importedNodes   = useCloudStore((s) => s.importedNodes)
+  const node          = nodes.find((n) => n.id === selectedId) ?? importedNodes.find((n) => n.id === selectedId)
+
+  const isImported = node?.status === 'imported'
 
   const [invalidatePath, setInvalidatePath] = useState('/*')
   const [acmDeleteError, setAcmDeleteError] = useState<string | null>(null)
@@ -54,8 +57,8 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             </div>
           </div>
           {(() => {
-            const srcNode = nodes.find((n) => n.id === selectedEdgeInfo.source)
-            const tgtNode = nodes.find((n) => n.id === selectedEdgeInfo.target)
+            const srcNode = nodes.find((n) => n.id === selectedEdgeInfo.source) ?? importedNodes.find((n) => n.id === selectedEdgeInfo.source)
+            const tgtNode = nodes.find((n) => n.id === selectedEdgeInfo.target) ?? importedNodes.find((n) => n.id === selectedEdgeInfo.target)
             return (
               <>
                 <div className="mb-3">
@@ -110,6 +113,18 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
           <div className="text-[9px] font-bold mb-2 pb-1" style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}>
             {node.type.toUpperCase()}  ·  Selected
           </div>
+
+          {isImported && (
+            <div style={{ padding: '6px 10px', borderRadius: 4, background: 'var(--cb-bg-secondary)', border: '1px solid var(--cb-border)', fontSize: 11, color: 'var(--cb-text-muted)', marginBottom: 8 }}>
+              Imported from Terraform — read-only
+            </div>
+          )}
+
+          {isImported && node.type === 'unknown' && (
+            <div style={{ fontSize: 11, color: '#f59e0b', marginBottom: 8 }}>
+              Unsupported Terraform resource type: {String(node.metadata?.unsupportedTfType ?? 'unknown')}
+            </div>
+          )}
 
           <button
             onClick={() => toggleLockNode(node.id)}
@@ -203,22 +218,24 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                 <div style={{ marginTop: 6, fontSize: 8, color: '#ff5f57' }}>{acmDeleteError}</div>
               )}
 
-              <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                <button
-                  onClick={() => {
-                    const inUseBy = node.metadata.inUseBy as string[]
-                    if (inUseBy.length > 0) {
-                      setAcmDeleteError(`Cannot delete: in use by ${inUseBy.length} resource(s)`)
-                      return
-                    }
-                    setAcmDeleteError(null)
-                    onDelete(node)
-                  }}
-                  style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                >
-                  ✕ Delete
-                </button>
-              </div>
+              {!isImported && (
+                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                  <button
+                    onClick={() => {
+                      const inUseBy = node.metadata.inUseBy as string[]
+                      if (inUseBy.length > 0) {
+                        setAcmDeleteError(`Cannot delete: in use by ${inUseBy.length} resource(s)`)
+                        return
+                      }
+                      setAcmDeleteError(null)
+                      onDelete(node)
+                    }}
+                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                  >
+                    ✕ Delete
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -241,40 +258,44 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                 </div>
               ))}
 
-              <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                <button
-                  onClick={() => onEdit(node)}
-                  style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                >
-                  ✎ Edit
-                </button>
-                <button
-                  onClick={() => onDelete(node)}
-                  style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                >
-                  ✕ Delete
-                </button>
-              </div>
+              {!isImported && (
+                <>
+                  <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                    <button
+                      onClick={() => onEdit(node)}
+                      style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                    >
+                      ✎ Edit
+                    </button>
+                    <button
+                      onClick={() => onDelete(node)}
+                      style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                    >
+                      ✕ Delete
+                    </button>
+                  </div>
 
-              {/* Invalidate cache quick action */}
-              <div style={{ marginTop: 10 }}>
-                <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Invalidate Cache</div>
-                <input
-                  value={invalidatePath}
-                  onChange={(e) => setInvalidatePath(e.target.value)}
-                  style={{
-                    width: '100%', background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)',
-                    borderRadius: 2, padding: '2px 5px', color: 'var(--cb-text-primary)',
-                    fontFamily: 'monospace', fontSize: 9, boxSizing: 'border-box',
-                  }}
-                />
-                <button
-                  onClick={() => onQuickAction(node, 'invalidate', { path: invalidatePath })}
-                  style={{ ...btnBase, border: '1px solid #a78bfa', color: '#a78bfa', width: '100%', marginTop: 4 }}
-                >
-                  Invalidate
-                </button>
-              </div>
+                  {/* Invalidate cache quick action */}
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Invalidate Cache</div>
+                    <input
+                      value={invalidatePath}
+                      onChange={(e) => setInvalidatePath(e.target.value)}
+                      style={{
+                        width: '100%', background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)',
+                        borderRadius: 2, padding: '2px 5px', color: 'var(--cb-text-primary)',
+                        fontFamily: 'monospace', fontSize: 9, boxSizing: 'border-box',
+                      }}
+                    />
+                    <button
+                      onClick={() => onQuickAction(node, 'invalidate', { path: invalidatePath })}
+                      style={{ ...btnBase, border: '1px solid #a78bfa', color: '#a78bfa', width: '100%', marginTop: 4 }}
+                    >
+                      Invalidate
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -312,24 +333,28 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                   {nodes.filter((n) => n.type === 'apigw-route' && n.parentId === node.id).length}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                <button
-                  onClick={() => onEdit(node)}
-                  style={{ flex: 1, background: 'var(--cb-bg-elevated)', border: '1px solid #64b5f6', borderRadius: 2, padding: '3px 0', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
-                >✎ Edit</button>
-                <button
-                  onClick={() => onDelete(node)}
-                  style={{ flex: 1, background: 'var(--cb-bg-elevated)', border: '1px solid #ff5f57', borderRadius: 2, padding: '3px 0', color: '#ff5f57', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
-                >✕ Delete</button>
-              </div>
-              <div style={{ marginTop: 4, fontSize: 8, color: 'var(--cb-text-muted)' }}>Deletes all routes in this API.</div>
-              <button
-                onClick={() => {
-                  setActiveCreate({ resource: 'apigw-route', view: 'topology' })
-                  if (onAddRoute) onAddRoute(node.id)
-                }}
-                style={{ width: '100%', marginTop: 8, background: 'var(--cb-bg-elevated)', border: '1px solid #8b5cf6', borderRadius: 2, padding: '3px 0', color: '#8b5cf6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
-              >+ Add Route</button>
+              {!isImported && (
+                <>
+                  <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                    <button
+                      onClick={() => onEdit(node)}
+                      style={{ flex: 1, background: 'var(--cb-bg-elevated)', border: '1px solid #64b5f6', borderRadius: 2, padding: '3px 0', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
+                    >✎ Edit</button>
+                    <button
+                      onClick={() => onDelete(node)}
+                      style={{ flex: 1, background: 'var(--cb-bg-elevated)', border: '1px solid #ff5f57', borderRadius: 2, padding: '3px 0', color: '#ff5f57', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
+                    >✕ Delete</button>
+                  </div>
+                  <div style={{ marginTop: 4, fontSize: 8, color: 'var(--cb-text-muted)' }}>Deletes all routes in this API.</div>
+                  <button
+                    onClick={() => {
+                      setActiveCreate({ resource: 'apigw-route', view: 'topology' })
+                      if (onAddRoute) onAddRoute(node.id)
+                    }}
+                    style={{ width: '100%', marginTop: 8, background: 'var(--cb-bg-elevated)', border: '1px solid #8b5cf6', borderRadius: 2, padding: '3px 0', color: '#8b5cf6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
+                  >+ Add Route</button>
+                </>
+              )}
             </div>
           )}
 
@@ -358,12 +383,14 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                   </div>
                 </div>
               ))}
-              <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                <button
-                  onClick={() => onDelete(node)}
-                  style={{ flex: 1, background: 'var(--cb-bg-elevated)', border: '1px solid #ff5f57', borderRadius: 2, padding: '3px 0', color: '#ff5f57', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
-                >✕ Delete</button>
-              </div>
+              {!isImported && (
+                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                  <button
+                    onClick={() => onDelete(node)}
+                    style={{ flex: 1, background: 'var(--cb-bg-elevated)', border: '1px solid #ff5f57', borderRadius: 2, padding: '3px 0', color: '#ff5f57', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
+                  >✕ Delete</button>
+                </div>
+              )}
             </div>
           )}
 
@@ -384,43 +411,47 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                <button
-                  onClick={() => onEdit(node)}
-                  style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                >
-                  ✎ Edit
-                </button>
-                <button
-                  onClick={() => onDelete(node)}
-                  style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                >
-                  ✕ Delete
-                </button>
-              </div>
-
-              {(node.type === 'ec2' || node.type === 'rds') && (
-                <div style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Quick actions</div>
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                    {node.status !== 'stopped' && (
-                      <button onClick={() => onQuickAction(node, 'stop')}
-                        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #febc2e', borderRadius: 2, padding: '2px 8px', color: '#febc2e', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
-                        Stop
-                      </button>
-                    )}
-                    {node.status === 'stopped' && (
-                      <button onClick={() => onQuickAction(node, 'start')}
-                        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #28c840', borderRadius: 2, padding: '2px 8px', color: '#28c840', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
-                        Start
-                      </button>
-                    )}
-                    <button onClick={() => onQuickAction(node, 'reboot')}
-                      style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #64b5f6', borderRadius: 2, padding: '2px 8px', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
-                      Reboot
+              {!isImported && (
+                <>
+                  <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                    <button
+                      onClick={() => onEdit(node)}
+                      style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                    >
+                      ✎ Edit
+                    </button>
+                    <button
+                      onClick={() => onDelete(node)}
+                      style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                    >
+                      ✕ Delete
                     </button>
                   </div>
-                </div>
+
+                  {(node.type === 'ec2' || node.type === 'rds') && (
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Quick actions</div>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        {node.status !== 'stopped' && (
+                          <button onClick={() => onQuickAction(node, 'stop')}
+                            style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #febc2e', borderRadius: 2, padding: '2px 8px', color: '#febc2e', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                            Stop
+                          </button>
+                        )}
+                        {node.status === 'stopped' && (
+                          <button onClick={() => onQuickAction(node, 'start')}
+                            style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #28c840', borderRadius: 2, padding: '2px 8px', color: '#28c840', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                            Start
+                          </button>
+                        )}
+                        <button onClick={() => onQuickAction(node, 'reboot')}
+                          style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #64b5f6', borderRadius: 2, padding: '2px 8px', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                          Reboot
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}

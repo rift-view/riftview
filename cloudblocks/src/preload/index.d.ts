@@ -26,5 +26,7 @@ interface Window {
     onUpdateAvailable(cb: () => void): () => void
     loadAnnotations(): Promise<Record<string, string>>
     saveAnnotations(data: Record<string, string>): Promise<void>
+    importTfState(): Promise<{ nodes: import('../renderer/types/cloud').CloudNode[]; error?: string }>
+    clearTfState(): Promise<{ ok: boolean }>
   }
 }

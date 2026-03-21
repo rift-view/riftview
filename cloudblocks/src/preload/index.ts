@@ -79,4 +79,8 @@ contextBridge.exposeInMainWorld('cloudblocks', {
   // Annotations — persisted to userData/annotations.json
   loadAnnotations: (): Promise<Record<string, string>> => ipcRenderer.invoke(IPC.ANNOTATIONS_LOAD),
   saveAnnotations: (data: Record<string, string>): Promise<void> => ipcRenderer.invoke(IPC.ANNOTATIONS_SAVE, data),
+
+  // Terraform state import
+  importTfState: () => ipcRenderer.invoke(IPC.TFSTATE_IMPORT),
+  clearTfState:  () => ipcRenderer.invoke(IPC.TFSTATE_CLEAR),
 })

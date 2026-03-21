@@ -26,6 +26,7 @@ const TYPE_BADGE_COLOR = {
   'r53-zone':       '#FF9900',
   sfn:              '#FF9900',
   'eventbridge-bus': '#FF9900',
+  'unknown':         '#6b7280',
 } satisfies Record<NodeType, string>
 
 const TYPE_SHORT = {
@@ -52,6 +53,7 @@ const TYPE_SHORT = {
   'r53-zone':       'R53',
   sfn:              'SFN',
   'eventbridge-bus': 'EB',
+  'unknown':         '?',
 } satisfies Record<NodeType, string>
 
 // Metadata field keys to search and how to label them in the subtitle
