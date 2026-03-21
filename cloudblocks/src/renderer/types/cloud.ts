@@ -1,4 +1,4 @@
-export type NodeStatus = 'running' | 'stopped' | 'pending' | 'error' | 'unknown' | 'creating' | 'deleting'
+export type NodeStatus = 'running' | 'stopped' | 'pending' | 'error' | 'unknown' | 'creating' | 'deleting' | 'imported'
 
 export type NodeType =
   | 'ec2'
@@ -24,6 +24,7 @@ export type NodeType =
   | 'r53-zone'
   | 'sfn'
   | 'eventbridge-bus'
+  | 'unknown'
 
 export type EdgeType = 'trigger' | 'origin' | 'subscription'
 
