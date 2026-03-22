@@ -1,6 +1,14 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { NodeStatus, NodeType } from '../../../types/cloud'
 
+function driftStripeColor(driftStatus: import('../../../types/cloud').DriftStatus): string {
+  switch (driftStatus) {
+    case 'unmanaged': return '#f59e0b'
+    case 'missing':   return '#ef4444'
+    case 'matched':   return '#22c55e'
+  }
+}
+
 function statusStripeColor(status: NodeStatus): string {
   switch (status) {
     case 'running':  return 'var(--cb-success, #22c55e)'
@@ -70,21 +78,22 @@ const TYPE_LABEL = {
 } satisfies Record<NodeType, string>
 
 interface ResourceNodeData {
-  label:       string
-  nodeType:    NodeType
-  status:      NodeStatus
-  vpcLabel?:   string   // graph view only — VPC membership indicator
-  vpcColor?:   string   // graph view only — color assigned to that VPC
-  region?:     string   // shown as muted secondary label when node is not inside a VPC
-  dimmed?:     boolean  // focus mode — node is not in the highlighted subgraph
-  locked?:     boolean  // lock mode — node cannot be dragged or selected
-  annotation?: string  // user note — shows indicator badge if non-empty
+  label:        string
+  nodeType:     NodeType
+  status:       NodeStatus
+  driftStatus?: import('../../../types/cloud').DriftStatus
+  vpcLabel?:    string   // graph view only — VPC membership indicator
+  vpcColor?:    string   // graph view only — color assigned to that VPC
+  region?:      string   // shown as muted secondary label when node is not inside a VPC
+  dimmed?:      boolean  // focus mode — node is not in the highlighted subgraph
+  locked?:      boolean  // lock mode — node cannot be dragged or selected
+  annotation?:  string  // user note — shows indicator badge if non-empty
 }
 
 export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
   const d = data as unknown as ResourceNodeData
   const borderColor = TYPE_BORDER[d.nodeType] ?? '#555'
-  const stripeColor = statusStripeColor(d.status)
+  const stripeColor = d.driftStatus ? driftStripeColor(d.driftStatus) : statusStripeColor(d.status)
   const typeLabel   = TYPE_LABEL[d.nodeType] ?? d.nodeType.toUpperCase()
   const isImported  = d.status === 'imported'
 
@@ -199,6 +208,32 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
           letterSpacing: '0.05em',
         }}>
           TF
+        </div>
+      )}
+
+      {/* Drift badge — shows drift status relative to Terraform state */}
+      {d.driftStatus && (
+        <div
+          title={
+            d.driftStatus === 'unmanaged' ? 'Unmanaged — not in Terraform state' :
+            d.driftStatus === 'missing'   ? 'Missing — declared in Terraform but not in live AWS' :
+                                            'Matched — found in both live AWS and Terraform state'
+          }
+          style={{
+            position:     'absolute',
+            top:          -6,
+            right:        isImported ? 14 : -6,
+            background:   d.driftStatus === 'unmanaged' ? '#f59e0b' :
+                          d.driftStatus === 'missing'   ? '#ef4444' : '#22c55e',
+            color:        d.driftStatus === 'unmanaged' ? '#000' : '#fff',
+            fontSize:     8,
+            fontWeight:   700,
+            padding:      '1px 4px',
+            borderRadius: 3,
+            zIndex:       2,
+          }}
+        >
+          {d.driftStatus === 'unmanaged' ? '!' : d.driftStatus === 'missing' ? '✕' : '✓'}
         </div>
       )}
     </div>
