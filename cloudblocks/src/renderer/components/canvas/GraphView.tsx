@@ -191,6 +191,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const snapToGrid         = useUIStore((s) => s.snapToGrid)
   const lockedNodes        = useUIStore((s) => s.lockedNodes)
   const annotations        = useUIStore((s) => s.annotations)
+  const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const graphPositions  = useUIStore((s) => s.nodePositions.graph)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
@@ -304,6 +305,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
             label:     n.label,
             nodeType:  n.type,
             status:    n.status,
+            driftStatus: n.driftStatus,
             vpcLabel:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcLabel : undefined,
             vpcColor:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcColor : undefined,
             region:    n.region,
@@ -332,13 +334,20 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           id:       n.id,
           type:     'resource' as const,
           position: livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: 50 },
-          data:     { label: n.label, nodeType: n.type, status: n.status, region: n.region },
+          data:     { label: n.label, nodeType: n.type, status: n.status, region: n.region, driftStatus: n.driftStatus },
           selected: n.id === selectedId,
         }))
 
-      return [...mapped, ...importedFlowNodes]
+      const all = [...mapped, ...importedFlowNodes]
+      if (!driftFilterActive) return all
+      const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw'])
+      return all.filter((fn) => {
+        const d = fn.data as { nodeType?: string; driftStatus?: string }
+        if (DRIFT_CONTAINER_TYPES.has(d.nodeType ?? '')) return true
+        return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
+      })
     },
-    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes],
+    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes, driftFilterActive],
   )
 
   const flowEdges: Edge[] = useMemo(() => {
