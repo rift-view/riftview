@@ -23,6 +23,11 @@ export function TitleBar(): React.JSX.Element {
   const nodes         = useCloudStore((s) => s.nodes)
   const importedNodes = useCloudStore((s) => s.importedNodes)
 
+  const driftMatched   = nodes.filter((n) => n.driftStatus === 'matched').length
+  const driftUnmanaged = nodes.filter((n) => n.driftStatus === 'unmanaged').length
+  const driftMissing   = importedNodes.filter((n) => n.driftStatus === 'missing').length
+  const driftTotal     = driftMatched + driftMissing
+
   useEffect(() => {
     window.cloudblocks.listProfiles().then(setProfiles)
     const unsub = window.cloudblocks.onConnStatus((status) => {
@@ -164,22 +169,16 @@ export function TitleBar(): React.JSX.Element {
       </button>
 
       {/* Drift summary pill — shown after TF import */}
-      {importedNodes.length > 0 && (() => {
-        const matched   = nodes.filter((n) => n.driftStatus === 'matched').length
-        const unmanaged = nodes.filter((n) => n.driftStatus === 'unmanaged').length
-        const missing   = importedNodes.filter((n) => n.driftStatus === 'missing').length
-        const total     = matched + missing
-        return (
-          <span className="text-[9px] font-mono" style={{ color: 'var(--cb-text-muted)', whiteSpace: 'nowrap' }}>
-            {'Imported '}{total}{' · '}
-            <span style={{ color: '#22c55e' }}>✓ {matched}</span>
-            {' · '}
-            <span style={{ color: '#f59e0b' }}>! {unmanaged}</span>
-            {' · '}
-            <span style={{ color: '#ef4444' }}>✕ {missing}</span>
-          </span>
-        )
-      })()}
+      {importedNodes.length > 0 && (
+        <span className="text-[9px] font-mono" style={{ color: 'var(--cb-text-muted)', whiteSpace: 'nowrap' }}>
+          {'Imported '}{driftTotal}{' · '}
+          <span style={{ color: '#22c55e' }}>✓ {driftMatched}</span>
+          {' · '}
+          <span style={{ color: '#f59e0b' }}>! {driftUnmanaged}</span>
+          {' · '}
+          <span style={{ color: '#ef4444' }}>✕ {driftMissing}</span>
+        </span>
+      )}
 
       {/* Settings + About */}
       <button
