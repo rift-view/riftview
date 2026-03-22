@@ -41,6 +41,8 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
   const toggleIntegrations = useUIStore((s) => s.toggleIntegrations)
   const snapToGrid         = useUIStore((s) => s.snapToGrid)
   const toggleSnapToGrid   = useUIStore((s) => s.toggleSnapToGrid)
+  const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
+  const toggleDriftFilter  = useUIStore((s) => s.toggleDriftFilter)
   const [modalSlot, setModalSlot] = useState<number | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [exportOpen, setExportOpen] = useState(false)
@@ -188,6 +190,21 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
         >
           ▦ Grid
         </button>
+
+        {importedNodes.length > 0 && (
+          <button
+            onClick={toggleDriftFilter}
+            title={driftFilterActive ? 'Show all nodes' : 'Show only unmanaged and missing nodes'}
+            style={{
+              ...btnBase,
+              background: driftFilterActive ? 'var(--cb-bg-elevated)' : 'transparent',
+              border: `1px solid ${driftFilterActive ? '#ef4444' : 'var(--cb-border)'}`,
+              color:  driftFilterActive ? '#ef4444' : '#666',
+            }}
+          >
+            ⊘ Drift only
+          </button>
+        )}
 
         {/* Export dropdown */}
         <div ref={exportRef} style={{ position: 'relative' }}>

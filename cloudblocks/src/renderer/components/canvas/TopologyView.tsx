@@ -106,7 +106,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
           x: GLOBAL_PAD + col * (RES_W + RES_GAP_X),
           y: GLOBAL_LABEL + row * (RES_H + RES_GAP_Y),
         },
-        data:     { label: n.label, nodeType: n.type, status: n.status, dimmed: highlightedIds !== null && !highlightedIds.has(n.id) },
+        data:     { label: n.label, nodeType: n.type, status: n.status, driftStatus: n.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(n.id) },
         selected: n.id === selectedId,
         zIndex:   1,
       })
@@ -192,7 +192,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
               x: SUB_PAD_X + col * (RES_W + RES_GAP_X),
               y: SUB_PAD_Y + row * (RES_H + RES_GAP_Y),
             },
-            data:     { label: r.label, nodeType: r.type, status: r.status, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
+            data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
             selected: r.id === selectedId,
           })
         })
@@ -213,7 +213,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
           x: VPC_PAD + col * (RES_W + RES_GAP_X),
           y: subnetBottom + row * (RES_H + RES_GAP_Y),
         },
-        data:     { label: r.label, nodeType: r.type, status: r.status, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
+        data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
         selected: r.id === selectedId,
       })
     })
@@ -279,7 +279,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
       id:       r.id,
       type:     'resource',
       position: { x: 40 + (i % ROOT_COLS) * (RES_W + RES_GAP_X + 40), y: rootY + Math.floor(i / ROOT_COLS) * (RES_H + RES_GAP_Y + 20) },
-      data:     { label: r.label, nodeType: r.type, status: r.status, region: r.region, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
+      data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, region: r.region, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
       selected: r.id === selectedId,
     })
   })
@@ -405,6 +405,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const collapsedSubnets   = useUIStore((s) => s.collapsedSubnets)
   const toggleSubnet       = useUIStore((s) => s.toggleSubnet)
   const annotations        = useUIStore((s) => s.annotations)
+  const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const topologyPositions = useUIStore((s) => s.nodePositions.topology)
   const setNodePosition   = useUIStore((s) => s.setNodePosition)
@@ -506,7 +507,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
           id:       n.id,
           type:     'resource',
           position: topologyPositions[n.id] ?? { x: 50, y: 50 },
-          data:     { label: n.label, nodeType: n.type, status: n.status },
+          data:     { label: n.label, nodeType: n.type, status: n.status, driftStatus: n.driftStatus },
           selected: n.id === selectedId,
         }
         if (parentExists) {
@@ -515,8 +516,15 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         return base
       })
 
-    return [...mapped, ...importedFlowNodes]
-  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes])
+    const all = [...mapped, ...importedFlowNodes]
+    if (!driftFilterActive) return all
+    const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw'])
+    return all.filter((fn) => {
+      const d = fn.data as { nodeType?: string; driftStatus?: string }
+      if (DRIFT_CONTAINER_TYPES.has(d.nodeType ?? '')) return true
+      return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
+    })
+  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
