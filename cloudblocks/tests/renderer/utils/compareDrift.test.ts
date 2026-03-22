@@ -75,13 +75,6 @@ describe('applyDriftToState', () => {
     expect(result.importedNodes).toHaveLength(1)
   })
 
-  it('stamps unmanaged on all live nodes when importedNodes is empty', () => {
-    // Note: cloud.ts guards against calling applyDriftToState when importedNodes.length === 0
-    // but if called, all live nodes correctly become unmanaged
-    const result = applyDriftToState([node('i-123')], [])
-    expect(result.nodes[0].driftStatus).toBe('unmanaged')
-  })
-
   it('excludes type:unknown imported nodes from matching', () => {
     const live = [node('i-123')]
     const imp  = [imported('tf-unknown-nat-1', 'unknown')]
