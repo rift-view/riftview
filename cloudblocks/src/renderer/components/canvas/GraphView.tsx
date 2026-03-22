@@ -340,7 +340,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
       const all = [...mapped, ...importedFlowNodes]
       if (!driftFilterActive) return all
-      const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw'])
+      const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw', 'globalZone', 'apigw-route'])
       return all.filter((fn) => {
         const d = fn.data as { nodeType?: string; driftStatus?: string }
         if (DRIFT_CONTAINER_TYPES.has(d.nodeType ?? '')) return true
