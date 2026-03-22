@@ -2,6 +2,7 @@ import { create, createStore } from 'zustand'
 import type { StoreApi } from 'zustand'
 import type { AwsProfile, CloudNode, NodeStatus, ScanDelta, ScanError, Settings } from '../types/cloud'
 import { applyTheme } from '../utils/applyTheme'
+import { applyDriftToState } from '../utils/compareDrift'
 
 export type { Settings }
 
@@ -75,7 +76,12 @@ export const useCloudStore = create<CloudState>((set) => ({
         return !existing || !protectedStatuses.includes(existing.status)
       })
       for (const id of safeToRemove) nodeMap.delete(id)
-      return { nodes: Array.from(nodeMap.values()), lastScannedAt: new Date() }
+      const newNodes = Array.from(nodeMap.values())
+      if (state.importedNodes.length > 0) {
+        const applied = applyDriftToState(newNodes, state.importedNodes)
+        return { nodes: applied.nodes, importedNodes: applied.importedNodes, lastScannedAt: new Date() }
+      }
+      return { nodes: newNodes, lastScannedAt: new Date() }
     }),
 
   setScanStatus:      (status)  => set({ scanStatus: status }),
@@ -114,8 +120,17 @@ export const useCloudStore = create<CloudState>((set) => ({
   setScanErrors:   (errors) => set({ scanErrors: errors }),
   clearScanErrors: ()       => set({ scanErrors: [] }),
 
-  setImportedNodes:  (nodes) => set({ importedNodes: nodes }),
-  clearImportedNodes: ()     => set({ importedNodes: [] }),
+  setImportedNodes: (nodes) =>
+    set((state) => {
+      if (nodes.length === 0) return { importedNodes: [] }
+      const applied = applyDriftToState(state.nodes, nodes)
+      return { nodes: applied.nodes, importedNodes: applied.importedNodes }
+    }),
+  clearImportedNodes: () =>
+    set((state) => ({
+      importedNodes: [],
+      nodes: state.nodes.map(({ driftStatus: _, tfMetadata: __, ...rest }) => rest),
+    })),
 }))
 
 // test-only factory — allows isolated store instances in unit tests
@@ -148,7 +163,12 @@ export function createCloudStore(): StoreApi<CloudState> {
           return !existing || !protectedStatuses.includes(existing.status)
         })
         for (const id of safeToRemove) nodeMap.delete(id)
-        return { nodes: Array.from(nodeMap.values()), lastScannedAt: new Date() }
+        const newNodes = Array.from(nodeMap.values())
+        if (state.importedNodes.length > 0) {
+          const applied = applyDriftToState(newNodes, state.importedNodes)
+          return { nodes: applied.nodes, importedNodes: applied.importedNodes, lastScannedAt: new Date() }
+        }
+        return { nodes: newNodes, lastScannedAt: new Date() }
       }),
 
     setScanStatus:      (status)  => set({ scanStatus: status }),
@@ -180,7 +200,16 @@ export function createCloudStore(): StoreApi<CloudState> {
     setScanErrors:   (errors) => set({ scanErrors: errors }),
     clearScanErrors: ()       => set({ scanErrors: [] }),
 
-    setImportedNodes:  (nodes) => set({ importedNodes: nodes }),
-    clearImportedNodes: ()     => set({ importedNodes: [] }),
+    setImportedNodes: (nodes) =>
+      set((state) => {
+        if (nodes.length === 0) return { importedNodes: [] }
+        const applied = applyDriftToState(state.nodes, nodes)
+        return { nodes: applied.nodes, importedNodes: applied.importedNodes }
+      }),
+    clearImportedNodes: () =>
+      set((state) => ({
+        importedNodes: [],
+        nodes: state.nodes.map(({ driftStatus: _, tfMetadata: __, ...rest }) => rest),
+      })),
   }))
 }
