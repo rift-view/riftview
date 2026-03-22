@@ -16,10 +16,12 @@ export function TitleBar(): React.JSX.Element {
   const [profiles, setProfiles]             = useState<AwsProfile[]>([])
   const [connStatus, setConnStatus]         = useState<'unknown' | 'connected' | 'error'>('unknown')
   const [endpointInput, setEndpointInput]   = useState<string>(() => useCloudStore.getState().profile.endpoint ?? '')
-  const profile    = useCloudStore((s) => s.profile)
-  const region     = useCloudStore((s) => s.region)
-  const setProfile = useCloudStore((s) => s.setProfile)
-  const setRegion  = useCloudStore((s) => s.setRegion)
+  const profile       = useCloudStore((s) => s.profile)
+  const region        = useCloudStore((s) => s.region)
+  const setProfile    = useCloudStore((s) => s.setProfile)
+  const setRegion     = useCloudStore((s) => s.setRegion)
+  const nodes         = useCloudStore((s) => s.nodes)
+  const importedNodes = useCloudStore((s) => s.importedNodes)
 
   useEffect(() => {
     window.cloudblocks.listProfiles().then(setProfiles)
@@ -160,6 +162,24 @@ export function TitleBar(): React.JSX.Element {
       >
         TF Import
       </button>
+
+      {/* Drift summary pill — shown after TF import */}
+      {importedNodes.length > 0 && (() => {
+        const matched   = nodes.filter((n) => n.driftStatus === 'matched').length
+        const unmanaged = nodes.filter((n) => n.driftStatus === 'unmanaged').length
+        const missing   = importedNodes.filter((n) => n.driftStatus === 'missing').length
+        const total     = matched + missing
+        return (
+          <span className="text-[9px] font-mono" style={{ color: 'var(--cb-text-muted)', whiteSpace: 'nowrap' }}>
+            {'Imported '}{total}{' · '}
+            <span style={{ color: '#22c55e' }}>✓ {matched}</span>
+            {' · '}
+            <span style={{ color: '#f59e0b' }}>! {unmanaged}</span>
+            {' · '}
+            <span style={{ color: '#ef4444' }}>✕ {missing}</span>
+          </span>
+        )
+      })()}
 
       {/* Settings + About */}
       <button
