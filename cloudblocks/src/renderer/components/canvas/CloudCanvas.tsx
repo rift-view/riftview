@@ -225,7 +225,16 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
                 onClick={() => {
                   setExportOpen(false)
                   window.cloudblocks.exportTerraform(nodes).then((res) => {
-                    if (res.success) useUIStore.getState().showToast('HCL exported', 'success')
+                    if (res.success) {
+                      if (res.skippedTypes && res.skippedTypes.length > 0) {
+                        useUIStore.getState().showToast(
+                          `Exported. Skipped unsupported types: ${res.skippedTypes.join(', ')}`,
+                          'error'
+                        )
+                      } else {
+                        useUIStore.getState().showToast('HCL exported', 'success')
+                      }
+                    }
                   }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
                 }}
                 disabled={nodes.length === 0}
