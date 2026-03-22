@@ -192,6 +192,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const lockedNodes        = useUIStore((s) => s.lockedNodes)
   const annotations        = useUIStore((s) => s.annotations)
   const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
+  const sidebarFilter      = useUIStore((s) => s.sidebarFilter)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const graphPositions  = useUIStore((s) => s.nodePositions.graph)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
@@ -265,6 +266,9 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
   // Compute highlighted set for focus mode
   const highlightedIds = useMemo<Set<string> | null>(() => {
+    if (sidebarFilter) {
+      return new Set(allNodes.filter((n) => n.type === sidebarFilter).map((n) => n.id))
+    }
     if (!selectedId) return null
     const rawEdges = deriveEdges(allNodes)
     const neighbours = new Set<string>([selectedId])
@@ -273,7 +277,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       if (e.target === selectedId) neighbours.add(e.source)
     }
     return neighbours
-  }, [selectedId, allNodes])
+  }, [selectedId, allNodes, sidebarFilter])
 
   // Track in-flight drag positions so controlled nodes follow the mouse.
   const [livePositions, setLivePositions] = useState<Record<string, { x: number; y: number }>>({})
@@ -347,7 +351,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
         return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
       })
     },
-    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes, driftFilterActive],
+    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes, driftFilterActive, sidebarFilter],
   )
 
   const flowEdges: Edge[] = useMemo(() => {
