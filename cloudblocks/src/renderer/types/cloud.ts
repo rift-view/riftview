@@ -1,5 +1,7 @@
 export type NodeStatus = 'running' | 'stopped' | 'pending' | 'error' | 'unknown' | 'creating' | 'deleting' | 'imported'
 
+export type DriftStatus = 'unmanaged' | 'missing' | 'matched'
+
 export type NodeType =
   | 'ec2'
   | 'vpc'
@@ -42,6 +44,8 @@ export interface CloudNode {
   metadata: Record<string, unknown>
   parentId?: string
   integrations?: { targetId: string; edgeType: EdgeType }[]
+  driftStatus?: DriftStatus
+  tfMetadata?: Record<string, unknown>
 }
 
 export interface CloudEdge {
