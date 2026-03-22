@@ -174,13 +174,15 @@ export default function App(): React.JSX.Element | null {
           <Sidebar />
         </div>
         <ResizeHandle onResize={(delta) => setSidebarWidth((w) => Math.max(80, Math.min(320, w + delta)))} />
-        <CloudCanvas onScan={triggerScan} onNodeContextMenu={handleNodeContextMenu} />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <CloudCanvas onScan={triggerScan} onNodeContextMenu={handleNodeContextMenu} />
+          <CommandDrawer />
+        </div>
         <ResizeHandle onResize={(delta) => setInspectorWidth((w) => Math.max(140, Math.min(400, w - delta)))} />
         <div style={{ width: inspectorWidth, flexShrink: 0, overflow: 'hidden' }}>
           <Inspector onDelete={handleDeleteRequest} onEdit={node => setEditTarget(node)} onQuickAction={handleQuickAction} />
         </div>
       </div>
-      <CommandDrawer />
       <CreateModal />
       <SearchPalette
         open={searchOpen}

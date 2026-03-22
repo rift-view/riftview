@@ -76,6 +76,141 @@ describe('parseTfState', () => {
     expect(nodes[0].type).toBe('cloudfront')
   })
 
+  it('maps aws_internet_gateway to igw node', () => {
+    const raw = minimal('aws_internet_gateway', { id: 'igw-abc123', vpc_id: 'vpc-1', tags: { Name: 'main-igw' } })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('igw')
+    expect(nodes[0].id).toBe('igw-abc123')
+    expect(nodes[0].label).toBe('main-igw')
+  })
+
+  it('maps aws_nat_gateway to nat-gateway node', () => {
+    const raw = minimal('aws_nat_gateway', { id: 'nat-abc123', subnet_id: 'sub-1' })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('nat-gateway')
+    expect(nodes[0].id).toBe('nat-abc123')
+  })
+
+  it('maps aws_sqs_queue to sqs node using queue ARN as ID', () => {
+    const raw = minimal('aws_sqs_queue', {
+      arn: 'arn:aws:sqs:us-east-1:123456789:my-queue',
+      url: 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue',
+    })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('sqs')
+    expect(nodes[0].id).toBe('arn:aws:sqs:us-east-1:123456789:my-queue')
+    expect(nodes[0].label).toBe('my-queue')
+  })
+
+  it('maps aws_sns_topic to sns node using topic ARN as ID', () => {
+    const raw = minimal('aws_sns_topic', { arn: 'arn:aws:sns:us-east-1:123456789:my-topic' })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('sns')
+    expect(nodes[0].id).toBe('arn:aws:sns:us-east-1:123456789:my-topic')
+    expect(nodes[0].label).toBe('my-topic')
+  })
+
+  it('maps aws_dynamodb_table to dynamo node using table name as ID', () => {
+    const raw = minimal('aws_dynamodb_table', { id: 'my-table', hash_key: 'id' })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('dynamo')
+    expect(nodes[0].id).toBe('my-table')
+  })
+
+  it('maps aws_ssm_parameter to ssm-param node using ARN as ID', () => {
+    const raw = minimal('aws_ssm_parameter', {
+      arn: 'arn:aws:ssm:us-east-1:123456789:parameter/my-param',
+      name: '/my-param',
+      type: 'String',
+    })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('ssm-param')
+    expect(nodes[0].id).toBe('arn:aws:ssm:us-east-1:123456789:parameter/my-param')
+    expect(nodes[0].label).toBe('/my-param')
+  })
+
+  it('maps aws_ssm_parameter to ssm-param node falling back to name when no ARN', () => {
+    const raw = minimal('aws_ssm_parameter', { name: '/my-param', type: 'String' })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('ssm-param')
+    expect(nodes[0].id).toBe('/my-param')
+  })
+
+  it('maps aws_secretsmanager_secret to secret node using ARN as ID', () => {
+    const raw = minimal('aws_secretsmanager_secret', {
+      arn: 'arn:aws:secretsmanager:us-east-1:123456789:secret:my-secret-abc123',
+      name: 'my-secret',
+    })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('secret')
+    expect(nodes[0].id).toBe('arn:aws:secretsmanager:us-east-1:123456789:secret:my-secret-abc123')
+    expect(nodes[0].label).toBe('my-secret')
+  })
+
+  it('maps aws_ecr_repository to ecr-repo node using repository ARN as ID', () => {
+    const raw = minimal('aws_ecr_repository', {
+      arn: 'arn:aws:ecr:us-east-1:123456789:repository/my-repo',
+      name: 'my-repo',
+    })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('ecr-repo')
+    expect(nodes[0].id).toBe('arn:aws:ecr:us-east-1:123456789:repository/my-repo')
+    expect(nodes[0].label).toBe('my-repo')
+  })
+
+  it('maps aws_route53_zone to r53-zone node using hosted zone ID path', () => {
+    const raw = minimal('aws_route53_zone', { id: '/hostedzone/Z1234ABCD', name: 'example.com.' })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('r53-zone')
+    expect(nodes[0].id).toBe('/hostedzone/Z1234ABCD')
+    expect(nodes[0].label).toBe('example.com.')
+  })
+
+  it('maps aws_sfn_state_machine to sfn node using ARN as ID', () => {
+    const raw = minimal('aws_sfn_state_machine', {
+      arn: 'arn:aws:states:us-east-1:123456789:stateMachine:my-machine',
+      name: 'my-machine',
+    })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('sfn')
+    expect(nodes[0].id).toBe('arn:aws:states:us-east-1:123456789:stateMachine:my-machine')
+    expect(nodes[0].label).toBe('my-machine')
+  })
+
+  it('maps aws_cloudwatch_event_bus to eventbridge-bus node using ARN as ID', () => {
+    const raw = minimal('aws_cloudwatch_event_bus', {
+      arn: 'arn:aws:events:us-east-1:123456789:event-bus/my-bus',
+      name: 'my-bus',
+    })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('eventbridge-bus')
+    expect(nodes[0].id).toBe('arn:aws:events:us-east-1:123456789:event-bus/my-bus')
+    expect(nodes[0].label).toBe('my-bus')
+  })
+
+  it('maps aws_acm_certificate to acm node using ARN as ID', () => {
+    const raw = minimal('aws_acm_certificate', {
+      arn: 'arn:aws:acm:us-east-1:123456789:certificate/abc-123',
+      domain_name: 'example.com',
+    })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('acm')
+    expect(nodes[0].id).toBe('arn:aws:acm:us-east-1:123456789:certificate/abc-123')
+    expect(nodes[0].label).toBe('example.com')
+  })
+
+  it('maps aws_apigatewayv2_route to apigw-route node with composite ID', () => {
+    const raw = minimal('aws_apigatewayv2_route', {
+      api_id: 'abc123',
+      id: 'route-xyz',
+      route_key: 'GET /users',
+    })
+    const nodes = parseTfState(raw)
+    expect(nodes[0].type).toBe('apigw-route')
+    expect(nodes[0].id).toBe('abc123/routes/route-xyz')
+    expect(nodes[0].label).toBe('GET /users')
+  })
+
   it('maps unknown aws_* to unknown node with warning', () => {
     const raw = minimal('aws_route_table', { id: 'rt-1' })
     const nodes = parseTfState(raw)

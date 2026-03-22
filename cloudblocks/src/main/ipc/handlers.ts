@@ -248,14 +248,14 @@ export function registerHandlers(win: BrowserWindow): void {
   // Terraform HCL export — generate file and open native save dialog
   ipcMain.handle(IPC.TERRAFORM_EXPORT, async (_e, nodes: CloudNode[]) => {
     try {
-      const hcl = generateTerraformFile(nodes)
+      const { hcl, skippedTypes } = generateTerraformFile(nodes)
       const { filePath } = await dialog.showSaveDialog({
         defaultPath: 'main.tf',
         filters: [{ name: 'Terraform', extensions: ['tf'] }],
       })
       if (!filePath) return { success: false }
       await fsp.writeFile(filePath, hcl, 'utf-8')
-      return { success: true }
+      return { success: true, skippedTypes: skippedTypes.length > 0 ? skippedTypes : undefined }
     } catch (err) {
       console.error('TERRAFORM_EXPORT error:', err)
       return { success: false }

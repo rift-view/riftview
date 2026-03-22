@@ -59,6 +59,102 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
       return { ...base, id: attrs['id'] as string, type: 'apigw', label: (attrs['name'] as string) ?? name }
     case 'aws_cloudfront_distribution':
       return { ...base, id: attrs['id'] as string, type: 'cloudfront', label: (attrs['domain_name'] as string) ?? name }
+    case 'aws_internet_gateway':
+      return {
+        ...base,
+        id: attrs['id'] as string,
+        type: 'igw',
+        label: ((attrs['tags'] as Record<string, string> | undefined)?.['Name']) ?? (attrs['id'] as string),
+      }
+    case 'aws_nat_gateway':
+      return {
+        ...base,
+        id: attrs['id'] as string,
+        type: 'nat-gateway',
+        label: ((attrs['tags'] as Record<string, string> | undefined)?.['Name']) ?? (attrs['id'] as string),
+      }
+    case 'aws_sqs_queue':
+      // Scanner enriches node ID from queue URL to queue ARN
+      return {
+        ...base,
+        id: attrs['arn'] as string,
+        type: 'sqs',
+        label: ((attrs['url'] as string | undefined) ?? (attrs['arn'] as string)).split('/').pop() ?? (attrs['arn'] as string),
+      }
+    case 'aws_sns_topic':
+      return {
+        ...base,
+        id: attrs['arn'] as string,
+        type: 'sns',
+        label: (attrs['arn'] as string).split(':').pop() ?? (attrs['arn'] as string),
+      }
+    case 'aws_dynamodb_table':
+      return {
+        ...base,
+        id: attrs['id'] as string,
+        type: 'dynamo',
+        label: attrs['id'] as string,
+      }
+    case 'aws_ssm_parameter':
+      // Scanner uses ARN ?? Name as ID
+      return {
+        ...base,
+        id: (attrs['arn'] as string | undefined) ?? (attrs['name'] as string),
+        type: 'ssm-param',
+        label: attrs['name'] as string,
+      }
+    case 'aws_secretsmanager_secret':
+      return {
+        ...base,
+        id: attrs['arn'] as string,
+        type: 'secret',
+        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string),
+      }
+    case 'aws_ecr_repository':
+      // Scanner uses repositoryArn as ID
+      return {
+        ...base,
+        id: attrs['arn'] as string,
+        type: 'ecr-repo',
+        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string),
+      }
+    case 'aws_route53_zone':
+      // Scanner uses item.Id (e.g. /hostedzone/Z1234) as ID; TF state 'id' matches this
+      return {
+        ...base,
+        id: attrs['id'] as string,
+        type: 'r53-zone',
+        label: (attrs['name'] as string | undefined) ?? (attrs['id'] as string),
+      }
+    case 'aws_sfn_state_machine':
+      return {
+        ...base,
+        id: attrs['arn'] as string,
+        type: 'sfn',
+        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string),
+      }
+    case 'aws_cloudwatch_event_bus':
+      return {
+        ...base,
+        id: attrs['arn'] as string,
+        type: 'eventbridge-bus',
+        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string),
+      }
+    case 'aws_acm_certificate':
+      return {
+        ...base,
+        id: attrs['arn'] as string,
+        type: 'acm',
+        label: (attrs['domain_name'] as string | undefined) ?? (attrs['arn'] as string),
+      }
+    case 'aws_apigatewayv2_route':
+      // Scanner ID is `${apiId}/routes/${routeId}`
+      return {
+        ...base,
+        id: `${attrs['api_id'] as string}/routes/${attrs['id'] as string}`,
+        type: 'apigw-route',
+        label: (attrs['route_key'] as string | undefined) ?? (attrs['id'] as string),
+      }
     default:
       return {
         ...base,

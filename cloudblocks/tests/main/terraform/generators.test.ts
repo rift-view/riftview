@@ -208,16 +208,20 @@ describe('generateTerraformBlock — unimplemented types', () => {
 // ── generateTerraformFile ─────────────────────────────────────────────────────
 
 describe('generateTerraformFile', () => {
-  it('returns empty string for empty node list', () => {
-    expect(generateTerraformFile([])).toBe('')
+  it('returns empty HCL and no skipped types for empty node list', () => {
+    const result = generateTerraformFile([])
+    expect(result.hcl).toBe('')
+    expect(result.skippedTypes).toEqual([])
   })
 
-  it('returns empty string when all nodes are unimplemented types', () => {
+  it('returns empty HCL and lists skipped types when all nodes are unimplemented types', () => {
     const nodes = [
       makeNode({ type: 'rds', label: 'db', metadata: {} }),
       makeNode({ type: 'alb', label: 'lb', metadata: {} }),
     ]
-    expect(generateTerraformFile(nodes)).toBe('')
+    const result = generateTerraformFile(nodes)
+    expect(result.hcl).toBe('')
+    expect(result.skippedTypes).toEqual(['rds', 'alb'])
   })
 
   it('joins multiple implemented blocks with a blank line between them', () => {
@@ -225,31 +229,44 @@ describe('generateTerraformFile', () => {
       makeNode({ id: 'v1', type: 'vpc', label: "vpc a", metadata: { cidrBlock: "10.0.0.0/16" } }),
       makeNode({ id: 'v2', type: 'vpc', label: "vpc b", metadata: { cidrBlock: "10.1.0.0/16" } }),
     ]
-    const output = generateTerraformFile(nodes)
-    expect(output).toContain('vpc_a')
-    expect(output).toContain('vpc_b')
+    const result = generateTerraformFile(nodes)
+    expect(result.hcl).toContain('vpc_a')
+    expect(result.hcl).toContain('vpc_b')
     // Two blocks separated by blank line
-    expect(output).toContain('\n\n')
+    expect(result.hcl).toContain('\n\n')
+    expect(result.skippedTypes).toEqual([])
   })
 
-  it('skips unimplemented nodes but includes implemented ones', () => {
+  it('skips unimplemented nodes but includes implemented ones, and lists skipped types', () => {
     const nodes: CloudNode[] = [
       makeNode({ type: 'rds', label: 'db', metadata: {} }),
       makeNode({ type: 'vpc', label: 'my-vpc', metadata: { cidrBlock: '10.0.0.0/8' } }),
       makeNode({ type: 'alb', label: 'lb', metadata: {} }),
     ]
-    const output = generateTerraformFile(nodes)
-    expect(output).toContain('resource "aws_vpc"')
-    expect(output).not.toContain('resource "aws_db_instance"')
-    expect(output).not.toContain('resource "aws_lb"')
+    const result = generateTerraformFile(nodes)
+    expect(result.hcl).toContain('resource "aws_vpc"')
+    expect(result.hcl).not.toContain('resource "aws_db_instance"')
+    expect(result.hcl).not.toContain('resource "aws_lb"')
+    expect(result.skippedTypes).toEqual(['rds', 'alb'])
   })
 
-  it('returns a single block (no trailing blank line) for one implemented node', () => {
+  it('returns a single block (no trailing blank line) for one implemented node, no skipped types', () => {
     const nodes: CloudNode[] = [
       makeNode({ type: 's3', label: 'solo-bucket', metadata: {} }),
     ]
-    const output = generateTerraformFile(nodes)
-    expect(output).toContain('resource "aws_s3_bucket"')
-    expect(output.endsWith('\n\n')).toBe(false)
+    const result = generateTerraformFile(nodes)
+    expect(result.hcl).toContain('resource "aws_s3_bucket"')
+    expect(result.hcl.endsWith('\n\n')).toBe(false)
+    expect(result.skippedTypes).toEqual([])
+  })
+
+  it('deduplicates skipped types', () => {
+    const nodes: CloudNode[] = [
+      makeNode({ type: 'rds', label: 'db1', metadata: {} }),
+      makeNode({ type: 'rds', label: 'db2', metadata: {} }),
+      makeNode({ type: 'alb', label: 'lb', metadata: {} }),
+    ]
+    const result = generateTerraformFile(nodes)
+    expect(result.skippedTypes).toEqual(['rds', 'alb'])
   })
 })
