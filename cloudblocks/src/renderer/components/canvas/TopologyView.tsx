@@ -406,6 +406,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const toggleSubnet       = useUIStore((s) => s.toggleSubnet)
   const annotations        = useUIStore((s) => s.annotations)
   const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
+  const sidebarFilter      = useUIStore((s) => s.sidebarFilter)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const topologyPositions = useUIStore((s) => s.nodePositions.topology)
   const setNodePosition   = useUIStore((s) => s.setNodePosition)
@@ -427,6 +428,9 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
 
   // Compute highlighted set for focus mode
   const highlightedIds = useMemo<Set<string> | null>(() => {
+    if (sidebarFilter) {
+      return new Set(allNodes.filter((n) => n.type === sidebarFilter).map((n) => n.id))
+    }
     if (!selectedId) return null
     const rawEdges = buildTopologyEdges(allNodes)
     const neighbours = new Set<string>([selectedId])
@@ -435,7 +439,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       if (e.target === selectedId) neighbours.add(e.source)
     }
     return neighbours
-  }, [selectedId, allNodes])
+  }, [selectedId, allNodes, sidebarFilter])
 
   // Track in-flight drag positions so controlled nodes follow the mouse.
   // Only persisted to the store on drag-end; cleared on drop.
@@ -524,7 +528,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       const d = fn.data as { driftStatus?: string }
       return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
     })
-  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive])
+  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive, sidebarFilter])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
