@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 import type { CloudNode, NodeType } from '../types/cloud'
@@ -7,6 +7,39 @@ import { edgeTypeLabel } from '../utils/edgeTypeLabel'
 import { getMonthlyEstimate, formatPrice } from '../utils/pricing'
 import { IamAdvisor } from './IamAdvisor'
 import type { IamAnalysisResult } from '../types/iam'
+
+function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unknown>; tfMetadata: Record<string, unknown> }): React.JSX.Element {
+  const allKeys = Array.from(new Set([...Object.keys(metadata), ...Object.keys(tfMetadata)]))
+  const diffs = allKeys.filter((k) => String(metadata[k] ?? '') !== String(tfMetadata[k] ?? '') && (metadata[k] !== undefined || tfMetadata[k] !== undefined))
+
+  return (
+    <>
+      <div style={{ fontWeight: 700, color: '#22c55e', marginBottom: diffs.length > 0 ? 6 : 0 }}>
+        ✓ MATCHED{diffs.length > 0 ? ` — ${diffs.length} difference${diffs.length === 1 ? '' : 's'}` : ''}
+      </div>
+      {diffs.length === 0 ? (
+        <div style={{ color: '#4ade80', fontSize: 10 }}>No differences detected</div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(0,0,0,0.3)', borderRadius: 3, overflow: 'hidden', fontSize: 9 }}>
+          <div style={{ padding: '3px 6px', color: '#6b7280', fontWeight: 700, fontSize: 8, background: 'rgba(0,0,0,0.2)' }}>LIVE</div>
+          <div style={{ padding: '3px 6px', color: '#7c3aed', fontWeight: 700, fontSize: 8, background: 'rgba(0,0,0,0.2)' }}>TERRAFORM</div>
+          {diffs.map((k) => (
+            <React.Fragment key={k}>
+              <div style={{ padding: '3px 6px', background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ color: '#6b7280', fontSize: 7, marginBottom: 1 }}>{k}</div>
+                <div style={{ color: '#fca5a5' }}>{String(metadata[k] ?? '—')}</div>
+              </div>
+              <div style={{ padding: '3px 6px', background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ color: '#6b7280', fontSize: 7, marginBottom: 1 }}>{k}</div>
+                <div style={{ color: '#86efac' }}>{String(tfMetadata[k] ?? '—')}</div>
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
 
 interface InspectorProps {
   onDelete: (node: CloudNode) => void
@@ -146,7 +179,27 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             {node.type.toUpperCase()}  ·  Selected
           </div>
 
-          {isImported && (
+          {node.driftStatus === 'unmanaged' && (
+            <div style={{ padding: '8px 10px', borderRadius: 4, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.4)', fontSize: 11, marginBottom: 8 }}>
+              <div style={{ fontWeight: 700, color: '#f59e0b', marginBottom: 3 }}>! UNMANAGED</div>
+              <div style={{ color: '#d97706', lineHeight: 1.5 }}>Not tracked in Terraform. Consider adding to your tfstate.</div>
+            </div>
+          )}
+
+          {node.driftStatus === 'missing' && (
+            <div style={{ padding: '8px 10px', borderRadius: 4, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)', fontSize: 11, marginBottom: 8 }}>
+              <div style={{ fontWeight: 700, color: '#ef4444', marginBottom: 3 }}>✕ MISSING — read-only</div>
+              <div style={{ color: '#dc2626', lineHeight: 1.5 }}>Declared in Terraform but not found in live AWS.</div>
+            </div>
+          )}
+
+          {node.driftStatus === 'matched' && (
+            <div style={{ padding: '8px 10px', borderRadius: 4, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.3)', fontSize: 11, marginBottom: 8 }}>
+              <DriftDiffTable metadata={node.metadata} tfMetadata={node.tfMetadata ?? {}} />
+            </div>
+          )}
+
+          {!node.driftStatus && isImported && (
             <div style={{ padding: '6px 10px', borderRadius: 4, background: 'var(--cb-bg-secondary)', border: '1px solid var(--cb-border)', fontSize: 11, color: 'var(--cb-text-muted)', marginBottom: 8 }}>
               Imported from Terraform — read-only
             </div>
