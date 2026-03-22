@@ -129,7 +129,8 @@ export const useCloudStore = create<CloudState>((set) => ({
   clearImportedNodes: () =>
     set((state) => ({
       importedNodes: [],
-      nodes: state.nodes.map(({ driftStatus: _, tfMetadata: __, ...rest }) => rest),
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      nodes: state.nodes.map(({ driftStatus: _driftStatus, tfMetadata: _tfMetadata, ...rest }) => rest),
     })),
 }))
 
@@ -209,7 +210,8 @@ export function createCloudStore(): StoreApi<CloudState> {
     clearImportedNodes: () =>
       set((state) => ({
         importedNodes: [],
-        nodes: state.nodes.map(({ driftStatus: _, tfMetadata: __, ...rest }) => rest),
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        nodes: state.nodes.map(({ driftStatus: _driftStatus, tfMetadata: _tfMetadata, ...rest }) => rest),
       })),
   }))
 }
