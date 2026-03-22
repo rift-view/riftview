@@ -35,6 +35,7 @@ interface UIState {
   showAbout:          boolean
   showSettings:       boolean
   annotations:        Record<string, string>
+  driftFilterActive:  boolean
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -56,6 +57,7 @@ interface UIState {
   setShowSettings:      (v: boolean) => void
   setAnnotation:        (nodeId: string, text: string) => void
   clearAnnotation:      (nodeId: string) => void
+  toggleDriftFilter:    () => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -78,6 +80,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   showAbout:         false,
   showSettings:      false,
   annotations:       {},
+  driftFilterActive: false,
 
   setView:         (view) => set({ view }),
   selectNode:      (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -157,4 +160,5 @@ export const useUIStore = create<UIState>((set, get) => ({
       delete next[nodeId]
       return { annotations: next }
     }),
+  toggleDriftFilter: () => set((state) => ({ driftFilterActive: !state.driftFilterActive })),
 }))
