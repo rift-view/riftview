@@ -31,6 +31,8 @@ export function Sidebar(): React.JSX.Element {
   const setView           = useUIStore((s) => s.setView)
   const expandedSsmGroups = useUIStore((s) => s.expandedSsmGroups)
   const toggleSsmGroup    = useUIStore((s) => s.toggleSsmGroup)
+  const sidebarFilter     = useUIStore((s) => s.sidebarFilter)
+  const setSidebarFilter  = useUIStore((s) => s.setSidebarFilter)
   const nodes             = useCloudStore((s) => s.nodes)
 
   const counts = useMemo(
@@ -102,13 +104,22 @@ export function Sidebar(): React.JSX.Element {
 
       {SERVICES.map((s) => {
         const count = counts[s.type] ?? 0
+        const isActive = sidebarFilter === s.type
+        const activeStyle: React.CSSProperties = {
+          ...serviceRowStyle,
+          border:     '1px solid var(--cb-accent)',
+          color:      'var(--cb-accent)',
+          background: 'var(--cb-bg-elevated)',
+          cursor:     'pointer',
+        }
         return (
           <div
             key={s.type}
             draggable
             onDragStart={(e) => e.dataTransfer.setData('text/plain', s.type)}
+            onClick={() => setSidebarFilter(isActive ? null : s.type)}
             className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
-            style={serviceRowStyle}
+            style={isActive ? activeStyle : serviceRowStyle}
           >
             <span>⬡ {s.label}</span>
             {count > 0 && (

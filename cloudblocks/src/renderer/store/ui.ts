@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { NodeType } from '../types/cloud'
 
 const TOAST_DURATION_MS = 2500
 
@@ -36,6 +37,7 @@ interface UIState {
   showSettings:       boolean
   annotations:        Record<string, string>
   driftFilterActive:  boolean
+  sidebarFilter:      NodeType | null
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -59,6 +61,7 @@ interface UIState {
   clearAnnotation:      (nodeId: string) => void
   toggleDriftFilter:    () => void
   resetDriftFilter:     () => void
+  setSidebarFilter:     (type: NodeType | null) => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -82,6 +85,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   showSettings:      false,
   annotations:       {},
   driftFilterActive: false,
+  sidebarFilter:     null,
 
   setView:         (view) => set({ view }),
   selectNode:      (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -163,4 +167,5 @@ export const useUIStore = create<UIState>((set, get) => ({
     }),
   toggleDriftFilter: () => set((state) => ({ driftFilterActive: !state.driftFilterActive })),
   resetDriftFilter:  () => set({ driftFilterActive: false }),
+  setSidebarFilter:  (type) => set({ sidebarFilter: type }),
 }))
