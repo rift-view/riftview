@@ -58,6 +58,7 @@ interface UIState {
   setAnnotation:        (nodeId: string, text: string) => void
   clearAnnotation:      (nodeId: string) => void
   toggleDriftFilter:    () => void
+  resetDriftFilter:     () => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -161,4 +162,5 @@ export const useUIStore = create<UIState>((set, get) => ({
       return { annotations: next }
     }),
   toggleDriftFilter: () => set((state) => ({ driftFilterActive: !state.driftFilterActive })),
+  resetDriftFilter:  () => set({ driftFilterActive: false }),
 }))

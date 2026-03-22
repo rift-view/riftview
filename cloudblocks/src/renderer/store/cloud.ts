@@ -3,6 +3,7 @@ import type { StoreApi } from 'zustand'
 import type { AwsProfile, CloudNode, NodeStatus, ScanDelta, ScanError, Settings } from '../types/cloud'
 import { applyTheme } from '../utils/applyTheme'
 import { applyDriftToState } from '../utils/compareDrift'
+import { useUIStore } from '../store/ui'
 
 export type { Settings }
 
@@ -126,12 +127,14 @@ export const useCloudStore = create<CloudState>((set) => ({
       const applied = applyDriftToState(state.nodes, nodes)
       return { nodes: applied.nodes, importedNodes: applied.importedNodes }
     }),
-  clearImportedNodes: () =>
+  clearImportedNodes: () => {
     set((state) => ({
       importedNodes: [],
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       nodes: state.nodes.map(({ driftStatus: _driftStatus, tfMetadata: _tfMetadata, ...rest }) => rest),
-    })),
+    }))
+    useUIStore.getState().resetDriftFilter()
+  },
 }))
 
 // test-only factory — allows isolated store instances in unit tests
@@ -207,11 +210,13 @@ export function createCloudStore(): StoreApi<CloudState> {
         const applied = applyDriftToState(state.nodes, nodes)
         return { nodes: applied.nodes, importedNodes: applied.importedNodes }
       }),
-    clearImportedNodes: () =>
+    clearImportedNodes: () => {
       set((state) => ({
         importedNodes: [],
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         nodes: state.nodes.map(({ driftStatus: _driftStatus, tfMetadata: _tfMetadata, ...rest }) => rest),
-      })),
+      }))
+      useUIStore.getState().resetDriftFilter()
+    },
   }))
 }
