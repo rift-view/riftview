@@ -518,7 +518,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
 
     const all = [...mapped, ...importedFlowNodes]
     if (!driftFilterActive) return all
-    const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw'])
+    const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw', 'globalZone', 'apigw-route'])
     return all.filter((fn) => {
       if (DRIFT_CONTAINER_TYPES.has(fn.type ?? '')) return true
       const d = fn.data as { driftStatus?: string }
