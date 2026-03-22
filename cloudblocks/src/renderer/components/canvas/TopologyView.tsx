@@ -407,6 +407,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const annotations        = useUIStore((s) => s.annotations)
   const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
   const sidebarFilter      = useUIStore((s) => s.sidebarFilter)
+  const setSidebarFilter   = useUIStore((s) => s.setSidebarFilter)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const topologyPositions = useUIStore((s) => s.nodePositions.topology)
   const setNodePosition   = useUIStore((s) => s.setNodePosition)
@@ -528,7 +529,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       const d = fn.data as { driftStatus?: string }
       return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
     })
-  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive, sidebarFilter])
+  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
@@ -590,7 +591,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
       onNodeDoubleClick={(_e, node) => selectNode(node.id)}
       onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
-      onPaneClick={() => { selectNode(null); selectEdge(null) }}
+      onPaneClick={() => { selectNode(null); selectEdge(null); setSidebarFilter(null) }}
       onNodeContextMenu={(event, rfNode) => {
         event.preventDefault()
         const cloudNode = allNodes.find((n) => n.id === rfNode.id)
