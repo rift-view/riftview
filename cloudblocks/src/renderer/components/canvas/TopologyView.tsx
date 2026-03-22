@@ -520,8 +520,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
     if (!driftFilterActive) return all
     const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw'])
     return all.filter((fn) => {
-      const d = fn.data as { nodeType?: string; driftStatus?: string }
-      if (DRIFT_CONTAINER_TYPES.has(d.nodeType ?? '')) return true
+      if (DRIFT_CONTAINER_TYPES.has(fn.type ?? '')) return true
+      const d = fn.data as { driftStatus?: string }
       return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
     })
   }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive])
