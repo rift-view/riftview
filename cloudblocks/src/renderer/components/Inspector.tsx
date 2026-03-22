@@ -175,10 +175,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
         </div>
       ) : (
         <>
-          <div className="text-[9px] font-bold mb-2 pb-1" style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}>
-            {node.type.toUpperCase()}  ·  Selected
-          </div>
-
+          {/* drift banners float to top when driftStatus is set */}
           {node.driftStatus === 'unmanaged' && (
             <div style={{ padding: '8px 10px', borderRadius: 4, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.4)', fontSize: 11, marginBottom: 8 }}>
               <div style={{ fontWeight: 700, color: '#f59e0b', marginBottom: 3 }}>! UNMANAGED</div>
@@ -199,6 +196,12 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             </div>
           )}
 
+          {/* node type header */}
+          <div className="text-[9px] font-bold mb-2 pb-1" style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}>
+            {node.type.toUpperCase()}  ·  Selected
+          </div>
+
+          {/* fallback imported banner (only when no driftStatus) */}
           {!node.driftStatus && isImported && (
             <div style={{ padding: '6px 10px', borderRadius: 4, background: 'var(--cb-bg-secondary)', border: '1px solid var(--cb-border)', fontSize: 11, color: 'var(--cb-text-muted)', marginBottom: 8 }}>
               Imported from Terraform — read-only
