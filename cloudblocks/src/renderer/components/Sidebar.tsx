@@ -1,7 +1,14 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useUIStore } from '../store/ui'
 import { useCloudStore } from '../store/cloud'
+import { useCliStore } from '../store/cli'
 import type { NodeType, CloudNode } from '../types/cloud'
+import SidebarFilterDialog from './modals/SidebarFilterDialog'
+
+const TYPE_LABELS: Record<string, string> = {
+  vpc: 'VPC', ec2: 'EC2', rds: 'RDS', s3: 'S3', lambda: 'Lambda',
+  alb: 'ALB', 'security-group': 'Security Group', igw: 'IGW',
+}
 
 const SERVICES: { type: NodeType; label: string }[] = [
   { type: 'vpc',            label: 'VPC' },
@@ -34,6 +41,17 @@ export function Sidebar(): React.JSX.Element {
   const sidebarFilter     = useUIStore((s) => s.sidebarFilter)
   const setSidebarFilter  = useUIStore((s) => s.setSidebarFilter)
   const nodes             = useCloudStore((s) => s.nodes)
+  const setCommandPreview = useCliStore((s) => s.setCommandPreview)
+  const setPendingCommand = useCliStore((s) => s.setPendingCommand)
+
+  const [filterTarget, setFilterTarget] = useState<NodeType | null>(null)
+
+  useEffect(() => {
+    if (!sidebarFilter) {
+      setCommandPreview([])
+      setPendingCommand(null)
+    }
+  }, [sidebarFilter, setCommandPreview, setPendingCommand])
 
   const counts = useMemo(
     () => nodes.reduce<Record<string, number>>(
@@ -117,7 +135,7 @@ export function Sidebar(): React.JSX.Element {
             key={s.type}
             draggable
             onDragStart={(e) => e.dataTransfer.setData('text/plain', s.type)}
-            onClick={() => setSidebarFilter(isActive ? null : s.type)}
+            onClick={() => { if (sidebarFilter === s.type) setSidebarFilter(null); else setFilterTarget(s.type) }}
             className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
             style={isActive ? activeStyle : serviceRowStyle}
           >
@@ -213,6 +231,22 @@ export function Sidebar(): React.JSX.Element {
           {v === 'topology' ? '⊞' : '◈'} {v.charAt(0).toUpperCase() + v.slice(1)}
         </div>
       ))}
+
+      {filterTarget && (
+        <SidebarFilterDialog
+          type={filterTarget}
+          count={counts[filterTarget] ?? 0}
+          onClose={() => setFilterTarget(null)}
+          onConfirm={() => {
+            const label = TYPE_LABELS[filterTarget] ?? filterTarget.toUpperCase()
+            const count = counts[filterTarget] ?? 0
+            setSidebarFilter(filterTarget)
+            setCommandPreview([`[Filter] ${label} · ${count} node${count === 1 ? '' : 's'}`])
+            setPendingCommand(null)
+            setFilterTarget(null)
+          }}
+        />
+      )}
     </div>
   )
 }
