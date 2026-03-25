@@ -6,20 +6,12 @@ import type { AwsProfile } from '../types/cloud'
 const LOCAL_PROFILE_NAME = 'local'
 const LOCAL_ENDPOINT_DEFAULT = 'http://localhost:4566'
 
-const REGIONS = [
-  'us-east-1','us-east-2','us-west-1','us-west-2',
-  'eu-west-1','eu-west-2','eu-central-1',
-  'ap-southeast-1','ap-northeast-1',
-]
-
 export function TitleBar(): React.JSX.Element {
   const [profiles, setProfiles]             = useState<AwsProfile[]>([])
   const [connStatus, setConnStatus]         = useState<'unknown' | 'connected' | 'error'>('unknown')
   const [endpointInput, setEndpointInput]   = useState<string>(() => useCloudStore.getState().profile.endpoint ?? '')
   const profile       = useCloudStore((s) => s.profile)
-  const region        = useCloudStore((s) => s.region)
   const setProfile    = useCloudStore((s) => s.setProfile)
-  const setRegion     = useCloudStore((s) => s.setRegion)
   const nodes         = useCloudStore((s) => s.nodes)
   const importedNodes = useCloudStore((s) => s.importedNodes)
 
@@ -50,12 +42,6 @@ export function TitleBar(): React.JSX.Element {
       setConnStatus('unknown')
       window.cloudblocks.selectProfile(newProfile)
     }
-  }
-
-  const handleRegionChange = (r: string): void => {
-    setRegion(r)
-    setConnStatus('unknown')
-    window.cloudblocks.selectRegion(r, profile.endpoint)
   }
 
   const handleEndpointSubmit = (): void => {
@@ -139,18 +125,6 @@ export function TitleBar(): React.JSX.Element {
           }}
         />
       )}
-
-      {/* Region selector */}
-      <select
-        value={region}
-        onChange={(e) => handleRegionChange(e.target.value)}
-        className="text-[10px] font-mono px-2 py-0.5 rounded"
-        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}
-      >
-        {REGIONS.map((r) => (
-          <option key={r} value={r}>{r}</option>
-        ))}
-      </select>
 
       {/* Connection status */}
       <div className="flex items-center gap-1.5">
