@@ -150,7 +150,7 @@ export function createCloudStore(): StoreApi<CloudState> {
     errorMessage:    null,
     pendingNodes:    [],
     keyPairs:        [],
-    settings:        { ...DEFAULT_SETTINGS, showRegionIndicators: true, regionColors: {} },
+    settings:        DEFAULT_SETTINGS,
     scanGeneration:  0,
     scanErrors:      [],
     selectedRegions: ['us-east-1'],
