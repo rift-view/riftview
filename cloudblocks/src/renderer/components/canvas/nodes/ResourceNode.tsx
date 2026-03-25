@@ -88,6 +88,7 @@ interface ResourceNodeData {
   dimmed?:      boolean  // focus mode — node is not in the highlighted subgraph
   locked?:      boolean  // lock mode — node cannot be dragged or selected
   annotation?:  string  // user note — shows indicator badge if non-empty
+  regionColor?: string  // multi-region accent strip on left edge
 }
 
 export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
@@ -119,6 +120,22 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
       <Handle type="target" position={Position.Left}   style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Right}  style={{ opacity: 0 }} />
+
+      {/* Region accent strip — 3px left-edge color band for multi-region views */}
+      {d.regionColor && (
+        <div
+          style={{
+            position:      'absolute',
+            left:          0,
+            top:           0,
+            bottom:        0,
+            width:         3,
+            borderRadius:  '4px 0 0 4px',
+            background:    d.regionColor,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
 
       {/* Annotation indicator — amber dot in top-right, non-interactive */}
       {d.annotation && (
