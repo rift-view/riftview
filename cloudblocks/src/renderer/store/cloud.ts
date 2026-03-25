@@ -11,6 +11,8 @@ const DEFAULT_SETTINGS: Settings = {
   deleteConfirmStyle: 'type-to-confirm',
   scanInterval: 30,
   theme: 'dark',
+  showRegionIndicators: true,
+  regionColors: {},
 }
 
 interface CloudState {
@@ -148,7 +150,7 @@ export function createCloudStore(): StoreApi<CloudState> {
     errorMessage:    null,
     pendingNodes:    [],
     keyPairs:        [],
-    settings:        DEFAULT_SETTINGS,
+    settings:        { ...DEFAULT_SETTINGS, showRegionIndicators: true, regionColors: {} },
     scanGeneration:  0,
     scanErrors:      [],
     selectedRegions: ['us-east-1'],
