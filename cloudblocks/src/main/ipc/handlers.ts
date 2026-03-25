@@ -34,6 +34,8 @@ const DEFAULT_SETTINGS = {
   deleteConfirmStyle: 'type-to-confirm' as const,
   scanInterval: 30 as const,
   theme: 'dark' as const,
+  showRegionIndicators: true,
+  regionColors: {} as Record<string, string>,
 }
 
 let scanner:   ResourceScanner | null = null

@@ -80,4 +80,6 @@ export interface Settings {
   deleteConfirmStyle: 'type-to-confirm' | 'command-drawer'
   scanInterval: 15 | 30 | 60 | 'manual'
   theme: Theme
+  showRegionIndicators: boolean
+  regionColors: Record<string, string>
 }
