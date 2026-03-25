@@ -4,8 +4,9 @@ import { useCloudStore } from '../store/cloud'
 // On mount: loads profiles, selects first profile + its default region
 // (which starts the scanner in main).
 export function useScanner(): { triggerScan: () => void } {
-  const setProfile  = useCloudStore((s) => s.setProfile)
-  const setRegion   = useCloudStore((s) => s.setRegion)
+  const setProfile          = useCloudStore((s) => s.setProfile)
+  const setRegion           = useCloudStore((s) => s.setRegion)
+  const setSelectedRegions  = useCloudStore((s) => s.setSelectedRegions)
   const initialized = useRef(false)
 
   useEffect(() => {
@@ -21,10 +22,11 @@ export function useScanner(): { triggerScan: () => void } {
       // Sync the region selector in the renderer with what main will use
       if (first.region) {
         setRegion(first.region)
+        setSelectedRegions([first.region])  // reset to single region on profile change
         window.cloudblocks.selectRegion(first.region)
       }
     })
-  }, [setProfile, setRegion])
+  }, [setProfile, setRegion, setSelectedRegions])
 
   return {
     triggerScan: () => {
