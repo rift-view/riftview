@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { useCloudStore } from '../store/cloud'
 import type { Settings, Theme, AwsProfile } from '../types/cloud'
 import { applyTheme } from '../utils/applyTheme'
+import { getRegionColor } from '../utils/regionColors'
 
 interface SettingsModalProps {
   onClose: () => void
@@ -354,6 +355,58 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                 <div style={noteStyle}>
                   Selected regions are used when &quot;Scan All Selected&quot; is triggered.
                   Currently scanning: <strong style={{ color: 'var(--cb-text-primary)' }}>{useCloudStore.getState().region}</strong>
+                </div>
+
+                <div style={{ marginTop: 16, borderTop: '1px solid var(--cb-border)', paddingTop: 12 }}>
+                  <div style={sectionLabel}>Region Indicators</div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 10 }}>
+                    <input
+                      type="checkbox"
+                      checked={settings.showRegionIndicators}
+                      onChange={(e): void => handleSettingChange('showRegionIndicators', e.target.checked)}
+                      style={{ accentColor: 'var(--cb-accent)', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--cb-text-secondary)' }}>
+                      Show region color indicators on nodes (when ≥ 2 regions active)
+                    </span>
+                  </label>
+
+                  {settings.showRegionIndicators && selectedRegions.length >= 2 && (
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                        Custom colors (hex, leave blank for default)
+                      </div>
+                      {selectedRegions.map((r) => (
+                        <label key={r} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: 10, color: 'var(--cb-text-secondary)', minWidth: 120 }}>{r}</span>
+                          <input
+                            type="text"
+                            placeholder={getRegionColor(r)}
+                            value={settings.regionColors[r] ?? ''}
+                            onChange={(e): void => {
+                              const val = e.target.value.trim()
+                              const next = { ...settings.regionColors }
+                              if (val) next[r] = val; else delete next[r]
+                              handleSettingChange('regionColors', next)
+                            }}
+                            style={{
+                              width: 90, fontFamily: 'monospace', fontSize: 10,
+                              background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)',
+                              borderRadius: 3, padding: '2px 6px', color: 'var(--cb-text-primary)',
+                            }}
+                          />
+                          {(settings.regionColors[r] || getRegionColor(r)) && (
+                            <span style={{
+                              width: 14, height: 14, borderRadius: '50%',
+                              background: settings.regionColors[r] || getRegionColor(r),
+                              border: '1px solid var(--cb-border)',
+                              flexShrink: 0,
+                            }} />
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
