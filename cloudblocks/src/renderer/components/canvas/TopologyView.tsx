@@ -8,6 +8,8 @@ import { ResourceNode } from './nodes/ResourceNode'
 import { VpcNode } from './nodes/VpcNode'
 import { SubnetNode } from './nodes/SubnetNode'
 import { GlobalZoneNode } from './nodes/GlobalZoneNode'
+import { RegionZoneNode } from './nodes/RegionZoneNode'
+import { buildRegionColorMap } from '../../utils/regionColors'
 import { AcmNode } from './nodes/AcmNode'
 import { CloudFrontNode } from './nodes/CloudFrontNode'
 import { ApigwNode } from './nodes/ApigwNode'
@@ -21,6 +23,7 @@ const NODE_TYPES = {
   vpc:         VpcNode,
   subnet:      SubnetNode,
   globalZone:  GlobalZoneNode,
+  regionZone:  RegionZoneNode,
   acm:         AcmNode,
   cloudfront:  CloudFrontNode,
   apigw:       ApigwNode,
@@ -63,8 +66,17 @@ function subnetSize(resourceCount: number): { w: number; h: number } {
 
 const SUBNET_COLLAPSED_H = 32
 
-function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, highlightedIds: Set<string> | null, collapsedSubnets: Set<string>): Node[] {
-  const nodes: Node[] = []
+function buildFlowNodes(
+  cloudNodes: CloudNode[],
+  selectedId: string | null,
+  highlightedIds: Set<string> | null,
+  collapsedSubnets: Set<string>,
+  selectedRegions: string[],
+  showRegionIndicators: boolean,
+  regionColorMap: Record<string, string>,
+): Node[] {
+  const allNodes: Node[] = []
+  const nodes = allNodes
 
   // Separate global nodes from regional nodes
   const globalNodes = cloudNodes.filter((n) => n.region === 'global')
@@ -183,6 +195,9 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
         rNodes.forEach((r, ri) => {
           const col = ri % RES_COLS
           const row = Math.floor(ri / RES_COLS)
+          const regionColor = showRegionIndicators && selectedRegions.length >= 2
+            ? (regionColorMap[r.region] ?? undefined)
+            : undefined
           nodes.push({
             id:       r.id,
             type:     'resource',
@@ -192,7 +207,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
               x: SUB_PAD_X + col * (RES_W + RES_GAP_X),
               y: SUB_PAD_Y + row * (RES_H + RES_GAP_Y),
             },
-            data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
+            data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor },
             selected: r.id === selectedId,
           })
         })
@@ -204,6 +219,9 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
     directRes.forEach((r, ri) => {
       const col = ri % RES_COLS
       const row = Math.floor(ri / RES_COLS)
+      const regionColor = showRegionIndicators && selectedRegions.length >= 2
+        ? (regionColorMap[r.region] ?? undefined)
+        : undefined
       nodes.push({
         id:       r.id,
         type:     'resource',
@@ -213,7 +231,7 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
           x: VPC_PAD + col * (RES_W + RES_GAP_X),
           y: subnetBottom + row * (RES_H + RES_GAP_Y),
         },
-        data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
+        data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor },
         selected: r.id === selectedId,
       })
     })
@@ -275,16 +293,50 @@ function buildFlowNodes(cloudNodes: CloudNode[], selectedId: string | null, high
   const ROOT_COLS  = 5
   const rootY      = vpcY + maxVpcHeight + 60
   rootResources.forEach((r, i) => {
+    const regionColor = showRegionIndicators && selectedRegions.length >= 2
+      ? (regionColorMap[r.region] ?? undefined)
+      : undefined
     nodes.push({
       id:       r.id,
       type:     'resource',
       position: { x: 40 + (i % ROOT_COLS) * (RES_W + RES_GAP_X + 40), y: rootY + Math.floor(i / ROOT_COLS) * (RES_H + RES_GAP_Y + 20) },
-      data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, region: r.region, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
+      data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, region: r.region, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor },
       selected: r.id === selectedId,
     })
   })
 
-  return nodes
+  // Add region zone containers if multi-region indicators are enabled
+  if (showRegionIndicators && selectedRegions.length >= 2) {
+    for (const region of selectedRegions) {
+      const regionNodeIds = new Set(
+        cloudNodes.filter((n) => n.region === region).map((n) => n.id)
+      )
+      const positions = allNodes
+        .filter((n) => regionNodeIds.has(n.id) && !n.parentId)
+        .map((n) => ({ x: n.position.x, y: n.position.y, w: (n.style?.width as number) ?? 200, h: (n.style?.height as number) ?? 60 }))
+
+      if (positions.length === 0) continue
+
+      const PAD = 40
+      const minX = Math.min(...positions.map((p) => p.x)) - PAD
+      const minY = Math.min(...positions.map((p) => p.y)) - PAD
+      const maxX = Math.max(...positions.map((p) => p.x + p.w)) + PAD
+      const maxY = Math.max(...positions.map((p) => p.y + p.h)) + PAD
+
+      allNodes.push({
+        id:         `region-zone-${region}`,
+        type:       'regionZone',
+        position:   { x: minX, y: minY },
+        style:      { width: maxX - minX, height: maxY - minY },
+        data:       { label: region, color: regionColorMap[region] },
+        selectable: false,
+        draggable:  false,
+        zIndex:     -2,
+      })
+    }
+  }
+
+  return allNodes
 }
 
 // Build topology edges: CloudFront → origin, route → lambda
@@ -394,6 +446,9 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const cloudNodes         = useCloudStore((s) => s.nodes)
   const pendingNodes       = useCloudStore((s) => s.pendingNodes)
   const importedNodes      = useCloudStore((s) => s.importedNodes)
+  const selectedRegions      = useCloudStore((s) => s.selectedRegions)
+  const showRegionIndicators = useCloudStore((s) => s.settings.showRegionIndicators)
+  const regionColorsSetting  = useCloudStore((s) => s.settings.regionColors)
   const selectNode         = useUIStore((s) => s.selectNode)
   const selectEdge         = useUIStore((s) => s.selectEdge)
   const selectedId         = useUIStore((s) => s.selectedNodeId)
@@ -448,6 +503,11 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
 
   // Only top-level nodes (no parentId, not in global zone) have draggable positions
   // we want to persist. Everything else (child nodes, phantom IDs) is ignored.
+  const regionColorMap = useMemo(
+    () => buildRegionColorMap(selectedRegions, regionColorsSetting),
+    [selectedRegions, regionColorsSetting]
+  )
+
   const topLevelNodeIds = useMemo(() => {
     const set = new Set<string>()
     allNodes.forEach((n) => {
@@ -459,7 +519,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   }, [allNodes, importedNodes])
 
   const flowNodes: Node[] = useMemo(() => {
-    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets)
+    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets, selectedRegions, showRegionIndicators, regionColorMap)
     const mapped = raw.map((n) => {
       const isLocked = lockedNodes.has(n.id)
       // Apply lock properties to all nodes (container nodes never get locked draggable/selectable
@@ -529,7 +589,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       const d = fn.data as { driftStatus?: string }
       return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
     })
-  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive])
+  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
