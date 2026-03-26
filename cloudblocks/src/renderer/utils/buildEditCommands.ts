@@ -120,6 +120,10 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
           '--image-scanning-configuration', `scanOnPush=${params.scanOnPush}`],
       ]
 
+    case 'secret':
+      return [['secretsmanager', 'update-secret', '--secret-id', params.secretId,
+        '--description', params.description]]
+
     default:
       return []
   }

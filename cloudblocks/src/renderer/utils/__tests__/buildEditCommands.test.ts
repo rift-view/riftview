@@ -184,6 +184,27 @@ describe('buildEditCommands — ECR', () => {
   })
 })
 
+describe('buildEditCommands — Secret', () => {
+  it('emits update-secret with description', () => {
+    expect(buildEditCommands(
+      node('secret', 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret'),
+      { resource: 'secret', secretId: 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret', description: 'My secret' }
+    )).toEqual([
+      ['secretsmanager', 'update-secret', '--secret-id', 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret',
+        '--description', 'My secret'],
+    ])
+  })
+
+  it('allows empty description', () => {
+    const cmds = buildEditCommands(
+      node('secret', 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret'),
+      { resource: 'secret', secretId: 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret', description: '' }
+    )
+    expect(cmds[0]).toEqual(['secretsmanager', 'update-secret', '--secret-id',
+      'arn:aws:secretsmanager:us-east-1:123:secret/my-secret', '--description', ''])
+  })
+})
+
 describe('buildEditCommands — EventBridge', () => {
   it('emits update-event-bus with bus name and description', () => {
     const n = { ...node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus'), label: 'my-bus' }
