@@ -172,6 +172,11 @@ code {
   }
 }
 
+@keyframes ecs-pulse {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50%       { opacity: 1;   transform: scale(1.2); }
+}
+
 @keyframes crt-on {
   0%   { background: #000;                       opacity: 1; }
   18%  { background: rgba(160, 255, 160, 0.95);  opacity: 1; }

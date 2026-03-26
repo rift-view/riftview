@@ -8,6 +8,7 @@ import { CanvasContextMenu } from './CanvasContextMenu'
 import { CanvasToast } from '../CanvasToast'
 import { SaveViewModal } from './SaveViewModal'
 import { ScanErrorStrip } from './ScanErrorStrip'
+import { EmptyCanvasState } from './EmptyCanvasState'
 import type { CloudNode } from '../../types/cloud'
 import { getMonthlyEstimate, formatPrice } from '../../utils/pricing'
 
@@ -361,71 +362,7 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
         </div>
       )}
 
-      {/* Empty state overlay — shown when scan completed (idle) and no nodes exist */}
-      {nodes.length === 0 && scanStatus === 'idle' && (
-        <div
-          style={{
-            position:        'absolute',
-            inset:           0,
-            display:         'flex',
-            alignItems:      'center',
-            justifyContent:  'center',
-            pointerEvents:   'none',
-            zIndex:          5,
-          }}
-        >
-          <div
-            style={{
-              textAlign:   'center',
-              color:       'var(--cb-text-muted)',
-              fontFamily:  'monospace',
-            }}
-          >
-            <div style={{ fontSize: 15, color: 'var(--cb-text)', marginBottom: 8, fontWeight: 600 }}>
-              No resources found
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--cb-text-muted)', maxWidth: 320, lineHeight: 1.6 }}>
-              Create your first resource from the sidebar, or drag one onto the canvas to get started.
-            </div>
-            {profile.endpoint && (
-              <div style={{ fontSize: 12, color: 'var(--cb-text-muted)', maxWidth: 320, marginTop: 10, lineHeight: 1.6, opacity: 0.75 }}>
-                Start your local AWS emulator and trigger a scan.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Scanning overlay */}
-      {scanStatus === 'scanning' && (
-        <div
-          style={{
-            position:       'absolute',
-            inset:          0,
-            display:        'flex',
-            alignItems:     'center',
-            justifyContent: 'center',
-            background:     'rgba(0, 0, 0, 0.45)',
-            pointerEvents:  'none',
-            zIndex:         20,
-          }}
-        >
-          <div
-            style={{
-              fontFamily:    'monospace',
-              fontSize:      '13px',
-              color:         'var(--cb-text-muted)',
-              letterSpacing: '0.05em',
-              border:        '1px solid var(--cb-border)',
-              background:    'var(--cb-bg-elevated)',
-              padding:       '8px 20px',
-              borderRadius:  '4px',
-            }}
-          >
-            ⟳ Scanning…
-          </div>
-        </div>
-      )}
+      <EmptyCanvasState />
 
       {/* CRT turn-on animation overlay — remounts on profile change to replay the animation */}
       <div
