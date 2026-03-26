@@ -64,14 +64,14 @@ Each service row in `Sidebar.tsx` gets a small amber `⚠` icon when any `scanEr
 | `ecr` | `ecr-repo` |
 | `sns` | `sns` |
 | `dynamo` | `dynamo` |
-| `ssm` | `ssm-param` — **not a `SERVICES` row**; badge appears on the Parameters section header in the Sidebar's bespoke SSM rendering block (lines ~166–228), not via the `SERVICES.map()` loop |
+| `ssm` | `ssm-param` — **not a `SERVICES` row**; badge appears on the Parameters section header. **Special case:** the Parameters section is normally gated on `ssmGroups.length > 0`, so it won't render at all when the SSM scan failed (zero params returned). When an `ssm` scan error is present and `ssmGroups` is empty, the implementer must render a minimal Parameters header row outside the gate so the badge is visible. |
 | `r53` | `r53-zone` |
 | `sfn` | `sfn` |
 | `eventbridge` | `eventbridge-bus` |
 
 `unknown` NodeType has no scan call and is never in this table.
 
-The `apigw-route` and `unknown` NodeTypes have no badge entry. All other 20 service-bearing NodeTypes are covered above.
+`apigw-route` IS a normal `SERVICES` row but has no independent `catch_()` key in `provider.ts` (route errors surface under `apigw`). The badge lookup for `apigw-route` will always return empty — no special guard needed. `unknown` has no scan call and is never in this table. All other 21 service-bearing NodeTypes are covered above.
 
 **Visual:**
 - `⚠` icon rendered inline after the service label, in amber (`#f59e0b` / `color: var(--cb-warning, #f59e0b)`)
