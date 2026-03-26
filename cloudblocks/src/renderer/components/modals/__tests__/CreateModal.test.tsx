@@ -107,3 +107,20 @@ it('blocks submission and does not call runCli when R53 domain name is empty', a
   await new Promise(r => setTimeout(r, 10))
   expect(runCli).not.toHaveBeenCalled()
 })
+
+it('renders SSM Parameter form title when activeCreate is ssm-param', () => {
+  useUIStore.setState({ activeCreate: { resource: 'ssm-param', view: 'topology' } })
+  render(<CreateModal />)
+  expect(screen.getByText(/new ssm parameter/i)).toBeInTheDocument()
+})
+
+it('blocks submission and does not call runCli when SSM param name and value are empty', async () => {
+  useUIStore.getState().setActiveCreate({ resource: 'ssm-param', view: 'topology' })
+  const runCli = vi.fn().mockResolvedValue({ code: 0 })
+  window.cloudblocks = { ...window.cloudblocks, runCli }
+
+  render(<CreateModal />)
+  window.dispatchEvent(new CustomEvent('commanddrawer:run'))
+  await new Promise(r => setTimeout(r, 10))
+  expect(runCli).not.toHaveBeenCalled()
+})

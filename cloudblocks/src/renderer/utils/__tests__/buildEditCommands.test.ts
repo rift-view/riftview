@@ -240,3 +240,33 @@ describe('buildEditCommands — DynamoDB', () => {
     ])
   })
 })
+
+describe('buildEditCommands — SSM Parameter', () => {
+  it('emits put-parameter for a String param', () => {
+    const n = { ...node('ssm-param', 'arn:aws:ssm:us-east-1:123:parameter/my/key'), label: '/my/key' }
+    expect(buildEditCommands(n, {
+      resource: 'ssm-param',
+      paramName: '/my/key',
+      value: 'new-value',
+      paramType: 'String',
+      description: 'updated desc',
+    })).toEqual([
+      ['ssm', 'put-parameter', '--name', '/my/key', '--value', 'new-value', '--type', 'String', '--overwrite', '--description', 'updated desc'],
+    ])
+  })
+
+  it('emits put-parameter for a SecureString param (caller supplies new value)', () => {
+    const n = { ...node('ssm-param', 'arn:aws:ssm:us-east-1:123:parameter/my/secret'), label: '/my/secret' }
+    const cmds = buildEditCommands(n, {
+      resource: 'ssm-param',
+      paramName: '/my/secret',
+      value: 'brand-new-secret',
+      paramType: 'SecureString',
+    })
+    expect(cmds).toHaveLength(1)
+    expect(cmds[0]).toContain('put-parameter')
+    expect(cmds[0]).toContain('SecureString')
+    expect(cmds[0]).toContain('brand-new-secret')
+    expect(cmds[0]).not.toContain('--description')
+  })
+})

@@ -201,3 +201,36 @@ describe('buildCommands — R53 Hosted Zone', () => {
     expect(cmds[0]).toContain('internal.example.com')
   })
 })
+
+describe('buildCommands: ssm-param', () => {
+  it('creates put-parameter command with all fields', () => {
+    const cmds = buildCommands({
+      resource: 'ssm-param',
+      name: '/my/app/config',
+      value: 'hello',
+      paramType: 'String',
+      description: 'A config param',
+    })
+    expect(cmds).toHaveLength(1)
+    expect(cmds[0]).toEqual([
+      'ssm', 'put-parameter',
+      '--name', '/my/app/config',
+      '--value', 'hello',
+      '--type', 'String',
+      '--overwrite',
+      '--description', 'A config param',
+    ])
+  })
+
+  it('omits --description when not provided', () => {
+    const cmds = buildCommands({
+      resource: 'ssm-param',
+      name: '/my/key',
+      value: 'val',
+      paramType: 'StringList',
+    })
+    expect(cmds).toHaveLength(1)
+    expect(cmds[0]).not.toContain('--description')
+    expect(cmds[0]).toContain('StringList')
+  })
+})

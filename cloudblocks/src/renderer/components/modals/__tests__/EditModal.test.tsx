@@ -236,4 +236,47 @@ describe('EditModal', () => {
     })
   })
 
+  describe('SSM Parameter edit form', () => {
+    const ssmStringNode: CloudNode = {
+      id: 'arn:aws:ssm:us-east-1:123:parameter/my/key',
+      type: 'ssm-param',
+      label: '/my/key',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { type: 'String', tier: 'Standard' },
+    }
+
+    const ssmSecureNode: CloudNode = {
+      id: 'arn:aws:ssm:us-east-1:123:parameter/my/secret',
+      type: 'ssm-param',
+      label: '/my/secret',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { type: 'SecureString', tier: 'Standard' },
+    }
+
+    it('renders the SSM edit modal title', () => {
+      render(<EditModal node={ssmStringNode} onClose={vi.fn()} />)
+      expect(screen.getByText(/edit ssm parameter/i)).toBeInTheDocument()
+    })
+
+    it('shows the parameter name as read-only', () => {
+      render(<EditModal node={ssmStringNode} onClose={vi.fn()} />)
+      expect(screen.getByDisplayValue('/my/key')).toBeInTheDocument()
+    })
+
+    it('disables the value field for SecureString and shows security notice', () => {
+      render(<EditModal node={ssmSecureNode} onClose={vi.fn()} />)
+      const valueInput = screen.getByPlaceholderText(/SecureString — cannot display/i) as HTMLInputElement
+      expect(valueInput.disabled).toBe(true)
+      expect(screen.getByText(/SecureString values cannot be edited here/i)).toBeInTheDocument()
+    })
+
+    it('allows editing the value field for a String param', () => {
+      render(<EditModal node={ssmStringNode} onClose={vi.fn()} />)
+      const valueInput = screen.getByPlaceholderText(/parameter value/i) as HTMLInputElement
+      expect(valueInput.disabled).toBe(false)
+    })
+  })
+
 })

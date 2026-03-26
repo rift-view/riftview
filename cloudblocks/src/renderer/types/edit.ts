@@ -68,8 +68,16 @@ export interface DynamoEditParams {
   writeCapacityUnits?: number
 }
 
+export interface SsmEditParams {
+  resource: 'ssm-param'
+  paramName: string
+  value: string
+  paramType: string
+  description?: string
+}
+
 export type EditParams =
   | VpcEditParams | Ec2EditParams | SgEditParams | RdsEditParams
   | S3EditParams  | LambdaEditParams | AlbEditParams | CloudFrontEditParams | ApigwEditParams
   | EventBridgeEditParams | SqsEditParams | SnsEditParams | EcrEditParams | SecretEditParams
-  | DynamoEditParams
+  | DynamoEditParams | SsmEditParams
