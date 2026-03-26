@@ -175,6 +175,50 @@ describe('EditModal', () => {
     })
   })
 
+  describe('DynamoDB edit form', () => {
+    const dynamoNode: CloudNode = {
+      id: 'my-table',
+      type: 'dynamo',
+      label: 'my-table',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { billingMode: 'PROVISIONED', readCapacity: 10, writeCapacity: 5 },
+    }
+
+    it('renders the DynamoDB edit modal with table name', () => {
+      render(<EditModal node={dynamoNode} onClose={vi.fn()} />)
+      expect(screen.getByText(/edit dynamodb table/i)).toBeInTheDocument()
+      expect(screen.getByDisplayValue('my-table')).toBeInTheDocument()
+    })
+
+    it('pre-fills billing mode from metadata', () => {
+      render(<EditModal node={dynamoNode} onClose={vi.fn()} />)
+      const select = screen.getByDisplayValue('PROVISIONED')
+      expect(select).toBeInTheDocument()
+    })
+
+    it('shows capacity inputs when billing mode is PROVISIONED', () => {
+      render(<EditModal node={dynamoNode} onClose={vi.fn()} />)
+      expect(screen.getByDisplayValue('10')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('5')).toBeInTheDocument()
+    })
+
+    it('hides capacity inputs when billing mode is PAY_PER_REQUEST', () => {
+      const nodePayPerRequest: CloudNode = { ...dynamoNode, metadata: { billingMode: 'PAY_PER_REQUEST' } }
+      render(<EditModal node={nodePayPerRequest} onClose={vi.fn()} />)
+      expect(screen.queryByText(/read capacity units/i)).toBeNull()
+      expect(screen.queryByText(/write capacity units/i)).toBeNull()
+    })
+
+    it('hides capacity inputs after switching from PROVISIONED to PAY_PER_REQUEST', () => {
+      render(<EditModal node={dynamoNode} onClose={vi.fn()} />)
+      const select = screen.getByDisplayValue('PROVISIONED')
+      fireEvent.change(select, { target: { value: 'PAY_PER_REQUEST' } })
+      expect(screen.queryByText(/read capacity units/i)).toBeNull()
+      expect(screen.queryByText(/write capacity units/i)).toBeNull()
+    })
+  })
+
   describe('EventBridge edit form', () => {
     it('renders the EventBridge edit modal with bus name and pre-filled description', () => {
       render(<EditModal node={eventBridgeNode} onClose={vi.fn()} />)

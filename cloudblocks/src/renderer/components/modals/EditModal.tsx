@@ -17,6 +17,7 @@ import SqsEditForm from './SqsEditForm'
 import SnsEditForm from './SnsEditForm'
 import EcrEditForm from './EcrEditForm'
 import SecretEditForm from './SecretEditForm'
+import DynamoEditForm from './DynamoEditForm'
 
 interface EditModalProps {
   node: CloudNode | null
@@ -28,6 +29,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   rds: 'RDS Instance', s3: 'S3 Bucket', lambda: 'Lambda Function', alb: 'Load Balancer',
   cloudfront: 'CloudFront Distribution', apigw: 'API Gateway',
   'eventbridge-bus': 'EventBridge Bus', sqs: 'SQS Queue', sns: 'SNS Topic', 'ecr-repo': 'ECR Repository', secret: 'Secret',
+  dynamo: 'DynamoDB Table',
 }
 
 export default function EditModal({ node, onClose }: EditModalProps): React.JSX.Element | null {
@@ -125,6 +127,7 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
         {node.type === 'sns'             && <SnsEditForm         node={node} onChange={handleChange} />}
         {node.type === 'ecr-repo'        && <EcrEditForm         node={node} onChange={handleChange} />}
         {node.type === 'secret'          && <SecretEditForm      node={node} onChange={handleChange} />}
+        {node.type === 'dynamo'          && <DynamoEditForm      node={node} onChange={handleChange} />}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
           <button
