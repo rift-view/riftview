@@ -14,6 +14,15 @@ const acmNode: CloudNode = {
   metadata: { domainName: 'example.com', validationMethod: 'DNS', inUseBy: [], cnameRecords: [] },
 }
 
+const eventBridgeNode: CloudNode = {
+  id: 'arn:aws:events:us-east-1:123456789:event-bus/my-bus',
+  type: 'eventbridge-bus',
+  label: 'my-bus',
+  status: 'running',
+  region: 'us-east-1',
+  metadata: { description: 'My existing description', policy: 'default' },
+}
+
 beforeEach(() => {
   window.cloudblocks = {
     runCli: vi.fn().mockResolvedValue({ code: 0 }),
@@ -46,6 +55,23 @@ describe('EditModal', () => {
     it('renders nothing for an ACM node', () => {
       const { container } = render(<EditModal node={acmNode} onClose={vi.fn()} />)
       expect(container.firstChild).toBeNull()
+    })
+  })
+
+  describe('EventBridge edit form', () => {
+    it('renders the EventBridge edit modal with bus name and pre-filled description', () => {
+      render(<EditModal node={eventBridgeNode} onClose={vi.fn()} />)
+      expect(screen.getByText(/edit eventbridge bus/i)).toBeInTheDocument()
+      expect(screen.getByDisplayValue('my-bus')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('My existing description')).toBeInTheDocument()
+    })
+
+    it('renders with empty description when metadata has no description', () => {
+      const nodeNoDesc: CloudNode = { ...eventBridgeNode, metadata: { policy: 'default' } }
+      render(<EditModal node={nodeNoDesc} onClose={vi.fn()} />)
+      const textarea = screen.getByPlaceholderText(/optional description/i)
+      expect(textarea).toBeInTheDocument()
+      expect((textarea as HTMLTextAreaElement).value).toBe('')
     })
   })
 
