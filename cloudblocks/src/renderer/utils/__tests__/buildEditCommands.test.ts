@@ -129,3 +129,18 @@ describe('buildEditCommands — ALB', () => {
     ])
   })
 })
+
+describe('buildEditCommands — EventBridge', () => {
+  it('emits update-event-bus with bus name and description', () => {
+    const n = { ...node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus'), label: 'my-bus' }
+    expect(buildEditCommands(n, { resource: 'eventbridge-bus', busName: 'my-bus', description: 'My event bus' })).toEqual([
+      ['events', 'update-event-bus', '--name', 'my-bus', '--description', 'My event bus'],
+    ])
+  })
+
+  it('emits empty description when not provided', () => {
+    const n = { ...node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus'), label: 'my-bus' }
+    const cmds = buildEditCommands(n, { resource: 'eventbridge-bus', busName: 'my-bus', description: '' })
+    expect(cmds[0]).toEqual(['events', 'update-event-bus', '--name', 'my-bus', '--description', ''])
+  })
+})
