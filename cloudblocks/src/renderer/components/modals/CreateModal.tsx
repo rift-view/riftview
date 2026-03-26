@@ -16,6 +16,13 @@ import { AcmForm } from './AcmForm'
 import { CloudFrontForm } from './CloudFrontForm'
 import { ApigwForm } from './ApigwForm'
 import { ApigwRouteForm } from './ApigwRouteForm'
+import { SqsForm } from './SqsForm'
+import { SnsForm } from './SnsForm'
+import { DynamoForm } from './DynamoForm'
+import { SecretForm } from './SecretForm'
+import { EcrForm } from './EcrForm'
+import { SfnForm } from './SfnForm'
+import { EventBusForm } from './EventBusForm'
 
 function validateParams(params: CreateParams | null): boolean {
   if (!params) return false
@@ -31,37 +38,58 @@ function validateParams(params: CreateParams | null): boolean {
     case 'cloudfront':   return !!(params.comment && params.origins.length > 0)
     case 'apigw':        return !!(params.name)
     case 'apigw-route':  return !!(params.apiId && params.path && params.path.startsWith('/'))
+    case 'sqs':          return !!(params.name)
+    case 'sns':          return !!(params.name)
+    case 'dynamo':       return !!(params.tableName && params.hashKey)
+    case 'secret':       return !!(params.name && params.value)
+    case 'ecr':          return !!(params.name)
+    case 'sfn':          return !!(params.name && params.roleArn && params.definition)
+    case 'eventbridge-bus': return !!(params.name)
     default:             return true
   }
 }
 
 const TITLES: Record<string, string> = {
-  vpc:          'New VPC',
-  ec2:          'New EC2 Instance',
-  sg:           'New Security Group',
-  s3:           'New S3 Bucket',
-  rds:          'New RDS Instance',
-  lambda:       'New Lambda Function',
-  alb:          'New ALB',
-  acm:          'New ACM Certificate',
-  cloudfront:   'New CloudFront Distribution',
-  apigw:        'New API Gateway',
-  'apigw-route': 'New API Route',
+  vpc:              'New VPC',
+  ec2:              'New EC2 Instance',
+  sg:               'New Security Group',
+  s3:               'New S3 Bucket',
+  rds:              'New RDS Instance',
+  lambda:           'New Lambda Function',
+  alb:              'New ALB',
+  acm:              'New ACM Certificate',
+  cloudfront:       'New CloudFront Distribution',
+  apigw:            'New API Gateway',
+  'apigw-route':    'New API Route',
+  sqs:              'New SQS Queue',
+  sns:              'New SNS Topic',
+  dynamo:           'New DynamoDB Table',
+  secret:           'New Secret',
+  ecr:              'New ECR Repository',
+  sfn:              'New Step Functions State Machine',
+  'eventbridge-bus': 'New EventBridge Bus',
 }
 
 // Maps form resource identifier to CloudNode NodeType
 const RESOURCE_TO_NODE_TYPE: Record<string, NodeType> = {
-  vpc:           'vpc',
-  ec2:           'ec2',
-  sg:            'security-group',
-  s3:            's3',
-  rds:           'rds',
-  lambda:        'lambda',
-  alb:           'alb',
-  acm:           'acm',
-  cloudfront:    'cloudfront',
-  apigw:         'apigw',
-  'apigw-route': 'apigw-route',
+  vpc:              'vpc',
+  ec2:              'ec2',
+  sg:               'security-group',
+  s3:               's3',
+  rds:              'rds',
+  lambda:           'lambda',
+  alb:              'alb',
+  acm:              'acm',
+  cloudfront:       'cloudfront',
+  apigw:            'apigw',
+  'apigw-route':    'apigw-route',
+  sqs:              'sqs',
+  sns:              'sns',
+  dynamo:           'dynamo',
+  secret:           'secret',
+  ecr:              'ecr-repo',
+  sfn:              'sfn',
+  'eventbridge-bus': 'eventbridge-bus',
 }
 
 export function CreateModal(): React.JSX.Element | null {
@@ -134,7 +162,14 @@ export function CreateModal(): React.JSX.Element | null {
       case 'vpc':          return (params as { name?: string }).name || 'New VPC'
       case 'acm':          return (params as { domainName?: string }).domainName || 'New Certificate'
       case 'cloudfront':   return (params as { comment?: string }).comment || 'New Distribution'
-      case 'apigw':        return (params as { name?: string }).name || 'New API'
+      case 'apigw':          return (params as { name?: string }).name || 'New API'
+      case 'sqs':            return (params as { name?: string }).name || 'New Queue'
+      case 'sns':            return (params as { name?: string }).name || 'New Topic'
+      case 'dynamo':         return (params as { tableName?: string }).tableName || 'New Table'
+      case 'secret':         return (params as { name?: string }).name || 'New Secret'
+      case 'ecr':            return (params as { name?: string }).name || 'New Repository'
+      case 'sfn':            return (params as { name?: string }).name || 'New State Machine'
+      case 'eventbridge-bus': return (params as { name?: string }).name || 'New Event Bus'
       default:             return `New ${params.resource}`
     }
   }
@@ -233,7 +268,14 @@ export function CreateModal(): React.JSX.Element | null {
         {activeCreate.resource === 'acm'          && <AcmForm          onChange={handleChange} showErrors={showErrors} />}
         {activeCreate.resource === 'cloudfront'   && <CloudFrontForm   onChange={handleChange} showErrors={showErrors} />}
         {activeCreate.resource === 'apigw'        && <ApigwForm        onChange={handleChange} showErrors={showErrors} />}
-        {activeCreate.resource === 'apigw-route'  && <ApigwRouteForm   onChange={handleChange} showErrors={showErrors} apiId={parentApiId} />}
+        {activeCreate.resource === 'apigw-route'    && <ApigwRouteForm   onChange={handleChange} showErrors={showErrors} apiId={parentApiId} />}
+        {activeCreate.resource === 'sqs'             && <SqsForm          onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'sns'             && <SnsForm          onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'dynamo'          && <DynamoForm       onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'secret'          && <SecretForm       onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'ecr'             && <EcrForm          onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'sfn'             && <SfnForm          onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'eventbridge-bus' && <EventBusForm     onChange={handleChange} showErrors={showErrors} />}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid var(--cb-border-strong)' }}>
           <button
