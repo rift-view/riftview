@@ -82,4 +82,5 @@ export interface Settings {
   theme: Theme
   showRegionIndicators: boolean
   regionColors: Record<string, string>
+  showScanErrorBadges: boolean
 }
