@@ -14,20 +14,22 @@ import { AcmNode } from './nodes/AcmNode'
 import { CloudFrontNode } from './nodes/CloudFrontNode'
 import { ApigwNode } from './nodes/ApigwNode'
 import { ApigwRouteNode } from './nodes/ApigwRouteNode'
+import { StickyNoteNode, useStickyNoteCallbacks } from './nodes/StickyNoteNode'
 import type { CloudNode, EdgeType, IntegrationEdgeData } from '../../types/cloud'
 
 const SNAP_GRID_SIZE = 20
 
 const NODE_TYPES = {
-  resource:    ResourceNode,
-  vpc:         VpcNode,
-  subnet:      SubnetNode,
-  globalZone:  GlobalZoneNode,
-  regionZone:  RegionZoneNode,
-  acm:         AcmNode,
-  cloudfront:  CloudFrontNode,
-  apigw:       ApigwNode,
+  resource:      ResourceNode,
+  vpc:           VpcNode,
+  subnet:        SubnetNode,
+  globalZone:    GlobalZoneNode,
+  regionZone:    RegionZoneNode,
+  acm:           AcmNode,
+  cloudfront:    CloudFrontNode,
+  apigw:         ApigwNode,
   'apigw-route': ApigwRouteNode,
+  'sticky-note': StickyNoteNode,
 }
 
 const CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw'])
@@ -460,12 +462,14 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const collapsedSubnets   = useUIStore((s) => s.collapsedSubnets)
   const toggleSubnet       = useUIStore((s) => s.toggleSubnet)
   const annotations        = useUIStore((s) => s.annotations)
+  const stickyNotes        = useUIStore((s) => s.stickyNotes)
+  const setNodePosition    = useUIStore((s) => s.setNodePosition)
   const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
   const sidebarFilter      = useUIStore((s) => s.sidebarFilter)
   const setSidebarFilter   = useUIStore((s) => s.setSidebarFilter)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const topologyPositions = useUIStore((s) => s.nodePositions.topology)
-  const setNodePosition   = useUIStore((s) => s.setNodePosition)
+  const { onSave: onStickyNotesSave, onDelete: onStickyNoteDelete } = useStickyNoteCallbacks()
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -581,15 +585,31 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         return base
       })
 
-    const all = [...mapped, ...importedFlowNodes]
+    const stickyFlowNodes: Node[] = stickyNotes.map((sn) => ({
+      id:       sn.id,
+      type:     'sticky-note' as const,
+      position: livePositions[sn.id] ?? topologyPositions[sn.id] ?? sn.position,
+      draggable: true,
+      selectable: false,
+      data:     {
+        noteId:   sn.id,
+        content:  sn.content,
+        onSave:   onStickyNotesSave,
+        onDelete: onStickyNoteDelete,
+      },
+      zIndex: 10,
+    }))
+
+    const all = [...mapped, ...importedFlowNodes, ...stickyFlowNodes]
     if (!driftFilterActive) return all
     const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw', 'globalZone', 'apigw-route'])
     return all.filter((fn) => {
       if (DRIFT_CONTAINER_TYPES.has(fn.type ?? '')) return true
+      if (fn.type === 'sticky-note') return false
       const d = fn.data as { driftStatus?: string }
       return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
     })
-  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap])
+  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
@@ -606,13 +626,16 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
 
   // Track drag positions in local state (so controlled nodes follow the mouse),
   // and persist to the store only on drag-end.
+  const stickyNoteIds = useMemo(() => new Set(stickyNotes.map((sn) => sn.id)), [stickyNotes])
+
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     const nextLive: Record<string, { x: number; y: number }> = {}
     const toClear: string[] = []
 
     for (const change of changes) {
       if (change.type !== 'position' || !change.position) continue
-      if (!topLevelNodeIds.has(change.id)) continue  // ignore child/phantom nodes
+      // Allow top-level AWS nodes and sticky note nodes to have positions tracked
+      if (!topLevelNodeIds.has(change.id) && !stickyNoteIds.has(change.id)) continue
 
       if (change.dragging) {
         nextLive[change.id] = change.position
@@ -629,7 +652,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         return next
       })
     }
-  }, [topLevelNodeIds, setNodePosition])
+  }, [topLevelNodeIds, stickyNoteIds, setNodePosition])
 
   const flowEdges: Edge[] = useMemo(() => {
     const raw = buildTopologyEdges(allNodes)

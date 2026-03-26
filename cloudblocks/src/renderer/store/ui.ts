@@ -5,6 +5,12 @@ const TOAST_DURATION_MS = 2500
 
 type ViewKey = 'topology' | 'graph'
 
+export interface StickyNote {
+  id:       string
+  content:  string
+  position: { x: number; y: number }
+}
+
 interface SavedView {
   name:      string
   positions: Record<string, { x: number; y: number }>
@@ -36,6 +42,7 @@ interface UIState {
   showAbout:          boolean
   showSettings:       boolean
   annotations:        Record<string, string>
+  stickyNotes:        StickyNote[]
   driftFilterActive:  boolean
   sidebarFilter:      NodeType | null
 
@@ -59,6 +66,10 @@ interface UIState {
   setShowSettings:      (v: boolean) => void
   setAnnotation:        (nodeId: string, text: string) => void
   clearAnnotation:      (nodeId: string) => void
+  setAnnotations:       (data: Record<string, string>) => void
+  addStickyNote:        (note: StickyNote) => void
+  updateStickyNote:     (id: string, content: string) => void
+  removeStickyNote:     (id: string) => void
   toggleDriftFilter:    () => void
   resetDriftFilter:     () => void
   setSidebarFilter:     (type: NodeType | null) => void
@@ -84,6 +95,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   showAbout:         false,
   showSettings:      false,
   annotations:       {},
+  stickyNotes:       [],
   driftFilterActive: false,
   sidebarFilter:     null,
 
@@ -165,6 +177,10 @@ export const useUIStore = create<UIState>((set, get) => ({
       delete next[nodeId]
       return { annotations: next }
     }),
+  setAnnotations: (data) => set({ annotations: data }),
+  addStickyNote:    (note)         => set((s) => ({ stickyNotes: [...s.stickyNotes, note] })),
+  updateStickyNote: (id, content)  => set((s) => ({ stickyNotes: s.stickyNotes.map((n) => n.id === id ? { ...n, content } : n) })),
+  removeStickyNote: (id)           => set((s) => ({ stickyNotes: s.stickyNotes.filter((n) => n.id !== id) })),
   toggleDriftFilter: () => set((state) => ({ driftFilterActive: !state.driftFilterActive })),
   resetDriftFilter:  () => set({ driftFilterActive: false }),
   setSidebarFilter:  (type) => set({ sidebarFilter: type }),

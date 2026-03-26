@@ -93,8 +93,19 @@ export default function App(): React.JSX.Element | null {
     useCloudStore.getState().loadSettings()
 
     window.cloudblocks.loadAnnotations().then((saved) => {
-      if (Object.keys(saved).length > 0) {
-        useUIStore.setState({ annotations: saved })
+      if (Object.keys(saved).length === 0) return
+      useUIStore.setState({ annotations: saved })
+
+      // Rebuild stickyNotes from persisted annotations (keys prefixed with "sticky:")
+      const stickyNotes = Object.entries(saved)
+        .filter(([k]) => k.startsWith('sticky:'))
+        .map(([k, content], i) => ({
+          id:       k.slice('sticky:'.length),
+          content,
+          position: { x: 40 + i * 220, y: 40 },
+        }))
+      if (stickyNotes.length > 0) {
+        useUIStore.setState({ stickyNotes })
       }
     })
 
@@ -110,6 +121,10 @@ export default function App(): React.JSX.Element | null {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         setSearchOpen(true)
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'N') {
+        e.preventDefault()
+        window.dispatchEvent(new CustomEvent('cloudblocks:add-sticky-note'))
       }
     }
     function onShowAbout(): void {
