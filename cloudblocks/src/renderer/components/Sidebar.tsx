@@ -10,16 +10,55 @@ const TYPE_LABELS: Record<string, string> = {
   alb: 'ALB', 'security-group': 'Security Group', igw: 'IGW',
 }
 
-const SERVICES: { type: NodeType; label: string }[] = [
-  { type: 'vpc',            label: 'VPC' },
-  { type: 'ec2',            label: 'EC2' },
-  { type: 'rds',            label: 'RDS' },
-  { type: 's3',             label: 'S3' },
-  { type: 'lambda',         label: 'Lambda' },
-  { type: 'alb',            label: 'ALB' },
-  { type: 'security-group', label: 'Security Group' },
-  { type: 'igw',            label: 'IGW' },
+const SERVICES: { type: NodeType; label: string; hasCreate: boolean; resource?: string }[] = [
+  { type: 'vpc',            label: 'VPC',             hasCreate: true },
+  { type: 'ec2',            label: 'EC2',             hasCreate: true },
+  { type: 'rds',            label: 'RDS',             hasCreate: true },
+  { type: 's3',             label: 'S3',              hasCreate: true },
+  { type: 'lambda',         label: 'Lambda',          hasCreate: true },
+  { type: 'alb',            label: 'ALB',             hasCreate: true },
+  { type: 'security-group', label: 'Security Group',  hasCreate: true,  resource: 'sg' },
+  { type: 'acm',            label: 'ACM',             hasCreate: true },
+  { type: 'cloudfront',     label: 'CloudFront',      hasCreate: true },
+  { type: 'apigw',          label: 'API Gateway',     hasCreate: true },
+  { type: 'sqs',            label: 'SQS',             hasCreate: true },
+  { type: 'sns',            label: 'SNS',             hasCreate: true },
+  { type: 'dynamo',         label: 'DynamoDB',        hasCreate: true },
+  { type: 'secret',         label: 'Secrets Manager', hasCreate: true },
+  { type: 'ecr-repo',       label: 'ECR',             hasCreate: true,  resource: 'ecr' },
+  { type: 'sfn',            label: 'Step Functions',  hasCreate: true },
+  { type: 'eventbridge-bus', label: 'EventBridge',   hasCreate: true },
+  { type: 'igw',            label: 'IGW',             hasCreate: false },
+  { type: 'subnet',         label: 'Subnet',          hasCreate: false },
+  { type: 'nat-gateway',    label: 'NAT Gateway',     hasCreate: false },
+  { type: 'r53-zone',       label: 'Route 53',        hasCreate: false },
+  { type: 'apigw-route',    label: 'API Route',       hasCreate: false },
 ]
+
+const SCAN_KEY_TO_TYPE: Record<string, NodeType> = {
+  'ec2:instances':       'ec2',
+  'ec2:vpcs':            'vpc',
+  'ec2:subnets':         'subnet',
+  'ec2:security-groups': 'security-group',
+  'igw':                 'igw',
+  'nat':                 'nat-gateway',
+  'rds':                 'rds',
+  's3':                  's3',
+  'lambda':              'lambda',
+  'alb':                 'alb',
+  'acm':                 'acm',
+  'cloudfront':          'cloudfront',
+  'apigw':               'apigw',
+  'sqs':                 'sqs',
+  'secrets':             'secret',
+  'ecr':                 'ecr-repo',
+  'sns':                 'sns',
+  'dynamo':              'dynamo',
+  'ssm':                 'ssm-param',
+  'r53':                 'r53-zone',
+  'sfn':                 'sfn',
+  'eventbridge':         'eventbridge-bus',
+}
 
 function getSsmPrefix(label: string): string {
   if (!label.startsWith('/')) return '(ungrouped)'
@@ -41,6 +80,8 @@ export function Sidebar(): React.JSX.Element {
   const sidebarFilter     = useUIStore((s) => s.sidebarFilter)
   const setSidebarFilter  = useUIStore((s) => s.setSidebarFilter)
   const nodes             = useCloudStore((s) => s.nodes)
+  const scanErrors        = useCloudStore((s) => s.scanErrors)
+  const settings          = useCloudStore((s) => s.settings)
   const setCommandPreview = useCliStore((s) => s.setCommandPreview)
   const setPendingCommand = useCliStore((s) => s.setPendingCommand)
 
@@ -77,6 +118,19 @@ export function Sidebar(): React.JSX.Element {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([prefix, groupNodes]) => ({ prefix, nodes: groupNodes }))
   }, [nodes])
+
+  const errorsByType = useMemo<Map<NodeType, string>>(() => {
+    const m = new Map<NodeType, string>()
+    if (!settings.showScanErrorBadges) return m
+    for (const err of scanErrors) {
+      const nt = SCAN_KEY_TO_TYPE[err.service]
+      if (!nt) continue
+      const line = `[${err.service}] ${err.region} — ${err.message}`
+      const existing = m.get(nt)
+      m.set(nt, existing ? `${existing}\n${line}` : line)
+    }
+    return m
+  }, [scanErrors, settings.showScanErrorBadges])
 
   const serviceRowStyle: React.CSSProperties = {
     background:     'var(--cb-bg-elevated)',
@@ -121,8 +175,9 @@ export function Sidebar(): React.JSX.Element {
       )}
 
       {SERVICES.map((s) => {
-        const count = counts[s.type] ?? 0
-        const isActive = sidebarFilter === s.type
+        const count        = counts[s.type] ?? 0
+        const isActive     = sidebarFilter === s.type
+        const errTooltip   = errorsByType.get(s.type)
         const activeStyle: React.CSSProperties = {
           ...serviceRowStyle,
           border:     '1px solid var(--cb-accent)',
@@ -133,13 +188,18 @@ export function Sidebar(): React.JSX.Element {
         return (
           <div
             key={s.type}
-            draggable
-            onDragStart={(e) => e.dataTransfer.setData('text/plain', s.type)}
+            draggable={s.hasCreate}
+            onDragStart={s.hasCreate ? (e) => e.dataTransfer.setData('text/plain', s.resource ?? s.type) : undefined}
             onClick={() => { if (sidebarFilter === s.type) setSidebarFilter(null); else setFilterTarget(s.type) }}
-            className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
-            style={isActive ? activeStyle : serviceRowStyle}
+            className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
+            style={{ ...(isActive ? activeStyle : serviceRowStyle), cursor: s.hasCreate ? 'grab' : 'default' }}
           >
-            <span>⬡ {s.label}</span>
+            <span>
+              ⬡ {s.label}
+              {errTooltip && (
+                <span title={errTooltip} style={{ color: '#f59e0b', fontSize: 10, marginLeft: 4 }}>⚠</span>
+              )}
+            </span>
             {count > 0 && (
               <span style={badgeStyle}>
                 {count}
@@ -149,10 +209,16 @@ export function Sidebar(): React.JSX.Element {
         )
       })}
 
-      {ssmGroups.length > 0 && (
+      {(ssmGroups.length > 0 || errorsByType.has('ssm-param')) && (
         <>
-          <div className="px-2.5 text-[9px] uppercase tracking-widest mt-3 mb-1" style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace' }}>
-            Parameters
+          <div
+            className="px-2.5 text-[9px] uppercase tracking-widest mt-3 mb-1"
+            style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: 4 }}
+          >
+            <span>Parameters</span>
+            {errorsByType.get('ssm-param') && (
+              <span title={errorsByType.get('ssm-param')} style={{ color: '#f59e0b', fontSize: 10 }}>⚠</span>
+            )}
           </div>
 
           {ssmGroups.map(({ prefix, nodes: groupNodes }) => {
