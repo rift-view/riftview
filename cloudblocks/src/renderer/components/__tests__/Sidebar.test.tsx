@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { Sidebar } from '../Sidebar'
+import { Sidebar, SCAN_KEY_TO_TYPE } from '../Sidebar'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
 import { useCliStore } from '../../store/cli'
@@ -80,5 +80,36 @@ describe('Sidebar scan error badges', () => {
     render(<Sidebar />)
     const badge = screen.getByTitle('[dynamo] eu-west-1 — ThrottlingException')
     expect(badge).toBeInTheDocument()
+  })
+})
+
+describe('SCAN_KEY_TO_TYPE contract', () => {
+  it('contains exactly the service keys used by awsProvider.scan()', () => {
+    const expectedKeys = new Set([
+      'ec2:instances',
+      'ec2:vpcs',
+      'ec2:subnets',
+      'ec2:security-groups',
+      'rds',
+      's3',
+      'lambda',
+      'alb',
+      'acm',
+      'cloudfront',
+      'apigw',
+      'igw',
+      'sqs',
+      'secrets',
+      'ecr',
+      'sns',
+      'dynamo',
+      'ssm',
+      'nat',
+      'r53',
+      'sfn',
+      'eventbridge',
+    ])
+    const actualKeys = new Set(Object.keys(SCAN_KEY_TO_TYPE))
+    expect(actualKeys).toEqual(expectedKeys)
   })
 })
