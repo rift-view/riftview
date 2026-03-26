@@ -1,4 +1,4 @@
-import type { CreateParams, SgParams, S3Params, RdsParams, LambdaParams, AlbParams, AcmParams, ApigwParams, ApigwRouteParams, SqsParams, SnsParams, DynamoParams, SecretParams, EcrParams, SfnParams, EventBusParams, R53ZoneParams } from '../types/create'
+import type { CreateParams, SgParams, S3Params, RdsParams, LambdaParams, AlbParams, AcmParams, ApigwParams, ApigwRouteParams, SqsParams, SnsParams, DynamoParams, SecretParams, EcrParams, SfnParams, EventBusParams, R53ZoneParams, CreateSsmParamParams } from '../types/create'
 
 /**
  * Returns an array of argv arrays — one per aws CLI command.
@@ -56,6 +56,7 @@ export function buildCommands(params: CreateParams): string[][] {
     case 'sfn':            return buildSfnCommands(params as SfnParams)
     case 'eventbridge-bus': return buildEventBusCommands(params as EventBusParams)
     case 'r53-zone':        return buildR53ZoneCommands(params as R53ZoneParams)
+    case 'ssm-param':      return buildSsmParamCommands(params as CreateSsmParamParams)
   }
 }
 
@@ -217,6 +218,18 @@ function buildR53ZoneCommands(p: R53ZoneParams): string[][] {
     '--caller-reference', Date.now().toString(),
     '--hosted-zone-config', `Comment="",PrivateZone=${p.isPrivate}`,
   ]]
+}
+
+function buildSsmParamCommands(p: CreateSsmParamParams): string[][] {
+  const args = [
+    'ssm', 'put-parameter',
+    '--name', p.name,
+    '--value', p.value,
+    '--type', p.paramType,
+    '--overwrite',
+  ]
+  if (p.description) args.push('--description', p.description)
+  return [args]
 }
 
 function buildS3Commands(params: S3Params): string[][] {

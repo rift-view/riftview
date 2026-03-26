@@ -47,6 +47,19 @@ describe('buildDeleteCommands', () => {
       ['route53', 'delete-hosted-zone', '--id', '/hostedzone/Z1234567890ABC'],
     ])
   })
+  it('SSM Parameter delete by name (label)', () => {
+    const n: CloudNode = {
+      id: 'arn:aws:ssm:us-east-1:123:parameter/my/key',
+      type: 'ssm-param',
+      label: '/my/key',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { type: 'String', tier: 'Standard' },
+    }
+    expect(buildDeleteCommands(n)).toEqual([
+      ['ssm', 'delete-parameter', '--name', '/my/key'],
+    ])
+  })
 })
 
 describe('buildQuickActionCommand', () => {

@@ -134,6 +134,18 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
       return [args]
     }
 
+    case 'ssm-param': {
+      const args = [
+        'ssm', 'put-parameter',
+        '--name', params.paramName,
+        '--value', params.value,
+        '--type', params.paramType,
+        '--overwrite',
+      ]
+      if (params.description !== undefined) args.push('--description', params.description)
+      return [args]
+    }
+
     default:
       return []
   }
