@@ -278,4 +278,9 @@ describe('theme defaults', () => {
       expect(store.getState().settings.theme).toBe(t)
     })
   })
+
+  it('DEFAULT_SETTINGS includes showScanErrorBadges: true', () => {
+    const store = createCloudStore()
+    expect(store.getState().settings.showScanErrorBadges).toBe(true)
+  })
 })
