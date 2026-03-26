@@ -142,6 +142,27 @@ describe('buildEditCommands — SQS', () => {
   })
 })
 
+describe('buildEditCommands — SNS', () => {
+  it('emits set-topic-attributes with DisplayName', () => {
+    expect(buildEditCommands(
+      node('sns', 'arn:aws:sns:us-east-1:123:my-topic'),
+      { resource: 'sns', topicArn: 'arn:aws:sns:us-east-1:123:my-topic', displayName: 'MySender' }
+    )).toEqual([
+      ['sns', 'set-topic-attributes', '--topic-arn', 'arn:aws:sns:us-east-1:123:my-topic',
+        '--attribute-name', 'DisplayName', '--attribute-value', 'MySender'],
+    ])
+  })
+
+  it('allows empty display name', () => {
+    const cmds = buildEditCommands(
+      node('sns', 'arn:aws:sns:us-east-1:123:my-topic'),
+      { resource: 'sns', topicArn: 'arn:aws:sns:us-east-1:123:my-topic', displayName: '' }
+    )
+    expect(cmds[0]).toEqual(['sns', 'set-topic-attributes', '--topic-arn', 'arn:aws:sns:us-east-1:123:my-topic',
+      '--attribute-name', 'DisplayName', '--attribute-value', ''])
+  })
+})
+
 describe('buildEditCommands — EventBridge', () => {
   it('emits update-event-bus with bus name and description', () => {
     const n = { ...node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus'), label: 'my-bus' }
