@@ -1,5 +1,5 @@
-import { useMemo, useCallback, useRef, useEffect, useState } from 'react'
-import { ReactFlow, Background, BackgroundVariant, MiniMap, useReactFlow, type Node, type Edge, type NodeChange } from '@xyflow/react'
+import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react'
+import { ReactFlow, Background, BackgroundVariant, MiniMap, useReactFlow, type Node, type Edge, type NodeChange, type OnSelectionChangeParams } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
@@ -451,9 +451,12 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const selectedRegions      = useCloudStore((s) => s.selectedRegions)
   const showRegionIndicators = useCloudStore((s) => s.settings.showRegionIndicators)
   const regionColorsSetting  = useCloudStore((s) => s.settings.regionColors)
-  const selectNode         = useUIStore((s) => s.selectNode)
-  const selectEdge         = useUIStore((s) => s.selectEdge)
-  const selectedId         = useUIStore((s) => s.selectedNodeId)
+  const selectNode           = useUIStore((s) => s.selectNode)
+  const selectEdge           = useUIStore((s) => s.selectEdge)
+  const selectedId           = useUIStore((s) => s.selectedNodeId)
+  const selectedNodeIds      = useUIStore((s) => s.selectedNodeIds)
+  const setSelectedNodeIds   = useUIStore((s) => s.setSelectedNodeIds)
+  const clearSelectedNodeIds = useUIStore((s) => s.clearSelectedNodeIds)
   const setActiveCreate    = useUIStore((s) => s.setActiveCreate)
   const view               = useUIStore((s) => s.view)
   const showIntegrations   = useUIStore((s) => s.showIntegrations)
@@ -525,6 +528,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const flowNodes: Node[] = useMemo(() => {
     const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets, selectedRegions, showRegionIndicators, regionColorMap)
     const mapped = raw.map((n) => {
+      const isMultiSelected = selectedNodeIds.size > 1 && selectedNodeIds.has(n.id)
       const isLocked = lockedNodes.has(n.id)
       // Apply lock properties to all nodes (container nodes never get locked draggable/selectable
       // overrides since they already have those set to false in buildFlowNodes)
@@ -532,15 +536,20 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         ? { draggable: false, selectable: false, zIndex: -1 }
         : {}
 
+      const multiSelectStyle: React.CSSProperties | undefined = isMultiSelected
+        ? { outline: '2px solid var(--cb-accent)', outlineOffset: '2px' }
+        : undefined
+
       if (n.extent === 'parent') {
         // Child nodes: only patch data for lock indicator, no position override
         // For subnet nodes, inject the toggleSubnet callback
         if (n.type === 'subnet') {
-          return { ...n, data: { ...n.data, onToggleCollapse: () => toggleSubnet(n.id), ...(isLocked ? { locked: true } : {}) }, ...(isLocked ? lockProps : {}) }
+          return { ...n, style: { ...n.style, ...multiSelectStyle }, data: { ...n.data, onToggleCollapse: () => toggleSubnet(n.id), ...(isLocked ? { locked: true } : {}) }, ...(isLocked ? lockProps : {}) }
         }
-        return isLocked
+        const base = isLocked
           ? { ...n, ...lockProps, data: { ...n.data, locked: true } }
           : n
+        return multiSelectStyle ? { ...base, style: { ...base.style, ...multiSelectStyle } } : base
       }
 
       const live  = livePositions[n.id]
@@ -553,6 +562,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
           ...n,
           position,
           ...lockProps,
+          style: { ...n.style, ...multiSelectStyle },
           data: { ...n.data, onToggleCollapse: () => toggleSubnet(n.id), ...(isLocked ? { locked: true } : {}), annotation: annotations[n.id] },
         }
       }
@@ -561,6 +571,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         ...n,
         position,
         ...lockProps,
+        style: { ...n.style, ...multiSelectStyle },
         data: { ...n.data, ...(isLocked ? { locked: true } : {}), annotation: annotations[n.id] },
       }
     })
@@ -609,7 +620,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       const d = fn.data as { driftStatus?: string }
       return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
     })
-  }, [allNodes, selectedId, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete])
+  }, [allNodes, selectedId, selectedNodeIds, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
@@ -627,6 +638,12 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   // Track drag positions in local state (so controlled nodes follow the mouse),
   // and persist to the store only on drag-end.
   const stickyNoteIds = useMemo(() => new Set(stickyNotes.map((sn) => sn.id)), [stickyNotes])
+
+  const onSelectionChange = useCallback(({ nodes: selected }: OnSelectionChangeParams) => {
+    setSelectedNodeIds(new Set(selected.map((n) => n.id)))
+    if (selected.length === 1) selectNode(selected[0].id)
+    else if (selected.length === 0) { selectNode(null); clearSelectedNodeIds() }
+  }, [setSelectedNodeIds, selectNode, clearSelectedNodeIds])
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     const nextLive: Record<string, { x: number; y: number }> = {}
@@ -674,7 +691,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
       onNodeDoubleClick={(_e, node) => selectNode(node.id)}
       onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
-      onPaneClick={() => { selectNode(null); selectEdge(null); setSidebarFilter(null) }}
+      onPaneClick={() => { selectNode(null); selectEdge(null); setSidebarFilter(null); clearSelectedNodeIds() }}
+      onSelectionChange={onSelectionChange}
       onNodeContextMenu={(event, rfNode) => {
         event.preventDefault()
         const cloudNode = allNodes.find((n) => n.id === rfNode.id)
