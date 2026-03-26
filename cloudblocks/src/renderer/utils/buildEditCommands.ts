@@ -112,6 +112,14 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
       return [['sns', 'set-topic-attributes', '--topic-arn', params.topicArn,
         '--attribute-name', 'DisplayName', '--attribute-value', params.displayName]]
 
+    case 'ecr-repo':
+      return [
+        ['ecr', 'put-image-tag-mutability', '--repository-name', params.repositoryName,
+          '--image-tag-mutability', params.imageTagMutability],
+        ['ecr', 'put-image-scanning-configuration', '--repository-name', params.repositoryName,
+          '--image-scanning-configuration', `scanOnPush=${params.scanOnPush}`],
+      ]
+
     default:
       return []
   }
