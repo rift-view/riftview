@@ -509,6 +509,21 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                     )
                   })}
                 </div>
+
+                <div style={{ marginTop: 20 }}>
+                  <div style={sectionLabel}>Scan Errors</div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={settings.showScanErrorBadges}
+                      onChange={(e): void => handleSettingChange('showScanErrorBadges', e.target.checked)}
+                      style={{ accentColor: 'var(--cb-accent)', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--cb-text-secondary)' }}>
+                      Show error badges in sidebar when a service scan fails
+                    </span>
+                  </label>
+                </div>
               </div>
             )}
 
