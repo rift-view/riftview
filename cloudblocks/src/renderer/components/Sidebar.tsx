@@ -35,7 +35,7 @@ const SERVICES: { type: NodeType; label: string; hasCreate: boolean; resource?: 
   { type: 'apigw-route',    label: 'API Route',       hasCreate: false },
 ]
 
-const SCAN_KEY_TO_TYPE: Record<string, NodeType> = {
+export const SCAN_KEY_TO_TYPE: Record<string, NodeType> = {
   'ec2:instances':       'ec2',
   'ec2:vpcs':            'vpc',
   'ec2:subnets':         'subnet',
