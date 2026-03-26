@@ -25,6 +25,8 @@ import { SfnForm } from './SfnForm'
 import { EventBusForm } from './EventBusForm'
 import { R53CreateForm } from './R53CreateForm'
 import { SsmCreateForm } from './SsmCreateForm'
+import { SubnetCreateForm } from './SubnetCreateForm'
+import { IgwCreateForm } from './IgwCreateForm'
 
 function validateParams(params: CreateParams | null): boolean {
   if (!params) return false
@@ -49,6 +51,8 @@ function validateParams(params: CreateParams | null): boolean {
     case 'eventbridge-bus': return !!(params.name)
     case 'r53-zone':        return !!(params.domainName)
     case 'ssm-param':       return !!(params.name && params.value)
+    case 'subnet':          return !!(params.vpcId && params.cidrBlock)
+    case 'igw':             return true
     default:             return true
   }
 }
@@ -74,6 +78,8 @@ const TITLES: Record<string, string> = {
   'eventbridge-bus': 'New EventBridge Bus',
   'r53-zone':        'New Hosted Zone',
   'ssm-param':       'New SSM Parameter',
+  subnet:            'New Subnet',
+  igw:               'New Internet Gateway',
 }
 
 // Maps form resource identifier to CloudNode NodeType
@@ -98,6 +104,8 @@ const RESOURCE_TO_NODE_TYPE: Record<string, NodeType> = {
   'eventbridge-bus': 'eventbridge-bus',
   'r53-zone':        'r53-zone',
   'ssm-param':       'ssm-param',
+  subnet:            'subnet',
+  igw:               'igw',
 }
 
 export function CreateModal(): React.JSX.Element | null {
@@ -180,6 +188,8 @@ export function CreateModal(): React.JSX.Element | null {
       case 'eventbridge-bus': return (params as { name?: string }).name || 'New Event Bus'
       case 'r53-zone':        return (params as { domainName?: string }).domainName || 'New Hosted Zone'
       case 'ssm-param':       return (params as { name?: string }).name || 'New Parameter'
+      case 'subnet':          return (params as { cidrBlock?: string }).cidrBlock || 'New Subnet'
+      case 'igw':             return (params as { name?: string }).name || 'New Internet Gateway'
       default:             return `New ${params.resource}`
     }
   }
@@ -288,6 +298,8 @@ export function CreateModal(): React.JSX.Element | null {
         {activeCreate.resource === 'eventbridge-bus' && <EventBusForm     onChange={handleChange} showErrors={showErrors} />}
         {activeCreate.resource === 'r53-zone'        && <R53CreateForm    onChange={handleChange} showErrors={showErrors} />}
         {activeCreate.resource === 'ssm-param'       && <SsmCreateForm    onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'subnet'          && <SubnetCreateForm onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'igw'             && <IgwCreateForm    onChange={handleChange} showErrors={showErrors} />}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid var(--cb-border-strong)' }}>
           <button

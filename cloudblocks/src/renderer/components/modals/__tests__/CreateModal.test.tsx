@@ -124,3 +124,26 @@ it('blocks submission and does not call runCli when SSM param name and value are
   await new Promise(r => setTimeout(r, 10))
   expect(runCli).not.toHaveBeenCalled()
 })
+
+it('renders Subnet form title when activeCreate is subnet', () => {
+  useUIStore.setState({ activeCreate: { resource: 'subnet', view: 'topology' } })
+  render(<CreateModal />)
+  expect(screen.getByText(/new subnet/i)).toBeInTheDocument()
+})
+
+it('blocks submission and does not call runCli when subnet vpcId and cidrBlock are empty', async () => {
+  useUIStore.getState().setActiveCreate({ resource: 'subnet', view: 'topology' })
+  const runCli = vi.fn().mockResolvedValue({ code: 0 })
+  window.cloudblocks = { ...window.cloudblocks, runCli }
+
+  render(<CreateModal />)
+  window.dispatchEvent(new CustomEvent('commanddrawer:run'))
+  await new Promise(r => setTimeout(r, 10))
+  expect(runCli).not.toHaveBeenCalled()
+})
+
+it('renders Internet Gateway form title when activeCreate is igw', () => {
+  useUIStore.setState({ activeCreate: { resource: 'igw', view: 'topology' } })
+  render(<CreateModal />)
+  expect(screen.getByText(/new internet gateway/i)).toBeInTheDocument()
+})
