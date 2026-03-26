@@ -34,7 +34,14 @@ export interface EventBridgeEditParams {
   description: string
 }
 
+export interface SqsEditParams {
+  resource: 'sqs'
+  queueUrl: string
+  visibilityTimeout: number
+  messageRetentionPeriod: number
+}
+
 export type EditParams =
   | VpcEditParams | Ec2EditParams | SgEditParams | RdsEditParams
   | S3EditParams  | LambdaEditParams | AlbEditParams | CloudFrontEditParams | ApigwEditParams
-  | EventBridgeEditParams
+  | EventBridgeEditParams | SqsEditParams

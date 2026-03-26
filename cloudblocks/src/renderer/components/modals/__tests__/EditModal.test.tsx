@@ -58,6 +58,36 @@ describe('EditModal', () => {
     })
   })
 
+  describe('SQS edit form', () => {
+    const sqsNode: CloudNode = {
+      id: 'https://sqs.us-east-1.amazonaws.com/123/my-queue',
+      type: 'sqs',
+      label: 'my-queue',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { visibilityTimeout: 60, messageRetentionPeriod: 86400 },
+    }
+
+    it('renders the SQS edit modal with queue URL', () => {
+      render(<EditModal node={sqsNode} onClose={vi.fn()} />)
+      expect(screen.getByText(/edit sqs queue/i)).toBeInTheDocument()
+      expect(screen.getByDisplayValue('https://sqs.us-east-1.amazonaws.com/123/my-queue')).toBeInTheDocument()
+    })
+
+    it('pre-fills visibility timeout and retention period from metadata', () => {
+      render(<EditModal node={sqsNode} onClose={vi.fn()} />)
+      expect(screen.getByDisplayValue('60')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('86400')).toBeInTheDocument()
+    })
+
+    it('uses defaults when metadata fields are absent', () => {
+      const nodeNoMeta: CloudNode = { ...sqsNode, metadata: {} }
+      render(<EditModal node={nodeNoMeta} onClose={vi.fn()} />)
+      expect(screen.getByDisplayValue('30')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('345600')).toBeInTheDocument()
+    })
+  })
+
   describe('EventBridge edit form', () => {
     it('renders the EventBridge edit modal with bus name and pre-filled description', () => {
       render(<EditModal node={eventBridgeNode} onClose={vi.fn()} />)

@@ -130,6 +130,18 @@ describe('buildEditCommands — ALB', () => {
   })
 })
 
+describe('buildEditCommands — SQS', () => {
+  it('emits set-queue-attributes with visibility timeout and retention period', () => {
+    expect(buildEditCommands(
+      node('sqs', 'https://sqs.us-east-1.amazonaws.com/123/my-queue'),
+      { resource: 'sqs', queueUrl: 'https://sqs.us-east-1.amazonaws.com/123/my-queue', visibilityTimeout: 60, messageRetentionPeriod: 86400 }
+    )).toEqual([
+      ['sqs', 'set-queue-attributes', '--queue-url', 'https://sqs.us-east-1.amazonaws.com/123/my-queue',
+        '--attributes', 'VisibilityTimeout=60,MessageRetentionPeriod=86400'],
+    ])
+  })
+})
+
 describe('buildEditCommands — EventBridge', () => {
   it('emits update-event-bus with bus name and description', () => {
     const n = { ...node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus'), label: 'my-bus' }
