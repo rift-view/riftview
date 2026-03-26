@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
+import type { StickyNote } from '../../store/ui'
 import { TopologyView } from './TopologyView'
 import { GraphView } from './GraphView'
 import { CanvasContextMenu } from './CanvasContextMenu'
@@ -44,6 +45,9 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
   const toggleSnapToGrid   = useUIStore((s) => s.toggleSnapToGrid)
   const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
   const toggleDriftFilter  = useUIStore((s) => s.toggleDriftFilter)
+  const addStickyNote  = useUIStore((s) => s.addStickyNote)
+  const setAnnotation  = useUIStore((s) => s.setAnnotation)
+
   const [modalSlot, setModalSlot] = useState<number | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [exportOpen, setExportOpen] = useState(false)
@@ -93,6 +97,21 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
     window.addEventListener('cloudblocks:fitnode', onFitNode)
     return () => window.removeEventListener('cloudblocks:fitnode', onFitNode)
   }, [fitView])
+
+  // Listen for "Add Note" shortcut / button
+  useEffect(() => {
+    function onAddStickyNote(): void {
+      const id   = `sn-${Date.now()}`
+      const note: StickyNote = { id, content: '', position: { x: 120, y: 120 } }
+      addStickyNote(note)
+      // persist an empty entry so the note survives reload until it gets content
+      const next = { ...useUIStore.getState().annotations, [`sticky:${id}`]: '' }
+      setAnnotation(`sticky:${id}`, '')
+      void window.cloudblocks.saveAnnotations(next)
+    }
+    window.addEventListener('cloudblocks:add-sticky-note', onAddStickyNote)
+    return () => window.removeEventListener('cloudblocks:add-sticky-note', onAddStickyNote)
+  }, [addStickyNote, setAnnotation])
 
   const btnBase = { fontFamily: 'monospace', fontSize: '9px', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }
 
@@ -155,6 +174,16 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
             {formatPrice(totalCost)}
           </span>
         )}
+
+        <div className="w-px h-3.5 bg-gray-700" />
+
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:add-sticky-note'))}
+          title="Add sticky note (⌘⇧N)"
+          style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid #ca8a04', color: '#ca8a04' }}
+        >
+          ✎ Note
+        </button>
 
         <div className="w-px h-3.5 bg-gray-700" />
 

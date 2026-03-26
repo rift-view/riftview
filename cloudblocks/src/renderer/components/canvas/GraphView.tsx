@@ -9,6 +9,7 @@ import { AcmNode } from './nodes/AcmNode'
 import { CloudFrontNode } from './nodes/CloudFrontNode'
 import { ApigwNode } from './nodes/ApigwNode'
 import { ApigwRouteNode } from './nodes/ApigwRouteNode'
+import { StickyNoteNode, useStickyNoteCallbacks } from './nodes/StickyNoteNode'
 import type { CloudNode } from '../../types/cloud'
 
 const SNAP_GRID_SIZE = 20
@@ -19,6 +20,7 @@ const NODE_TYPES = {
   cloudfront:    CloudFrontNode,
   apigw:         ApigwNode,
   'apigw-route': ApigwRouteNode,
+  'sticky-note': StickyNoteNode,
 }
 
 // Distinct colors per VPC — cycles if more than 6 VPCs
@@ -191,12 +193,14 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const snapToGrid         = useUIStore((s) => s.snapToGrid)
   const lockedNodes        = useUIStore((s) => s.lockedNodes)
   const annotations        = useUIStore((s) => s.annotations)
+  const stickyNotes        = useUIStore((s) => s.stickyNotes)
   const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
   const sidebarFilter      = useUIStore((s) => s.sidebarFilter)
   const setSidebarFilter   = useUIStore((s) => s.setSidebarFilter)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const graphPositions  = useUIStore((s) => s.nodePositions.graph)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
+  const { onSave: onStickyNotesSave, onDelete: onStickyNoteDelete } = useStickyNoteCallbacks()
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
@@ -343,16 +347,32 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           selected: n.id === selectedId,
         }))
 
-      const all = [...mapped, ...importedFlowNodes]
+      const stickyFlowNodes: Node[] = stickyNotes.map((sn) => ({
+        id:        sn.id,
+        type:      'sticky-note' as const,
+        position:  livePositions[sn.id] ?? graphPositions[sn.id] ?? sn.position,
+        draggable: true,
+        selectable: false,
+        data:      {
+          noteId:   sn.id,
+          content:  sn.content,
+          onSave:   onStickyNotesSave,
+          onDelete: onStickyNoteDelete,
+        },
+        zIndex: 10,
+      }))
+
+      const all = [...mapped, ...importedFlowNodes, ...stickyFlowNodes]
       if (!driftFilterActive) return all
       const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw', 'globalZone', 'apigw-route'])
       return all.filter((fn) => {
+        if (fn.type === 'sticky-note') return false
         const d = fn.data as { nodeType?: string; driftStatus?: string }
         if (DRIFT_CONTAINER_TYPES.has(d.nodeType ?? '')) return true
         return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
       })
     },
-    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes, driftFilterActive],
+    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes, driftFilterActive, stickyNotes, onStickyNotesSave, onStickyNoteDelete],
   )
 
   const flowEdges: Edge[] = useMemo(() => {

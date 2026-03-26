@@ -563,7 +563,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                     clearAnnotation(node.id)
                     const next = { ...useUIStore.getState().annotations }
                     delete next[node.id]
-                    window.cloudblocks.saveAnnotations(next)
+                    void window.cloudblocks.saveAnnotations(next)
                   }}
                   style={{ background: 'none', border: 'none', color: 'var(--cb-text-muted)', cursor: 'pointer', fontSize: 9, padding: 0, lineHeight: 1 }}
                   title="Clear note"
@@ -572,10 +572,11 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             </div>
             <textarea
               value={annotations[node.id] ?? ''}
-              onChange={(e) => {
-                setAnnotation(node.id, e.target.value)
+              onChange={(e) => setAnnotation(node.id, e.target.value)}
+              onBlur={(e) => {
                 const next = { ...useUIStore.getState().annotations, [node.id]: e.target.value }
-                window.cloudblocks.saveAnnotations(next)
+                if (!e.target.value) delete next[node.id]
+                void window.cloudblocks.saveAnnotations(next)
               }}
               placeholder="Add a note about this resource..."
               rows={4}
