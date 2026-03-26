@@ -110,5 +110,6 @@ export interface EcrParams { resource: 'ecr'; name: string }
 export interface SfnParams { resource: 'sfn'; name: string; type?: 'STANDARD' | 'EXPRESS'; roleArn: string; definition: string }
 export interface EventBusParams { resource: 'eventbridge-bus'; name: string }
 export interface R53ZoneParams { resource: 'r53-zone'; domainName: string; isPrivate: boolean }
+export interface CreateSsmParamParams { resource: 'ssm-param'; name: string; value: string; paramType: 'String' | 'StringList'; description?: string }
 
-export type CreateParams = VpcParams | Ec2Params | SgParams | S3Params | RdsParams | LambdaParams | AlbParams | AcmParams | CloudFrontParams | ApigwParams | ApigwRouteParams | SqsParams | SnsParams | DynamoParams | SecretParams | EcrParams | SfnParams | EventBusParams | R53ZoneParams
+export type CreateParams = VpcParams | Ec2Params | SgParams | S3Params | RdsParams | LambdaParams | AlbParams | AcmParams | CloudFrontParams | ApigwParams | ApigwRouteParams | SqsParams | SnsParams | DynamoParams | SecretParams | EcrParams | SfnParams | EventBusParams | R53ZoneParams | CreateSsmParamParams
