@@ -36,6 +36,7 @@ const DEFAULT_SETTINGS = {
   theme: 'dark' as const,
   showRegionIndicators: true,
   regionColors: {} as Record<string, string>,
+  showScanErrorBadges: true,
 }
 
 let scanner:   ResourceScanner | null = null

@@ -13,6 +13,7 @@ const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
   showRegionIndicators: true,
   regionColors: {},
+  showScanErrorBadges: true,
 }
 
 interface CloudState {
