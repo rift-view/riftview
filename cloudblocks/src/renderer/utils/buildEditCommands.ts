@@ -104,6 +104,10 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
       return [args]
     }
 
+    case 'sqs':
+      return [['sqs', 'set-queue-attributes', '--queue-url', params.queueUrl,
+        '--attributes', `VisibilityTimeout=${params.visibilityTimeout},MessageRetentionPeriod=${params.messageRetentionPeriod}`]]
+
     default:
       return []
   }

@@ -13,6 +13,7 @@ import AlbEditForm from './AlbEditForm'
 import CloudFrontEditForm from './CloudFrontEditForm'
 import ApigwEditForm from './ApigwEditForm'
 import EventBridgeEditForm from './EventBridgeEditForm'
+import SqsEditForm from './SqsEditForm'
 
 interface EditModalProps {
   node: CloudNode | null
@@ -23,7 +24,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   vpc: 'VPC', ec2: 'EC2 Instance', 'security-group': 'Security Group',
   rds: 'RDS Instance', s3: 'S3 Bucket', lambda: 'Lambda Function', alb: 'Load Balancer',
   cloudfront: 'CloudFront Distribution', apigw: 'API Gateway',
-  'eventbridge-bus': 'EventBridge Bus',
+  'eventbridge-bus': 'EventBridge Bus', sqs: 'SQS Queue',
 }
 
 export default function EditModal({ node, onClose }: EditModalProps): React.JSX.Element | null {
@@ -117,6 +118,7 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
         {node.type === 'cloudfront'      && <CloudFrontEditForm node={node} onChange={handleChange} />}
         {node.type === 'apigw'           && <ApigwEditForm      node={node} onChange={handleChange} />}
         {node.type === 'eventbridge-bus' && <EventBridgeEditForm node={node} onChange={handleChange} />}
+        {node.type === 'sqs'             && <SqsEditForm         node={node} onChange={handleChange} />}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
           <button
