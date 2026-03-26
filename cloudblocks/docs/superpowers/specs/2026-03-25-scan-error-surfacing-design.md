@@ -50,8 +50,8 @@ Each service row in `Sidebar.tsx` gets a small amber `⚠` icon when any `scanEr
 | `ec2:vpcs` | `vpc` |
 | `ec2:subnets` | `subnet` |
 | `ec2:security-groups` | `security-group` |
-| `ec2:igw` or `igw` | `igw` |
-| `ec2:nat` or `nat` | `nat-gateway` |
+| `igw` | `igw` |
+| `nat` | `nat-gateway` |
 | `rds` | `rds` |
 | `s3` | `s3` |
 | `lambda` | `lambda` |
@@ -64,7 +64,7 @@ Each service row in `Sidebar.tsx` gets a small amber `⚠` icon when any `scanEr
 | `ecr` | `ecr-repo` |
 | `sns` | `sns` |
 | `dynamo` | `dynamo` |
-| `ssm` | `ssm-param` (badge appears in the Parameters section of the Sidebar, same inline `⚠` treatment) |
+| `ssm` | `ssm-param` — **not a `SERVICES` row**; badge appears on the Parameters section header in the Sidebar's bespoke SSM rendering block (lines ~166–228), not via the `SERVICES.map()` loop |
 | `r53` | `r53-zone` |
 | `sfn` | `sfn` |
 | `eventbridge` | `eventbridge-bus` |
@@ -105,7 +105,7 @@ interface Settings {
 | File | Change |
 |------|--------|
 | `renderer/types/cloud.ts` | Add `showScanErrorBadges: boolean` to `Settings` |
-| `store/cloud.ts` | Add `showScanErrorBadges: true` to the module-level `DEFAULT_SETTINGS` const and to the `DEFAULT_SETTINGS` inside `createCloudStore()` (the test factory, ~line 144) |
+| `store/cloud.ts` | Add `showScanErrorBadges: true` to the module-level `DEFAULT_SETTINGS` const (the test factory at line ~144 references the same const, so one edit covers both) |
 | `main/ipc/handlers.ts` | Add `showScanErrorBadges: true` to `DEFAULT_SETTINGS` |
 | `components/Sidebar.tsx` | Read `scanErrors` + `settings.showScanErrorBadges`; render `⚠` on matching rows |
 | `components/SettingsModal.tsx` | Add toggle for `showScanErrorBadges` |
