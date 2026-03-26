@@ -108,6 +108,10 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
       return [['sqs', 'set-queue-attributes', '--queue-url', params.queueUrl,
         '--attributes', `VisibilityTimeout=${params.visibilityTimeout},MessageRetentionPeriod=${params.messageRetentionPeriod}`]]
 
+    case 'sns':
+      return [['sns', 'set-topic-attributes', '--topic-arn', params.topicArn,
+        '--attribute-name', 'DisplayName', '--attribute-value', params.displayName]]
+
     default:
       return []
   }
