@@ -5,6 +5,15 @@ import type { CloudNode } from '../../../types/cloud'
 
 const vpcNode: CloudNode = { id: 'vpc-123', type: 'vpc', label: 'my-vpc', status: 'running', region: 'us-east-1', metadata: { name: 'my-vpc' } }
 
+const acmNode: CloudNode = {
+  id: 'arn:aws:acm:us-east-1:123456789:certificate/abc',
+  type: 'acm',
+  label: 'example.com',
+  status: 'running',
+  region: 'us-east-1',
+  metadata: { domainName: 'example.com', validationMethod: 'DNS', inUseBy: [], cnameRecords: [] },
+}
+
 beforeEach(() => {
   window.cloudblocks = {
     runCli: vi.fn().mockResolvedValue({ code: 0 }),
@@ -32,4 +41,12 @@ describe('EditModal', () => {
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
     expect(onClose).toHaveBeenCalled()
   })
+
+  describe('ACM edit affordance suppressed', () => {
+    it('renders nothing for an ACM node', () => {
+      const { container } = render(<EditModal node={acmNode} onClose={vi.fn()} />)
+      expect(container.firstChild).toBeNull()
+    })
+  })
+
 })
