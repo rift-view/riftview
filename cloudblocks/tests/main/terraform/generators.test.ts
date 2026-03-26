@@ -5,7 +5,7 @@
  *  - Each implemented generator (vpc, subnet, ec2, s3, lambda) produces non-empty HCL
  *  - Output contains the expected resource type string
  *  - Key fields from node metadata appear in the output
- *  - Unimplemented NodeTypes return empty string (no throw)
+ *  - All previously-stub NodeTypes now produce non-empty HCL (no throw)
  *  - generateTerraformFile joins multiple blocks and skips empty ones
  */
 import { describe, it, expect } from 'vitest'
@@ -186,23 +186,168 @@ describe('generateTerraformBlock — lambda', () => {
   })
 })
 
-// ── unimplemented node types return empty string (no throw) ──────────────────
+// ── newly-implemented node types produce non-empty HCL ───────────────────────
 
-describe('generateTerraformBlock — unimplemented types', () => {
-  const unimplemented: CloudNode['type'][] = [
-    'rds', 'alb', 'security-group', 'igw', 'acm', 'cloudfront',
-    'apigw', 'apigw-route', 'sqs', 'secret', 'ecr-repo', 'sns',
-    'dynamo', 'ssm-param', 'nat-gateway', 'r53-zone', 'sfn', 'eventbridge-bus',
-  ]
+describe('generateTerraformBlock — newly-implemented types', () => {
+  it('rds produces aws_db_instance HCL', () => {
+    const node = makeNode({ type: 'rds', label: 'mydb', metadata: { engine: 'postgres', instanceClass: 'db.t3.micro' } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_db_instance"')
+    expect(hcl).toContain('postgres')
+    expect(hcl).toContain('db.t3.micro')
+  })
 
-  for (const nodeType of unimplemented) {
-    it(`${nodeType} does not throw and returns empty string`, () => {
-      const node = makeNode({ type: nodeType, label: 'test', metadata: {} })
-      let result: string | undefined
-      expect(() => { result = generateTerraformBlock(node) }).not.toThrow()
-      expect(result).toBe('')
-    })
-  }
+  it('alb produces aws_lb HCL with internal=false for internet-facing', () => {
+    const node = makeNode({ type: 'alb', label: 'my-alb', metadata: { scheme: 'internet-facing', type: 'application' } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_lb"')
+    expect(hcl).toContain('internal           = false')
+    expect(hcl).toContain('application')
+  })
+
+  it('alb produces internal=true for internal scheme', () => {
+    const node = makeNode({ type: 'alb', label: 'internal-alb', metadata: { scheme: 'internal', type: 'network' } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('internal           = true')
+  })
+
+  it('security-group produces aws_security_group HCL', () => {
+    const node = makeNode({ type: 'security-group', label: 'web-sg', metadata: {} })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_security_group"')
+    expect(hcl).toContain('web-sg')
+  })
+
+  it('igw produces aws_internet_gateway HCL', () => {
+    const node = makeNode({ type: 'igw', label: 'my-igw', metadata: {} })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_internet_gateway"')
+    expect(hcl).toContain('my-igw')
+  })
+
+  it('acm produces aws_acm_certificate HCL', () => {
+    const node = makeNode({ type: 'acm', label: 'example.com', metadata: { domainName: 'example.com' } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_acm_certificate"')
+    expect(hcl).toContain('example.com')
+    expect(hcl).toContain('DNS')
+  })
+
+  it('cloudfront produces aws_cloudfront_distribution HCL', () => {
+    const node = makeNode({ type: 'cloudfront', label: 'my-dist', metadata: { origins: [{ domain: 'bucket.s3.amazonaws.com' }], priceClass: 'PriceClass_200' } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_cloudfront_distribution"')
+    expect(hcl).toContain('bucket.s3.amazonaws.com')
+    expect(hcl).toContain('PriceClass_200')
+  })
+
+  it('cloudfront uses placeholder when origins absent', () => {
+    const node = makeNode({ type: 'cloudfront', label: 'my-dist', metadata: {} })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('REPLACE_WITH_ORIGIN_DOMAIN')
+  })
+
+  it('apigw produces aws_apigatewayv2_api HCL', () => {
+    const node = makeNode({ type: 'apigw', label: 'my-api', metadata: { protocolType: 'HTTP' } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_apigatewayv2_api"')
+    expect(hcl).toContain('HTTP')
+  })
+
+  it('apigw-route produces aws_apigatewayv2_route HCL', () => {
+    const node = makeNode({ type: 'apigw-route', label: 'GET /items', metadata: { method: 'GET', path: '/items', apiId: 'abc123' } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_apigatewayv2_route"')
+    expect(hcl).toContain('GET /items')
+    expect(hcl).toContain('abc123')
+  })
+
+  it('sqs produces aws_sqs_queue HCL', () => {
+    const node = makeNode({ type: 'sqs', label: 'my-queue', metadata: {} })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_sqs_queue"')
+    expect(hcl).toContain('my-queue')
+  })
+
+  it('secret produces aws_secretsmanager_secret HCL', () => {
+    const node = makeNode({ type: 'secret', label: 'my-secret', metadata: { description: 'A test secret' } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_secretsmanager_secret"')
+    expect(hcl).toContain('my-secret')
+    expect(hcl).toContain('A test secret')
+  })
+
+  it('ecr-repo produces aws_ecr_repository HCL', () => {
+    const node = makeNode({ type: 'ecr-repo', label: 'my-repo', metadata: {} })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_ecr_repository"')
+    expect(hcl).toContain('my-repo')
+  })
+
+  it('sns produces aws_sns_topic HCL', () => {
+    const node = makeNode({ type: 'sns', label: 'my-topic', metadata: {} })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_sns_topic"')
+    expect(hcl).toContain('my-topic')
+  })
+
+  it('dynamo produces aws_dynamodb_table HCL with PAY_PER_REQUEST', () => {
+    const node = makeNode({ type: 'dynamo', label: 'my-table', metadata: {} })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_dynamodb_table"')
+    expect(hcl).toContain('PAY_PER_REQUEST')
+    expect(hcl).toContain('REPLACE_WITH_HASH_KEY')
+  })
+
+  it('ssm-param produces aws_ssm_parameter HCL', () => {
+    const node = makeNode({ type: 'ssm-param', label: '/my/param', metadata: { type: 'SecureString' } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_ssm_parameter"')
+    expect(hcl).toContain('SecureString')
+    expect(hcl).toContain('REPLACE_WITH_VALUE')
+  })
+
+  it('nat-gateway produces aws_nat_gateway HCL with placeholders', () => {
+    const node = makeNode({ type: 'nat-gateway', label: 'my-nat', metadata: {} })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_nat_gateway"')
+    expect(hcl).toContain('REPLACE_WITH_EIP_ALLOCATION_ID')
+    expect(hcl).toContain('REPLACE_WITH_SUBNET_ID')
+  })
+
+  it('r53-zone produces aws_route53_zone HCL (public)', () => {
+    const node = makeNode({ type: 'r53-zone', label: 'example.com', metadata: { private: false } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_route53_zone"')
+    expect(hcl).toContain('example.com')
+  })
+
+  it('r53-zone includes vpc block for private zone', () => {
+    const node = makeNode({ type: 'r53-zone', label: 'internal.local', metadata: { private: true } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('vpc {')
+    expect(hcl).toContain('REPLACE_WITH_VPC_ID')
+  })
+
+  it('sfn produces aws_sfn_state_machine HCL', () => {
+    const node = makeNode({ type: 'sfn', label: 'my-machine', metadata: { type: 'EXPRESS' } })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_sfn_state_machine"')
+    expect(hcl).toContain('EXPRESS')
+    expect(hcl).toContain('REPLACE_WITH_ROLE_ARN')
+  })
+
+  it('eventbridge-bus produces aws_cloudwatch_event_bus HCL', () => {
+    const node = makeNode({ type: 'eventbridge-bus', label: 'my-bus', metadata: {} })
+    const hcl = generateTerraformBlock(node)
+    expect(hcl).toContain('resource "aws_cloudwatch_event_bus"')
+    expect(hcl).toContain('my-bus')
+  })
+
+  it('unknown still returns empty string', () => {
+    const node = makeNode({ type: 'unknown', label: 'mystery', metadata: {} })
+    expect(generateTerraformBlock(node)).toBe('')
+  })
 })
 
 // ── generateTerraformFile ─────────────────────────────────────────────────────
@@ -214,14 +359,15 @@ describe('generateTerraformFile', () => {
     expect(result.skippedTypes).toEqual([])
   })
 
-  it('returns empty HCL and lists skipped types when all nodes are unimplemented types', () => {
+  it('returns non-empty HCL and no skipped types when all nodes are now-implemented types', () => {
     const nodes = [
       makeNode({ type: 'rds', label: 'db', metadata: {} }),
       makeNode({ type: 'alb', label: 'lb', metadata: {} }),
     ]
     const result = generateTerraformFile(nodes)
-    expect(result.hcl).toBe('')
-    expect(result.skippedTypes).toEqual(['rds', 'alb'])
+    expect(result.hcl).toContain('resource "aws_db_instance"')
+    expect(result.hcl).toContain('resource "aws_lb"')
+    expect(result.skippedTypes).toEqual([])
   })
 
   it('joins multiple implemented blocks with a blank line between them', () => {
@@ -237,7 +383,7 @@ describe('generateTerraformFile', () => {
     expect(result.skippedTypes).toEqual([])
   })
 
-  it('skips unimplemented nodes but includes implemented ones, and lists skipped types', () => {
+  it('includes all implemented nodes and has no skipped types', () => {
     const nodes: CloudNode[] = [
       makeNode({ type: 'rds', label: 'db', metadata: {} }),
       makeNode({ type: 'vpc', label: 'my-vpc', metadata: { cidrBlock: '10.0.0.0/8' } }),
@@ -245,9 +391,9 @@ describe('generateTerraformFile', () => {
     ]
     const result = generateTerraformFile(nodes)
     expect(result.hcl).toContain('resource "aws_vpc"')
-    expect(result.hcl).not.toContain('resource "aws_db_instance"')
-    expect(result.hcl).not.toContain('resource "aws_lb"')
-    expect(result.skippedTypes).toEqual(['rds', 'alb'])
+    expect(result.hcl).toContain('resource "aws_db_instance"')
+    expect(result.hcl).toContain('resource "aws_lb"')
+    expect(result.skippedTypes).toEqual([])
   })
 
   it('returns a single block (no trailing blank line) for one implemented node, no skipped types', () => {
@@ -260,13 +406,13 @@ describe('generateTerraformFile', () => {
     expect(result.skippedTypes).toEqual([])
   })
 
-  it('deduplicates skipped types', () => {
+  it('skips unknown nodes and lists them in skippedTypes', () => {
     const nodes: CloudNode[] = [
-      makeNode({ type: 'rds', label: 'db1', metadata: {} }),
-      makeNode({ type: 'rds', label: 'db2', metadata: {} }),
-      makeNode({ type: 'alb', label: 'lb', metadata: {} }),
+      makeNode({ type: 'unknown', label: 'mystery', metadata: {} }),
+      makeNode({ type: 'vpc', label: 'my-vpc', metadata: { cidrBlock: '10.0.0.0/8' } }),
     ]
     const result = generateTerraformFile(nodes)
-    expect(result.skippedTypes).toEqual(['rds', 'alb'])
+    expect(result.hcl).toContain('resource "aws_vpc"')
+    expect(result.skippedTypes).toEqual([])  // unknown is excluded from skippedTypes by design
   })
 })
