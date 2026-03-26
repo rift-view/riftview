@@ -38,6 +38,8 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
   }, [])
 
   if (!node) return null
+  // ACM certificates have no editable fields via the AWS CLI
+  if (node.type === 'acm') return null
 
   const handleChange = (params: EditParams): void => {
     paramsRef.current = params
