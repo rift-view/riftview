@@ -18,6 +18,9 @@ export function RegionZoneNode({ data }: NodeProps): React.JSX.Element {
         fontFamily:    'monospace',
         overflow:      'hidden',
         pointerEvents: 'none',
+        width:         '100%',
+        height:        '100%',
+        boxSizing:     'border-box',
       }}
     >
       <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
