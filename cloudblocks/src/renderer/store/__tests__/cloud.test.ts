@@ -284,3 +284,27 @@ describe('theme defaults', () => {
     expect(store.getState().settings.showScanErrorBadges).toBe(true)
   })
 })
+
+describe('clearImportedNodes', () => {
+  it('resets driftFilterActive to false', () => {
+    useUIStore.setState({ driftFilterActive: true })
+    useCloudStore.getState().clearImportedNodes()
+    expect(useUIStore.getState().driftFilterActive).toBe(false)
+  })
+
+  it('clears importedNodes array', () => {
+    const node = { id: 'i-123', type: 'ec2' as const, label: 'Instance', status: 'active' as const, region: 'us-east-1', metadata: {}, driftStatus: 'managed' as const }
+    useCloudStore.setState({ importedNodes: [node] })
+    useCloudStore.getState().clearImportedNodes()
+    expect(useCloudStore.getState().importedNodes).toEqual([])
+  })
+
+  it('removes drift metadata from live nodes', () => {
+    const nodeWithDrift = { id: 'i-123', type: 'ec2' as const, label: 'Instance', status: 'active' as const, region: 'us-east-1', metadata: {}, driftStatus: 'managed' as const, tfMetadata: { name: 'test' } }
+    useCloudStore.setState({ nodes: [nodeWithDrift] })
+    useCloudStore.getState().clearImportedNodes()
+    const clearedNode = useCloudStore.getState().nodes[0]
+    expect(clearedNode.driftStatus).toBeUndefined()
+    expect(clearedNode.tfMetadata).toBeUndefined()
+  })
+})
