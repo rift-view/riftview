@@ -1,5 +1,5 @@
-import { useMemo, useCallback, useRef, useEffect, useState } from 'react'
-import { ReactFlow, Background, BackgroundVariant, MiniMap, useReactFlow, type Node, type Edge, type NodeChange } from '@xyflow/react'
+import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react'
+import { ReactFlow, Background, BackgroundVariant, MiniMap, useReactFlow, type Node, type Edge, type NodeChange, type OnSelectionChangeParams } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
@@ -184,9 +184,12 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const cloudNodes         = useCloudStore((s) => s.nodes)
   const pendingNodes       = useCloudStore((s) => s.pendingNodes)
   const importedNodes      = useCloudStore((s) => s.importedNodes)
-  const selectNode         = useUIStore((s) => s.selectNode)
-  const selectEdge         = useUIStore((s) => s.selectEdge)
-  const selectedId         = useUIStore((s) => s.selectedNodeId)
+  const selectNode           = useUIStore((s) => s.selectNode)
+  const selectEdge           = useUIStore((s) => s.selectEdge)
+  const selectedId           = useUIStore((s) => s.selectedNodeId)
+  const selectedNodeIds      = useUIStore((s) => s.selectedNodeIds)
+  const setSelectedNodeIds   = useUIStore((s) => s.setSelectedNodeIds)
+  const clearSelectedNodeIds = useUIStore((s) => s.clearSelectedNodeIds)
   const setActiveCreate    = useUIStore((s) => s.setActiveCreate)
   const view               = useUIStore((s) => s.view)
   const showIntegrations   = useUIStore((s) => s.showIntegrations)
@@ -227,6 +230,12 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
     const dropPosition = screenToFlowPosition({ x: e.clientX, y: e.clientY })
     setActiveCreate({ resource: type, view, dropPosition })
   }, [screenToFlowPosition, view, setActiveCreate])
+
+  const onSelectionChange = useCallback(({ nodes: selected }: OnSelectionChangeParams) => {
+    setSelectedNodeIds(new Set(selected.map((n) => n.id)))
+    if (selected.length === 1) selectNode(selected[0].id)
+    else if (selected.length === 0) { selectNode(null); clearSelectedNodeIds() }
+  }, [setSelectedNodeIds, selectNode, clearSelectedNodeIds])
 
   // Track drag positions in local state so controlled nodes follow the mouse,
   // and persist to the store only on drag-end.
@@ -303,6 +312,10 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           'resource'
 
         const isLocked = lockedNodes.has(n.id)
+        const isMultiSelected = selectedNodeIds.size > 1 && selectedNodeIds.has(n.id)
+        const multiSelectStyle: React.CSSProperties | undefined = isMultiSelected
+          ? { outline: '2px solid var(--cb-accent)', outlineOffset: '2px' }
+          : undefined
         return {
           id:         n.id,
           type:       rfType,
@@ -310,6 +323,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           draggable:  !isLocked,
           selectable: !isLocked,
           zIndex:     isLocked ? -1 : 0,
+          style:      multiSelectStyle,
           data:     {
             label:     n.label,
             nodeType:  n.type,
@@ -372,7 +386,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
         return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
       })
     },
-    [allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes, driftFilterActive, stickyNotes, onStickyNotesSave, onStickyNoteDelete],
+    [allNodes, selectedId, selectedNodeIds, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes, driftFilterActive, stickyNotes, onStickyNotesSave, onStickyNoteDelete],
   )
 
   const flowEdges: Edge[] = useMemo(() => {
@@ -395,7 +409,8 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
       onNodeDoubleClick={(_e, node) => selectNode(node.id)}
       onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
-      onPaneClick={() => { selectNode(null); selectEdge(null); setSidebarFilter(null) }}
+      onPaneClick={() => { selectNode(null); selectEdge(null); setSidebarFilter(null); clearSelectedNodeIds() }}
+      onSelectionChange={onSelectionChange}
       onNodeContextMenu={(event, rfNode) => {
         event.preventDefault()
         const cloudNode = allNodes.find((n) => n.id === rfNode.id)

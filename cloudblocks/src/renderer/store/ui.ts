@@ -27,6 +27,7 @@ export interface SelectedEdgeInfo {
 interface UIState {
   view:               ViewKey
   selectedNodeId:     string | null
+  selectedNodeIds:    Set<string>
   selectedEdgeId:     string | null
   selectedEdgeInfo:   SelectedEdgeInfo | null
   activeCreate:       { resource: string; view: ViewKey; dropPosition?: { x: number; y: number } } | null
@@ -48,6 +49,8 @@ interface UIState {
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
+  setSelectedNodeIds:   (ids: Set<string>) => void
+  clearSelectedNodeIds: () => void
   selectEdge:           (info: SelectedEdgeInfo | null) => void
   setActiveCreate:      (val: UIState['activeCreate']) => void
   showToast:            (message: string, type?: 'success' | 'error') => void
@@ -80,6 +83,7 @@ let toastTimer: ReturnType<typeof setTimeout> | null = null
 export const useUIStore = create<UIState>((set, get) => ({
   view:              'topology',
   selectedNodeId:    null,
+  selectedNodeIds:   new Set<string>(),
   selectedEdgeId:    null,
   selectedEdgeInfo:  null,
   activeCreate:      null,
@@ -99,9 +103,11 @@ export const useUIStore = create<UIState>((set, get) => ({
   driftFilterActive: false,
   sidebarFilter:     null,
 
-  setView:         (view) => set({ view }),
-  selectNode:      (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
-  selectEdge:      (info) => set({ selectedEdgeId: info?.id ?? null, selectedEdgeInfo: info, selectedNodeId: null }),
+  setView:             (view) => set({ view }),
+  selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
+  setSelectedNodeIds:  (ids)  => set({ selectedNodeIds: ids }),
+  clearSelectedNodeIds: ()    => set({ selectedNodeIds: new Set<string>() }),
+  selectEdge:          (info) => set({ selectedEdgeId: info?.id ?? null, selectedEdgeInfo: info, selectedNodeId: null }),
   setActiveCreate: (val)  => set({ activeCreate: val }),
   showToast: (message, type = 'success') => {
     if (toastTimer) clearTimeout(toastTimer)
