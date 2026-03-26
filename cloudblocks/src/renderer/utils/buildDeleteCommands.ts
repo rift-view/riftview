@@ -49,8 +49,10 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
       return [['stepfunctions', 'delete-state-machine', '--state-machine-arn', node.id]]
     case 'eventbridge-bus':
       return [['events', 'delete-event-bus', '--name', node.label]]
+    case 'r53-zone':
+      return [['route53', 'delete-hosted-zone', '--id', node.id]]
     default:
-      // Intentionally partial: subnet, igw, cloudfront, ssm-param, nat-gateway, r53-zone
+      // Intentionally partial: subnet, igw, cloudfront, ssm-param, nat-gateway
       // do not yet have delete commands wired up. Returning [] means the DeleteDialog will
       // show no preview command, which is the intended safe behaviour until each is implemented.
       return []

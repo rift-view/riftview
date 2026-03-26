@@ -23,6 +23,7 @@ import { SecretForm } from './SecretForm'
 import { EcrForm } from './EcrForm'
 import { SfnForm } from './SfnForm'
 import { EventBusForm } from './EventBusForm'
+import { R53CreateForm } from './R53CreateForm'
 
 function validateParams(params: CreateParams | null): boolean {
   if (!params) return false
@@ -45,6 +46,7 @@ function validateParams(params: CreateParams | null): boolean {
     case 'ecr':          return !!(params.name)
     case 'sfn':          return !!(params.name && params.roleArn && params.definition)
     case 'eventbridge-bus': return !!(params.name)
+    case 'r53-zone':        return !!(params.domainName)
     default:             return true
   }
 }
@@ -68,6 +70,7 @@ const TITLES: Record<string, string> = {
   ecr:              'New ECR Repository',
   sfn:              'New Step Functions State Machine',
   'eventbridge-bus': 'New EventBridge Bus',
+  'r53-zone':        'New Hosted Zone',
 }
 
 // Maps form resource identifier to CloudNode NodeType
@@ -90,6 +93,7 @@ const RESOURCE_TO_NODE_TYPE: Record<string, NodeType> = {
   ecr:              'ecr-repo',
   sfn:              'sfn',
   'eventbridge-bus': 'eventbridge-bus',
+  'r53-zone':        'r53-zone',
 }
 
 export function CreateModal(): React.JSX.Element | null {
@@ -170,6 +174,7 @@ export function CreateModal(): React.JSX.Element | null {
       case 'ecr':            return (params as { name?: string }).name || 'New Repository'
       case 'sfn':            return (params as { name?: string }).name || 'New State Machine'
       case 'eventbridge-bus': return (params as { name?: string }).name || 'New Event Bus'
+      case 'r53-zone':        return (params as { domainName?: string }).domainName || 'New Hosted Zone'
       default:             return `New ${params.resource}`
     }
   }
@@ -276,6 +281,7 @@ export function CreateModal(): React.JSX.Element | null {
         {activeCreate.resource === 'ecr'             && <EcrForm          onChange={handleChange} showErrors={showErrors} />}
         {activeCreate.resource === 'sfn'             && <SfnForm          onChange={handleChange} showErrors={showErrors} />}
         {activeCreate.resource === 'eventbridge-bus' && <EventBusForm     onChange={handleChange} showErrors={showErrors} />}
+        {activeCreate.resource === 'r53-zone'        && <R53CreateForm    onChange={handleChange} showErrors={showErrors} />}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px', paddingTop: '10px', borderTop: '1px solid var(--cb-border-strong)' }}>
           <button

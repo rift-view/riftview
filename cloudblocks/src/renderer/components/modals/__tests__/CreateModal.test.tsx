@@ -90,3 +90,20 @@ it('blocks submission and does not call runCli when required VPC fields are empt
   await new Promise(r => setTimeout(r, 10))
   expect(runCli).not.toHaveBeenCalled()
 })
+
+it('renders R53 hosted zone form title when activeCreate is r53-zone', () => {
+  useUIStore.setState({ activeCreate: { resource: 'r53-zone', view: 'topology' } })
+  render(<CreateModal />)
+  expect(screen.getByText(/new hosted zone/i)).toBeInTheDocument()
+})
+
+it('blocks submission and does not call runCli when R53 domain name is empty', async () => {
+  useUIStore.getState().setActiveCreate({ resource: 'r53-zone', view: 'topology' })
+  const runCli = vi.fn().mockResolvedValue({ code: 0 })
+  window.cloudblocks = { ...window.cloudblocks, runCli }
+
+  render(<CreateModal />)
+  window.dispatchEvent(new CustomEvent('commanddrawer:run'))
+  await new Promise(r => setTimeout(r, 10))
+  expect(runCli).not.toHaveBeenCalled()
+})
