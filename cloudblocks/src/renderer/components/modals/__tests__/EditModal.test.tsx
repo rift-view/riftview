@@ -88,6 +88,35 @@ describe('EditModal', () => {
     })
   })
 
+  describe('SNS edit form', () => {
+    const snsNode: CloudNode = {
+      id: 'arn:aws:sns:us-east-1:123:my-topic',
+      type: 'sns',
+      label: 'my-topic',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { displayName: 'MySender' },
+    }
+
+    it('renders the SNS edit modal with topic ARN', () => {
+      render(<EditModal node={snsNode} onClose={vi.fn()} />)
+      expect(screen.getByText(/edit sns topic/i)).toBeInTheDocument()
+      expect(screen.getByDisplayValue('arn:aws:sns:us-east-1:123:my-topic')).toBeInTheDocument()
+    })
+
+    it('pre-fills display name from metadata', () => {
+      render(<EditModal node={snsNode} onClose={vi.fn()} />)
+      expect(screen.getByDisplayValue('MySender')).toBeInTheDocument()
+    })
+
+    it('renders empty display name when metadata has no displayName', () => {
+      const nodeNoDisplay: CloudNode = { ...snsNode, metadata: {} }
+      render(<EditModal node={nodeNoDisplay} onClose={vi.fn()} />)
+      const input = screen.getByPlaceholderText(/max 11 characters/i)
+      expect((input as HTMLInputElement).value).toBe('')
+    })
+  })
+
   describe('EventBridge edit form', () => {
     it('renders the EventBridge edit modal with bus name and pre-filled description', () => {
       render(<EditModal node={eventBridgeNode} onClose={vi.fn()} />)

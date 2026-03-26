@@ -41,7 +41,13 @@ export interface SqsEditParams {
   messageRetentionPeriod: number
 }
 
+export interface SnsEditParams {
+  resource: 'sns'
+  topicArn: string
+  displayName: string
+}
+
 export type EditParams =
   | VpcEditParams | Ec2EditParams | SgEditParams | RdsEditParams
   | S3EditParams  | LambdaEditParams | AlbEditParams | CloudFrontEditParams | ApigwEditParams
-  | EventBridgeEditParams | SqsEditParams
+  | EventBridgeEditParams | SqsEditParams | SnsEditParams
