@@ -1,4 +1,4 @@
-import type { CreateParams, SgParams, S3Params, RdsParams, LambdaParams, AlbParams, AcmParams, ApigwParams, ApigwRouteParams } from '../types/create'
+import type { CreateParams, SgParams, S3Params, RdsParams, LambdaParams, AlbParams, AcmParams, ApigwParams, ApigwRouteParams, SqsParams, SnsParams, DynamoParams, SecretParams, EcrParams, SfnParams, EventBusParams } from '../types/create'
 
 /**
  * Returns an array of argv arrays — one per aws CLI command.
@@ -48,6 +48,13 @@ export function buildCommands(params: CreateParams): string[][] {
     case 'cloudfront': return []   // CloudFront create uses SDK via IPC, not CLI
     case 'apigw':      return buildApigwCommands(params as ApigwParams)
     case 'apigw-route': return buildApigwRouteCommands(params as ApigwRouteParams)
+    case 'sqs':            return buildSqsCommands(params as SqsParams)
+    case 'sns':            return buildSnsCommands(params as SnsParams)
+    case 'dynamo':         return buildDynamoCommands(params as DynamoParams)
+    case 'secret':         return buildSecretCommands(params as SecretParams)
+    case 'ecr':            return buildEcrCommands(params as EcrParams)
+    case 'sfn':            return buildSfnCommands(params as SfnParams)
+    case 'eventbridge-bus': return buildEventBusCommands(params as EventBusParams)
   }
 }
 
@@ -146,6 +153,60 @@ function buildAcmCommands(p: AcmParams): string[][] {
     args.push('--subject-alternative-names', ...p.subjectAlternativeNames)
   }
   return [args]
+}
+
+function buildSqsCommands(p: SqsParams): string[][] {
+  const queueName = p.fifo ? `${p.name}.fifo` : p.name
+  const args = ['sqs', 'create-queue', '--queue-name', queueName]
+  const attrs: string[] = []
+  if (p.fifo) attrs.push('FifoQueue=true')
+  if (p.visibilityTimeout !== undefined) attrs.push(`VisibilityTimeout=${p.visibilityTimeout}`)
+  if (attrs.length > 0) args.push('--attributes', attrs.join(','))
+  return [args]
+}
+
+function buildSnsCommands(p: SnsParams): string[][] {
+  const topicName = p.fifo ? `${p.name}.fifo` : p.name
+  const args = ['sns', 'create-topic', '--name', topicName]
+  if (p.fifo) args.push('--attributes', 'FifoTopic=true')
+  return [args]
+}
+
+function buildDynamoCommands(p: DynamoParams): string[][] {
+  const billingMode = p.billingMode ?? 'PAY_PER_REQUEST'
+  return [[
+    'dynamodb', 'create-table',
+    '--table-name', p.tableName,
+    '--key-schema', `AttributeName=${p.hashKey},KeyType=HASH`,
+    '--attribute-definitions', `AttributeName=${p.hashKey},AttributeType=S`,
+    '--billing-mode', billingMode,
+  ]]
+}
+
+function buildSecretCommands(p: SecretParams): string[][] {
+  return [[
+    'secretsmanager', 'create-secret',
+    '--name', p.name,
+    '--secret-string', p.value,
+  ]]
+}
+
+function buildEcrCommands(p: EcrParams): string[][] {
+  return [['ecr', 'create-repository', '--repository-name', p.name]]
+}
+
+function buildSfnCommands(p: SfnParams): string[][] {
+  return [[
+    'stepfunctions', 'create-state-machine',
+    '--name', p.name,
+    '--type', p.type ?? 'STANDARD',
+    '--role-arn', p.roleArn,
+    '--definition', p.definition,
+  ]]
+}
+
+function buildEventBusCommands(p: EventBusParams): string[][] {
+  return [['events', 'create-event-bus', '--name', p.name]]
 }
 
 function buildS3Commands(params: S3Params): string[][] {

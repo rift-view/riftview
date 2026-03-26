@@ -154,6 +154,8 @@ export function Sidebar(): React.JSX.Element {
     flexShrink:   0,
   }
 
+  const ssmErrTooltip = errorsByType.get('ssm-param' as NodeType)
+
   return (
     <div
       className="flex flex-col py-2 overflow-y-auto h-full"
@@ -209,15 +211,15 @@ export function Sidebar(): React.JSX.Element {
         )
       })}
 
-      {(ssmGroups.length > 0 || errorsByType.has('ssm-param')) && (
+      {(ssmGroups.length > 0 || ssmErrTooltip) && (
         <>
           <div
             className="px-2.5 text-[9px] uppercase tracking-widest mt-3 mb-1"
             style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: 4 }}
           >
             <span>Parameters</span>
-            {errorsByType.get('ssm-param') && (
-              <span title={errorsByType.get('ssm-param')} style={{ color: '#f59e0b', fontSize: 10 }}>⚠</span>
+            {ssmErrTooltip && (
+              <span title={ssmErrTooltip} style={{ color: '#f59e0b', fontSize: 10 }}>⚠</span>
             )}
           </div>
 

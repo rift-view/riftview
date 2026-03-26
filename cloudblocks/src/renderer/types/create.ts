@@ -102,4 +102,12 @@ export interface ApigwRouteParams {
   path: string
 }
 
-export type CreateParams = VpcParams | Ec2Params | SgParams | S3Params | RdsParams | LambdaParams | AlbParams | AcmParams | CloudFrontParams | ApigwParams | ApigwRouteParams
+export interface SqsParams { resource: 'sqs'; name: string; fifo?: boolean; visibilityTimeout?: number }
+export interface SnsParams { resource: 'sns'; name: string; fifo?: boolean }
+export interface DynamoParams { resource: 'dynamo'; tableName: string; hashKey: string; billingMode?: 'PAY_PER_REQUEST' | 'PROVISIONED' }
+export interface SecretParams { resource: 'secret'; name: string; value: string }
+export interface EcrParams { resource: 'ecr'; name: string }
+export interface SfnParams { resource: 'sfn'; name: string; type?: 'STANDARD' | 'EXPRESS'; roleArn: string; definition: string }
+export interface EventBusParams { resource: 'eventbridge-bus'; name: string }
+
+export type CreateParams = VpcParams | Ec2Params | SgParams | S3Params | RdsParams | LambdaParams | AlbParams | AcmParams | CloudFrontParams | ApigwParams | ApigwRouteParams | SqsParams | SnsParams | DynamoParams | SecretParams | EcrParams | SfnParams | EventBusParams

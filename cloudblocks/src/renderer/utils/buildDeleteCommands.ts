@@ -35,11 +35,24 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
       const meta = node.metadata as { apiId: string; routeId: string }
       return [['apigatewayv2', 'delete-route', '--api-id', meta.apiId, '--route-id', meta.routeId]]
     }
+    case 'sqs':
+      return [['sqs', 'delete-queue', '--queue-url', (node.metadata.url as string | undefined) ?? node.id]]
+    case 'sns':
+      return [['sns', 'delete-topic', '--topic-arn', node.id]]
+    case 'dynamo':
+      return [['dynamodb', 'delete-table', '--table-name', node.label]]
+    case 'secret':
+      return [['secretsmanager', 'delete-secret', '--secret-id', node.id]]
+    case 'ecr-repo':
+      return [['ecr', 'delete-repository', '--repository-name', node.label, '--force']]
+    case 'sfn':
+      return [['stepfunctions', 'delete-state-machine', '--state-machine-arn', node.id]]
+    case 'eventbridge-bus':
+      return [['events', 'delete-event-bus', '--name', node.label]]
     default:
-      // Intentionally partial: subnet, igw, cloudfront, sqs, secret, ecr-repo, sns,
-      // dynamo, ssm-param, nat-gateway, r53-zone, sfn, eventbridge-bus do not yet have
-      // delete commands wired up. Returning [] means the DeleteDialog will show no
-      // preview command, which is the intended safe behaviour until each is implemented.
+      // Intentionally partial: subnet, igw, cloudfront, ssm-param, nat-gateway, r53-zone
+      // do not yet have delete commands wired up. Returning [] means the DeleteDialog will
+      // show no preview command, which is the intended safe behaviour until each is implemented.
       return []
   }
 }
