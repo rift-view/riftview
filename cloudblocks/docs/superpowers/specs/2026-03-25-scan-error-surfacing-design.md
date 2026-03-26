@@ -58,16 +58,20 @@ Each service row in `Sidebar.tsx` gets a small amber `⚠` icon when any `scanEr
 | `alb` | `alb` |
 | `acm` | `acm` |
 | `cloudfront` | `cloudfront` |
-| `apigw` | `apigw` |
+| `apigw` | `apigw` (route errors surface through this row; `apigw-route` has no independent scan call and needs no badge) |
 | `sqs` | `sqs` |
 | `secrets` | `secret` |
-| `ecr` | `ecr` |
+| `ecr` | `ecr-repo` |
 | `sns` | `sns` |
-| `dynamo` | `dynamodb` |
-| `ssm` | `ssm-param` |
+| `dynamo` | `dynamo` |
+| `ssm` | `ssm-param` (badge appears in the Parameters section of the Sidebar, same inline `⚠` treatment) |
 | `r53` | `r53-zone` |
 | `sfn` | `sfn` |
-| `eventbridge` | `eventbridge` |
+| `eventbridge` | `eventbridge-bus` |
+
+`unknown` NodeType has no scan call and is never in this table.
+
+The `apigw-route` and `unknown` NodeTypes have no badge entry. All other 20 service-bearing NodeTypes are covered above.
 
 **Visual:**
 - `⚠` icon rendered inline after the service label, in amber (`#f59e0b` / `color: var(--cb-warning, #f59e0b)`)
@@ -101,7 +105,7 @@ interface Settings {
 | File | Change |
 |------|--------|
 | `renderer/types/cloud.ts` | Add `showScanErrorBadges: boolean` to `Settings` |
-| `store/cloud.ts` | Add `showScanErrorBadges: true` to both `defaultSettings` objects |
+| `store/cloud.ts` | Add `showScanErrorBadges: true` to the module-level `DEFAULT_SETTINGS` const and to the `DEFAULT_SETTINGS` inside `createCloudStore()` (the test factory, ~line 144) |
 | `main/ipc/handlers.ts` | Add `showScanErrorBadges: true` to `DEFAULT_SETTINGS` |
 | `components/Sidebar.tsx` | Read `scanErrors` + `settings.showScanErrorBadges`; render `⚠` on matching rows |
 | `components/SettingsModal.tsx` | Add toggle for `showScanErrorBadges` |
