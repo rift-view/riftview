@@ -124,6 +124,16 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
       return [['secretsmanager', 'update-secret', '--secret-id', params.secretId,
         '--description', params.description]]
 
+    case 'dynamo': {
+      const args = ['dynamodb', 'update-table', '--table-name', params.tableName,
+        '--billing-mode', params.billingMode]
+      if (params.billingMode === 'PROVISIONED' && params.readCapacityUnits && params.writeCapacityUnits) {
+        args.push('--provisioned-throughput',
+          `ReadCapacityUnits=${params.readCapacityUnits},WriteCapacityUnits=${params.writeCapacityUnits}`)
+      }
+      return [args]
+    }
+
     default:
       return []
   }
