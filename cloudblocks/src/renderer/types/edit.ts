@@ -47,7 +47,14 @@ export interface SnsEditParams {
   displayName: string
 }
 
+export interface EcrEditParams {
+  resource: 'ecr-repo'
+  repositoryName: string
+  imageTagMutability: 'MUTABLE' | 'IMMUTABLE'
+  scanOnPush: boolean
+}
+
 export type EditParams =
   | VpcEditParams | Ec2EditParams | SgEditParams | RdsEditParams
   | S3EditParams  | LambdaEditParams | AlbEditParams | CloudFrontEditParams | ApigwEditParams
-  | EventBridgeEditParams | SqsEditParams | SnsEditParams
+  | EventBridgeEditParams | SqsEditParams | SnsEditParams | EcrEditParams

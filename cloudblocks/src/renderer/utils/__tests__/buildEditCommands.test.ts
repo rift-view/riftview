@@ -163,6 +163,27 @@ describe('buildEditCommands — SNS', () => {
   })
 })
 
+describe('buildEditCommands — ECR', () => {
+  it('emits two commands: put-image-tag-mutability and put-image-scanning-configuration', () => {
+    const cmds = buildEditCommands(
+      node('ecr-repo', 'arn:aws:ecr:us-east-1:123:repository/my-repo'),
+      { resource: 'ecr-repo', repositoryName: 'my-repo', imageTagMutability: 'IMMUTABLE', scanOnPush: true }
+    )
+    expect(cmds).toHaveLength(2)
+    expect(cmds[0]).toEqual(['ecr', 'put-image-tag-mutability', '--repository-name', 'my-repo', '--image-tag-mutability', 'IMMUTABLE'])
+    expect(cmds[1]).toEqual(['ecr', 'put-image-scanning-configuration', '--repository-name', 'my-repo', '--image-scanning-configuration', 'scanOnPush=true'])
+  })
+
+  it('emits MUTABLE and scanOnPush=false', () => {
+    const cmds = buildEditCommands(
+      node('ecr-repo', 'arn:aws:ecr:us-east-1:123:repository/my-repo'),
+      { resource: 'ecr-repo', repositoryName: 'my-repo', imageTagMutability: 'MUTABLE', scanOnPush: false }
+    )
+    expect(cmds[0]).toContain('MUTABLE')
+    expect(cmds[1]).toContain('scanOnPush=false')
+  })
+})
+
 describe('buildEditCommands — EventBridge', () => {
   it('emits update-event-bus with bus name and description', () => {
     const n = { ...node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus'), label: 'my-bus' }

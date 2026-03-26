@@ -117,6 +117,35 @@ describe('EditModal', () => {
     })
   })
 
+  describe('ECR edit form', () => {
+    const ecrNode: CloudNode = {
+      id: 'arn:aws:ecr:us-east-1:123:repository/my-repo',
+      type: 'ecr-repo',
+      label: 'my-repo',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { uri: 'https://123.dkr.ecr.us-east-1.amazonaws.com/my-repo', imageTagMutability: 'IMMUTABLE', scanOnPush: true },
+    }
+
+    it('renders the ECR edit modal with repository name', () => {
+      render(<EditModal node={ecrNode} onClose={vi.fn()} />)
+      expect(screen.getByText(/edit ecr repository/i)).toBeInTheDocument()
+      expect(screen.getByDisplayValue('my-repo')).toBeInTheDocument()
+    })
+
+    it('pre-fills imageTagMutability from metadata', () => {
+      render(<EditModal node={ecrNode} onClose={vi.fn()} />)
+      const select = screen.getByDisplayValue('IMMUTABLE')
+      expect(select).toBeInTheDocument()
+    })
+
+    it('pre-fills scanOnPush checkbox from metadata', () => {
+      render(<EditModal node={ecrNode} onClose={vi.fn()} />)
+      const checkbox = screen.getByRole('checkbox') as HTMLInputElement
+      expect(checkbox.checked).toBe(true)
+    })
+  })
+
   describe('EventBridge edit form', () => {
     it('renders the EventBridge edit modal with bus name and pre-filled description', () => {
       render(<EditModal node={eventBridgeNode} onClose={vi.fn()} />)
