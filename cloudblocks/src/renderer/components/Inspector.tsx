@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 import type { CloudNode, NodeType } from '../types/cloud'
@@ -6,7 +6,6 @@ import { fieldLabel } from '../utils/fieldLabels'
 import { edgeTypeLabel } from '../utils/edgeTypeLabel'
 import { getMonthlyEstimate, formatPrice } from '../utils/pricing'
 import { IamAdvisor } from './IamAdvisor'
-import type { IamAnalysisResult } from '../types/iam'
 
 function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unknown>; tfMetadata: Record<string, unknown> }): React.JSX.Element {
   const allKeys = Array.from(new Set([...Object.keys(metadata), ...Object.keys(tfMetadata)]))
@@ -67,34 +66,6 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
   const [acmDeleteError, setAcmDeleteError] = useState<string | null>(null)
 
   const IAM_SUPPORTED_TYPES: NodeType[] = ['ec2', 'lambda', 's3']
-  const [iamResult, setIamResult] = useState<IamAnalysisResult | null | undefined>(undefined)
-
-  useEffect(() => {
-    if (!node || !IAM_SUPPORTED_TYPES.includes(node.type as NodeType)) return
-    const nodeId = node.id
-    const nodeType = node.type as NodeType
-    const metadata = node.metadata ?? {}
-    Promise.resolve().then(() => {
-      setIamResult(null)
-      window.cloudblocks
-        .analyzeIam(nodeId, nodeType, metadata)
-        .then(setIamResult)
-        .catch((err: unknown) =>
-          setIamResult({ nodeId, findings: [], error: String(err), fetchedAt: Date.now() })
-        )
-    })
-  }, [node?.id])
-
-  function handleIamRecheck(): void {
-    if (!node || !IAM_SUPPORTED_TYPES.includes(node.type as NodeType)) return
-    setIamResult(null)
-    window.cloudblocks
-      .analyzeIam(node.id, node.type as NodeType, node.metadata ?? {})
-      .then(setIamResult)
-      .catch((err: unknown) =>
-        setIamResult({ nodeId: node.id, findings: [], error: String(err), fetchedAt: Date.now() })
-      )
-  }
 
   const STATUS_COLORS: Record<string, string> = {
     running: '#28c840', stopped: '#ff5f57', pending: '#febc2e', error: '#ff5f57', unknown: '#666',
@@ -544,13 +515,9 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             </>
           )}
 
-          {/* IAM Advisor — EC2, Lambda, S3 only, hidden for unsupported types and imported nodes */}
-          {node && IAM_SUPPORTED_TYPES.includes(node.type as NodeType) && !isImported && iamResult !== undefined && (
-            <IamAdvisor
-              node={node}
-              onRecheck={handleIamRecheck}
-              result={iamResult}
-            />
+          {/* IAM Permissions — EC2, Lambda, S3 only, hidden for imported nodes */}
+          {node && IAM_SUPPORTED_TYPES.includes(node.type as NodeType) && !isImported && (
+            <IamAdvisor node={node} />
           )}
 
           {/* Notes section — always shown for any selected node */}
