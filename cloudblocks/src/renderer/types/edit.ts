@@ -54,7 +54,13 @@ export interface EcrEditParams {
   scanOnPush: boolean
 }
 
+export interface SecretEditParams {
+  resource: 'secret'
+  secretId: string
+  description: string
+}
+
 export type EditParams =
   | VpcEditParams | Ec2EditParams | SgEditParams | RdsEditParams
   | S3EditParams  | LambdaEditParams | AlbEditParams | CloudFrontEditParams | ApigwEditParams
-  | EventBridgeEditParams | SqsEditParams | SnsEditParams | EcrEditParams
+  | EventBridgeEditParams | SqsEditParams | SnsEditParams | EcrEditParams | SecretEditParams

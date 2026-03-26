@@ -146,6 +146,35 @@ describe('EditModal', () => {
     })
   })
 
+  describe('Secret edit form', () => {
+    const secretNode: CloudNode = {
+      id: 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret',
+      type: 'secret',
+      label: 'my-secret',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { description: 'My secret description' },
+    }
+
+    it('renders the Secret edit modal with secret ID', () => {
+      render(<EditModal node={secretNode} onClose={vi.fn()} />)
+      expect(screen.getByText(/edit secret/i)).toBeInTheDocument()
+      expect(screen.getByDisplayValue('arn:aws:secretsmanager:us-east-1:123:secret/my-secret')).toBeInTheDocument()
+    })
+
+    it('pre-fills description from metadata', () => {
+      render(<EditModal node={secretNode} onClose={vi.fn()} />)
+      expect(screen.getByDisplayValue('My secret description')).toBeInTheDocument()
+    })
+
+    it('renders empty description when metadata has no description', () => {
+      const nodeNoDesc: CloudNode = { ...secretNode, metadata: {} }
+      render(<EditModal node={nodeNoDesc} onClose={vi.fn()} />)
+      const textarea = screen.getByPlaceholderText(/optional description/i)
+      expect((textarea as HTMLTextAreaElement).value).toBe('')
+    })
+  })
+
   describe('EventBridge edit form', () => {
     it('renders the EventBridge edit modal with bus name and pre-filled description', () => {
       render(<EditModal node={eventBridgeNode} onClose={vi.fn()} />)
