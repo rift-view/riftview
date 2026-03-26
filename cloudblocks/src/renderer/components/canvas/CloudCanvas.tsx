@@ -10,6 +10,7 @@ import { CanvasToast } from '../CanvasToast'
 import { SaveViewModal } from './SaveViewModal'
 import { ScanErrorStrip } from './ScanErrorStrip'
 import { EmptyCanvasState } from './EmptyCanvasState'
+import { BulkActionToolbar } from './BulkActionToolbar'
 import type { CloudNode } from '../../types/cloud'
 import { getMonthlyEstimate, formatPrice } from '../../utils/pricing'
 
@@ -363,6 +364,7 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
       </div>
 
       <ScanErrorStrip />
+      <BulkActionToolbar />
 
       {view === 'topology'
         ? <TopologyView onNodeContextMenu={onNodeContextMenu} />
