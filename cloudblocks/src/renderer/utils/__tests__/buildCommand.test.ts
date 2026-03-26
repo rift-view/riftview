@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { buildCommands } from '../buildCommand'
-import type { VpcParams, Ec2Params, SgParams, S3Params, RdsParams, LambdaParams, AlbParams } from '../../types/create'
+import type { VpcParams, Ec2Params, SgParams, S3Params, RdsParams, LambdaParams, AlbParams, R53ZoneParams } from '../../types/create'
 
 describe('buildCommands: vpc', () => {
   it('returns one command with correct args', () => {
@@ -174,5 +174,30 @@ describe('buildCommands — ALB', () => {
     expect(cmds[0]).toContain('subnet-1')
     expect(cmds[0]).toContain('subnet-2')
     expect(cmds[0]).toContain('sg-1')
+  })
+})
+
+describe('buildCommands — R53 Hosted Zone', () => {
+  it('generates create-hosted-zone command for public zone', () => {
+    const params: R53ZoneParams = { resource: 'r53-zone', domainName: 'example.com', isPrivate: false }
+    const cmds = buildCommands(params)
+    expect(cmds).toHaveLength(1)
+    expect(cmds[0]).toContain('route53')
+    expect(cmds[0]).toContain('create-hosted-zone')
+    expect(cmds[0]).toContain('--name')
+    expect(cmds[0]).toContain('example.com')
+    expect(cmds[0]).toContain('--caller-reference')
+    expect(cmds[0]).toContain('--hosted-zone-config')
+    const config = cmds[0][cmds[0].indexOf('--hosted-zone-config') + 1]
+    expect(config).toContain('PrivateZone=false')
+  })
+
+  it('generates create-hosted-zone command for private zone', () => {
+    const params: R53ZoneParams = { resource: 'r53-zone', domainName: 'internal.example.com', isPrivate: true }
+    const cmds = buildCommands(params)
+    expect(cmds).toHaveLength(1)
+    const config = cmds[0][cmds[0].indexOf('--hosted-zone-config') + 1]
+    expect(config).toContain('PrivateZone=true')
+    expect(cmds[0]).toContain('internal.example.com')
   })
 })

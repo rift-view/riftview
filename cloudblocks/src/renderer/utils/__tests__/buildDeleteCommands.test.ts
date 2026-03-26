@@ -42,6 +42,11 @@ describe('buildDeleteCommands', () => {
       ['elbv2', 'delete-load-balancer', '--load-balancer-arn', 'arn:aws:elasticloadbalancing:us-east-1:123:loadbalancer/app/my-alb/abc'],
     ])
   })
+  it('R53 hosted zone delete', () => {
+    expect(buildDeleteCommands(node('r53-zone', '/hostedzone/Z1234567890ABC'))).toEqual([
+      ['route53', 'delete-hosted-zone', '--id', '/hostedzone/Z1234567890ABC'],
+    ])
+  })
 })
 
 describe('buildQuickActionCommand', () => {
