@@ -60,7 +60,16 @@ export interface SecretEditParams {
   description: string
 }
 
+export interface DynamoEditParams {
+  resource: 'dynamo'
+  tableName: string
+  billingMode: 'PAY_PER_REQUEST' | 'PROVISIONED'
+  readCapacityUnits?: number
+  writeCapacityUnits?: number
+}
+
 export type EditParams =
   | VpcEditParams | Ec2EditParams | SgEditParams | RdsEditParams
   | S3EditParams  | LambdaEditParams | AlbEditParams | CloudFrontEditParams | ApigwEditParams
   | EventBridgeEditParams | SqsEditParams | SnsEditParams | EcrEditParams | SecretEditParams
+  | DynamoEditParams

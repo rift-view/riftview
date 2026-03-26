@@ -219,3 +219,24 @@ describe('buildEditCommands — EventBridge', () => {
     expect(cmds[0]).toEqual(['events', 'update-event-bus', '--name', 'my-bus', '--description', ''])
   })
 })
+
+describe('buildEditCommands — DynamoDB', () => {
+  it('emits update-table with PAY_PER_REQUEST billing mode (no throughput args)', () => {
+    expect(buildEditCommands(
+      node('dynamo', 'my-table'),
+      { resource: 'dynamo', tableName: 'my-table', billingMode: 'PAY_PER_REQUEST' }
+    )).toEqual([
+      ['dynamodb', 'update-table', '--table-name', 'my-table', '--billing-mode', 'PAY_PER_REQUEST'],
+    ])
+  })
+
+  it('emits update-table with PROVISIONED billing mode and provisioned-throughput args', () => {
+    expect(buildEditCommands(
+      node('dynamo', 'my-table'),
+      { resource: 'dynamo', tableName: 'my-table', billingMode: 'PROVISIONED', readCapacityUnits: 10, writeCapacityUnits: 5 }
+    )).toEqual([
+      ['dynamodb', 'update-table', '--table-name', 'my-table', '--billing-mode', 'PROVISIONED',
+        '--provisioned-throughput', 'ReadCapacityUnits=10,WriteCapacityUnits=5'],
+    ])
+  })
+})
