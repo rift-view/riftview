@@ -98,6 +98,12 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
       return [['apigatewayv2', 'update-api', '--api-id', p.apiId, '--name', p.name, ...corsArgs]]
     }
 
+    case 'eventbridge-bus': {
+      const args = ['events', 'update-event-bus', '--name', params.busName]
+      args.push('--description', params.description)
+      return [args]
+    }
+
     default:
       return []
   }

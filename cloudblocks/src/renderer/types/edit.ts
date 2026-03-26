@@ -28,6 +28,13 @@ export interface ApigwEditParams {
   corsOrigins: string[]
 }
 
+export interface EventBridgeEditParams {
+  resource: 'eventbridge-bus'
+  busName: string
+  description: string
+}
+
 export type EditParams =
   | VpcEditParams | Ec2EditParams | SgEditParams | RdsEditParams
   | S3EditParams  | LambdaEditParams | AlbEditParams | CloudFrontEditParams | ApigwEditParams
+  | EventBridgeEditParams
