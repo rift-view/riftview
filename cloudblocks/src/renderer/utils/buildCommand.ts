@@ -1,4 +1,4 @@
-import type { CreateParams, SgParams, S3Params, RdsParams, LambdaParams, AlbParams, AcmParams, ApigwParams, ApigwRouteParams, SqsParams, SnsParams, DynamoParams, SecretParams, EcrParams, SfnParams, EventBusParams, R53ZoneParams, CreateSsmParamParams } from '../types/create'
+import type { CreateParams, SgParams, S3Params, RdsParams, LambdaParams, AlbParams, AcmParams, ApigwParams, ApigwRouteParams, SqsParams, SnsParams, DynamoParams, SecretParams, EcrParams, SfnParams, EventBusParams, R53ZoneParams, CreateSsmParamParams, CreateSubnetParams, CreateIgwParams } from '../types/create'
 
 /**
  * Returns an array of argv arrays — one per aws CLI command.
@@ -57,6 +57,8 @@ export function buildCommands(params: CreateParams): string[][] {
     case 'eventbridge-bus': return buildEventBusCommands(params as EventBusParams)
     case 'r53-zone':        return buildR53ZoneCommands(params as R53ZoneParams)
     case 'ssm-param':      return buildSsmParamCommands(params as CreateSsmParamParams)
+    case 'subnet':         return buildSubnetCommands(params as CreateSubnetParams)
+    case 'igw':            return buildIgwCommands(params as CreateIgwParams)
   }
 }
 
@@ -230,6 +232,27 @@ function buildSsmParamCommands(p: CreateSsmParamParams): string[][] {
   ]
   if (p.description) args.push('--description', p.description)
   return [args]
+}
+
+function buildSubnetCommands(p: CreateSubnetParams): string[][] {
+  const args = [
+    'ec2', 'create-subnet',
+    '--vpc-id', p.vpcId,
+    '--cidr-block', p.cidrBlock,
+  ]
+  if (p.availabilityZone) args.push('--availability-zone', p.availabilityZone)
+  return [args]
+}
+
+function buildIgwCommands(p: CreateIgwParams): string[][] {
+  if (p.name) {
+    return [[
+      'ec2', 'create-internet-gateway',
+      '--tag-specifications',
+      `ResourceType=internet-gateway,Tags=[{Key=Name,Value=${p.name}}]`,
+    ]]
+  }
+  return [['ec2', 'create-internet-gateway']]
 }
 
 function buildS3Commands(params: S3Params): string[][] {
