@@ -46,5 +46,6 @@ export interface CloudblocksPlugin {
   hclGenerators?: Record<string, PluginHclGenerator>
   activate?(): void | Promise<void>
   deactivate?(): void | Promise<void>
-  registerIpcHandlers?(win: Electron.BrowserWindow): void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registerIpcHandlers?(win: any): void
 }
