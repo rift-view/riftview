@@ -1,12 +1,18 @@
 import type { CloudNode } from '../../renderer/types/cloud'
+import type { TerraformGenerator } from './types'
 import { terraformGenerators } from './generators'
+import { pluginRegistry } from '../plugin/index'
 
 /**
  * Generate Terraform HCL for a single node.
  * Returns empty string for unsupported node types.
+ * Falls back to pluginRegistry.getHclGenerator for non-built-in node types.
  */
 export function generateTerraformBlock(node: CloudNode): string {
-  return terraformGenerators[node.type](node)
+  const builtinGen = (terraformGenerators as Record<string, TerraformGenerator | undefined>)[node.type]
+  const gen = builtinGen ?? pluginRegistry.getHclGenerator(node.type)
+  if (!gen) return ''
+  return gen(node)
 }
 
 /**
