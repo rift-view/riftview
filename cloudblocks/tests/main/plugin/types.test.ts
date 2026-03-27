@@ -37,8 +37,8 @@ describe('CloudblocksPlugin interface — structural shape', () => {
           shortLabel: 'T', displayName: 'Test Node', hasCreate: false,
         },
       },
-      createCredentials: (_profile, _region) => ({}),
-      scan: async (_ctx) => ({ nodes: [], errors: [] }),
+      createCredentials: () => ({}),
+      scan: async () => ({ nodes: [], errors: [] }),
     }
     expect(plugin.id).toBe('com.test.plugin')
     expect(plugin.nodeTypes).toHaveLength(1)

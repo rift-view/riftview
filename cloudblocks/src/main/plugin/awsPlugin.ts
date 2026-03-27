@@ -77,7 +77,7 @@ export const awsPlugin: CloudblocksPlugin = {
     const clients = context.credentials as AwsClients
     const region = context.region
     const errors: PluginScanResult['errors'] = []
-    const catch_ = (service: string) => errCatch(service, region, errors)
+    const catch_ = (service: string): ((e: unknown) => CloudNode[]) => errCatch(service, region, errors)
 
     const results = await Promise.all([
       describeInstances(clients.ec2, region).catch(catch_('ec2:instances')),
