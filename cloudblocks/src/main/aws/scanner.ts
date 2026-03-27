@@ -3,7 +3,7 @@ import { IPC } from '../ipc/channels'
 import { createClients } from './client'
 import type { CloudNode, ScanDelta } from '../../renderer/types/cloud'
 import { describeKeyPairs } from './services/ec2'
-import { awsProvider } from './provider'
+import { pluginRegistry } from '../plugin/index'
 
 const POLL_INTERVAL_MS = 30_000
 
@@ -78,14 +78,14 @@ export class ResourceScanner {
     try {
       // Fan out across all selected regions in parallel
       const regionResults = await Promise.all(
-        this.regions.map((region) => {
-          const clients = createClients(this.profile, region, this.endpoint)
-          return awsProvider.scan(clients, region)
+        this.regions.map(async (region) => {
+          await pluginRegistry.activateAll(this.profile, region, this.endpoint)
+          return pluginRegistry.scanAll(region)
         }),
       )
 
       const nextNodes  = regionResults.flatMap((r) => r.nodes)
-      const scanErrors = regionResults.flatMap((r) => r.scanErrors)
+      const scanErrors = regionResults.flatMap((r) => r.errors)
 
       const delta = computeDelta(this.currentNodes, nextNodes)
 

@@ -57,8 +57,11 @@ describe('computeDelta', () => {
 vi.mock('../../../src/main/aws/client', () => ({
   createClients: vi.fn().mockReturnValue({}),
 }))
-vi.mock('../../../src/main/aws/provider', () => ({
-  awsProvider: { scan: vi.fn().mockResolvedValue({ nodes: [], scanErrors: [] }) },
+vi.mock('../../../src/main/plugin/index', () => ({
+  pluginRegistry: {
+    activateAll: vi.fn().mockResolvedValue(undefined),
+    scanAll: vi.fn().mockResolvedValue({ nodes: [], errors: [] }),
+  },
 }))
 vi.mock('../../../src/main/aws/services/ec2', () => ({
   describeKeyPairs: vi.fn().mockResolvedValue([]),
