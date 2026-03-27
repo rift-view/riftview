@@ -141,11 +141,16 @@ export default function App(): React.JSX.Element | null {
       useUIStore.getState().showToast('Update downloaded — restart to apply', 'success')
     })
 
+    const removePluginMetadata = window.cloudblocks.onPluginMetadata((meta) => {
+      useUIStore.getState().setPluginNodeTypes(meta)
+    })
+
     return () => {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('cloudblocks:show-about', onShowAbout)
       window.removeEventListener('cloudblocks:show-settings', onShowSettings)
       removeUpdateListener()
+      removePluginMetadata()
     }
   }, [])
 

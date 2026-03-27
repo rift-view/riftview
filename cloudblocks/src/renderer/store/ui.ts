@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { NodeType } from '../types/cloud'
+import type { NodeTypeMetadata } from '../types/plugin'
 
 const TOAST_DURATION_MS = 2500
 
@@ -47,6 +48,7 @@ interface UIState {
   driftFilterActive:      boolean
   driftBannerDismissed:   boolean
   sidebarFilter:          NodeType | null
+  pluginNodeTypes:        Record<string, NodeTypeMetadata>
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -80,6 +82,7 @@ interface UIState {
   dismissDriftBanner:     () => void
   resetDriftBanner:       () => void
   setSidebarFilter:       (type: NodeType | null) => void
+  setPluginNodeTypes:     (meta: Record<string, NodeTypeMetadata>) => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -107,6 +110,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   driftFilterActive:    false,
   driftBannerDismissed: false,
   sidebarFilter:        null,
+  pluginNodeTypes:      {},
 
   setView:             (view) => set({ view }),
   selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -198,4 +202,5 @@ export const useUIStore = create<UIState>((set, get) => ({
   dismissDriftBanner: () => set({ driftBannerDismissed: true }),
   resetDriftBanner:   () => set({ driftBannerDismissed: false }),
   setSidebarFilter:   (type) => set({ sidebarFilter: type }),
+  setPluginNodeTypes: (meta) => set({ pluginNodeTypes: meta }),
 }))
