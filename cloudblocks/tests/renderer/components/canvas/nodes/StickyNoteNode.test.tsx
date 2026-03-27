@@ -14,7 +14,7 @@ Object.defineProperty(window, 'cloudblocks', {
   writable: true,
 })
 
-const makeProps = (content = '', onSave = vi.fn(), onDelete = vi.fn()) =>
+const makeProps = (content = '', onSave = vi.fn(), onDelete = vi.fn()): NodeProps =>
   ({
     id:       'sn-001',
     data:     { noteId: 'sn-001', content, onSave, onDelete },

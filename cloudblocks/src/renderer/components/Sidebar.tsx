@@ -4,6 +4,7 @@ import { useCloudStore } from '../store/cloud'
 import { useCliStore } from '../store/cli'
 import type { NodeType, CloudNode } from '../types/cloud'
 import SidebarFilterDialog from './modals/SidebarFilterDialog'
+import { SCAN_KEY_TO_TYPE } from '../utils/scanKeyMap'
 
 const TYPE_LABELS: Record<string, string> = {
   vpc: 'VPC', ec2: 'EC2', rds: 'RDS', s3: 'S3', lambda: 'Lambda',
@@ -35,30 +36,6 @@ const SERVICES: { type: NodeType; label: string; hasCreate: boolean; resource?: 
   { type: 'apigw-route',    label: 'API Route',       hasCreate: false },
 ]
 
-export const SCAN_KEY_TO_TYPE: Record<string, NodeType> = {
-  'ec2:instances':       'ec2',
-  'ec2:vpcs':            'vpc',
-  'ec2:subnets':         'subnet',
-  'ec2:security-groups': 'security-group',
-  'igw':                 'igw',
-  'nat':                 'nat-gateway',
-  'rds':                 'rds',
-  's3':                  's3',
-  'lambda':              'lambda',
-  'alb':                 'alb',
-  'acm':                 'acm',
-  'cloudfront':          'cloudfront',
-  'apigw':               'apigw',
-  'sqs':                 'sqs',
-  'secrets':             'secret',
-  'ecr':                 'ecr-repo',
-  'sns':                 'sns',
-  'dynamo':              'dynamo',
-  'ssm':                 'ssm-param',
-  'r53':                 'r53-zone',
-  'sfn':                 'sfn',
-  'eventbridge':         'eventbridge-bus',
-}
 
 function getSsmPrefix(label: string): string {
   if (!label.startsWith('/')) return '(ungrouped)'

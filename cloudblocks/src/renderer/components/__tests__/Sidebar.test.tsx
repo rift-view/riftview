@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { Sidebar, SCAN_KEY_TO_TYPE } from '../Sidebar'
+import { Sidebar } from '../Sidebar'
+import { SCAN_KEY_TO_TYPE } from '../../utils/scanKeyMap'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
 import { useCliStore } from '../../store/cli'
