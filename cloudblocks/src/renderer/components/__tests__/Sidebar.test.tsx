@@ -19,7 +19,7 @@ const DEFAULT_SETTINGS = {
 
 beforeEach(() => {
   useCloudStore.setState({ nodes: [], scanErrors: [], settings: DEFAULT_SETTINGS })
-  useUIStore.setState({ view: 'topology', sidebarFilter: null, expandedSsmGroups: new Set() })
+  useUIStore.setState({ view: 'topology', sidebarFilter: null, expandedSsmGroups: new Set(), pluginNodeTypes: {} })
   useCliStore.setState({ commandPreview: [], pendingCommand: null })
 })
 
@@ -81,6 +81,42 @@ describe('Sidebar scan error badges', () => {
     render(<Sidebar />)
     const badge = screen.getByTitle('[dynamo] eu-west-1 — ThrottlingException')
     expect(badge).toBeInTheDocument()
+  })
+})
+
+describe('Plugin node types in Sidebar', () => {
+  it('shows plugin service type in sidebar when pluginNodeTypes has hasCreate: true entry', () => {
+    useUIStore.setState({
+      pluginNodeTypes: {
+        'azure-vm': {
+          label: 'VM',
+          borderColor: '#0078D4',
+          badgeColor: '#0078D4',
+          shortLabel: 'VM',
+          displayName: 'Azure VM',
+          hasCreate: true,
+        },
+      },
+    })
+    render(<Sidebar />)
+    expect(screen.getByText('⬡ Azure VM')).toBeInTheDocument()
+  })
+
+  it('does not show plugin service type when hasCreate is false', () => {
+    useUIStore.setState({
+      pluginNodeTypes: {
+        'azure-readonly': {
+          label: 'RO',
+          borderColor: '#ccc',
+          badgeColor: '#ccc',
+          shortLabel: 'RO',
+          displayName: 'Azure Read Only',
+          hasCreate: false,
+        },
+      },
+    })
+    render(<Sidebar />)
+    expect(screen.queryByText('⬡ Azure Read Only')).not.toBeInTheDocument()
   })
 })
 

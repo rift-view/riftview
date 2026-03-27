@@ -62,6 +62,8 @@ export function Sidebar(): React.JSX.Element {
   const setCommandPreview = useCliStore((s) => s.setCommandPreview)
   const setPendingCommand = useCliStore((s) => s.setPendingCommand)
 
+  const pluginNodeTypes   = useUIStore((s) => s.pluginNodeTypes)
+
   const [filterTarget, setFilterTarget] = useState<NodeType | null>(null)
 
   useEffect(() => {
@@ -95,6 +97,11 @@ export function Sidebar(): React.JSX.Element {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([prefix, groupNodes]) => ({ prefix, nodes: groupNodes }))
   }, [nodes])
+
+  const pluginServices = useMemo(
+    () => Object.entries(pluginNodeTypes).filter(([, meta]) => meta.hasCreate),
+    [pluginNodeTypes],
+  )
 
   const errorsByType = useMemo<Map<NodeType, string>>(() => {
     const m = new Map<NodeType, string>()
@@ -187,6 +194,19 @@ export function Sidebar(): React.JSX.Element {
           </div>
         )
       })}
+
+      {pluginServices.map(([type, meta]) => (
+        <div
+          key={type}
+          draggable
+          onDragStart={(e) => e.dataTransfer.setData('text/plain', type)}
+          onClick={() => { /* plugin types skip the filter dialog for now */ }}
+          className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
+          style={{ ...serviceRowStyle, cursor: 'grab' }}
+        >
+          <span>⬡ {meta.displayName}</span>
+        </div>
+      ))}
 
       {(ssmGroups.length > 0 || ssmErrTooltip) && (
         <>
