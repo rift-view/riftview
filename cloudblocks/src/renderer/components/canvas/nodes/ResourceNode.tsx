@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { NodeStatus, NodeType } from '../../../types/cloud'
+import { useUIStore } from '../../../store/ui'
 
 function driftStripeColor(driftStatus: import('../../../types/cloud').DriftStatus): string {
   switch (driftStatus) {
@@ -93,9 +94,10 @@ interface ResourceNodeData {
 
 export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
   const d = data as unknown as ResourceNodeData
-  const borderColor = TYPE_BORDER[d.nodeType] ?? '#555'
+  const pluginMeta  = useUIStore.getState().pluginNodeTypes[d.nodeType]
+  const borderColor = (TYPE_BORDER as Record<string, string>)[d.nodeType] ?? pluginMeta?.borderColor ?? '#555'
   const stripeColor = d.driftStatus ? driftStripeColor(d.driftStatus) : statusStripeColor(d.status)
-  const typeLabel   = TYPE_LABEL[d.nodeType] ?? d.nodeType.toUpperCase()
+  const typeLabel   = (TYPE_LABEL as Record<string, string>)[d.nodeType] ?? pluginMeta?.label ?? d.nodeType.toUpperCase()
   const isImported  = d.status === 'imported'
 
   return (
