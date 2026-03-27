@@ -94,7 +94,7 @@ contextBridge.exposeInMainWorld('cloudblocks', {
 
   // Plugin metadata — push: main → renderer
   onPluginMetadata: (cb: (meta: Record<string, NodeTypeMetadata>) => void): (() => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, meta: Record<string, NodeTypeMetadata>) => cb(meta)
+    const handler = (_event: Electron.IpcRendererEvent, meta: Record<string, NodeTypeMetadata>): void => cb(meta)
     ipcRenderer.on(IPC.PLUGIN_METADATA, handler)
     return () => ipcRenderer.removeListener(IPC.PLUGIN_METADATA, handler)
   },

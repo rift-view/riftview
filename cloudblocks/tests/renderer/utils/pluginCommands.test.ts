@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { resolveCreateCommands, resolveDeleteCommands, resolveEditCommands, registerPluginCommandHandlers } from '../../../src/renderer/plugin/pluginCommands'
+import { resolveDeleteCommands, registerPluginCommandHandlers } from '../../../src/renderer/plugin/pluginCommands'
 import type { CloudNode } from '../../../src/renderer/types/cloud'
 
 describe('pluginCommands — routing', () => {
