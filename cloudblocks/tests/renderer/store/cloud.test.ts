@@ -49,4 +49,9 @@ describe('theme defaults', () => {
     const store = createCloudStore()
     expect(store.getState().settings.theme).toBe('dark')
   })
+
+  it('DEFAULT_SETTINGS includes notifyOnDrift: true', () => {
+    const store = createCloudStore()
+    expect(store.getState().settings.notifyOnDrift).toBe(true)
+  })
 })

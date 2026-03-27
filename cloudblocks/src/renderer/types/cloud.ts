@@ -83,4 +83,5 @@ export interface Settings {
   showRegionIndicators: boolean
   regionColors: Record<string, string>
   showScanErrorBadges: boolean
+  notifyOnDrift: boolean
 }
