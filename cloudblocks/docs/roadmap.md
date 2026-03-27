@@ -1,6 +1,6 @@
 # Cloudblocks Product Roadmap
 
-**Last updated:** 2026-03-26
+**Last updated:** 2026-03-26 (Wave 5 complete)
 **Status:** Active — sequenced into waves, each wave independently shippable and revertable.
 
 ---
@@ -70,7 +70,7 @@ Expands what users can actually do with the canvas.
 | **Wave 2** | C1 (7 edit forms) | Wave 1 complete | ✅ Complete (399 tests) |
 | **Wave 3** | D1, D2, D3 | Wave 2 complete | ✅ Complete (442 tests) |
 | **Wave 4** | D4, D5, P1 (design) | Wave 3 complete | ✅ Complete (478 tests) |
-| **Wave 5** | P2, P3 | Wave 4 complete | 🔄 In Progress (P2 ✅, P3 next) |
+| **Wave 5** | P2, P3 | Wave 4 complete | ✅ Complete (528 tests) |
 
 ---
 
