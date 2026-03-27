@@ -524,6 +524,21 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                     </span>
                   </label>
                 </div>
+
+                <div style={{ marginTop: 20 }}>
+                  <div style={sectionLabel}>Drift Notifications</div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={settings.notifyOnDrift}
+                      onChange={(e): void => handleSettingChange('notifyOnDrift', e.target.checked)}
+                      style={{ accentColor: 'var(--cb-accent)', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--cb-text-secondary)' }}>
+                      Notify when drift is detected
+                    </span>
+                  </label>
+                </div>
               </div>
             )}
 

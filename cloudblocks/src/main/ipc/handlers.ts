@@ -2,7 +2,7 @@ import fs from 'fs'
 import fsp from 'fs/promises'
 import path from 'path'
 import os from 'os'
-import { ipcMain, BrowserWindow, app, dialog } from 'electron'
+import { ipcMain, BrowserWindow, app, dialog, Notification } from 'electron'
 import { IPC } from './channels'
 import { listProfiles, getDefaultRegion } from '../aws/credentials'
 import { createClients } from '../aws/client'
@@ -37,6 +37,7 @@ const DEFAULT_SETTINGS = {
   showRegionIndicators: true,
   regionColors: {} as Record<string, string>,
   showScanErrorBadges: true,
+  notifyOnDrift: true,
 }
 
 let scanner:   ResourceScanner | null = null
@@ -347,6 +348,17 @@ export function registerHandlers(win: BrowserWindow): void {
       return Promise.race([analyzePromise, timeoutPromise])
     }
   )
+
+  // OS-level drift notification — only fires when window is not focused
+  ipcMain.handle(IPC.NOTIFY_DRIFT, (_event, count: number): void => {
+    const w = BrowserWindow.getAllWindows()[0]
+    if (w && !w.isFocused()) {
+      new Notification({
+        title: 'Cloudblocks — Drift Detected',
+        body:  `${count} resource${count === 1 ? '' : 's'} drifted from Terraform state`,
+      }).show()
+    }
+  })
 
   // Initialise engine for the default session
   cliEngine = new CliEngine(win)

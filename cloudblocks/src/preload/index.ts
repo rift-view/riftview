@@ -87,4 +87,7 @@ contextBridge.exposeInMainWorld('cloudblocks', {
   // IAM Least-Privilege Advisor
   analyzeIam: (nodeId: string, nodeType: NodeType, metadata: Record<string, unknown>) =>
     ipcRenderer.invoke(IPC.IAM_ANALYZE, { nodeId, nodeType, metadata }),
+
+  // OS drift notification
+  notifyDrift: (count: number): Promise<void> => ipcRenderer.invoke(IPC.NOTIFY_DRIFT, count),
 })

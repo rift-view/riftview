@@ -9,6 +9,7 @@ import { CanvasContextMenu } from './CanvasContextMenu'
 import { CanvasToast } from '../CanvasToast'
 import { SaveViewModal } from './SaveViewModal'
 import { ScanErrorStrip } from './ScanErrorStrip'
+import { DriftNotificationBanner } from './DriftNotificationBanner'
 import { EmptyCanvasState } from './EmptyCanvasState'
 import { BulkActionToolbar } from './BulkActionToolbar'
 import type { CloudNode } from '../../types/cloud'
@@ -364,6 +365,7 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
       </div>
 
       <ScanErrorStrip />
+      <DriftNotificationBanner />
       <BulkActionToolbar />
 
       {view === 'topology'

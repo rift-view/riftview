@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS: Settings = {
   showRegionIndicators: true,
   regionColors: {},
   showScanErrorBadges: true,
+  notifyOnDrift: true,
 }
 
 interface CloudState {
@@ -83,6 +84,13 @@ export const useCloudStore = create<CloudState>((set) => ({
       const newNodes = Array.from(nodeMap.values())
       if (state.importedNodes.length > 0) {
         const applied = applyDriftToState(newNodes, state.importedNodes)
+        const driftedCount = applied.nodes.filter(
+          (n) => n.driftStatus === 'unmanaged' || n.driftStatus === 'missing'
+        ).length
+        if (driftedCount > 0 && state.settings.notifyOnDrift) {
+          useUIStore.getState().resetDriftBanner()
+          void window.cloudblocks.notifyDrift(driftedCount)
+        }
         return { nodes: applied.nodes, importedNodes: applied.importedNodes, lastScannedAt: new Date() }
       }
       return { nodes: newNodes, lastScannedAt: new Date() }

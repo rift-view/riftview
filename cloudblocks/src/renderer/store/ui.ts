@@ -44,8 +44,9 @@ interface UIState {
   showSettings:       boolean
   annotations:        Record<string, string>
   stickyNotes:        StickyNote[]
-  driftFilterActive:  boolean
-  sidebarFilter:      NodeType | null
+  driftFilterActive:      boolean
+  driftBannerDismissed:   boolean
+  sidebarFilter:          NodeType | null
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -73,9 +74,12 @@ interface UIState {
   addStickyNote:        (note: StickyNote) => void
   updateStickyNote:     (id: string, content: string) => void
   removeStickyNote:     (id: string) => void
-  toggleDriftFilter:    () => void
-  resetDriftFilter:     () => void
-  setSidebarFilter:     (type: NodeType | null) => void
+  toggleDriftFilter:      () => void
+  setDriftFilterActive:   (active: boolean) => void
+  resetDriftFilter:       () => void
+  dismissDriftBanner:     () => void
+  resetDriftBanner:       () => void
+  setSidebarFilter:       (type: NodeType | null) => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -100,8 +104,9 @@ export const useUIStore = create<UIState>((set, get) => ({
   showSettings:      false,
   annotations:       {},
   stickyNotes:       [],
-  driftFilterActive: false,
-  sidebarFilter:     null,
+  driftFilterActive:    false,
+  driftBannerDismissed: false,
+  sidebarFilter:        null,
 
   setView:             (view) => set({ view }),
   selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -187,7 +192,10 @@ export const useUIStore = create<UIState>((set, get) => ({
   addStickyNote:    (note)         => set((s) => ({ stickyNotes: [...s.stickyNotes, note] })),
   updateStickyNote: (id, content)  => set((s) => ({ stickyNotes: s.stickyNotes.map((n) => n.id === id ? { ...n, content } : n) })),
   removeStickyNote: (id)           => set((s) => ({ stickyNotes: s.stickyNotes.filter((n) => n.id !== id) })),
-  toggleDriftFilter: () => set((state) => ({ driftFilterActive: !state.driftFilterActive })),
-  resetDriftFilter:  () => set({ driftFilterActive: false }),
-  setSidebarFilter:  (type) => set({ sidebarFilter: type }),
+  toggleDriftFilter:      () => set((state) => ({ driftFilterActive: !state.driftFilterActive })),
+  setDriftFilterActive:   (active) => set({ driftFilterActive: active }),
+  resetDriftFilter:       () => set({ driftFilterActive: false }),
+  dismissDriftBanner: () => set({ driftBannerDismissed: true }),
+  resetDriftBanner:   () => set({ driftBannerDismissed: false }),
+  setSidebarFilter:   (type) => set({ sidebarFilter: type }),
 }))
