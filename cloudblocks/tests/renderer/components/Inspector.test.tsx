@@ -30,7 +30,7 @@ const EC2_NODE: CloudNode = {
   metadata: {},
 }
 
-const noop = () => {}
+const noop = (): void => {}
 
 function renderInspector(): ReturnType<typeof render> {
   return render(

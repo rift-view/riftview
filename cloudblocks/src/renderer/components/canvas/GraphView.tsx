@@ -9,7 +9,8 @@ import { AcmNode } from './nodes/AcmNode'
 import { CloudFrontNode } from './nodes/CloudFrontNode'
 import { ApigwNode } from './nodes/ApigwNode'
 import { ApigwRouteNode } from './nodes/ApigwRouteNode'
-import { StickyNoteNode, useStickyNoteCallbacks } from './nodes/StickyNoteNode'
+import { StickyNoteNode } from './nodes/StickyNoteNode'
+import { useStickyNoteCallbacks } from './nodes/useStickyNoteCallbacks'
 import type { CloudNode } from '../../types/cloud'
 
 const SNAP_GRID_SIZE = 20
