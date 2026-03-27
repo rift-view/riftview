@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { ScanDelta, AwsProfile, NodeType } from '../renderer/types/cloud'
 import type { CloudFrontParams } from '../renderer/types/create'
 import type { CloudFrontEditParams } from '../renderer/types/edit'
+import type { NodeTypeMetadata } from '../main/plugin/types'
 import { IPC } from '../main/ipc/channels'
 
 contextBridge.exposeInMainWorld('cloudblocks', {
@@ -90,4 +91,11 @@ contextBridge.exposeInMainWorld('cloudblocks', {
 
   // OS drift notification
   notifyDrift: (count: number): Promise<void> => ipcRenderer.invoke(IPC.NOTIFY_DRIFT, count),
+
+  // Plugin metadata — push: main → renderer
+  onPluginMetadata: (cb: (meta: Record<string, NodeTypeMetadata>) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, meta: Record<string, NodeTypeMetadata>) => cb(meta)
+    ipcRenderer.on(IPC.PLUGIN_METADATA, handler)
+    return () => ipcRenderer.removeListener(IPC.PLUGIN_METADATA, handler)
+  },
 })

@@ -9,6 +9,7 @@ import { createClients } from '../aws/client'
 import type { AwsClients } from '../aws/client'
 import { ResourceScanner } from '../aws/scanner'
 import { CliEngine } from '../cli/engine'
+import { pluginRegistry } from '../plugin/index'
 import {
   CreateDistributionCommand,
   GetDistributionConfigCommand,
@@ -372,4 +373,5 @@ function restartScanner(win: BrowserWindow, profile: string, regions: string[], 
   clients   = createClients(profile, regions[0] ?? 'us-east-1', endpoint)
   scanner   = new ResourceScanner(profile, regions, endpoint, win)
   scanner.start()
+  win.webContents.send(IPC.PLUGIN_METADATA, pluginRegistry.getAllNodeTypeMetadata())
 }
