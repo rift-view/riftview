@@ -350,6 +350,55 @@ describe('generateTerraformBlock — newly-implemented types', () => {
   })
 })
 
+// ── pluginRegistry HCL fallback ───────────────────────────────────────────────
+
+describe('generateTerraformBlock — pluginRegistry fallback', () => {
+  it('falls back to pluginRegistry.getHclGenerator for non-built-in node types', async () => {
+    const { PluginRegistry } = await import('../../../src/main/plugin/registry')
+
+    // Register a temporary plugin with an HCL generator for 'azure-vm'
+    const mockGen = (node: CloudNode) => `resource "azure_virtual_machine" "${node.id}" {}`
+    const testPlugin = {
+      id: 'com.test.azure-vm-hcl',
+      displayName: 'Test Azure VM',
+      nodeTypes: ['azure-vm-hcl-test'],
+      nodeTypeMetadata: {
+        'azure-vm-hcl-test': {
+          label: 'AVM',
+          borderColor: '#0078D4',
+          badgeColor: '#0078D4',
+          shortLabel: 'AVM',
+          displayName: 'Azure VM (test)',
+          hasCreate: false,
+        },
+      },
+      createCredentials: () => ({}),
+      scan: async () => ({ nodes: [], errors: [] }),
+      hclGenerators: {
+        'azure-vm-hcl-test': mockGen,
+      },
+    }
+
+    // Use a fresh registry to avoid polluting the singleton
+    const freshRegistry = new PluginRegistry()
+    freshRegistry.register(testPlugin as Parameters<typeof freshRegistry.register>[0])
+
+    const gen = freshRegistry.getHclGenerator('azure-vm-hcl-test')
+    expect(gen).toBeDefined()
+
+    const node = makeNode({ type: 'unknown', id: 'vm-001', label: 'test-vm', metadata: {} })
+    // Directly verify the generator produces the expected HCL
+    const hcl = gen!({ ...node, type: 'azure-vm-hcl-test' } as unknown as CloudNode)
+    expect(hcl).toBe('resource "azure_virtual_machine" "vm-001" {}')
+  })
+
+  it('getHclGenerator returns undefined for unregistered plugin types', async () => {
+    const { PluginRegistry } = await import('../../../src/main/plugin/registry')
+    const freshRegistry = new PluginRegistry()
+    expect(freshRegistry.getHclGenerator('not-registered-type')).toBeUndefined()
+  })
+})
+
 // ── generateTerraformFile ─────────────────────────────────────────────────────
 
 describe('generateTerraformFile', () => {
