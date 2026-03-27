@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useCloudStore } from '../store/cloud'
+import { useUIStore } from '../store/ui'
 import type { CloudNode, NodeType } from '../types/cloud'
 
 const TYPE_BADGE_COLOR = {
@@ -241,9 +242,10 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
             </div>
           )}
           {results.map(({ node, matchedField }, i) => {
-            const isActive = i === cursor
-            const badgeColor = TYPE_BADGE_COLOR[node.type] ?? '#666'
-            const typeShort  = TYPE_SHORT[node.type] ?? node.type.toUpperCase()
+            const isActive   = i === cursor
+            const pluginMeta = useUIStore.getState().pluginNodeTypes[node.type]
+            const badgeColor = (TYPE_BADGE_COLOR as Record<string, string>)[node.type] ?? pluginMeta?.badgeColor ?? '#666'
+            const typeShort  = (TYPE_SHORT as Record<string, string>)[node.type] ?? pluginMeta?.shortLabel ?? node.type.toUpperCase()
 
             return (
               <div
