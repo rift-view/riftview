@@ -15,4 +15,8 @@ describe('IPC channel constants', () => {
   it('defines THEME_OVERRIDES channel', () => {
     expect(IPC.THEME_OVERRIDES).toBe('theme:overrides')
   })
+
+  it('defines PLUGIN_METADATA channel', () => {
+    expect(IPC.PLUGIN_METADATA).toBe('plugin:metadata')
+  })
 })

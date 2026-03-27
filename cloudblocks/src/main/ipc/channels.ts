@@ -28,6 +28,7 @@ export const IPC = {
   TFSTATE_CLEAR:    'tfstate:clear',          // invoke → { ok: boolean }
   IAM_ANALYZE:      'iam:analyze',            // invoke → IamAnalysisResult
   NOTIFY_DRIFT:     'notify:drift',           // invoke → void (count: number)
+  PLUGIN_METADATA:  'plugin:metadata',        // push: main → renderer
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]
