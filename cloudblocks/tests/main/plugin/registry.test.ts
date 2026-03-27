@@ -83,7 +83,7 @@ describe('PluginRegistry', () => {
 
   it('getHclGenerator returns generator when plugin has registered it', () => {
     const p = makePlugin('com.test.a', ['type-a'])
-    p.hclGenerators = { 'type-a': (_node) => 'resource "mock" "r" {}' }
+    p.hclGenerators = { 'type-a': () => 'resource "mock" "r" {}' }
     registry.register(p)
     const gen = registry.getHclGenerator('type-a')
     expect(gen).toBeDefined()

@@ -357,7 +357,7 @@ describe('generateTerraformBlock — pluginRegistry fallback', () => {
     const { PluginRegistry } = await import('../../../src/main/plugin/registry')
 
     // Register a temporary plugin with an HCL generator for 'azure-vm'
-    const mockGen = (node: CloudNode) => `resource "azure_virtual_machine" "${node.id}" {}`
+    const mockGen = (node: CloudNode): string => `resource "azure_virtual_machine" "${node.id}" {}`
     const testPlugin = {
       id: 'com.test.azure-vm-hcl',
       displayName: 'Test Azure VM',
