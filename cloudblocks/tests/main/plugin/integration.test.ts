@@ -71,7 +71,7 @@ describe('Plugin system — integration smoke test', () => {
     registry.register(mockPlugin)
     const gen = registry.getHclGenerator('mock-service')
     expect(gen).toBeDefined()
-    const hcl = gen!({ id: 'r-001', type: 'mock-service', label: 'R', status: 'running', region: 'us-east-1', metadata: {} } as Parameters<typeof gen>[0])
+    const hcl = gen!({ id: 'r-001', type: 'mock-service', label: 'R', status: 'running', region: 'us-east-1', metadata: {} } as unknown as import('../../../src/renderer/types/cloud').CloudNode)
     expect(hcl).toBe('resource "mock_service" "r-001" {}')
   })
 
