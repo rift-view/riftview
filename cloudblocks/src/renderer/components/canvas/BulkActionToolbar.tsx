@@ -1,7 +1,7 @@
 import React from 'react'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
-import { buildDeleteCommands } from '../../utils/buildDeleteCommands'
+import { resolveDeleteCommands } from '../../plugin/pluginCommands'
 
 export function BulkActionToolbar(): React.JSX.Element | null {
   const selectedNodeIds    = useUIStore((s) => s.selectedNodeIds)
@@ -15,7 +15,7 @@ export function BulkActionToolbar(): React.JSX.Element | null {
   const selectedNodes = allNodes.filter((n) => selectedNodeIds.has(n.id))
 
   async function handleBulkDelete(): Promise<void> {
-    const commands = selectedNodes.flatMap((n) => buildDeleteCommands(n))
+    const commands = selectedNodes.flatMap((n) => resolveDeleteCommands(n))
     if (commands.length === 0) {
       useUIStore.getState().showToast('No delete commands available for selected nodes', 'error')
       return

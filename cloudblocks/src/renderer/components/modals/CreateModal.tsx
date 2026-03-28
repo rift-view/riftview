@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
 import { useCliStore } from '../../store/cli'
-import { buildCommands } from '../../utils/buildCommand'
+import { resolveCreateCommands } from '../../plugin/pluginCommands'
 import type { CreateParams, CloudFrontParams } from '../../types/create'
 import type { NodeType } from '../../types/cloud'
 import { VpcForm } from './VpcForm'
@@ -152,7 +152,7 @@ export function CreateModal(): React.JSX.Element | null {
         setCommandPreview(['[CloudFront distribution will be created via SDK]'])
         return
       }
-      const preview = buildCommands(params).map(argv => 'aws ' + argv.join(' '))
+      const preview = resolveCreateCommands(params.resource, params as unknown as Record<string, unknown>).map(argv => 'aws ' + argv.join(' '))
       setCommandPreview(preview)
     } catch {
       // incomplete form — ignore preview update
@@ -233,7 +233,7 @@ export function CreateModal(): React.JSX.Element | null {
 
     const runPromise = paramsRef.current!.resource === 'cloudfront'
       ? window.cloudblocks.createCloudFront(paramsRef.current! as CloudFrontParams)
-      : window.cloudblocks.runCli(buildCommands(paramsRef.current!))
+      : window.cloudblocks.runCli(resolveCreateCommands(paramsRef.current!.resource, paramsRef.current! as unknown as Record<string, unknown>))
 
     runPromise
       .then((result) => {
