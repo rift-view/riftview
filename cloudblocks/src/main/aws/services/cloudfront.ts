@@ -2,7 +2,7 @@ import {
   CloudFrontClient,
   ListDistributionsCommand,
 } from '@aws-sdk/client-cloudfront'
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType, NodeStatus } from '../../../renderer/types/cloud'
 
 function cfStatusToNodeStatus(status: string | undefined): NodeStatus {
   if (status === 'Deployed')   return 'running'
@@ -12,8 +12,14 @@ function cfStatusToNodeStatus(status: string | undefined): NodeStatus {
 }
 
 function originType(domainName: string): 'S3' | 'custom' {
-  if (domainName.includes('.s3.amazonaws.com') || domainName.includes('.s3-website-')) return 'S3'
+  // Covers: bucket.s3.amazonaws.com, bucket.s3.REGION.amazonaws.com, bucket.s3-website-REGION.amazonaws.com
+  if (/\.s3[.-]/.test(domainName) && domainName.endsWith('.amazonaws.com')) return 'S3'
   return 'custom'
+}
+
+// Extract S3 bucket name from domain like "my-bucket.s3.amazonaws.com"
+function s3BucketName(domainName: string): string {
+  return domainName.split('.s3')[0]
 }
 
 export async function listDistributions(client: CloudFrontClient): Promise<CloudNode[]> {
@@ -30,7 +36,11 @@ export async function listDistributions(client: CloudFrontClient): Promise<Cloud
 
       const certArn = dist.ViewerCertificate?.ACMCertificateArn
 
-      return {
+      const integrations: { targetId: string; edgeType: EdgeType }[] = origins
+        .filter((o) => o.type === 'S3')
+        .map((o) => ({ targetId: s3BucketName(o.domainName), edgeType: 'origin' as EdgeType }))
+
+      const node: CloudNode = {
         id:     dist.Id ?? 'unknown',
         type:   'cloudfront',
         label:  dist.Comment || dist.DomainName || dist.Id || 'CloudFront',
@@ -43,6 +53,8 @@ export async function listDistributions(client: CloudFrontClient): Promise<Cloud
           priceClass:        dist.PriceClass ?? 'PriceClass_All',
         },
       }
+
+      return integrations.length > 0 ? { ...node, integrations } : node
     })
   } catch {
     return []
