@@ -41,29 +41,33 @@ const DEFAULT_SETTINGS = {
   notifyOnDrift: true,
 }
 
-let scanner:   ResourceScanner | null = null
-let cliEngine: CliEngine       | null = null
-let clients:   AwsClients      | null = null
+let scanner:        ResourceScanner | null = null
+let cliEngine:      CliEngine       | null = null
+let clients:        AwsClients      | null = null
+let activeProfile:  string = 'default'
+let activeEndpoint: string | undefined
 
 export function registerHandlers(win: BrowserWindow): void {
   // List available AWS profiles
   ipcMain.handle(IPC.PROFILES_LIST, () => listProfiles())
 
   // Select a profile — recreates clients + restarts scanner
-  ipcMain.handle(IPC.PROFILE_SELECT, (_event, profile: AwsProfile) => {
+  ipcMain.handle(IPC.PROFILE_SELECT, async (_event, profile: AwsProfile) => {
     const region = getDefaultRegion(profile.name)
-    restartScanner(win, profile.name, [region], profile.endpoint)
+    await restartScanner(win, profile.name, [region], profile.endpoint)
   })
 
   // Select a region — recreates clients + restarts scanner with current profile
-  ipcMain.handle(IPC.REGION_SELECT, (_event, { region, endpoint }: { region: string; endpoint?: string }) => {
+  ipcMain.handle(IPC.REGION_SELECT, async (_event, { region, endpoint }: { region: string; endpoint?: string }) => {
     const profile = process.env.AWS_PROFILE ?? 'default'
-    restartScanner(win, profile, [region], endpoint)
+    await restartScanner(win, profile, [region], endpoint)
   })
 
-  // Manual scan trigger — renderer may pass selectedRegions to refresh the scanner's region list
-  ipcMain.handle(IPC.SCAN_START, (_event, payload?: { selectedRegions?: string[] }) => {
+  // Manual scan trigger — renderer may pass selectedRegions to refresh the scanner's region list.
+  // When new regions are supplied, activate credentials for those regions before scanning.
+  ipcMain.handle(IPC.SCAN_START, async (_event, payload?: { selectedRegions?: string[] }) => {
     if (payload?.selectedRegions && payload.selectedRegions.length > 0 && scanner) {
+      await pluginRegistry.activateAll(activeProfile, payload.selectedRegions, activeEndpoint)
       scanner.updateRegions(payload.selectedRegions)
     }
     scanner?.triggerManualScan()
@@ -365,8 +369,13 @@ export function registerHandlers(win: BrowserWindow): void {
   cliEngine = new CliEngine(win)
 }
 
-function restartScanner(win: BrowserWindow, profile: string, regions: string[], endpoint?: string): void {
+async function restartScanner(win: BrowserWindow, profile: string, regions: string[], endpoint?: string): Promise<void> {
   scanner?.stop()
+  activeProfile  = profile
+  activeEndpoint = endpoint
+  // Activate plugin credentials for all requested regions before starting the scanner.
+  // This must run once per profile/region change — not on every scan cycle.
+  await pluginRegistry.activateAll(profile, regions, endpoint)
   // Recreate engine to ensure it holds the current win reference after profile/region switch
   cliEngine = new CliEngine(win, endpoint)
   // Keep a single client set for the primary region (used by CF, etc.)

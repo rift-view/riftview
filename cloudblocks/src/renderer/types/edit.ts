@@ -76,8 +76,15 @@ export interface SsmEditParams {
   description?: string
 }
 
+export interface SfnEditParams {
+  resource: 'sfn'
+  stateMachineArn: string
+  definition?: string
+  roleArn?: string
+}
+
 export type EditParams =
   | VpcEditParams | Ec2EditParams | SgEditParams | RdsEditParams
   | S3EditParams  | LambdaEditParams | AlbEditParams | CloudFrontEditParams | ApigwEditParams
   | EventBridgeEditParams | SqsEditParams | SnsEditParams | EcrEditParams | SecretEditParams
-  | DynamoEditParams | SsmEditParams
+  | DynamoEditParams | SsmEditParams | SfnEditParams

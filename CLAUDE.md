@@ -64,7 +64,7 @@
   ## Architecture Rules
 
   ### Execution model (read vs write)
-  - **Reads:** AWS SDK v3 in main process, called from `awsProvider.scan()`
+  - **Reads:** AWS SDK v3 in main process, routed through `PluginRegistry.scanAll()` in `src/main/plugin/registry.ts`
   - **Writes:** `aws` CLI subprocess via `cli:run` IPC — never SDK writes
   - Credentials stay in main process, never cross to renderer
 
@@ -76,7 +76,7 @@
   Follow the pattern in `src/main/aws/services/scanFlatService.ts`:
   1. Create `services/{name}.ts` using `scanFlatService` (or manual paginated loop for SSM-style)
   2. Add client to `AwsClients` interface + `createClients()` in `client.ts`
-  3. Wire into `awsProvider.scan()` in `provider.ts` with `.catch(() => [])`
+  3. Wire into `awsPlugin.scan()` in `src/main/plugin/awsPlugin.ts` — add to the `Promise.all([...])` array with `.catch(catch_('service-name'))`
   4. Add `NodeType` entry to `src/renderer/types/cloud.ts`
   5. Add entry to `Record<NodeType, string>` maps in `ResourceNode.tsx` and `SearchPalette.tsx`
 
@@ -98,7 +98,7 @@
 
   ## NodeType Completeness
 
-  Any `Record<NodeType, string>` map **must** include all 22 values. When adding a new NodeType, update:
+  Any `Record<NodeType, string>` map **must** include all 24 values. When adding a new NodeType, update:
   - `src/renderer/types/cloud.ts` (the union)
   - `src/renderer/components/canvas/nodes/ResourceNode.tsx` (TYPE_BORDER, TYPE_LABEL)
   - `src/renderer/components/canvas/nodes/SearchPalette.tsx` (TYPE_BADGE_COLOR, TYPE_SHORT)

@@ -5,6 +5,9 @@ import type { CloudNode, ScanDelta } from '../../renderer/types/cloud'
 import { describeKeyPairs } from './services/ec2'
 import { pluginRegistry } from '../plugin/index'
 
+// pluginRegistry.activateAll() must be called before starting the scanner.
+// scanner.ts never calls activateAll — it only calls scanAll() per region.
+
 const POLL_INTERVAL_MS = 30_000
 
 // Computes the diff between previous and next resource snapshots.
@@ -76,12 +79,10 @@ export class ResourceScanner {
     this.window.webContents.send(IPC.SCAN_STATUS, 'scanning')
 
     try {
-      // Fan out across all selected regions in parallel
+      // Fan out across all selected regions in parallel.
+      // Credentials were established by activateAll() before the scanner started.
       const regionResults = await Promise.all(
-        this.regions.map(async (region) => {
-          await pluginRegistry.activateAll(this.profile, region, this.endpoint)
-          return pluginRegistry.scanAll(region)
-        }),
+        this.regions.map((region) => pluginRegistry.scanAll(region)),
       )
 
       const nextNodes  = regionResults.flatMap((r) => r.nodes)

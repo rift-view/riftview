@@ -14,8 +14,9 @@ import NodeContextMenu from '../components/canvas/NodeContextMenu'
 import DeleteDialog from '../components/modals/DeleteDialog'
 import EditModal from '../components/modals/EditModal'
 import { SearchPalette } from '../components/SearchPalette'
-import { buildDeleteCommands, buildQuickActionCommand } from '../utils/buildDeleteCommands'
+import { buildQuickActionCommand } from '../utils/buildDeleteCommands'
 import type { DeleteOptions } from '../utils/buildDeleteCommands'
+import { resolveDeleteCommands } from '../plugin/pluginCommands'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 import { useCliStore } from '../store/cli'
@@ -155,7 +156,7 @@ export default function App(): React.JSX.Element | null {
   }, [])
 
   const handleDeleteConfirm = (node: CloudNode, opts: DeleteOptions): void => {
-    const commands = buildDeleteCommands(node, opts)
+    const commands = resolveDeleteCommands(node, opts as Record<string, unknown>)
     setCommandPreview(commands.map(argv => 'aws ' + argv.join(' ')))
     setPendingCommand(commands)
     setDeleteTarget(null)

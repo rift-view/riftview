@@ -270,3 +270,31 @@ describe('buildEditCommands — SSM Parameter', () => {
     expect(cmds[0]).not.toContain('--description')
   })
 })
+
+describe('buildEditCommands — SFN', () => {
+  const sfnNode = node('sfn', 'arn:aws:states:us-east-1:123456789012:stateMachine:my-sfn')
+
+  it('updates definition only', () => {
+    const def = JSON.stringify({ StartAt: 'A', States: { A: { Type: 'Pass', End: true } } })
+    const cmds = buildEditCommands(sfnNode, { resource: 'sfn', stateMachineArn: sfnNode.id, definition: def })
+    expect(cmds).toHaveLength(1)
+    expect(cmds[0]).toContain('update-state-machine')
+    expect(cmds[0]).toContain('--definition')
+    expect(cmds[0]).toContain(def)
+    expect(cmds[0]).not.toContain('--role-arn')
+  })
+
+  it('updates role ARN only', () => {
+    const cmds = buildEditCommands(sfnNode, { resource: 'sfn', stateMachineArn: sfnNode.id, roleArn: 'arn:aws:iam::123:role/MyRole' })
+    expect(cmds).toHaveLength(1)
+    expect(cmds[0]).toContain('--role-arn')
+    expect(cmds[0]).not.toContain('--definition')
+  })
+
+  it('updates both definition and role ARN', () => {
+    const def = '{}'
+    const cmds = buildEditCommands(sfnNode, { resource: 'sfn', stateMachineArn: sfnNode.id, definition: def, roleArn: 'arn:aws:iam::123:role/R' })
+    expect(cmds[0]).toContain('--definition')
+    expect(cmds[0]).toContain('--role-arn')
+  })
+})

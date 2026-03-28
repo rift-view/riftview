@@ -25,14 +25,18 @@ export class PluginRegistry {
     this._plugins.push(plugin)
   }
 
-  async activateAll(profile: string, region: string, endpoint?: string): Promise<void> {
-    for (const plugin of this._plugins) {
-      try {
-        const creds = plugin.createCredentials(profile, region, endpoint)
-        this._credentials.set(plugin.id, creds)
-        if (plugin.activate) await plugin.activate()
-      } catch (err) {
-        console.error(`[PluginRegistry] Failed to activate plugin "${plugin.id}":`, err)
+  // Credentials are keyed by `${pluginId}::${region}` to support multi-region scanning.
+  // Call once per profile/region change — not on every scan cycle.
+  async activateAll(profile: string, regions: string[], endpoint?: string): Promise<void> {
+    for (const region of regions) {
+      for (const plugin of this._plugins) {
+        try {
+          const creds = plugin.createCredentials(profile, region, endpoint)
+          this._credentials.set(`${plugin.id}::${region}`, creds)
+          if (plugin.activate) await plugin.activate()
+        } catch (err) {
+          console.error(`[PluginRegistry] Failed to activate plugin "${plugin.id}":`, err)
+        }
       }
     }
   }
@@ -55,7 +59,7 @@ export class PluginRegistry {
     await Promise.all(
       this._plugins.map(async (plugin) => {
         try {
-          const credentials = this._credentials.get(plugin.id)
+          const credentials = this._credentials.get(`${plugin.id}::${region}`)
           const result = await plugin.scan({ credentials, region })
           allNodes.push(...result.nodes)
           allErrors.push(...result.errors)
