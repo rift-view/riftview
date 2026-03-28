@@ -19,6 +19,7 @@ import { useStickyNoteCallbacks } from './nodes/useStickyNoteCallbacks'
 import type { CloudNode, EdgeType, IntegrationEdgeData } from '../../types/cloud'
 import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
 import IntegrationEdge from './edges/IntegrationEdge'
+import IntegrationLegend from './IntegrationLegend'
 
 const SNAP_GRID_SIZE = 20
 
@@ -687,37 +688,40 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   }, [allNodes, selectedId, showIntegrations])
 
   return (
-    <ReactFlow
-      nodes={flowNodes}
-      edges={flowEdges}
-      nodeTypes={NODE_TYPES}
-      edgeTypes={EDGE_TYPES}
-      onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
-      onNodeDoubleClick={(_e, node) => selectNode(node.id)}
-      onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
-      onPaneClick={() => { selectNode(null); selectEdge(null); setSidebarFilter(null); clearSelectedNodeIds() }}
-      onSelectionChange={onSelectionChange}
-      onNodeContextMenu={(event, rfNode) => {
-        event.preventDefault()
-        const cloudNode = allNodes.find((n) => n.id === rfNode.id)
-        if (cloudNode) onNodeContextMenu(cloudNode, event.clientX, event.clientY)
-      }}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      onNodesChange={onNodesChange}
-      panOnScroll
-      snapToGrid={snapToGrid}
-      snapGrid={[SNAP_GRID_SIZE, SNAP_GRID_SIZE]}
-      minZoom={0.1}
-      maxZoom={2}
-      style={{ background: 'var(--cb-canvas-bg)' }}
-    >
-      <Background id="minor" variant={BackgroundVariant.Lines} gap={SNAP_GRID_SIZE} color="rgba(255,255,255,0.015)" />
-      <Background id="major" variant={BackgroundVariant.Lines} gap={100} color="rgba(255,255,255,0.035)" />
-      <MiniMap
-        style={{ background: 'var(--cb-minimap-bg)', border: '1px solid var(--cb-minimap-border)' }}
-        nodeColor="#FF9900"
-      />
-    </ReactFlow>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <ReactFlow
+        nodes={flowNodes}
+        edges={flowEdges}
+        nodeTypes={NODE_TYPES}
+        edgeTypes={EDGE_TYPES}
+        onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
+        onNodeDoubleClick={(_e, node) => selectNode(node.id)}
+        onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
+        onPaneClick={() => { selectNode(null); selectEdge(null); setSidebarFilter(null); clearSelectedNodeIds() }}
+        onSelectionChange={onSelectionChange}
+        onNodeContextMenu={(event, rfNode) => {
+          event.preventDefault()
+          const cloudNode = allNodes.find((n) => n.id === rfNode.id)
+          if (cloudNode) onNodeContextMenu(cloudNode, event.clientX, event.clientY)
+        }}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        onNodesChange={onNodesChange}
+        panOnScroll
+        snapToGrid={snapToGrid}
+        snapGrid={[SNAP_GRID_SIZE, SNAP_GRID_SIZE]}
+        minZoom={0.1}
+        maxZoom={2}
+        style={{ background: 'var(--cb-canvas-bg)' }}
+      >
+        <Background id="minor" variant={BackgroundVariant.Lines} gap={SNAP_GRID_SIZE} color="rgba(255,255,255,0.015)" />
+        <Background id="major" variant={BackgroundVariant.Lines} gap={100} color="rgba(255,255,255,0.035)" />
+        <MiniMap
+          style={{ background: 'var(--cb-minimap-bg)', border: '1px solid var(--cb-minimap-border)' }}
+          nodeColor="#FF9900"
+        />
+      </ReactFlow>
+      <IntegrationLegend />
+    </div>
   )
 }
