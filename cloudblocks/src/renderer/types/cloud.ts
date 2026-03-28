@@ -30,7 +30,7 @@ export type NodeType =
 
 export type EdgeType = 'trigger' | 'origin' | 'subscription'
 
-export interface IntegrationEdgeData {
+export interface IntegrationEdgeData extends Record<string, unknown> {
   isIntegration: true
   edgeType: EdgeType
 }

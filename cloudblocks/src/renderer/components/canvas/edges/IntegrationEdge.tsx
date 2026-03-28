@@ -1,6 +1,8 @@
-import React, { useState } from 'react'
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react'
+import React, { useState, useEffect } from 'react'
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps, type Edge } from '@xyflow/react'
 import type { EdgeType, IntegrationEdgeData } from '../../../types/cloud'
+
+type IntegrationEdgeType = Edge<IntegrationEdgeData, 'integration'>
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const EDGE_TYPE_STYLES: Record<EdgeType, { color: string; label: string }> = {
@@ -38,11 +40,10 @@ export default function IntegrationEdge({
   sourcePosition,
   targetPosition,
   data,
-}: EdgeProps): React.JSX.Element {
-  ensureStyle()
+}: EdgeProps<IntegrationEdgeType>): React.JSX.Element {
+  useEffect(() => { ensureStyle() }, [])
 
-  const integrationData = data as IntegrationEdgeData | undefined
-  const edgeType: EdgeType = integrationData?.edgeType ?? 'trigger'
+  const edgeType: EdgeType = data?.edgeType ?? 'trigger'
   const { color, label } = EDGE_TYPE_STYLES[edgeType]
   const duration = ANIMATION_DURATION[edgeType]
 
