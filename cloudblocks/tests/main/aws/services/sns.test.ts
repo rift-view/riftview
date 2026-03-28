@@ -40,7 +40,7 @@ describe('listTopics', () => {
     expect(nodes[0].integrations?.every((i) => i.edgeType === 'subscription')).toBe(true)
     expect(nodes[0].integrations?.map((i) => i.targetId)).toEqual([
       'arn:aws:lambda:us-east-1:123456789:function:my-fn',
-      'https://sqs.us-east-1.amazonaws.com/123456789/my-queue',
+      'arn:aws:sqs:us-east-1:123456789:my-queue',
     ])
   })
 
