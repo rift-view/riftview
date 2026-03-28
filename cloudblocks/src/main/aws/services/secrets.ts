@@ -39,7 +39,7 @@ export async function listSecrets(client: SecretsManagerClient, region: string):
         { targetId: rotationArn, edgeType: 'trigger' },
       ]
 
-      return { ...baseNode, integrations }
+      return integrations.length > 0 ? { ...baseNode, integrations } : baseNode
     })
   )
 
