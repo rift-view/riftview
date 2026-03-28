@@ -97,7 +97,7 @@ export const awsPlugin: CloudblocksPlugin = {
       listSecrets(clients.secrets, region).catch(catch_('secret')),
       listRepositories(clients.ecr, region).catch(catch_('ecr-repo')),
       listTopics(clients.sns, region).catch(catch_('sns')),
-      listTables(clients.dynamo, region).catch(catch_('dynamo')),
+      listTables(clients.dynamo, clients.lambda, region).catch(catch_('dynamo')),
       listParameters(clients.ssm, region).catch(catch_('ssm-param')),
       listHostedZones(clients.r53).catch(catch_('r53-zone')),
       listStateMachines(clients.sfn, region).catch(catch_('sfn')),
