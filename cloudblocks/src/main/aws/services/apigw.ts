@@ -4,7 +4,7 @@ import {
   GetRoutesCommand,
   GetIntegrationsCommand,
 } from '@aws-sdk/client-apigatewayv2'
-import type { CloudNode } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
 export async function listApis(client: ApiGatewayV2Client, region: string): Promise<CloudNode[]> {
   try {
@@ -88,6 +88,10 @@ async function listRoutes(client: ApiGatewayV2Client, apiId: string, region: str
           lambdaArn = integrationMap.get(integrationId)
         }
 
+        const integrations = lambdaArn?.startsWith('arn:aws:lambda:')
+          ? [{ targetId: lambdaArn, edgeType: 'trigger' as EdgeType }]
+          : []
+
         routeNodes.push({
           id:     `${apiId}/routes/${route.RouteId}`,
           type:   'apigw-route',
@@ -103,6 +107,7 @@ async function listRoutes(client: ApiGatewayV2Client, apiId: string, region: str
             lambdaArn: lambdaArn ?? undefined,
           },
           parentId: apiId,
+          ...(integrations.length > 0 ? { integrations } : {}),
         })
       }
       nextToken = res.NextToken
