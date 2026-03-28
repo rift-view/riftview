@@ -11,9 +11,11 @@ function cfStatusToNodeStatus(status: string | undefined): NodeStatus {
   return 'unknown'
 }
 
-function originType(domainName: string): 'S3' | 'custom' {
+function originType(domainName: string): 'ALB' | 'APIGW' | 'S3' | 'custom' {
   // Covers: bucket.s3.amazonaws.com, bucket.s3.REGION.amazonaws.com, bucket.s3-website-REGION.amazonaws.com
   if (/\.s3[.-]/.test(domainName) && domainName.endsWith('.amazonaws.com')) return 'S3'
+  if (/\.elb\.amazonaws\.com$/.test(domainName)) return 'ALB'
+  if (/\.execute-api\.[^.]+\.amazonaws\.com$/.test(domainName)) return 'APIGW'
   return 'custom'
 }
 
@@ -36,9 +38,14 @@ export async function listDistributions(client: CloudFrontClient): Promise<Cloud
 
       const certArn = dist.ViewerCertificate?.ACMCertificateArn
 
-      const integrations: { targetId: string; edgeType: EdgeType }[] = origins
-        .filter((o) => o.type === 'S3')
-        .map((o) => ({ targetId: s3BucketName(o.domainName), edgeType: 'origin' as EdgeType }))
+      const integrations: { targetId: string; edgeType: EdgeType }[] = [
+        ...origins
+          .filter((o) => o.type === 'S3')
+          .map((o) => ({ targetId: s3BucketName(o.domainName), edgeType: 'origin' as EdgeType })),
+        ...origins
+          .filter((o) => o.type === 'ALB' || o.type === 'APIGW')
+          .map((o) => ({ targetId: o.domainName, edgeType: 'origin' as EdgeType })),
+      ]
 
       const node: CloudNode = {
         id:     dist.Id ?? 'unknown',
