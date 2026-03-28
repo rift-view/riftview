@@ -15,6 +15,7 @@ import type { CloudNode } from '../../types/cloud'
 import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
 import IntegrationEdge from './edges/IntegrationEdge'
 import IntegrationLegend from './IntegrationLegend'
+import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
 
 const SNAP_GRID_SIZE = 20
 
@@ -165,12 +166,13 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
   for (const node of nodes) {
     if (!node.integrations) continue
     for (const integration of node.integrations) {
-      const targetExists = nodes.some(n => n.id === integration.targetId)
+      const resolvedTargetId = resolveIntegrationTargetId(nodes, integration.targetId)
+      const targetExists = nodes.some(n => n.id === resolvedTargetId)
       if (!targetExists) continue
       edges.push({
-        id:     `integration-${node.id}-${integration.targetId}`,
+        id:     `integration-${node.id}-${resolvedTargetId}`,
         source: node.id,
-        target: integration.targetId,
+        target: resolvedTargetId,
         type:   'integration',
         data:   { isIntegration: true as const, edgeType: integration.edgeType as EdgeType },
       })
