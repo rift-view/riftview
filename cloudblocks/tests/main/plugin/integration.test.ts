@@ -52,7 +52,7 @@ describe('Plugin system — integration smoke test', () => {
 
   it('scanAll returns mock plugin node', async () => {
     registry.register(mockPlugin)
-    await registry.activateAll('default', 'us-east-1')
+    await registry.activateAll('default', ['us-east-1'])
     const result = await registry.scanAll('us-east-1')
     expect(result.nodes).toHaveLength(1)
     expect(result.nodes[0].id).toBe('mock-001')

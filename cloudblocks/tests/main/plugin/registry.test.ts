@@ -56,7 +56,7 @@ describe('PluginRegistry', () => {
 
     registry.register(pa)
     registry.register(pb)
-    await registry.activateAll('default', 'us-east-1')
+    await registry.activateAll('default', ['us-east-1'])
     const result = await registry.scanAll('us-east-1')
     expect(result.nodes).toHaveLength(2)
     expect(result.errors).toHaveLength(0)
@@ -70,7 +70,7 @@ describe('PluginRegistry', () => {
 
     registry.register(pa)
     registry.register(pb)
-    await registry.activateAll('default', 'us-east-1')
+    await registry.activateAll('default', ['us-east-1'])
     const result = await registry.scanAll('us-east-1')
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].service).toBe('com.test.a')

@@ -17,6 +17,7 @@ import { ApigwRouteNode } from './nodes/ApigwRouteNode'
 import { StickyNoteNode } from './nodes/StickyNoteNode'
 import { useStickyNoteCallbacks } from './nodes/useStickyNoteCallbacks'
 import type { CloudNode, EdgeType, IntegrationEdgeData } from '../../types/cloud'
+import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
 
 const SNAP_GRID_SIZE = 20
 
@@ -31,6 +32,8 @@ const NODE_TYPES = {
   apigw:         ApigwNode,
   'apigw-route': ApigwRouteNode,
   'sticky-note': StickyNoteNode,
+  // Plugin-registered custom node renderers (populated at startup before first render)
+  ...getPluginNodeComponents(),
 }
 
 const CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw'])

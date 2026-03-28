@@ -146,6 +146,13 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
       return [args]
     }
 
+    case 'sfn': {
+      const args = ['stepfunctions', 'update-state-machine', '--state-machine-arn', params.stateMachineArn]
+      if (params.definition) args.push('--definition', params.definition)
+      if (params.roleArn)    args.push('--role-arn', params.roleArn)
+      return [args]
+    }
+
     default:
       return []
   }

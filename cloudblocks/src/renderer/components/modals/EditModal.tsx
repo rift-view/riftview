@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react'
 import type { CloudNode } from '../../types/cloud'
 import type { EditParams, CloudFrontEditParams } from '../../types/edit'
-import { buildEditCommands } from '../../utils/buildEditCommands'
+import { resolveEditCommands } from '../../plugin/pluginCommands'
 import { useCliStore } from '../../store/cli'
 import VpcEditForm from './VpcEditForm'
 import Ec2EditForm from './Ec2EditForm'
@@ -19,6 +19,7 @@ import EcrEditForm from './EcrEditForm'
 import SecretEditForm from './SecretEditForm'
 import DynamoEditForm from './DynamoEditForm'
 import SsmEditForm from './SsmEditForm'
+import SfnEditForm from './SfnEditForm'
 
 interface EditModalProps {
   node: CloudNode | null
@@ -32,6 +33,7 @@ const RESOURCE_LABELS: Record<string, string> = {
   'eventbridge-bus': 'EventBridge Bus', sqs: 'SQS Queue', sns: 'SNS Topic', 'ecr-repo': 'ECR Repository', secret: 'Secret',
   dynamo: 'DynamoDB Table',
   'ssm-param': 'SSM Parameter',
+  sfn: 'Step Functions State Machine',
 }
 
 export default function EditModal({ node, onClose }: EditModalProps): React.JSX.Element | null {
@@ -57,7 +59,7 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
       setCommandPreview(['[CloudFront distribution will be updated via SDK]'])
       return
     }
-    const cmds = buildEditCommands(node, params)
+    const cmds = resolveEditCommands(node, params as unknown as Record<string, unknown>)
     setCommandPreview(cmds.map(argv => 'aws ' + argv.join(' ')))
   }
 
@@ -80,7 +82,7 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
       return
     }
 
-    const cmds = buildEditCommands(node, paramsRef.current)
+    const cmds = resolveEditCommands(node, paramsRef.current as unknown as Record<string, unknown>)
     if (cmds.length === 0) { setIsRunning(false); onClose(); return }
     const unsubOutput = window.cloudblocks.onCliOutput(d => appendCliOutput(d))
     try {
@@ -131,6 +133,7 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
         {node.type === 'secret'          && <SecretEditForm      node={node} onChange={handleChange} />}
         {node.type === 'dynamo'          && <DynamoEditForm      node={node} onChange={handleChange} />}
         {node.type === 'ssm-param'       && <SsmEditForm         node={node} onChange={handleChange} />}
+        {node.type === 'sfn'             && <SfnEditForm         node={node} onChange={handleChange} />}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
           <button
