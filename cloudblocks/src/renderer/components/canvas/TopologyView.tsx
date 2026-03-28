@@ -688,6 +688,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   }, [allNodes, selectedId, showIntegrations])
 
   return (
+    // Wrapper must receive a concrete height from its parent (flex-1) for ReactFlow to fill correctly
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <ReactFlow
         nodes={flowNodes}
