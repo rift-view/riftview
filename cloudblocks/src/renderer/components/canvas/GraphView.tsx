@@ -13,8 +13,13 @@ import { StickyNoteNode } from './nodes/StickyNoteNode'
 import { useStickyNoteCallbacks } from './nodes/useStickyNoteCallbacks'
 import type { CloudNode } from '../../types/cloud'
 import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
+import IntegrationEdge from './edges/IntegrationEdge'
 
 const SNAP_GRID_SIZE = 20
+
+const EDGE_TYPES = {
+  integration: IntegrationEdge,
+}
 
 const NODE_TYPES = {
   resource:      ResourceNode,
@@ -161,18 +166,12 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
     for (const integration of node.integrations) {
       const targetExists = nodes.some(n => n.id === integration.targetId)
       if (!targetExists) continue
-      const animated = integration.edgeType === 'trigger' && nodes.length < 50
       edges.push({
-        id: `integration-${node.id}-${integration.targetId}`,
+        id:     `integration-${node.id}-${integration.targetId}`,
         source: node.id,
         target: integration.targetId,
-        animated,
-        style: integration.edgeType === 'trigger'
-          ? { strokeDasharray: '5 5' }
-          : integration.edgeType === 'subscription'
-          ? { strokeDasharray: '2 4' }
-          : undefined,
-        data: { isIntegration: true as const, edgeType: integration.edgeType as EdgeType },
+        type:   'integration',
+        data:   { isIntegration: true as const, edgeType: integration.edgeType as EdgeType },
       })
     }
   }
@@ -410,6 +409,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       nodes={flowNodes}
       edges={flowEdges}
       nodeTypes={NODE_TYPES}
+      edgeTypes={EDGE_TYPES}
       onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
       onNodeDoubleClick={(_e, node) => selectNode(node.id)}
       onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}

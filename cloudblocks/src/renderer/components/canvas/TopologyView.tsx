@@ -18,8 +18,13 @@ import { StickyNoteNode } from './nodes/StickyNoteNode'
 import { useStickyNoteCallbacks } from './nodes/useStickyNoteCallbacks'
 import type { CloudNode, EdgeType, IntegrationEdgeData } from '../../types/cloud'
 import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
+import IntegrationEdge from './edges/IntegrationEdge'
 
 const SNAP_GRID_SIZE = 20
+
+const EDGE_TYPES = {
+  integration: IntegrationEdge,
+}
 
 const NODE_TYPES = {
   resource:      ResourceNode,
@@ -425,18 +430,12 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
       const targetExists = cloudNodes.some((n) => n.id === integration.targetId)
       if (!targetExists) continue
       const edgeType: EdgeType = integration.edgeType
-      const animated = edgeType === 'trigger' && cloudNodes.length < 50
       edges.push({
-        id:       `integration-${node.id}-${integration.targetId}`,
-        source:   node.id,
-        target:   integration.targetId,
-        animated,
-        style:    edgeType === 'trigger'
-          ? { strokeDasharray: '5 5' }
-          : edgeType === 'subscription'
-          ? { strokeDasharray: '2 4' }
-          : undefined, // solid for 'origin'
-        data:     { isIntegration: true as const, edgeType },
+        id:     `integration-${node.id}-${integration.targetId}`,
+        source: node.id,
+        target: integration.targetId,
+        type:   'integration',
+        data:   { isIntegration: true as const, edgeType },
       })
     }
   }
@@ -692,6 +691,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       nodes={flowNodes}
       edges={flowEdges}
       nodeTypes={NODE_TYPES}
+      edgeTypes={EDGE_TYPES}
       onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
       onNodeDoubleClick={(_e, node) => selectNode(node.id)}
       onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
