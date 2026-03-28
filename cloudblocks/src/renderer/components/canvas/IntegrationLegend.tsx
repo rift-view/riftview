@@ -9,6 +9,7 @@ export default function IntegrationLegend(): React.JSX.Element | null {
 
   // Reset dismissed when integrations are re-enabled so the legend reappears
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (showIntegrations) setDismissed(false)
   }, [showIntegrations])
 
