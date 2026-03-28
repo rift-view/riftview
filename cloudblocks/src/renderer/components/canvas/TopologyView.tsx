@@ -10,6 +10,7 @@ import { SubnetNode } from './nodes/SubnetNode'
 import { GlobalZoneNode } from './nodes/GlobalZoneNode'
 import { RegionZoneNode } from './nodes/RegionZoneNode'
 import { buildRegionColorMap } from '../../utils/regionColors'
+import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
 import { AcmNode } from './nodes/AcmNode'
 import { CloudFrontNode } from './nodes/CloudFrontNode'
 import { ApigwNode } from './nodes/ApigwNode'
@@ -428,13 +429,14 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
   for (const node of cloudNodes) {
     if (!node.integrations) continue
     for (const integration of node.integrations) {
-      const targetExists = cloudNodes.some((n) => n.id === integration.targetId)
+      const resolvedTargetId = resolveIntegrationTargetId(cloudNodes, integration.targetId)
+      const targetExists = cloudNodes.some((n) => n.id === resolvedTargetId)
       if (!targetExists) continue
       const edgeType: EdgeType = integration.edgeType
       edges.push({
-        id:     `integration-${node.id}-${integration.targetId}`,
+        id:     `integration-${node.id}-${resolvedTargetId}`,
         source: node.id,
-        target: integration.targetId,
+        target: resolvedTargetId,
         type:   'integration',
         data:   { isIntegration: true as const, edgeType },
       })
