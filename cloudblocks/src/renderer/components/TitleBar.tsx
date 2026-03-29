@@ -3,6 +3,7 @@ import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 import type { AwsProfile } from '../types/cloud'
 import { computeTidyLayout } from '../utils/tidyLayout'
+import TemplatesModal from './TemplatesModal'
 
 const LOCAL_PROFILE_NAME = 'local'
 const LOCAL_ENDPOINT_DEFAULT = 'http://localhost:4566'
@@ -18,6 +19,8 @@ export function TitleBar(): React.JSX.Element {
   const view            = useUIStore((s) => s.view)
   const applyTidyLayout = useUIStore((s) => s.applyTidyLayout)
 
+  const [showTemplates, setShowTemplates] = useState(false)
+
   const driftMatched   = nodes.filter((n) => n.driftStatus === 'matched').length
   const driftUnmanaged = nodes.filter((n) => n.driftStatus === 'unmanaged').length
   const driftMissing   = importedNodes.filter((n) => n.driftStatus === 'missing').length
@@ -29,6 +32,12 @@ export function TitleBar(): React.JSX.Element {
       setConnStatus(status === 'connected' ? 'connected' : 'error')
     })
     return unsub
+  }, [])
+
+  useEffect(() => {
+    const handler = (): void => setShowTemplates(true)
+    window.addEventListener('cloudblocks:show-templates', handler)
+    return () => window.removeEventListener('cloudblocks:show-templates', handler)
   }, [])
 
   const handleProfileChange = (name: string): void => {
@@ -143,6 +152,16 @@ export function TitleBar(): React.JSX.Element {
         <span className="text-[9px] font-mono" style={{ color: statusColor }}>{statusLabel}</span>
       </div>
 
+      {/* Templates button */}
+      <button
+        onClick={() => setShowTemplates(true)}
+        title="Starter templates"
+        className="text-[10px] font-mono px-2 py-0.5 rounded"
+        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)', cursor: 'pointer' }}
+      >
+        Templates
+      </button>
+
       {/* TF Import button */}
       <button
         onClick={() => { void handleImportTfState() }}
@@ -201,6 +220,9 @@ export function TitleBar(): React.JSX.Element {
         ?
       </button>
 
+      {showTemplates && (
+        <TemplatesModal onClose={() => setShowTemplates(false)} />
+      )}
     </div>
   )
 }
