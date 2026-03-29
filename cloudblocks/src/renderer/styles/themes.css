@@ -21,15 +21,15 @@
   --cb-bg-panel:       #efefef;
   --cb-bg-elevated:    #ffffff;
   --cb-bg-hover:       #e8e8e8;
-  --cb-border:         #dddddd;
+  --cb-border:         #c6c8ca;
   --cb-border-strong:  #cccccc;
   --cb-text-primary:   #1a1a1a;
   --cb-text-secondary: #555555;
-  --cb-text-muted:     #888888;
+  --cb-text-muted:     #767676;
   --cb-accent:         #e07800;
   --cb-accent-subtle:  rgba(224, 120, 0, 0.08);
   --cb-canvas-bg:      #fafafa;
-  --cb-canvas-grid:    #e8e8e8;
+  --cb-canvas-grid:    #d4d4d4;
   --cb-minimap-bg:     #f0f0f0;
   --cb-minimap-border: #dddddd;
 }
@@ -86,4 +86,58 @@
   --cb-canvas-grid:    #2a2b3d;
   --cb-minimap-bg:     #181825;
   --cb-minimap-border: #313244;
+}
+
+:root[data-theme="solarized-light"] {
+  --cb-bg-app:         #fdf6e3;
+  --cb-bg-panel:       #eee8d5;
+  --cb-bg-elevated:    #fff8f0;
+  --cb-bg-hover:       #e0d9c8;
+  --cb-border:         #c8c0b0;
+  --cb-border-strong:  #b8b0a0;
+  --cb-text-primary:   #073642;
+  --cb-text-secondary: #586e75;
+  --cb-text-muted:     #657b83;
+  --cb-accent:         #268bd2;
+  --cb-accent-subtle:  rgba(38, 139, 210, 0.1);
+  --cb-canvas-bg:      #fdf6e3;
+  --cb-canvas-grid:    #e4dcc8;
+  --cb-minimap-bg:     #f5eed8;
+  --cb-minimap-border: #c8c0b0;
+}
+
+:root[data-theme="github-light"] {
+  --cb-bg-app:         #f6f8fa;
+  --cb-bg-panel:       #ffffff;
+  --cb-bg-elevated:    #ffffff;
+  --cb-bg-hover:       #eaf0f7;
+  --cb-border:         #d0d7de;
+  --cb-border-strong:  #c6cdd5;
+  --cb-text-primary:   #1f2328;
+  --cb-text-secondary: #636c76;
+  --cb-text-muted:     #767676;
+  --cb-accent:         #0969da;
+  --cb-accent-subtle:  rgba(9, 105, 218, 0.1);
+  --cb-canvas-bg:      #f6f8fa;
+  --cb-canvas-grid:    #d0d7de;
+  --cb-minimap-bg:     #eaeef2;
+  --cb-minimap-border: #d0d7de;
+}
+
+:root[data-theme="nord-light"] {
+  --cb-bg-app:         #eceff4;
+  --cb-bg-panel:       #e5e9f0;
+  --cb-bg-elevated:    #ffffff;
+  --cb-bg-hover:       #dce2ec;
+  --cb-border:         #c8d0e0;
+  --cb-border-strong:  #bcc8d8;
+  --cb-text-primary:   #2e3440;
+  --cb-text-secondary: #4c566a;
+  --cb-text-muted:     #677290;
+  --cb-accent:         #5e81ac;
+  --cb-accent-subtle:  rgba(94, 129, 172, 0.1);
+  --cb-canvas-bg:      #eceff4;
+  --cb-canvas-grid:    #d4dae8;
+  --cb-minimap-bg:     #e5e9f0;
+  --cb-minimap-border: #c8d0e0;
 }
