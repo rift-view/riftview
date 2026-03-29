@@ -46,6 +46,9 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps): React.JS
     solarized:     { label: 'Solarized Dark',   accent: '#2aa198' },
     'rose-pine':   { label: 'Rosé Pine',        accent: '#eb6f92' },
     catppuccin:    { label: 'Catppuccin Mocha', accent: '#fab387' },
+    'solarized-light': { label: 'Solarized Light', accent: '#268bd2' },
+    'github-light':    { label: 'GitHub Light',     accent: '#0969da' },
+    'nord-light':      { label: 'Nord Light',        accent: '#5e81ac' },
   }
 
   return (

@@ -89,7 +89,7 @@ export default function IntegrationEdge({
             pointerEvents: 'none',
             opacity: hovered ? 1 : 0,
             transition: 'opacity 0.15s ease',
-            background: 'var(--cb-surface, #1e1e2e)',
+            background: 'var(--cb-bg-elevated)',
             color: color,
             border: `1px solid ${color}`,
             borderRadius: 4,
