@@ -100,6 +100,13 @@ function CanvasInner({ onScan, onNodeContextMenu }: Props): React.JSX.Element {
     return () => window.removeEventListener('cloudblocks:fitnode', onFitNode)
   }, [fitView])
 
+  // Listen for tidy layout — fit the whole view after positions are applied
+  useEffect(() => {
+    const handler = (): void => { void fitView({ duration: 300 }) }
+    window.addEventListener('cloudblocks:fitview', handler)
+    return () => window.removeEventListener('cloudblocks:fitview', handler)
+  }, [fitView])
+
   // Listen for "Add Note" shortcut / button
   useEffect(() => {
     function onAddStickyNote(): void {

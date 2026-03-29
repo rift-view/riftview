@@ -41,6 +41,7 @@ interface UIState {
   expandedSsmGroups:  Set<string>
   lockedNodes:        Set<string>
   collapsedSubnets:   Set<string>
+  collapsedVpcs:      Set<string>
   showAbout:          boolean
   showSettings:       boolean
   annotations:        Record<string, string>
@@ -69,6 +70,9 @@ interface UIState {
   isNodeLocked:         (id: string) => boolean
   toggleSubnet:         (id: string) => void
   isSubnetCollapsed:    (id: string) => boolean
+  toggleVpc:            (id: string) => void
+  isVpcCollapsed:       (id: string) => boolean
+  applyTidyLayout:      (view: 'topology' | 'graph', positions: Record<string, { x: number; y: number }>) => void
   setShowAbout:         (v: boolean) => void
   setShowSettings:      (v: boolean) => void
   setAnnotation:        (nodeId: string, text: string) => void
@@ -105,6 +109,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   expandedSsmGroups: new Set<string>(),
   lockedNodes:       new Set<string>(),
   collapsedSubnets:  new Set<string>(),
+  collapsedVpcs:     new Set<string>(),
   showAbout:         false,
   showSettings:      false,
   annotations:       {},
@@ -185,6 +190,18 @@ export const useUIStore = create<UIState>((set, get) => ({
       return { collapsedSubnets: next }
     }),
   isSubnetCollapsed: (id) => get().collapsedSubnets.has(id),
+  toggleVpc: (id) =>
+    set((s) => {
+      const next = new Set(s.collapsedVpcs)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return { collapsedVpcs: next }
+    }),
+  isVpcCollapsed: (id) => get().collapsedVpcs.has(id),
+  applyTidyLayout: (view, positions) =>
+    set((s) => ({
+      nodePositions: { ...s.nodePositions, [view]: positions },
+    })),
   setShowAbout:     (v) => set({ showAbout: v }),
   setShowSettings:  (v) => set({ showSettings: v }),
   setAnnotation: (nodeId, text) =>
