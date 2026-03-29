@@ -200,7 +200,10 @@ export const useUIStore = create<UIState>((set, get) => ({
   isVpcCollapsed: (id) => get().collapsedVpcs.has(id),
   applyTidyLayout: (view, positions) =>
     set((s) => ({
-      nodePositions: { ...s.nodePositions, [view]: positions },
+      nodePositions: {
+        ...s.nodePositions,
+        [view]: { ...s.nodePositions[view], ...positions },
+      },
     })),
   setShowAbout:     (v) => set({ showAbout: v }),
   setShowSettings:  (v) => set({ showSettings: v }),
