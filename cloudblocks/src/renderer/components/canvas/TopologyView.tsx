@@ -87,6 +87,8 @@ function buildFlowNodes(
   selectedRegions: string[],
   showRegionIndicators: boolean,
   regionColorMap: Record<string, string>,
+  zonePositionOverrides: Record<string, { x: number; y: number }>,
+  zoneSizeOverrides: Record<string, { width: number; height: number }>,
 ): Node[] {
   const allNodes: Node[] = []
   const nodes = allNodes
@@ -321,6 +323,7 @@ function buildFlowNodes(
   // Add region zone containers if multi-region indicators are enabled
   if (showRegionIndicators && selectedRegions.length >= 2) {
     for (const region of selectedRegions) {
+      const zoneId = `region-zone-${region}`
       const regionNodeIds = new Set(
         cloudNodes.filter((n) => n.region === region).map((n) => n.id)
       )
@@ -331,19 +334,26 @@ function buildFlowNodes(
       if (positions.length === 0) continue
 
       const PAD = 40
-      const minX = Math.min(...positions.map((p) => p.x)) - PAD
-      const minY = Math.min(...positions.map((p) => p.y)) - PAD
-      const maxX = Math.max(...positions.map((p) => p.x + p.w)) + PAD
-      const maxY = Math.max(...positions.map((p) => p.y + p.h)) + PAD
+      const autoMinX = Math.min(...positions.map((p) => p.x)) - PAD
+      const autoMinY = Math.min(...positions.map((p) => p.y)) - PAD
+      const autoMaxX = Math.max(...positions.map((p) => p.x + p.w)) + PAD
+      const autoMaxY = Math.max(...positions.map((p) => p.y + p.h)) + PAD
+
+      const posOverride = zonePositionOverrides[zoneId]
+      const sizeOverride = zoneSizeOverrides[zoneId]
+      const zoneX = posOverride?.x ?? autoMinX
+      const zoneY = posOverride?.y ?? autoMinY
+      const zoneW = sizeOverride?.width ?? (autoMaxX - autoMinX)
+      const zoneH = sizeOverride?.height ?? (autoMaxY - autoMinY)
 
       allNodes.push({
-        id:         `region-zone-${region}`,
+        id:         zoneId,
         type:       'regionZone',
-        position:   { x: minX, y: minY },
-        style:      { width: maxX - minX, height: maxY - minY },
+        position:   { x: zoneX, y: zoneY },
+        style:      { width: zoneW, height: zoneH },
         data:       { label: region, color: regionColorMap[region] },
-        selectable: false,
-        draggable:  false,
+        selectable: true,
+        draggable:  true,
         zIndex:     -2,
       })
     }
@@ -473,6 +483,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const annotations        = useUIStore((s) => s.annotations)
   const stickyNotes        = useUIStore((s) => s.stickyNotes)
   const setNodePosition    = useUIStore((s) => s.setNodePosition)
+  const zoneSizes          = useUIStore((s) => s.zoneSizes)
+  const setZoneSize        = useUIStore((s) => s.setZoneSize)
   const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
   const sidebarFilter      = useUIStore((s) => s.sidebarFilter)
   const setSidebarFilter   = useUIStore((s) => s.setSidebarFilter)
@@ -528,11 +540,15 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
     })
     // Also include imported nodes that render at the top level (no parentId)
     importedNodes.forEach((n) => { if (!n.parentId) set.add(n.id) })
+    // Include region zone nodes so they can be dragged
+    if (showRegionIndicators) {
+      selectedRegions.forEach((r) => set.add(`region-zone-${r}`))
+    }
     return set
-  }, [allNodes, importedNodes])
+  }, [allNodes, importedNodes, showRegionIndicators, selectedRegions])
 
   const flowNodes: Node[] = useMemo(() => {
-    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets, selectedRegions, showRegionIndicators, regionColorMap)
+    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets, selectedRegions, showRegionIndicators, regionColorMap, topologyPositions, zoneSizes)
     const mapped = raw.map((n) => {
       const isMultiSelected = selectedNodeIds.size > 1 && selectedNodeIds.has(n.id)
       const isLocked = lockedNodes.has(n.id)
@@ -561,6 +577,18 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       const live  = livePositions[n.id]
       const saved = topologyPositions[n.id]
       const position = live ?? saved ?? n.position
+
+      // For region zone nodes, inject the onResizeEnd callback
+      if (n.id.startsWith('region-zone-')) {
+        return {
+          ...n,
+          position,
+          data: {
+            ...n.data as object,
+            onResizeEnd: (id: string, w: number, h: number) => setZoneSize(id, { width: w, height: h }),
+          },
+        }
+      }
 
       // For top-level subnet nodes (no parentId), also inject toggleSubnet
       if (n.type === 'subnet') {
@@ -619,14 +647,14 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
 
     const all = [...mapped, ...importedFlowNodes, ...stickyFlowNodes]
     if (!driftFilterActive) return all
-    const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw', 'globalZone', 'apigw-route'])
+    const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw', 'globalZone', 'apigw-route', 'regionZone'])
     return all.filter((fn) => {
       if (DRIFT_CONTAINER_TYPES.has(fn.type ?? '')) return true
       if (fn.type === 'sticky-note') return false
       const d = fn.data as { driftStatus?: string }
       return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
     })
-  }, [allNodes, selectedId, selectedNodeIds, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete])
+  }, [allNodes, selectedId, selectedNodeIds, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete, zoneSizes, setZoneSize])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
@@ -660,11 +688,47 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       // Allow top-level AWS nodes and sticky note nodes to have positions tracked
       if (!topLevelNodeIds.has(change.id) && !stickyNoteIds.has(change.id)) continue
 
+      // Co-move: when a zone is dragged, apply the same delta to all member nodes
+      if (change.id.startsWith('region-zone-') && change.position) {
+        const prevPos = livePositions[change.id] ?? topologyPositions[change.id] ?? null
+        if (prevPos) {
+          const dx = change.position.x - prevPos.x
+          const dy = change.position.y - prevPos.y
+          if (dx !== 0 || dy !== 0) {
+            const region = change.id.slice('region-zone-'.length)
+            const memberIds = allNodes
+              .filter((n) => n.region === region && !n.parentId)
+              .map((n) => n.id)
+            for (const memberId of memberIds) {
+              const memberPrev = livePositions[memberId] ?? topologyPositions[memberId]
+              if (memberPrev) {
+                nextLive[memberId] = { x: memberPrev.x + dx, y: memberPrev.y + dy }
+              }
+            }
+          }
+        }
+      }
+
       if (change.dragging) {
         nextLive[change.id] = change.position
       } else {
         toClear.push(change.id)
         setNodePosition('topology', change.id, change.position)
+
+        // Persist member positions when zone drag ends
+        if (change.id.startsWith('region-zone-')) {
+          const region = change.id.slice('region-zone-'.length)
+          const memberIds = allNodes
+            .filter((n) => n.region === region && !n.parentId)
+            .map((n) => n.id)
+          for (const memberId of memberIds) {
+            const finalPos = nextLive[memberId] ?? livePositions[memberId] ?? topologyPositions[memberId]
+            if (finalPos) {
+              toClear.push(memberId)
+              setNodePosition('topology', memberId, finalPos)
+            }
+          }
+        }
       }
     }
 
@@ -675,7 +739,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         return next
       })
     }
-  }, [topLevelNodeIds, stickyNoteIds, setNodePosition])
+  }, [topLevelNodeIds, stickyNoteIds, setNodePosition, livePositions, topologyPositions, allNodes])
 
   const flowEdges: Edge[] = useMemo(() => {
     const raw = buildTopologyEdges(allNodes)
@@ -697,7 +761,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         edges={flowEdges}
         nodeTypes={NODE_TYPES}
         edgeTypes={EDGE_TYPES}
-        onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
+        onNodeClick={(_e, node) => { if (node.id.startsWith('region-zone-')) return; if (!lockedNodes.has(node.id)) selectNode(node.id) }}
         onNodeDoubleClick={(_e, node) => selectNode(node.id)}
         onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
         onPaneClick={() => { selectNode(null); selectEdge(null); setSidebarFilter(null); clearSelectedNodeIds() }}
