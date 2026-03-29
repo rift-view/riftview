@@ -204,8 +204,8 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const annotations        = useUIStore((s) => s.annotations)
   const stickyNotes        = useUIStore((s) => s.stickyNotes)
   const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
-  const sidebarFilter      = useUIStore((s) => s.sidebarFilter)
-  const setSidebarFilter   = useUIStore((s) => s.setSidebarFilter)
+  const activeFilters      = useUIStore((s) => s.activeFilters)
+  const clearFilters       = useUIStore((s) => s.clearFilters)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const graphPositions  = useUIStore((s) => s.nodePositions.graph)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
@@ -286,8 +286,8 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
   // Compute highlighted set for focus mode
   const highlightedIds = useMemo<Set<string> | null>(() => {
-    if (sidebarFilter) {
-      return new Set(allNodes.filter((n) => n.type === sidebarFilter).map((n) => n.id))
+    if (activeFilters.length > 0) {
+      return new Set(allNodes.filter((n) => activeFilters.some((f) => f.test(n))).map((n) => n.id))
     }
     if (!selectedId) return null
     const rawEdges = deriveEdges(allNodes)
@@ -297,7 +297,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       if (e.target === selectedId) neighbours.add(e.source)
     }
     return neighbours
-  }, [selectedId, allNodes, sidebarFilter])
+  }, [selectedId, allNodes, activeFilters])
 
   // Track in-flight drag positions so controlled nodes follow the mouse.
   const [livePositions, setLivePositions] = useState<Record<string, { x: number; y: number }>>({})
@@ -418,7 +418,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
         onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
         onNodeDoubleClick={(_e, node) => selectNode(node.id)}
         onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
-        onPaneClick={() => { selectNode(null); selectEdge(null); setSidebarFilter(null); clearSelectedNodeIds() }}
+        onPaneClick={() => { selectNode(null); selectEdge(null); clearFilters(); clearSelectedNodeIds() }}
         onSelectionChange={onSelectionChange}
         onNodeContextMenu={(event, rfNode) => {
           event.preventDefault()

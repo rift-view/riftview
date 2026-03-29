@@ -494,8 +494,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const zoneSizes          = useUIStore((s) => s.zoneSizes)
   const setZoneSize        = useUIStore((s) => s.setZoneSize)
   const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
-  const sidebarFilter      = useUIStore((s) => s.sidebarFilter)
-  const setSidebarFilter   = useUIStore((s) => s.setSidebarFilter)
+  const activeFilters      = useUIStore((s) => s.activeFilters)
+  const clearFilters       = useUIStore((s) => s.clearFilters)
   const { screenToFlowPosition, fitView } = useReactFlow()
   const topologyPositions = useUIStore((s) => s.nodePositions.topology)
   const { onSave: onStickyNotesSave, onDelete: onStickyNoteDelete } = useStickyNoteCallbacks()
@@ -517,8 +517,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
 
   // Compute highlighted set for focus mode
   const highlightedIds = useMemo<Set<string> | null>(() => {
-    if (sidebarFilter) {
-      return new Set(allNodes.filter((n) => n.type === sidebarFilter).map((n) => n.id))
+    if (activeFilters.length > 0) {
+      return new Set(allNodes.filter((n) => activeFilters.some((f) => f.test(n))).map((n) => n.id))
     }
     if (!selectedId) return null
     const rawEdges = buildTopologyEdges(allNodes)
@@ -528,7 +528,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       if (e.target === selectedId) neighbours.add(e.source)
     }
     return neighbours
-  }, [selectedId, allNodes, sidebarFilter])
+  }, [selectedId, allNodes, activeFilters])
 
   // Track in-flight drag positions so controlled nodes follow the mouse.
   // Only persisted to the store on drag-end; cleared on drop.
@@ -788,7 +788,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         onNodeClick={(_e, node) => { if (node.id.startsWith('region-zone-')) return; if (!lockedNodes.has(node.id)) selectNode(node.id) }}
         onNodeDoubleClick={(_e, node) => selectNode(node.id)}
         onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
-        onPaneClick={() => { selectNode(null); selectEdge(null); setSidebarFilter(null); clearSelectedNodeIds() }}
+        onPaneClick={() => { selectNode(null); selectEdge(null); clearFilters(); clearSelectedNodeIds() }}
         onSelectionChange={onSelectionChange}
         onNodeContextMenu={(event, rfNode) => {
           event.preventDefault()

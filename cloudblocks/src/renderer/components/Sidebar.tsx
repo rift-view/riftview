@@ -54,8 +54,9 @@ export function Sidebar(): React.JSX.Element {
   const setView           = useUIStore((s) => s.setView)
   const expandedSsmGroups = useUIStore((s) => s.expandedSsmGroups)
   const toggleSsmGroup    = useUIStore((s) => s.toggleSsmGroup)
-  const sidebarFilter     = useUIStore((s) => s.sidebarFilter)
-  const setSidebarFilter  = useUIStore((s) => s.setSidebarFilter)
+  const activeFilters     = useUIStore((s) => s.activeFilters)
+  const addFilter         = useUIStore((s) => s.addFilter)
+  const removeFilter      = useUIStore((s) => s.removeFilter)
   const nodes             = useCloudStore((s) => s.nodes)
   const scanErrors        = useCloudStore((s) => s.scanErrors)
   const settings          = useCloudStore((s) => s.settings)
@@ -66,12 +67,14 @@ export function Sidebar(): React.JSX.Element {
 
   const [filterTarget, setFilterTarget] = useState<NodeType | null>(null)
 
+  const sidebarFilterActive = activeFilters.some((f) => f.id === 'sidebar-type')
+
   useEffect(() => {
-    if (!sidebarFilter) {
+    if (!sidebarFilterActive) {
       setCommandPreview([])
       setPendingCommand(null)
     }
-  }, [sidebarFilter, setCommandPreview, setPendingCommand])
+  }, [sidebarFilterActive, setCommandPreview, setPendingCommand])
 
   const counts = useMemo(
     () => nodes.reduce<Record<string, number>>(
@@ -162,7 +165,7 @@ export function Sidebar(): React.JSX.Element {
 
       {SERVICES.map((s) => {
         const count        = counts[s.type] ?? 0
-        const isActive     = sidebarFilter === s.type
+        const isActive     = sidebarFilterActive && activeFilters.some((f) => f.id === 'sidebar-type' && f.test({ type: s.type } as CloudNode))
         const errTooltip   = errorsByType.get(s.type)
         const activeStyle: React.CSSProperties = {
           ...serviceRowStyle,
@@ -176,7 +179,7 @@ export function Sidebar(): React.JSX.Element {
             key={s.type}
             draggable={s.hasCreate}
             onDragStart={s.hasCreate ? (e) => e.dataTransfer.setData('text/plain', s.resource ?? s.type) : undefined}
-            onClick={() => { if (sidebarFilter === s.type) setSidebarFilter(null); else setFilterTarget(s.type) }}
+            onClick={() => { if (isActive) removeFilter('sidebar-type'); else setFilterTarget(s.type) }}
             className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
             style={{ ...(isActive ? activeStyle : serviceRowStyle), cursor: s.hasCreate ? 'grab' : 'default' }}
           >
@@ -305,7 +308,8 @@ export function Sidebar(): React.JSX.Element {
           onConfirm={() => {
             const label = TYPE_LABELS[filterTarget] ?? filterTarget.toUpperCase()
             const count = counts[filterTarget] ?? 0
-            setSidebarFilter(filterTarget)
+            const type  = filterTarget
+            addFilter({ id: 'sidebar-type', label, test: (n) => n.type === type })
             setCommandPreview([`[Filter] ${label} · ${count} node${count === 1 ? '' : 's'}`])
             setPendingCommand(null)
             setFilterTarget(null)
