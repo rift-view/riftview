@@ -10,6 +10,8 @@ export function CommandDrawer(): React.JSX.Element {
   const logHistory        = useCliStore((s) => s.logHistory)
   const clearLogHistory   = useCliStore((s) => s.clearLogHistory)
   const activeCreate      = useUIStore((s) => s.activeCreate)
+  const activeFilters     = useUIStore((s) => s.activeFilters)
+  const removeFilter      = useUIStore((s) => s.removeFilter)
   const appendCliOutput   = useCliStore((s) => s.appendCliOutput)
   const clearCliOutput    = useCliStore((s) => s.clearCliOutput)
   const clearPendingNodes = useCloudStore((s) => s.clearPendingNodes)
@@ -181,6 +183,25 @@ export function CommandDrawer(): React.JSX.Element {
               ))
             )}
           </div>
+        </div>
+      )}
+
+      {/* Active filter chips */}
+      {activeFilters.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderTop: '1px solid var(--cb-border)', flexWrap: 'wrap' }}>
+          {activeFilters.map((f) => (
+            <span
+              key={f.id}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-accent)', borderRadius: 3, padding: '1px 5px', fontSize: 9, color: 'var(--cb-accent)', fontFamily: 'monospace' }}
+            >
+              ⊡ {f.label}
+              <button
+                onClick={() => removeFilter(f.id)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--cb-accent)', cursor: 'pointer', fontSize: 10, lineHeight: 1, padding: 0 }}
+                title="Clear filter"
+              >×</button>
+            </span>
+          ))}
         </div>
       )}
 
