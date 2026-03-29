@@ -435,9 +435,8 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
       id:     `route-lambda-${route.id}`,
       source: route.id,
       target: lambdaNode.id,
-      type:   'step',
-      label:  'integration',
-      style:  { stroke: 'var(--cb-border)', strokeDasharray: '4 2', strokeWidth: 1 },
+      type:   'integration',
+      data:   { isIntegration: true as const, edgeType: 'trigger' as EdgeType },
     })
   })
 
