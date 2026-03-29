@@ -96,6 +96,12 @@ export function EmptyCanvasState(): React.JSX.Element | null {
         >
           Start Scan
         </button>
+        <button
+          style={{ ...btnStyle, marginTop: 8, borderColor: 'var(--cb-border)', color: 'var(--cb-text-secondary)', fontSize: 11 }}
+          onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-templates'))}
+        >
+          Browse Templates
+        </button>
       </div>
     </div>
   )
