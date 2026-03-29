@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 import type { AwsProfile } from '../types/cloud'
+import { computeTidyLayout } from '../utils/tidyLayout'
 
 const LOCAL_PROFILE_NAME = 'local'
 const LOCAL_ENDPOINT_DEFAULT = 'http://localhost:4566'
@@ -10,10 +11,12 @@ export function TitleBar(): React.JSX.Element {
   const [profiles, setProfiles]             = useState<AwsProfile[]>([])
   const [connStatus, setConnStatus]         = useState<'unknown' | 'connected' | 'error'>('unknown')
   const [endpointInput, setEndpointInput]   = useState<string>(() => useCloudStore.getState().profile.endpoint ?? '')
-  const profile       = useCloudStore((s) => s.profile)
-  const setProfile    = useCloudStore((s) => s.setProfile)
-  const nodes         = useCloudStore((s) => s.nodes)
-  const importedNodes = useCloudStore((s) => s.importedNodes)
+  const profile         = useCloudStore((s) => s.profile)
+  const setProfile      = useCloudStore((s) => s.setProfile)
+  const nodes           = useCloudStore((s) => s.nodes)
+  const importedNodes   = useCloudStore((s) => s.importedNodes)
+  const view            = useUIStore((s) => s.view)
+  const applyTidyLayout = useUIStore((s) => s.applyTidyLayout)
 
   const driftMatched   = nodes.filter((n) => n.driftStatus === 'matched').length
   const driftUnmanaged = nodes.filter((n) => n.driftStatus === 'unmanaged').length
@@ -51,6 +54,13 @@ export function TitleBar(): React.JSX.Element {
     setProfile(newProfile)
     setConnStatus('unknown')
     window.cloudblocks.selectProfile(newProfile)
+  }
+
+  function handleTidy(): void {
+    const viewKey = view === 'topology' ? 'topology' : 'graph'
+    const positions = computeTidyLayout(nodes, viewKey)
+    applyTidyLayout(viewKey, positions)
+    window.dispatchEvent(new CustomEvent('cloudblocks:fitview'))
   }
 
   async function handleImportTfState(): Promise<void> {
@@ -140,6 +150,24 @@ export function TitleBar(): React.JSX.Element {
         style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)', cursor: 'pointer' }}
       >
         TF Import
+      </button>
+
+      {/* Tidy layout button */}
+      <button
+        onClick={handleTidy}
+        title="Tidy — arrange nodes by service type"
+        style={{
+          background:  'var(--cb-bg-elevated)',
+          border:      '1px solid var(--cb-border)',
+          borderRadius: 3,
+          padding:     '3px 8px',
+          color:       'var(--cb-text-secondary)',
+          fontFamily:  'monospace',
+          fontSize:    10,
+          cursor:      'pointer',
+        }}
+      >
+        Tidy
       </button>
 
       {/* Drift summary pill — shown after TF import */}

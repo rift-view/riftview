@@ -84,6 +84,7 @@ function buildFlowNodes(
   selectedId: string | null,
   highlightedIds: Set<string> | null,
   collapsedSubnets: Set<string>,
+  collapsedVpcs: Set<string>,
   selectedRegions: string[],
   showRegionIndicators: boolean,
   regionColorMap: Record<string, string>,
@@ -181,18 +182,21 @@ function buildFlowNodes(
     const vpcW = Math.max(260, VPC_PAD * 2 + Math.max(totalSubW, directRes.length > 0 ? directSize.w : 0))
     const vpcH = VPC_LABEL + VPC_PAD + maxSubH + VPC_PAD + (directRes.length > 0 ? directSize.h + SUB_GAP : 0)
     const vpcHFinal = Math.max(160, vpcH)
-    maxVpcHeight = Math.max(maxVpcHeight, vpcHFinal)
+    const isCollapsed = collapsedVpcs.has(vpc.id)
+    const childCount = vpcSubnets.length + directRes.length
+    const effectiveVpcH = isCollapsed ? 48 : vpcHFinal
+    maxVpcHeight = Math.max(maxVpcHeight, effectiveVpcH)
 
     nodes.push({
       id:       vpc.id,
       type:     'vpc',
       position: { x: vpcX, y: vpcY },
-      style:    { width: vpcW, height: vpcHFinal },
-      data:     { label: vpc.label, cidr: vpc.metadata.cidr as string | undefined },
+      style:    { width: vpcW, height: effectiveVpcH },
+      data:     { label: vpc.label, cidr: vpc.metadata.cidr as string | undefined, collapsed: isCollapsed, childCount },
     })
 
     let subX = VPC_PAD
-    vpcSubnets.forEach((subnet, si) => {
+    if (!isCollapsed) vpcSubnets.forEach((subnet, si) => {
       const { w: sw, h: sh } = subSizes[si]
       const isCollapsed = collapsedSubnets.has(subnet.id)
       nodes.push({
@@ -230,26 +234,28 @@ function buildFlowNodes(
       subX += sw + SUB_GAP
     })
 
-    const subnetBottom = VPC_LABEL + VPC_PAD + maxSubH + VPC_PAD + SUB_GAP
-    directRes.forEach((r, ri) => {
-      const col = ri % RES_COLS
-      const row = Math.floor(ri / RES_COLS)
-      const regionColor = showRegionIndicators && selectedRegions.length >= 2
-        ? (regionColorMap[r.region] ?? undefined)
-        : undefined
-      nodes.push({
-        id:       r.id,
-        type:     'resource',
-        parentId: vpc.id,
-        extent:   'parent',
-        position: {
-          x: VPC_PAD + col * (RES_W + RES_GAP_X),
-          y: subnetBottom + row * (RES_H + RES_GAP_Y),
-        },
-        data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor },
-        selected: r.id === selectedId,
+    if (!isCollapsed) {
+      const subnetBottom = VPC_LABEL + VPC_PAD + maxSubH + VPC_PAD + SUB_GAP
+      directRes.forEach((r, ri) => {
+        const col = ri % RES_COLS
+        const row = Math.floor(ri / RES_COLS)
+        const regionColor = showRegionIndicators && selectedRegions.length >= 2
+          ? (regionColorMap[r.region] ?? undefined)
+          : undefined
+        nodes.push({
+          id:       r.id,
+          type:     'resource',
+          parentId: vpc.id,
+          extent:   'parent',
+          position: {
+            x: VPC_PAD + col * (RES_W + RES_GAP_X),
+            y: subnetBottom + row * (RES_H + RES_GAP_Y),
+          },
+          data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor },
+          selected: r.id === selectedId,
+        })
       })
-    })
+    }
 
     vpcX += vpcW + VPC_GAP
   })
@@ -480,6 +486,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const lockedNodes        = useUIStore((s) => s.lockedNodes)
   const collapsedSubnets   = useUIStore((s) => s.collapsedSubnets)
   const toggleSubnet       = useUIStore((s) => s.toggleSubnet)
+  const collapsedVpcs      = useUIStore((s) => s.collapsedVpcs)
+  const toggleVpc          = useUIStore((s) => s.toggleVpc)
   const annotations        = useUIStore((s) => s.annotations)
   const stickyNotes        = useUIStore((s) => s.stickyNotes)
   const setNodePosition    = useUIStore((s) => s.setNodePosition)
@@ -548,7 +556,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   }, [allNodes, importedNodes, showRegionIndicators, selectedRegions])
 
   const flowNodes: Node[] = useMemo(() => {
-    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets, selectedRegions, showRegionIndicators, regionColorMap, topologyPositions, zoneSizes)
+    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets, collapsedVpcs, selectedRegions, showRegionIndicators, regionColorMap, topologyPositions, zoneSizes)
     const mapped = raw.map((n) => {
       const isMultiSelected = selectedNodeIds.size > 1 && selectedNodeIds.has(n.id)
       const isLocked = lockedNodes.has(n.id)
@@ -586,6 +594,22 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
           data: {
             ...n.data as object,
             onResizeEnd: (id: string, w: number, h: number) => setZoneSize(id, { width: w, height: h }),
+          },
+        }
+      }
+
+      // For top-level VPC nodes, inject toggleVpc callback
+      if (n.type === 'vpc') {
+        return {
+          ...n,
+          position,
+          ...lockProps,
+          style: { ...n.style, ...multiSelectStyle },
+          data: {
+            ...n.data as object,
+            onToggleCollapse: () => toggleVpc(n.id),
+            annotation: annotations[n.id],
+            ...(isLocked ? { locked: true } : {}),
           },
         }
       }
@@ -654,7 +678,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       const d = fn.data as { driftStatus?: string }
       return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
     })
-  }, [allNodes, selectedId, selectedNodeIds, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete, zoneSizes, setZoneSize])
+  }, [allNodes, selectedId, selectedNodeIds, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, collapsedVpcs, toggleVpc, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete, zoneSizes, setZoneSize])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
