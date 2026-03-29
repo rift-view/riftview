@@ -49,6 +49,7 @@ interface UIState {
   driftBannerDismissed:   boolean
   sidebarFilter:          NodeType | null
   pluginNodeTypes:        Record<string, NodeTypeMetadata>
+  zoneSizes:              Record<string, { width: number; height: number }>
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -83,6 +84,7 @@ interface UIState {
   resetDriftBanner:       () => void
   setSidebarFilter:       (type: NodeType | null) => void
   setPluginNodeTypes:     (meta: Record<string, NodeTypeMetadata>) => void
+  setZoneSize:            (id: string, size: { width: number; height: number }) => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -111,6 +113,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   driftBannerDismissed: false,
   sidebarFilter:        null,
   pluginNodeTypes:      {},
+  zoneSizes:            {},
 
   setView:             (view) => set({ view }),
   selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -203,4 +206,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   resetDriftBanner:   () => set({ driftBannerDismissed: false }),
   setSidebarFilter:   (type) => set({ sidebarFilter: type }),
   setPluginNodeTypes: (meta) => set({ pluginNodeTypes: meta }),
+  setZoneSize: (id, size) =>
+    set((s) => ({ zoneSizes: { ...s.zoneSizes, [id]: size } })),
 }))
