@@ -55,6 +55,7 @@ interface UIState {
   driftFilterActive:      boolean
   driftBannerDismissed:   boolean
   activeFilters:          NodeFilter[]
+  activeSidebarType:      NodeType | null
   pluginNodeTypes:        Record<string, NodeTypeMetadata>
   zoneSizes:              Record<string, { width: number; height: number }>
 
@@ -95,6 +96,7 @@ interface UIState {
   addFilter:              (filter: NodeFilter) => void
   removeFilter:           (id: string) => void
   clearFilters:           () => void
+  setSidebarType:         (type: NodeType | null) => void
   setPluginNodeTypes:     (meta: Record<string, NodeTypeMetadata>) => void
   setZoneSize:            (id: string, size: { width: number; height: number }) => void
 }
@@ -125,6 +127,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   driftFilterActive:    false,
   driftBannerDismissed: false,
   activeFilters:        [],
+  activeSidebarType:    null,
   pluginNodeTypes:      {},
   zoneSizes:            {},
 
@@ -240,8 +243,12 @@ export const useUIStore = create<UIState>((set, get) => ({
       ],
     })),
   removeFilter: (id) =>
-    set((s) => ({ activeFilters: s.activeFilters.filter((f) => f.id !== id) })),
-  clearFilters: () => set({ activeFilters: [] }),
+    set((s) => ({
+      activeFilters:     s.activeFilters.filter((f) => f.id !== id),
+      activeSidebarType: id === 'sidebar-type' ? null : s.activeSidebarType,
+    })),
+  clearFilters: () => set({ activeFilters: [], activeSidebarType: null }),
+  setSidebarType: (type) => set({ activeSidebarType: type }),
   setPluginNodeTypes: (meta) => set({ pluginNodeTypes: meta }),
   setZoneSize: (id, size) =>
     set((s) => ({ zoneSizes: { ...s.zoneSizes, [id]: size } })),

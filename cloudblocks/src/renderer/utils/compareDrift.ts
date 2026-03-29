@@ -5,7 +5,7 @@ export interface DriftResult {
   unmanaged: string[]
   missing:   string[]
   /** Maps live node ID → matched imported node ID (only populated for fuzzy matches) */
-  fuzzyMap?: Map<string, string>
+  fuzzyMap: Map<string, string>
 }
 
 /** Normalise a label for fuzzy comparison: lowercase, collapse whitespace/separators */
@@ -75,11 +75,9 @@ export function applyDriftToState(
   const importedMap = new Map(importedNodes.map((n) => [n.id, n]))
   // Also map fuzzy: live id → imported node
   const fuzzyImportedMap = new Map<string, CloudNode>()
-  if (fuzzyMap) {
-    for (const [liveId, impId] of fuzzyMap) {
-      const imp = importedMap.get(impId)
-      if (imp) fuzzyImportedMap.set(liveId, imp)
-    }
+  for (const [liveId, impId] of fuzzyMap) {
+    const imp = importedMap.get(impId)
+    if (imp) fuzzyImportedMap.set(liveId, imp)
   }
 
   const nodes = liveNodes.map((n) => {
@@ -96,7 +94,7 @@ export function applyDriftToState(
   // Imported IDs consumed by any match (exact or fuzzy)
   const consumedImpIds = new Set([
     ...liveNodes.filter((n) => matchedSet.has(n.id) && importedMap.has(n.id)).map((n) => n.id),
-    ...(fuzzyMap ? [...fuzzyMap.values()] : []),
+    ...fuzzyMap.values(),
   ])
 
   const newImportedNodes = importedNodes.map((n) => {

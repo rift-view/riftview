@@ -114,6 +114,33 @@ describe('applyDriftToState — fuzzy matches', () => {
     expect(liveNode.tfMetadata).toEqual({ instance_type: 't3.large' })
     expect(result.importedNodes).toHaveLength(0)
   })
+
+  it('fuzzy-matched imported node is removed from importedNodes', () => {
+    const live = node('i-xyz', 'ec2', 'web-server')
+    const imp  = imported('aws_instance.web_server', 'ec2', 'web-server')
+    const result = applyDriftToState([live], [imp])
+    expect(result.importedNodes).toHaveLength(0)
+  })
+
+  it('both exact and fuzzy matches coexist correctly in the same call', () => {
+    const liveExact = node('i-exact', 'ec2', 'exact-node')
+    const liveFuzzy = node('i-fuzzy', 'ec2', 'fuzzy-node')
+    const impExact  = { ...imported('i-exact', 'ec2', 'exact-node'), metadata: { instance_type: 't3.small' } }
+    const impFuzzy  = { ...imported('aws_instance.fuzzy_node', 'ec2', 'fuzzy-node'), metadata: { instance_type: 't3.large' } }
+
+    const result = applyDriftToState([liveExact, liveFuzzy], [impExact, impFuzzy])
+
+    const exactNode = result.nodes.find((n) => n.id === 'i-exact')!
+    const fuzzyNode = result.nodes.find((n) => n.id === 'i-fuzzy')!
+
+    expect(exactNode.driftStatus).toBe('matched')
+    expect(exactNode.tfMetadata).toEqual({ instance_type: 't3.small' })
+
+    expect(fuzzyNode.driftStatus).toBe('matched')
+    expect(fuzzyNode.tfMetadata).toEqual({ instance_type: 't3.large' })
+
+    expect(result.importedNodes).toHaveLength(0)
+  })
 })
 
 describe('applyDriftToState', () => {
