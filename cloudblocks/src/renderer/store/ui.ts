@@ -1,6 +1,12 @@
 import { create } from 'zustand'
-import type { NodeType } from '../types/cloud'
+import type { NodeType, CloudNode } from '../types/cloud'
 import type { NodeTypeMetadata } from '../types/plugin'
+
+export interface NodeFilter {
+  id:    string
+  label: string
+  test:  (node: CloudNode) => boolean
+}
 
 const TOAST_DURATION_MS = 2500
 
@@ -48,7 +54,7 @@ interface UIState {
   stickyNotes:        StickyNote[]
   driftFilterActive:      boolean
   driftBannerDismissed:   boolean
-  sidebarFilter:          NodeType | null
+  activeFilters:          NodeFilter[]
   pluginNodeTypes:        Record<string, NodeTypeMetadata>
   zoneSizes:              Record<string, { width: number; height: number }>
 
@@ -86,7 +92,9 @@ interface UIState {
   resetDriftFilter:       () => void
   dismissDriftBanner:     () => void
   resetDriftBanner:       () => void
-  setSidebarFilter:       (type: NodeType | null) => void
+  addFilter:              (filter: NodeFilter) => void
+  removeFilter:           (id: string) => void
+  clearFilters:           () => void
   setPluginNodeTypes:     (meta: Record<string, NodeTypeMetadata>) => void
   setZoneSize:            (id: string, size: { width: number; height: number }) => void
 }
@@ -116,7 +124,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   stickyNotes:       [],
   driftFilterActive:    false,
   driftBannerDismissed: false,
-  sidebarFilter:        null,
+  activeFilters:        [],
   pluginNodeTypes:      {},
   zoneSizes:            {},
 
@@ -224,7 +232,16 @@ export const useUIStore = create<UIState>((set, get) => ({
   resetDriftFilter:       () => set({ driftFilterActive: false }),
   dismissDriftBanner: () => set({ driftBannerDismissed: true }),
   resetDriftBanner:   () => set({ driftBannerDismissed: false }),
-  setSidebarFilter:   (type) => set({ sidebarFilter: type }),
+  addFilter: (filter) =>
+    set((s) => ({
+      activeFilters: [
+        ...s.activeFilters.filter((f) => f.id !== filter.id),
+        filter,
+      ],
+    })),
+  removeFilter: (id) =>
+    set((s) => ({ activeFilters: s.activeFilters.filter((f) => f.id !== id) })),
+  clearFilters: () => set({ activeFilters: [] }),
   setPluginNodeTypes: (meta) => set({ pluginNodeTypes: meta }),
   setZoneSize: (id, size) =>
     set((s) => ({ zoneSizes: { ...s.zoneSizes, [id]: size } })),
