@@ -57,6 +57,7 @@ export function TitleBar(): React.JSX.Element {
   }
 
   function handleTidy(): void {
+    if (nodes.length === 0) return
     const viewKey = view === 'topology' ? 'topology' : 'graph'
     const positions = computeTidyLayout(nodes, viewKey)
     applyTidyLayout(viewKey, positions)
