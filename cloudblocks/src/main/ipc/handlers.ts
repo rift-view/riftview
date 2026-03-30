@@ -22,10 +22,20 @@ import type { CloudFrontParams } from '../../renderer/types/create'
 import type { CloudFrontEditParams } from '../../renderer/types/edit'
 import type { AwsProfile, CloudNode } from '../../renderer/types/cloud'
 import { generateTerraformFile } from '../terraform/index'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+import { randomUUID } from 'crypto'
+import { buildLocalStackProvider } from '../terraform/provider'
+const execFileAsync = promisify(execFile)
 import { parseTfState } from '../aws/tfstate/parser'
 import { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from '../aws/iam/fetcher'
 import type { IamAnalysisResult } from '../../renderer/types/iam'
 import type { NodeType } from '../../renderer/types/cloud'
+
+type TerraformDeployResult =
+  | { status: 'success'; output: string }
+  | { status: 'error'; output: string }
+  | { status: 'not_found' }
 
 function settingsPath(): string {
   return path.join(app.getPath('userData'), 'settings.json')
@@ -33,7 +43,7 @@ function settingsPath(): string {
 
 const DEFAULT_SETTINGS = {
   deleteConfirmStyle: 'type-to-confirm' as const,
-  scanInterval: 30 as const,
+  scanInterval: 30 as 15 | 30 | 60 | 'manual',
   theme: 'dark' as const,
   showRegionIndicators: true,
   regionColors: {} as Record<string, string>,
@@ -95,6 +105,12 @@ export function registerHandlers(win: BrowserWindow): void {
       fs.writeFileSync(settingsPath(), JSON.stringify(settings, null, 2))
     } catch (err) {
       console.error('Failed to write settings:', err)
+    }
+    // Apply new scan interval immediately without restarting the scanner
+    if (scanner && settings?.scanInterval !== undefined) {
+      const raw = settings.scanInterval
+      const intervalMs: number | 'manual' = raw === 'manual' ? 'manual' : (raw as number) * 1000
+      scanner.updateInterval(intervalMs)
     }
   })
 
@@ -271,6 +287,51 @@ export function registerHandlers(win: BrowserWindow): void {
     }
   })
 
+  // Terraform LocalStack deploy — write config to temp dir, run init + apply
+  ipcMain.handle(IPC.TERRAFORM_DEPLOY, async (_, hcl: string, region: string): Promise<TerraformDeployResult> => {
+    // 1. Check binary
+    try {
+      execFile('terraform', ['version'], { timeout: 5000 }, () => {})
+      await execFileAsync('terraform', ['version'], { timeout: 5000 })
+    } catch {
+      return { status: 'not_found' }
+    }
+
+    // 2. Write full config to temp dir
+    const deployDir = path.join(app.getPath('userData'), 'terraform-deployments', randomUUID())
+    await fsp.mkdir(deployDir, { recursive: true })
+    const configPath = path.join(deployDir, 'main.tf')
+    await fsp.writeFile(configPath, buildLocalStackProvider(region) + '\n' + hcl, 'utf-8')
+
+    const opts = { cwd: deployDir, maxBuffer: 10 * 1024 * 1024 }
+    let output = ''
+
+    try {
+      // 3. terraform init
+      const initResult = await execFileAsync('terraform', [
+        'init', '-input=false', '-no-color',
+      ], opts)
+      output += initResult.stdout + initResult.stderr
+
+      // 4. terraform apply
+      const applyResult = await execFileAsync('terraform', [
+        'apply', '-auto-approve', '-no-color',
+      ], opts)
+      output += applyResult.stdout + applyResult.stderr
+
+      // 5. Cleanup on success
+      await fsp.rm(deployDir, { recursive: true, force: true })
+
+      return { status: 'success', output }
+    } catch (err: unknown) {
+      const e = err as { stdout?: string; stderr?: string; message?: string }
+      output += (e.stdout ?? '') + (e.stderr ?? '')
+      if (!output) output = e.message ?? 'Unknown error'
+      // Leave temp dir on failure for debugging
+      return { status: 'error', output }
+    }
+  })
+
   // Annotations — persist to userData/annotations.json
   ipcMain.handle(IPC.ANNOTATIONS_LOAD, (): Record<string, string> => {
     const file = path.join(app.getPath('userData'), 'annotations.json')
@@ -380,7 +441,13 @@ async function restartScanner(win: BrowserWindow, profile: string, regions: stri
   cliEngine = new CliEngine(win, endpoint)
   // Keep a single client set for the primary region (used by CF, etc.)
   clients   = createClients(profile, regions[0] ?? 'us-east-1', endpoint)
-  scanner   = new ResourceScanner(profile, regions, endpoint, win)
+  // Read persisted scan interval and pass it to the scanner
+  const storedSettings: { scanInterval?: unknown } = (() => {
+    try { return JSON.parse(fs.readFileSync(settingsPath(), 'utf-8')) } catch { return {} }
+  })()
+  const rawInterval = storedSettings.scanInterval ?? DEFAULT_SETTINGS.scanInterval
+  const intervalMs: number | 'manual' = rawInterval === 'manual' ? 'manual' : (rawInterval as number) * 1000
+  scanner   = new ResourceScanner(profile, regions, endpoint, win, intervalMs)
   scanner.start()
   win.webContents.send(IPC.PLUGIN_METADATA, pluginRegistry.getAllNodeTypeMetadata())
 }
