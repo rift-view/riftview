@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useCloudStore } from '../store/cloud'
 
 interface Template {
   id: string
@@ -270,9 +271,17 @@ interface TemplatesModalProps {
   onClose: () => void
 }
 
+type DeployState = 'idle' | 'deploying' | 'success' | 'error'
+
 export default function TemplatesModal({ onClose }: TemplatesModalProps): React.JSX.Element {
-  const [selected, setSelected] = useState<string>(TEMPLATES[0].id)
-  const [copied, setCopied]     = useState(false)
+  const [selected, setSelected]         = useState<string>(TEMPLATES[0].id)
+  const [copied, setCopied]             = useState(false)
+  const [deployState, setDeployState]   = useState<DeployState>('idle')
+  const [deployOutput, setDeployOutput] = useState<string>('')
+
+  const profile = useCloudStore((s) => s.profile)
+  const isLocal = !!profile.endpoint
+  const region  = profile.region ?? 'us-east-1'
 
   const current = TEMPLATES.find((t) => t.id === selected) ?? TEMPLATES[0]
 
@@ -280,6 +289,33 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
     void navigator.clipboard.writeText(current.hcl).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  const handleSelectTemplate = (id: string): void => {
+    setSelected(id)
+    setDeployState('idle')
+    setDeployOutput('')
+  }
+
+  const handleDeploy = (): void => {
+    setDeployState('deploying')
+    setDeployOutput('')
+    void window.cloudblocks.terraformDeploy(current.hcl, region, profile.endpoint).then((result) => {
+      if (result.status === 'not_found') {
+        setDeployState('error')
+        setDeployOutput('terraform binary not found. Install terraform and restart Cloudblocks.')
+      } else if (result.status === 'error') {
+        setDeployState('error')
+        setDeployOutput(result.output)
+      } else {
+        setDeployState('success')
+        setDeployOutput(result.output)
+        void window.cloudblocks.startScan()
+      }
+    }).catch((err: unknown) => {
+      setDeployState('error')
+      setDeployOutput(err instanceof Error ? err.message : 'Deploy failed — check the app log.')
     })
   }
 
@@ -337,7 +373,7 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
             {TEMPLATES.map((t) => (
               <div
                 key={t.id}
-                onClick={() => setSelected(t.id)}
+                onClick={() => handleSelectTemplate(t.id)}
                 style={{
                   padding: '8px 16px', cursor: 'pointer', fontSize: 11,
                   background: selected === t.id ? 'var(--cb-bg-elevated)' : 'transparent',
@@ -357,21 +393,71 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
               <span style={{ fontSize: 11, color: 'var(--cb-text-secondary)' }}>
                 {current.name} — main.tf
               </span>
-              <button
-                onClick={handleCopy}
-                style={{
-                  background: copied ? '#22c55e' : 'var(--cb-bg-elevated)',
-                  border: `1px solid ${copied ? '#22c55e' : 'var(--cb-border)'}`,
-                  borderRadius: 3, padding: '3px 12px', cursor: 'pointer',
-                  color: copied ? '#000' : 'var(--cb-text-secondary)',
-                  fontFamily: 'monospace', fontSize: 10, fontWeight: copied ? 'bold' : 'normal',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {copied ? '✓ Copied' : 'Copy'}
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                {isLocal && (
+                  <button
+                    onClick={deployState === 'deploying' ? undefined : handleDeploy}
+                    disabled={deployState === 'deploying'}
+                    style={{
+                      background: deployState === 'success'
+                        ? '#22c55e'
+                        : deployState === 'error'
+                          ? '#ef4444'
+                          : 'var(--cb-bg-elevated)',
+                      border: `1px solid ${
+                        deployState === 'success' ? '#22c55e'
+                        : deployState === 'error' ? '#ef4444'
+                        : 'var(--cb-border)'
+                      }`,
+                      borderRadius: 3, padding: '3px 12px', cursor: deployState === 'deploying' ? 'default' : 'pointer',
+                      color: (deployState === 'success' || deployState === 'error') ? '#000' : 'var(--cb-text-secondary)',
+                      fontFamily: 'monospace', fontSize: 10,
+                      fontWeight: (deployState === 'success' || deployState === 'error') ? 'bold' : 'normal',
+                      transition: 'all 0.15s', marginRight: 8,
+                      opacity: deployState === 'deploying' ? 0.6 : 1,
+                    }}
+                  >
+                    {deployState === 'deploying'
+                      ? '⟳ Deploying...'
+                      : deployState === 'success'
+                        ? '✓ Deployed'
+                        : deployState === 'error'
+                          ? '✗ Failed'
+                          : 'Deploy to LocalStack'}
+                  </button>
+                )}
+                <button
+                  onClick={handleCopy}
+                  style={{
+                    background: copied ? '#22c55e' : 'var(--cb-bg-elevated)',
+                    border: `1px solid ${copied ? '#22c55e' : 'var(--cb-border)'}`,
+                    borderRadius: 3, padding: '3px 12px', cursor: 'pointer',
+                    color: copied ? '#000' : 'var(--cb-text-secondary)',
+                    fontFamily: 'monospace', fontSize: 10, fontWeight: copied ? 'bold' : 'normal',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  {copied ? '✓ Copied' : 'Copy'}
+                </button>
+              </div>
             </div>
             <pre style={code}>{current.hcl}</pre>
+            {deployOutput && (
+              <div style={{
+                borderTop: `1px solid ${deployState === 'error' ? '#ef4444' : deployState === 'success' ? '#22c55e' : 'var(--cb-border)'}`,
+                padding: '8px 16px',
+                maxHeight: 120,
+                overflowY: 'auto',
+                background: 'var(--cb-bg-elevated)',
+                fontSize: 10,
+                fontFamily: 'monospace',
+                color: deployState === 'error' ? '#ef4444' : 'var(--cb-text-secondary)',
+                lineHeight: 1.5,
+                flexShrink: 0,
+              }}>
+                <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{deployOutput}</pre>
+              </div>
+            )}
           </div>
         </div>
       </div>
