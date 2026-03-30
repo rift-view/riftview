@@ -31,6 +31,8 @@ interface Window {
     onUpdateAvailable(cb: () => void): () => void
     loadAnnotations(): Promise<Record<string, string>>
     saveAnnotations(data: Record<string, string>): Promise<void>
+    loadCustomEdges(): Promise<import('../renderer/types/cloud').CustomEdge[]>
+    saveCustomEdges(edges: import('../renderer/types/cloud').CustomEdge[]): Promise<void>
     importTfState(): Promise<{ nodes: import('../renderer/types/cloud').CloudNode[]; error?: string }>
     clearTfState(): Promise<{ ok: boolean }>
     analyzeIam(nodeId: string, nodeType: import('../renderer/types/cloud').NodeType, metadata: Record<string, unknown>): Promise<import('../renderer/types/iam').IamAnalysisResult>

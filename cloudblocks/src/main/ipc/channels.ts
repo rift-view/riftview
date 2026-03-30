@@ -30,6 +30,8 @@ export const IPC = {
   IAM_ANALYZE:      'iam:analyze',            // invoke → IamAnalysisResult
   NOTIFY_DRIFT:     'notify:drift',           // invoke → void (count: number)
   PLUGIN_METADATA:  'plugin:metadata',        // push: main → renderer
+  CUSTOM_EDGES_SAVE: 'custom-edges:save',      // invoke → void
+  CUSTOM_EDGES_LOAD: 'custom-edges:load',      // invoke → CustomEdge[]
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]

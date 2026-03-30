@@ -85,3 +85,13 @@ export interface Settings {
   showScanErrorBadges: boolean
   notifyOnDrift: boolean
 }
+
+export type CustomEdgeColor = '#f59e0b' | '#14b8a6' | '#6366f1' | '#22c55e' | '#ef4444' | '#8b5cf6'
+
+export interface CustomEdge {
+  id: string
+  source: string
+  target: string
+  color: CustomEdgeColor
+  label?: string
+}

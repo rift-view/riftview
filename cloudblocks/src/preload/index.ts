@@ -85,6 +85,12 @@ contextBridge.exposeInMainWorld('cloudblocks', {
   loadAnnotations: (): Promise<Record<string, string>> => ipcRenderer.invoke(IPC.ANNOTATIONS_LOAD),
   saveAnnotations: (data: Record<string, string>): Promise<void> => ipcRenderer.invoke(IPC.ANNOTATIONS_SAVE, data),
 
+  // Custom edges — persisted to userData/custom-edges.json
+  loadCustomEdges: (): Promise<import('../renderer/types/cloud').CustomEdge[]> =>
+    ipcRenderer.invoke(IPC.CUSTOM_EDGES_LOAD),
+  saveCustomEdges: (edges: import('../renderer/types/cloud').CustomEdge[]): Promise<void> =>
+    ipcRenderer.invoke(IPC.CUSTOM_EDGES_SAVE, edges),
+
   // Terraform state import
   importTfState: () => ipcRenderer.invoke(IPC.TFSTATE_IMPORT),
   clearTfState:  () => ipcRenderer.invoke(IPC.TFSTATE_CLEAR),

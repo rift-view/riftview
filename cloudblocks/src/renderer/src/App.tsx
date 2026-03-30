@@ -93,6 +93,12 @@ export default function App(): React.JSX.Element | null {
     window.cloudblocks.listProfiles().then(setProfiles)
     useCloudStore.getState().loadSettings()
 
+    window.cloudblocks.loadCustomEdges().then((saved) => {
+      if (saved.length > 0) {
+        useUIStore.setState({ customEdges: saved })
+      }
+    })
+
     window.cloudblocks.loadAnnotations().then((saved) => {
       if (Object.keys(saved).length === 0) return
       useUIStore.setState({ annotations: saved })
