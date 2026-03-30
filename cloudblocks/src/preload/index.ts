@@ -65,8 +65,8 @@ contextBridge.exposeInMainWorld('cloudblocks', {
   exportTerraform: (nodes: import('../renderer/types/cloud').CloudNode[]) => ipcRenderer.invoke(IPC.TERRAFORM_EXPORT, nodes),
 
   // Terraform LocalStack deploy
-  terraformDeploy: (hcl: string, region: string) =>
-    ipcRenderer.invoke(IPC.TERRAFORM_DEPLOY, hcl, region),
+  terraformDeploy: (hcl: string, region: string, endpoint?: string) =>
+    ipcRenderer.invoke(IPC.TERRAFORM_DEPLOY, hcl, region, endpoint),
 
   // Canvas PNG export
   exportPng: (): Promise<{ success: boolean; filePath?: string }> => ipcRenderer.invoke(IPC.CANVAS_EXPORT_PNG),

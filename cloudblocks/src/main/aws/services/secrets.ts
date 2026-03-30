@@ -1,12 +1,11 @@
 import {
   SecretsManagerClient,
   ListSecretsCommand,
-  DescribeSecretCommand,
 } from '@aws-sdk/client-secrets-manager'
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
 export async function listSecrets(client: SecretsManagerClient, region: string): Promise<CloudNode[]> {
-  let secretList: { ARN?: string; Name?: string; Description?: string; LastRotatedDate?: Date }[] = []
+  let secretList: { ARN?: string; Name?: string; Description?: string; LastRotatedDate?: Date; RotationLambdaARN?: string }[] = []
   try {
     const res = await client.send(new ListSecretsCommand({}))
     secretList = res.SecretList ?? []
@@ -14,34 +13,24 @@ export async function listSecrets(client: SecretsManagerClient, region: string):
     return []
   }
 
-  const nodes = await Promise.all(
-    secretList.map(async (item): Promise<CloudNode> => {
-      const baseNode: CloudNode = {
-        id: item.ARN ?? '',
-        type: 'secret',
-        label: item.Name ?? item.ARN ?? '',
-        status: 'running',
-        region,
-        metadata: {
-          description: item.Description ?? '',
-          lastRotated: item.LastRotatedDate?.toISOString() ?? '',
-        },
-      }
+  return secretList.map((item): CloudNode => {
+    const baseNode: CloudNode = {
+      id: item.ARN ?? '',
+      type: 'secret',
+      label: item.Name ?? item.ARN ?? '',
+      status: 'running',
+      region,
+      metadata: {
+        description: item.Description ?? '',
+        lastRotated: item.LastRotatedDate?.toISOString() ?? '',
+      },
+    }
 
-      const descRes = await client
-        .send(new DescribeSecretCommand({ SecretId: item.ARN ?? item.Name }))
-        .catch(() => null)
+    if (!item.RotationLambdaARN) return baseNode
 
-      const rotationArn = descRes?.RotationLambdaARN
-      if (!rotationArn) return baseNode
-
-      const integrations: { targetId: string; edgeType: EdgeType }[] = [
-        { targetId: rotationArn, edgeType: 'trigger' },
-      ]
-
-      return integrations.length > 0 ? { ...baseNode, integrations } : baseNode
-    })
-  )
-
-  return nodes
+    const integrations: { targetId: string; edgeType: EdgeType }[] = [
+      { targetId: item.RotationLambdaARN, edgeType: 'trigger' },
+    ]
+    return { ...baseNode, integrations }
+  })
 }

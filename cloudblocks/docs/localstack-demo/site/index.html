@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloudblocks — LocalStack Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080c14;
+      --panel:     #0d1117;
+      --elevated:  #1a2332;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --secondary: #aaaaaa;
+      --muted:     #666666;
+      --accent:    #FF9900;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --blue:      #64b5f6;
+    }
+
+    body {
+      font-family: 'Cascadia Code', 'Fira Mono', 'Consolas', 'Monaco', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .logo { color: var(--accent); font-size: 13px; font-weight: bold; letter-spacing: 3px; }
+    .badge {
+      font-size: 9px; padding: 2px 8px; border-radius: 9999px;
+      background: var(--elevated); border: 1px solid var(--border);
+      color: var(--secondary); letter-spacing: 1px;
+    }
+    .spacer { flex: 1; }
+    #statusDot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--muted); transition: background 0.3s;
+    }
+    #statusDot.ok  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    #statusDot.err { background: var(--red);   box-shadow: 0 0 6px var(--red);   }
+    #statusText { font-size: 9px; color: var(--secondary); }
+
+    /* ── Main layout ── */
+    main {
+      flex: 1;
+      display: flex;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    aside {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    .section-label {
+      font-size: 9px; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--muted); margin-bottom: 8px;
+    }
+
+    .api-field {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    input[type="text"], textarea {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 7px 10px;
+      border-radius: 4px;
+      width: 100%;
+      transition: border-color 0.15s;
+    }
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+
+    .hint { font-size: 9px; color: var(--muted); line-height: 1.5; }
+    .hint code {
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: 3px; padding: 1px 5px;
+      color: var(--blue); font-size: 9px;
+    }
+
+    /* ── Buttons ── */
+    button {
+      font-family: inherit; font-size: 11px;
+      padding: 6px 14px; border-radius: 4px;
+      cursor: pointer; border: 1px solid var(--border);
+      background: var(--elevated); color: var(--secondary);
+      transition: all 0.15s; white-space: nowrap;
+    }
+    button:hover { filter: brightness(1.25); }
+    button:active { filter: brightness(0.9); }
+    button.primary {
+      background: var(--accent); border-color: var(--accent);
+      color: #000; font-weight: bold;
+    }
+    button.danger { border-color: var(--red); color: var(--red); padding: 4px 10px; font-size: 10px; }
+    button.sm { padding: 4px 10px; font-size: 10px; }
+    button.full { width: 100%; }
+
+    /* ── Canvas (right panel) ── */
+    .canvas {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .canvas-header {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .canvas-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .count-badge {
+      font-size: 9px; padding: 2px 8px; border-radius: 9999px;
+      background: var(--elevated); border: 1px solid var(--border);
+      color: var(--muted); min-width: 28px; text-align: center;
+    }
+
+    /* ── Item cards ── */
+    .items-list {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .item-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex; align-items: flex-start; gap: 12px;
+      animation: fadein 0.2s ease;
+    }
+    @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+    .item-card:hover { border-color: #30363d; background: var(--elevated); }
+    .item-body { flex: 1; min-width: 0; }
+    .item-name { font-size: 13px; color: var(--text); margin-bottom: 2px; }
+    .item-note { font-size: 11px; color: var(--secondary); line-height: 1.5; margin-bottom: 4px; }
+    .item-meta { font-size: 9px; color: var(--muted); }
+
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 48px 24px; text-align: center;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+    .empty-title { font-size: 13px; margin-bottom: 6px; color: var(--secondary); }
+    .empty-sub { font-size: 11px; line-height: 1.6; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--elevated); border: 1px solid var(--border);
+      border-radius: 6px; padding: 8px 20px; font-size: 11px;
+      color: var(--text); pointer-events: none;
+      opacity: 0; transition: opacity 0.2s;
+      white-space: nowrap; z-index: 100;
+    }
+    #toast.show { opacity: 1; }
+    #toast.success { border-color: var(--green); color: var(--green); }
+    #toast.error   { border-color: var(--red);   color: var(--red);   }
+
+    /* ── Resource graph (visual reference) ── */
+    .graph-card {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 6px; padding: 16px;
+    }
+    .graph-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .graph-nodes {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    }
+    .gnode {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .gnode-box {
+      width: 56px; height: 40px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: bold; letter-spacing: 1px;
+      border-width: 1px; border-style: solid;
+    }
+    .arrow { font-size: 14px; color: var(--muted); margin-top: 10px; }
+    .gnode-label { font-size: 8px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">⬡ CLOUDBLOCKS</span>
+  <span class="badge">LocalStack Demo</span>
+  <div class="spacer"></div>
+  <div id="statusDot"></div>
+  <span id="statusText">not connected</span>
+</header>
+
+<main>
+  <aside>
+    <div>
+      <div class="section-label">API Endpoint</div>
+      <div class="api-field">
+        <input type="text" id="apiUrl" placeholder="http://localhost:4566/_aws/execute-api/…/$default" />
+        <button class="primary full" onclick="loadItems()">Connect & Refresh</button>
+      </div>
+      <div class="hint" style="margin-top:8px">
+        Get URL from:<br>
+        <code>terraform output api_url</code>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+      <div class="section-label">Add Item</div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <input type="text" id="newName" placeholder="Name…"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addItem()}" />
+        <textarea id="newNote" rows="2" placeholder="Note (optional)…"></textarea>
+        <button class="primary" onclick="addItem()">Add Item</button>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+      <div class="section-label">Architecture</div>
+      <div class="graph-card" style="padding:12px; background:var(--bg);">
+        <div class="graph-nodes">
+          <div class="gnode">
+            <div class="gnode-box" style="border-color:#8b5cf6; color:#8b5cf6; background:rgba(139,92,246,0.08)">APIGW</div>
+            <div class="gnode-label">API Gateway</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="gnode">
+            <div class="gnode-box" style="border-color:#64b5f6; color:#64b5f6; background:rgba(100,181,246,0.08)">λ</div>
+            <div class="gnode-label">Lambda</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="gnode">
+            <div class="gnode-box" style="border-color:#64b5f6; color:#64b5f6; background:rgba(100,181,246,0.08)">DDB</div>
+            <div class="gnode-label">DynamoDB</div>
+          </div>
+        </div>
+        <div style="margin-top:10px; font-size:9px; color:var(--muted);">
+          S3 → λ · SNS → SQS also provisioned
+        </div>
+      </div>
+      <div class="hint" style="margin-top:8px;">
+        Point Cloudblocks at LocalStack using the <strong style="color:var(--secondary)">⬡ Local</strong> profile to see these resources on the canvas.
+      </div>
+    </div>
+  </aside>
+
+  <div class="canvas">
+    <div class="canvas-header">
+      <span class="canvas-title">Items</span>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span id="countBadge" class="count-badge">0</span>
+        <button class="sm" onclick="loadItems()">⟳ Refresh</button>
+      </div>
+    </div>
+
+    <div id="itemsList" class="items-list">
+      <div class="empty-state">
+        <div class="empty-icon">⬡</div>
+        <div class="empty-title">Not connected</div>
+        <div class="empty-sub">Paste your API URL and click<br>Connect &amp; Refresh to get started.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+  const API_KEY = 'cb_demo_api_url'
+  const saved   = localStorage.getItem(API_KEY)
+  if (saved) document.getElementById('apiUrl').value = saved
+
+  function base() {
+    const v = document.getElementById('apiUrl').value.trim().replace(/\/$/, '')
+    if (v) localStorage.setItem(API_KEY, v)
+    return v
+  }
+
+  function setStatus(state) {
+    const dot  = document.getElementById('statusDot')
+    const text = document.getElementById('statusText')
+    if (state === 'ok')  { dot.className = 'ok';  text.textContent = 'connected' }
+    if (state === 'err') { dot.className = 'err'; text.textContent = 'error' }
+    if (state === 'off') { dot.className = '';    text.textContent = 'not connected' }
+  }
+
+  function toast(msg, type = 'success') {
+    const el = document.getElementById('toast')
+    el.textContent = msg
+    el.className   = `show ${type}`
+    clearTimeout(el._t)
+    el._t = setTimeout(() => { el.className = '' }, 2400)
+  }
+
+  async function loadItems() {
+    const url = base()
+    if (!url) { toast('Paste your API URL first', 'error'); return }
+    try {
+      const r    = await fetch(`${url}/items`, { headers: { Accept: 'application/json' } })
+      const data = await r.json()
+      if (!r.ok) throw new Error(data.error || r.statusText)
+      setStatus('ok')
+      renderItems(data.items || [])
+    } catch (e) {
+      setStatus('err')
+      renderError(e.message)
+    }
+  }
+
+  async function addItem() {
+    const url  = base()
+    const name = document.getElementById('newName').value.trim()
+    const note = document.getElementById('newNote').value.trim()
+    if (!url)  { toast('Paste your API URL first', 'error'); return }
+    if (!name) { toast('Name is required', 'error'); return }
+    try {
+      const r = await fetch(`${url}/items`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name, note }),
+      })
+      const data = await r.json()
+      if (!r.ok) throw new Error(data.error || r.statusText)
+      document.getElementById('newName').value = ''
+      document.getElementById('newNote').value = ''
+      toast(`Added: ${data.item.name}`)
+      await loadItems()
+    } catch (e) {
+      setStatus('err')
+      toast(e.message, 'error')
+    }
+  }
+
+  async function deleteItem(id, name) {
+    const url = base()
+    try {
+      await fetch(`${url}/items/${encodeURIComponent(id)}`, { method: 'DELETE' })
+      toast(`Deleted: ${name}`)
+      await loadItems()
+    } catch (e) {
+      toast(e.message, 'error')
+    }
+  }
+
+  function renderItems(items) {
+    const el     = document.getElementById('itemsList')
+    const badge  = document.getElementById('countBadge')
+    badge.textContent = items.length
+    if (items.length === 0) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">○</div>
+          <div class="empty-title">No items yet</div>
+          <div class="empty-sub">Add your first item using the form on the left.</div>
+        </div>`
+      return
+    }
+    el.innerHTML = items.map(item => `
+      <div class="item-card">
+        <div class="item-body">
+          <div class="item-name">${esc(item.name || '(no name)')}</div>
+          ${item.note ? `<div class="item-note">${esc(item.note)}</div>` : ''}
+          <div class="item-meta">id: ${esc(item.id)} · ${tsLabel(item.ts)}</div>
+        </div>
+        <button class="danger" onclick="deleteItem('${esc(item.id)}', '${esc(item.name || '')}')">✕</button>
+      </div>`).join('')
+  }
+
+  function renderError(msg) {
+    document.getElementById('itemsList').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon" style="color:var(--red)">⚠</div>
+        <div class="empty-title" style="color:var(--red)">API error</div>
+        <div class="empty-sub">${esc(msg)}<br><br>Is LocalStack running?<br><code style="color:var(--blue)">localstack start</code></div>
+      </div>`
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+  }
+
+  function tsLabel(ts) {
+    if (!ts) return ''
+    try { return new Date(parseInt(ts)).toLocaleTimeString() } catch { return '' }
+  }
+</script>
+</body>
+</html>
