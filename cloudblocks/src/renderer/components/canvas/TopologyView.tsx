@@ -633,13 +633,31 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       }
     })
 
+    // Augment SNS nodes with subscriber labels
+    const snsSubscriberMap = new Map<string, string[]>()
+    for (const n of allNodes) {
+      if (n.type !== 'sns' || !n.integrations) continue
+      const labels = n.integrations
+        .filter((i) => i.edgeType === 'subscription')
+        .map((i) => {
+          const resolved = resolveIntegrationTargetId(allNodes, i.targetId)
+          return allNodes.find((x) => x.id === resolved)?.label ?? resolved
+        })
+      if (labels.length > 0) snsSubscriberMap.set(n.id, labels)
+    }
+    const augmented = mapped.map((node) => {
+      const subs = snsSubscriberMap.get(node.id)
+      if (!subs) return node
+      return { ...node, data: { ...(node.data as object), subscribers: subs } }
+    })
+
     // Append imported nodes (from Terraform state import) as resource nodes
-    const existingIds = new Set(mapped.map((n) => n.id))
+    const existingIds = new Set(augmented.map((n) => n.id))
     const importedFlowNodes: Node[] = importedNodes
       .filter((n) => !existingIds.has(n.id))
       .map((n) => {
         // Only keep parentId if the parent already exists in the flow nodes
-        const parentExists = n.parentId != null && mapped.some((fn) => fn.id === n.parentId)
+        const parentExists = n.parentId != null && augmented.some((fn) => fn.id === n.parentId)
         const base: Node = {
           id:       n.id,
           type:     'resource',
@@ -668,7 +686,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       zIndex: 10,
     }))
 
-    const all = [...mapped, ...importedFlowNodes, ...stickyFlowNodes]
+    const all = [...augmented, ...importedFlowNodes, ...stickyFlowNodes]
     if (!driftFilterActive) return all
     const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw', 'globalZone', 'apigw-route', 'regionZone'])
     return all.filter((fn) => {
@@ -769,8 +787,25 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
     const filtered = showIntegrations
       ? raw
       : raw.filter((e) => !(e.data as IntegrationEdgeData | undefined)?.isIntegration)
-    if (!selectedId) return filtered
-    return filtered.map((e) => {
+
+    // Hide subscription edges for SNS nodes with 2+ subscriptions when unselected
+    const snsWithManySubscriptions = new Set(
+      allNodes
+        .filter((n) => n.type === 'sns' && (n.integrations?.filter((i) => i.edgeType === 'subscription').length ?? 0) >= 2)
+        .map((n) => n.id)
+    )
+
+    const withSubCollapse = showIntegrations
+      ? filtered.filter((e) => {
+          const edgeData = e.data as IntegrationEdgeData | undefined
+          if (edgeData?.edgeType !== 'subscription') return true
+          if (!snsWithManySubscriptions.has(e.source)) return true
+          return e.source === selectedId
+        })
+      : filtered
+
+    if (!selectedId) return withSubCollapse
+    return withSubCollapse.map((e) => {
       const incident = e.source === selectedId || e.target === selectedId
       return incident ? e : { ...e, style: { ...(e.style ?? {}), opacity: 0.15 } }
     })

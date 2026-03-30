@@ -90,6 +90,7 @@ interface ResourceNodeData {
   locked?:      boolean  // lock mode — node cannot be dragged or selected
   annotation?:  string  // user note — shows indicator badge if non-empty
   regionColor?: string  // multi-region accent strip on left edge
+  subscribers?: string[]  // SNS only — subscriber node labels
 }
 
 export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
@@ -208,6 +209,28 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
           style={{ fontSize: 8, color: 'var(--cb-text-muted)', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}
         >
           {d.region}
+        </div>
+      )}
+
+      {/* SNS subscriber badge */}
+      {d.subscribers && d.subscribers.length > 0 && (
+        <div
+          className="mt-1"
+          style={{ position: 'relative', display: 'inline-block' }}
+        >
+          <span
+            className="sns-sub-badge"
+            style={{
+              fontSize: 9,
+              color: '#14b8a6',
+              cursor: 'default',
+              letterSpacing: '0.03em',
+              userSelect: 'none',
+            }}
+            title={d.subscribers.join('\n')}
+          >
+            ↓ {d.subscribers.length} subscriber{d.subscribers.length !== 1 ? 's' : ''}
+          </span>
         </div>
       )}
 
