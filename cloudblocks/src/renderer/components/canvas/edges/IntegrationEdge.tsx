@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps, type Edge } from '@xyflow/react'
+import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps, type Edge } from '@xyflow/react'
 import type { EdgeType, IntegrationEdgeData } from '../../../types/cloud'
 
 type IntegrationEdgeType = Edge<IntegrationEdgeData, 'integration'>
@@ -49,13 +49,14 @@ export default function IntegrationEdge({
 
   const [hovered, setHovered] = useState(false)
 
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
     targetX,
     targetY,
     targetPosition,
+    borderRadius: 8,
   })
 
   return (
