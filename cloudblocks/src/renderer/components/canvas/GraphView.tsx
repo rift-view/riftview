@@ -350,6 +350,15 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
             locked:      isLocked,
             // User annotation
             annotation:  annotations[n.id],
+            // SNS subscriber labels
+            subscribers: n.type === 'sns' && n.integrations && n.integrations.length > 0
+              ? n.integrations
+                  .filter((i) => i.edgeType === 'subscription')
+                  .map((i) => {
+                    const resolved = resolveIntegrationTargetId(allNodes, i.targetId)
+                    return byId.get(resolved)?.label ?? resolved
+                  })
+              : undefined,
           },
           selected: n.id === selectedId,
         }
@@ -400,8 +409,25 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
     const filtered = showIntegrations
       ? raw
       : raw.filter((e) => !(e.data as IntegrationEdgeData | undefined)?.isIntegration)
-    if (!selectedId) return filtered
-    return filtered.map((e) => {
+
+    // Hide subscription edges for SNS nodes with 2+ subscriptions when unselected
+    const snsWithManySubscriptions = new Set(
+      allNodes
+        .filter((n) => n.type === 'sns' && (n.integrations?.filter((i) => i.edgeType === 'subscription').length ?? 0) >= 2)
+        .map((n) => n.id)
+    )
+
+    const withSubCollapse = showIntegrations
+      ? filtered.filter((e) => {
+          const edgeData = e.data as IntegrationEdgeData | undefined
+          if (edgeData?.edgeType !== 'subscription') return true
+          if (!snsWithManySubscriptions.has(e.source)) return true
+          return e.source === selectedId
+        })
+      : filtered
+
+    if (!selectedId) return withSubCollapse
+    return withSubCollapse.map((e) => {
       const incident = e.source === selectedId || e.target === selectedId
       return incident ? e : { ...e, style: { ...(e.style ?? {}), opacity: 0.15 } }
     })
