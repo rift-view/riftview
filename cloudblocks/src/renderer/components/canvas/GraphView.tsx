@@ -64,57 +64,12 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
       })
     })
 
-  // CloudFront → origin edges + CloudFront → ACM cert edges
-  const s3Nodes     = nodes.filter((n) => n.type === 's3')
-  const albNodes    = nodes.filter((n) => n.type === 'alb')
-  const apigwNodes  = nodes.filter((n) => n.type === 'apigw')
+  // CloudFront → ACM cert edges
   const acmNodes    = nodes.filter((n) => n.type === 'acm')
   const cfNodes     = nodes.filter((n) => n.type === 'cloudfront')
   const lambdaNodes = nodes.filter((n) => n.type === 'lambda')
 
   cfNodes.forEach((cf) => {
-    const origins = (cf.metadata.origins ?? []) as Array<{ id: string; domainName: string; type: string }>
-
-    // Origin edges
-    origins.forEach((origin) => {
-      const s3Match = s3Nodes.find((s) => origin.domainName.startsWith(s.id + '.'))
-      if (s3Match) {
-        edges.push({
-          id:     `cf-origin-${cf.id}-${s3Match.id}`,
-          source: cf.id,
-          target: s3Match.id,
-          type:   'step',
-          style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
-        })
-        return
-      }
-      const albMatch = albNodes.find((a) => origin.domainName === (a.metadata.dnsName as string))
-      if (albMatch) {
-        edges.push({
-          id:     `cf-origin-${cf.id}-${albMatch.id}`,
-          source: cf.id,
-          target: albMatch.id,
-          type:   'step',
-          style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
-        })
-        return
-      }
-      // APIGW match: strip protocol from metadata.endpoint and compare to origin domainName
-      const apigwMatch = apigwNodes.find((a) => {
-        const endpoint = (a.metadata.endpoint as string | undefined) ?? ''
-        return endpoint.replace(/^https?:\/\//, '') === origin.domainName
-      })
-      if (apigwMatch) {
-        edges.push({
-          id:     `cf-origin-${cf.id}-${apigwMatch.id}`,
-          source: cf.id,
-          target: apigwMatch.id,
-          type:   'step',
-          style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
-        })
-      }
-    })
-
     // Cert edge (dotted)
     const certArn = cf.metadata.certArn as string | undefined
     if (certArn) {
