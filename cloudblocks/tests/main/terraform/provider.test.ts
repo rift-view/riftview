@@ -24,11 +24,14 @@ describe('buildLocalStackProvider', () => {
     const result = buildLocalStackProvider('us-east-1')
     expect(result).toContain('apigatewayv2')
     expect(result).toContain('dynamodb')
+    expect(result).toContain('ec2')
+    expect(result).toContain('iam')
     expect(result).toContain('lambda')
     expect(result).toContain('s3')
     expect(result).toContain('secretsmanager')
     expect(result).toContain('sns')
     expect(result).toContain('sqs')
+    expect(result).toContain('sts')
   })
 
   it('ends with a trailing newline so template body starts on new line', () => {

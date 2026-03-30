@@ -291,7 +291,6 @@ export function registerHandlers(win: BrowserWindow): void {
   ipcMain.handle(IPC.TERRAFORM_DEPLOY, async (_, hcl: string, region: string): Promise<TerraformDeployResult> => {
     // 1. Check binary
     try {
-      execFile('terraform', ['version'], { timeout: 5000 }, () => {})
       await execFileAsync('terraform', ['version'], { timeout: 5000 })
     } catch {
       return { status: 'not_found' }
