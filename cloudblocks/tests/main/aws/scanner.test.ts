@@ -78,4 +78,50 @@ describe('ResourceScanner', () => {
     expect(typeof scanner.stop).toBe('function')
     expect(typeof scanner.triggerManualScan).toBe('function')
   })
+
+  it('manual mode: start() does not set a repeating timer', () => {
+    vi.useFakeTimers()
+    const mockWin = { webContents: { send: vi.fn() } } as unknown as Electron.BrowserWindow
+    const scanner = new ResourceScanner('default', ['us-east-1'], undefined, mockWin, 'manual')
+    scanner.start()
+    // Advance time well beyond any interval — should not trigger additional scans
+    const sendBefore = (mockWin.webContents.send as ReturnType<typeof vi.fn>).mock.calls.length
+    vi.advanceTimersByTime(300_000)
+    const sendAfter = (mockWin.webContents.send as ReturnType<typeof vi.fn>).mock.calls.length
+    // Only the initial scan from start() should have fired — no additional interval ticks
+    expect(sendAfter).toBe(sendBefore)
+    scanner.stop()
+    vi.useRealTimers()
+  })
+
+  it('updateInterval switches from manual to timed', () => {
+    vi.useFakeTimers()
+    const mockWin = { webContents: { send: vi.fn() } } as unknown as Electron.BrowserWindow
+    const scanner = new ResourceScanner('default', ['us-east-1'], undefined, mockWin, 'manual')
+    scanner.start()
+    const sendAfterStart = (mockWin.webContents.send as ReturnType<typeof vi.fn>).mock.calls.length
+    // Switch to a 60s interval
+    scanner.updateInterval(60_000)
+    vi.advanceTimersByTime(60_000)
+    const sendAfterTick = (mockWin.webContents.send as ReturnType<typeof vi.fn>).mock.calls.length
+    // At least one additional scan should have fired after the interval tick
+    expect(sendAfterTick).toBeGreaterThan(sendAfterStart)
+    scanner.stop()
+    vi.useRealTimers()
+  })
+
+  it('updateInterval to manual stops the existing timer', () => {
+    vi.useFakeTimers()
+    const mockWin = { webContents: { send: vi.fn() } } as unknown as Electron.BrowserWindow
+    const scanner = new ResourceScanner('default', ['us-east-1'], undefined, mockWin, 60_000)
+    scanner.start()
+    // Switch to manual — no more interval scans
+    scanner.updateInterval('manual')
+    const sendAfterSwitch = (mockWin.webContents.send as ReturnType<typeof vi.fn>).mock.calls.length
+    vi.advanceTimersByTime(300_000)
+    const sendAfterWait = (mockWin.webContents.send as ReturnType<typeof vi.fn>).mock.calls.length
+    expect(sendAfterWait).toBe(sendAfterSwitch)
+    scanner.stop()
+    vi.useRealTimers()
+  })
 })

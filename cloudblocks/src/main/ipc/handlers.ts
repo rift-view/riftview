@@ -288,7 +288,7 @@ export function registerHandlers(win: BrowserWindow): void {
   })
 
   // Terraform LocalStack deploy — write config to temp dir, run init + apply
-  ipcMain.handle(IPC.TERRAFORM_DEPLOY, async (_, hcl: string, region: string): Promise<TerraformDeployResult> => {
+  ipcMain.handle(IPC.TERRAFORM_DEPLOY, async (_, hcl: string, region: string, endpoint = 'http://localhost:4566'): Promise<TerraformDeployResult> => {
     // 1. Check binary
     try {
       await execFileAsync('terraform', ['version'], { timeout: 5000 })
@@ -300,22 +300,22 @@ export function registerHandlers(win: BrowserWindow): void {
     const deployDir = path.join(app.getPath('userData'), 'terraform-deployments', randomUUID())
     await fsp.mkdir(deployDir, { recursive: true })
     const configPath = path.join(deployDir, 'main.tf')
-    await fsp.writeFile(configPath, buildLocalStackProvider(region) + '\n' + hcl, 'utf-8')
+    await fsp.writeFile(configPath, buildLocalStackProvider(region, endpoint) + '\n' + hcl, 'utf-8')
 
-    const opts = { cwd: deployDir, maxBuffer: 10 * 1024 * 1024 }
+    const baseOpts = { cwd: deployDir, maxBuffer: 10 * 1024 * 1024 }
     let output = ''
 
     try {
       // 3. terraform init
       const initResult = await execFileAsync('terraform', [
         'init', '-input=false', '-no-color',
-      ], opts)
+      ], { ...baseOpts, timeout: 3 * 60 * 1000 })
       output += initResult.stdout + initResult.stderr
 
       // 4. terraform apply
       const applyResult = await execFileAsync('terraform', [
         'apply', '-auto-approve', '-no-color',
-      ], opts)
+      ], { ...baseOpts, timeout: 5 * 60 * 1000 })
       output += applyResult.stdout + applyResult.stderr
 
       // 5. Cleanup on success
