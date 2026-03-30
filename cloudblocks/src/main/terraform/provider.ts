@@ -1,4 +1,4 @@
-export function buildLocalStackProvider(region: string): string {
+export function buildLocalStackProvider(region: string, endpoint = 'http://localhost:4566'): string {
   return `terraform {
   required_providers {
     aws = {
@@ -17,16 +17,16 @@ provider "aws" {
   skip_requesting_account_id  = true
 
   endpoints {
-    apigatewayv2   = "http://localhost:4566"
-    dynamodb       = "http://localhost:4566"
-    ec2            = "http://localhost:4566"
-    iam            = "http://localhost:4566"
-    lambda         = "http://localhost:4566"
-    s3             = "http://localhost:4566"
-    secretsmanager = "http://localhost:4566"
-    sns            = "http://localhost:4566"
-    sqs            = "http://localhost:4566"
-    sts            = "http://localhost:4566"
+    apigatewayv2   = "${endpoint}"
+    dynamodb       = "${endpoint}"
+    ec2            = "${endpoint}"
+    iam            = "${endpoint}"
+    lambda         = "${endpoint}"
+    s3             = "${endpoint}"
+    secretsmanager = "${endpoint}"
+    sns            = "${endpoint}"
+    sqs            = "${endpoint}"
+    sts            = "${endpoint}"
   }
 }
 

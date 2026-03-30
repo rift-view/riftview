@@ -8,7 +8,7 @@ import { pluginRegistry } from '../plugin/index'
 // pluginRegistry.activateAll() must be called before starting the scanner.
 // scanner.ts never calls activateAll — it only calls scanAll() per region.
 
-const POLL_INTERVAL_MS = 30_000
+const DEFAULT_POLL_INTERVAL_MS = 30_000
 
 // Computes the diff between previous and next resource snapshots.
 // Exported for unit testing — scanner.ts is the only caller in production.
@@ -47,17 +47,23 @@ export function computeDelta(prev: CloudNode[], next: CloudNode[]): ScanDelta {
 export class ResourceScanner {
   private timer: NodeJS.Timeout | null = null
   private currentNodes: CloudNode[] = []
+  private intervalMs: number | 'manual'
 
   constructor(
     private profile: string,
     private regions: string[],
     private endpoint: string | undefined,
     private window: BrowserWindow,
-  ) {}
+    intervalMs: number | 'manual' = DEFAULT_POLL_INTERVAL_MS,
+  ) {
+    this.intervalMs = intervalMs
+  }
 
   start(): void {
     this.scan()
-    this.timer = setInterval(() => this.scan(), POLL_INTERVAL_MS)
+    if (this.intervalMs !== 'manual') {
+      this.timer = setInterval(() => this.scan(), this.intervalMs)
+    }
   }
 
   stop(): void {
@@ -73,6 +79,17 @@ export class ResourceScanner {
 
   updateRegions(regions: string[]): void {
     this.regions = regions
+  }
+
+  updateInterval(intervalMs: number | 'manual'): void {
+    this.intervalMs = intervalMs
+    if (this.timer) {
+      clearInterval(this.timer)
+      this.timer = null
+    }
+    if (intervalMs !== 'manual') {
+      this.timer = setInterval(() => this.scan(), intervalMs)
+    }
   }
 
   private async scan(): Promise<void> {
