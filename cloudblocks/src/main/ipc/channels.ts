@@ -19,6 +19,7 @@ export const IPC = {
   CF_DELETE:       'cloudfront:delete',     // invoke → { code: number }
   CF_INVALIDATE:   'cloudfront:invalidate', // invoke → { code: number }
   TERRAFORM_EXPORT: 'terraform:export',     // invoke → { success: boolean }
+  TERRAFORM_DEPLOY: 'terraform:deploy',    // invoke → TerraformDeployResult
   CANVAS_EXPORT_PNG: 'canvas:export-png',   // invoke → { success: boolean; filePath?: string }
   AWS_LIST_PROFILES: 'aws:list-profiles',   // invoke → string[]
   UPDATE_AVAILABLE: 'update:available',      // push → void (main → renderer)
