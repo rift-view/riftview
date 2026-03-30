@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react'
-import { ReactFlow, Background, BackgroundVariant, MiniMap, useReactFlow, type Node, type Edge, type NodeChange, type OnSelectionChangeParams } from '@xyflow/react'
+import { ReactFlow, Background, BackgroundVariant, MiniMap, useReactFlow, type Node, type Edge, type NodeChange, type OnSelectionChangeParams, type Connection } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
@@ -17,15 +17,17 @@ import { ApigwNode } from './nodes/ApigwNode'
 import { ApigwRouteNode } from './nodes/ApigwRouteNode'
 import { StickyNoteNode } from './nodes/StickyNoteNode'
 import { useStickyNoteCallbacks } from './nodes/useStickyNoteCallbacks'
-import type { CloudNode, EdgeType, IntegrationEdgeData } from '../../types/cloud'
+import type { CloudNode, EdgeType, IntegrationEdgeData, CustomEdge } from '../../types/cloud'
 import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
 import IntegrationEdge from './edges/IntegrationEdge'
+import UserEdge from './edges/UserEdge'
 import IntegrationLegend from './IntegrationLegend'
 
 const SNAP_GRID_SIZE = 20
 
 const EDGE_TYPES = {
   integration: IntegrationEdge,
+  user:        UserEdge,
 }
 
 const NODE_TYPES = {
@@ -447,11 +449,25 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const { screenToFlowPosition, fitView } = useReactFlow()
   const topologyPositions = useUIStore((s) => s.nodePositions.topology)
   const { onSave: onStickyNotesSave, onDelete: onStickyNoteDelete } = useStickyNoteCallbacks()
+  const customEdges    = useUIStore((s) => s.customEdges)
+  const addCustomEdge  = useUIStore((s) => s.addCustomEdge)
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
   }, [])
+
+  const onConnect = useCallback((connection: Connection) => {
+    if (!connection.source || !connection.target) return
+    const edge: CustomEdge = {
+      id:     `user-${connection.source}-${connection.target}-${Date.now()}`,
+      source: connection.source,
+      target: connection.target,
+      color:  '#8b5cf6',
+    }
+    addCustomEdge(edge)
+    void window.cloudblocks.saveCustomEdges(useUIStore.getState().customEdges)
+  }, [addCustomEdge])
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -753,12 +769,23 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         })
       : filtered
 
-    if (!selectedId) return withSubCollapse
-    return withSubCollapse.map((e) => {
-      const incident = e.source === selectedId || e.target === selectedId
-      return incident ? e : { ...e, style: { ...(e.style ?? {}), opacity: 0.15 } }
-    })
-  }, [allNodes, selectedId, showIntegrations])
+    const withOpacity = !selectedId
+      ? withSubCollapse
+      : withSubCollapse.map((e) => {
+          const incident = e.source === selectedId || e.target === selectedId
+          return incident ? e : { ...e, style: { ...(e.style ?? {}), opacity: 0.15 } }
+        })
+
+    // Custom user-drawn edges — always visible, never filtered by showIntegrations
+    const userEdges: Edge[] = customEdges.map((ce) => ({
+      id:     ce.id,
+      source: ce.source,
+      target: ce.target,
+      type:   'user',
+      data:   { isCustom: true as const, color: ce.color, label: ce.label },
+    }))
+    return [...withOpacity, ...userEdges]
+  }, [allNodes, selectedId, showIntegrations, customEdges])
 
   return (
     // Wrapper must receive a concrete height from its parent (flex-1) for ReactFlow to fill correctly
@@ -780,6 +807,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         }}
         onDragOver={onDragOver}
         onDrop={onDrop}
+        onConnect={onConnect}
         onNodesChange={onNodesChange}
         panOnScroll
         snapToGrid={snapToGrid}

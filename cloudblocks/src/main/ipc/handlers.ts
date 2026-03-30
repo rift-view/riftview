@@ -343,6 +343,21 @@ export function registerHandlers(win: BrowserWindow): void {
     fs.writeFileSync(file, JSON.stringify(data), 'utf-8')
   })
 
+  // Custom edges — persist to userData/custom-edges.json
+  ipcMain.handle(IPC.CUSTOM_EDGES_LOAD, () => {
+    const file = path.join(app.getPath('userData'), 'custom-edges.json')
+    try {
+      return JSON.parse(fs.readFileSync(file, 'utf-8'))
+    } catch {
+      return []
+    }
+  })
+
+  ipcMain.handle(IPC.CUSTOM_EDGES_SAVE, (_event, edges: unknown) => {
+    const file = path.join(app.getPath('userData'), 'custom-edges.json')
+    fsp.writeFile(file, JSON.stringify(edges, null, 2)).catch(() => {})
+  })
+
   // Terraform state import — open a native file dialog and parse the .tfstate
   ipcMain.handle(IPC.TFSTATE_IMPORT, async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog({

@@ -40,6 +40,8 @@ beforeEach(() => {
     notifyDrift:          vi.fn().mockResolvedValue(undefined),
     onPluginMetadata:     vi.fn().mockReturnValue(vi.fn()),
     terraformDeploy:      vi.fn().mockResolvedValue({ status: 'not_found' }),
+    loadCustomEdges:      vi.fn().mockResolvedValue([]),
+    saveCustomEdges:      vi.fn().mockResolvedValue(undefined),
   }
   useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })
