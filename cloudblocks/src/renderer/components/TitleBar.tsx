@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 import type { AwsProfile } from '../types/cloud'
@@ -20,6 +20,8 @@ export function TitleBar(): React.JSX.Element {
   const applyTidyLayout = useUIStore((s) => s.applyTidyLayout)
 
   const [showTemplates, setShowTemplates] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
 
   const driftMatched   = nodes.filter((n) => n.driftStatus === 'matched').length
   const driftUnmanaged = nodes.filter((n) => n.driftStatus === 'unmanaged').length
@@ -39,6 +41,17 @@ export function TitleBar(): React.JSX.Element {
     window.addEventListener('cloudblocks:show-templates', handler)
     return () => window.removeEventListener('cloudblocks:show-templates', handler)
   }, [])
+
+  useEffect(() => {
+    if (!exportOpen) return
+    function onClickOutside(e: MouseEvent): void {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [exportOpen])
 
   const handleProfileChange = (name: string): void => {
     if (name === LOCAL_PROFILE_NAME) {
@@ -152,7 +165,10 @@ export function TitleBar(): React.JSX.Element {
         <span className="text-[9px] font-mono" style={{ color: statusColor }}>{statusLabel}</span>
       </div>
 
-      {/* Templates button */}
+      {/* SEPARATOR */}
+      <div className="w-px h-4 flex-shrink-0" style={{ background: 'var(--cb-border-strong)' }} />
+
+      {/* Action group: Templates + Tidy */}
       <button
         onClick={() => setShowTemplates(true)}
         title="Starter templates"
@@ -162,17 +178,6 @@ export function TitleBar(): React.JSX.Element {
         Templates
       </button>
 
-      {/* TF Import button */}
-      <button
-        onClick={() => { void handleImportTfState() }}
-        title="Import .tfstate file"
-        className="text-[10px] font-mono px-2 py-0.5 rounded"
-        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)', cursor: 'pointer' }}
-      >
-        TF Import
-      </button>
-
-      {/* Tidy layout button */}
       <button
         onClick={handleTidy}
         title="Tidy — arrange nodes by service type"
@@ -189,6 +194,85 @@ export function TitleBar(): React.JSX.Element {
       >
         Tidy
       </button>
+
+      {/* SEPARATOR */}
+      <div className="w-px h-4 flex-shrink-0" style={{ background: 'var(--cb-border-strong)' }} />
+
+      {/* IO group: TF Import + Export dropdown */}
+      <button
+        onClick={() => { void handleImportTfState() }}
+        title="Import .tfstate file"
+        className="text-[10px] font-mono px-2 py-0.5 rounded"
+        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)', cursor: 'pointer' }}
+      >
+        TF Import
+      </button>
+
+      {/* Export dropdown */}
+      <div ref={exportRef} style={{ position: 'relative' }}>
+        <button
+          onClick={() => setExportOpen((o) => !o)}
+          title="Export"
+          className="text-[10px] font-mono px-2 py-0.5 rounded"
+          style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)', cursor: 'pointer' }}
+        >
+          ↓ Export ▾
+        </button>
+        {exportOpen && (
+          <div style={{
+            position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 200,
+            background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border-strong)',
+            borderRadius: 4, overflow: 'hidden', minWidth: 130,
+          }}>
+            <button
+              onClick={() => {
+                setExportOpen(false)
+                window.cloudblocks.exportTerraform(nodes).then((res) => {
+                  if (res.success) {
+                    if (res.skippedTypes && res.skippedTypes.length > 0) {
+                      useUIStore.getState().showToast(
+                        `Exported. Skipped: ${res.skippedTypes.join(', ')}`, 'error'
+                      )
+                    } else {
+                      useUIStore.getState().showToast('HCL exported', 'success')
+                    }
+                  }
+                }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
+              }}
+              disabled={nodes.length === 0}
+              style={{
+                display: 'block', width: '100%', textAlign: 'left',
+                background: 'none', border: 'none', borderBottom: '1px solid var(--cb-border)',
+                padding: '5px 10px', fontFamily: 'monospace', fontSize: 10,
+                color: nodes.length === 0 ? 'var(--cb-text-muted)' : 'var(--cb-text-secondary)',
+                cursor: nodes.length === 0 ? 'not-allowed' : 'pointer',
+              }}
+            >
+              ⬡ Terraform HCL
+            </button>
+            <button
+              onClick={() => {
+                setExportOpen(false)
+                window.cloudblocks.exportPng().then((res) => {
+                  if (res.success) useUIStore.getState().showToast('PNG exported', 'success')
+                  else useUIStore.getState().showToast('Export cancelled', 'error')
+                }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
+              }}
+              style={{
+                display: 'block', width: '100%', textAlign: 'left',
+                background: 'none', border: 'none',
+                padding: '5px 10px', fontFamily: 'monospace', fontSize: 10,
+                color: 'var(--cb-text-secondary)', cursor: 'pointer',
+              }}
+            >
+              ↓ PNG
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* SEPARATOR */}
+      <div className="w-px h-4 flex-shrink-0" style={{ background: 'var(--cb-border-strong)' }} />
 
       {/* Drift summary pill — shown after TF import */}
       {importedNodes.length > 0 && (
