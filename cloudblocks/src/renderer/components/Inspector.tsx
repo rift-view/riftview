@@ -118,26 +118,68 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
               </>
             )
           })()}
-          {selectedEdgeInfo.data && Object.keys(selectedEdgeInfo.data).filter((k) => k !== 'isIntegration').length > 0 && (
-            <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
-                METADATA
+          {(selectedEdgeInfo.data as { isCustom?: boolean } | undefined)?.isCustom ? (
+            <div className="mt-3">
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                CUSTOM EDGE
               </div>
-              {Object.entries(selectedEdgeInfo.data)
-                .filter(([k]) => k !== 'isIntegration')
-                .map(([k, v]) => (
-                  <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{fieldLabel(k)}</div>
-                    <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{String(v ?? '—')}</div>
+              <div className="mb-2">
+                <div className="text-[7px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>LABEL</div>
+                <input
+                  value={(selectedEdgeInfo.data as { label?: string } | undefined)?.label ?? ''}
+                  onChange={(e) => {
+                    useUIStore.getState().updateCustomEdgeLabel(selectedEdgeInfo.id, e.target.value)
+                    void window.cloudblocks.saveCustomEdges(useUIStore.getState().customEdges)
+                  }}
+                  placeholder="add label…"
+                  style={{
+                    fontSize: 9, fontFamily: 'monospace', width: '100%',
+                    background: 'var(--cb-bg-elevated)',
+                    border: '1px solid var(--cb-border)',
+                    color: 'var(--cb-text-primary)',
+                    borderRadius: 3, padding: '2px 5px', outline: 'none',
+                  }}
+                />
+              </div>
+              <button
+                onClick={() => {
+                  useUIStore.getState().removeCustomEdge(selectedEdgeInfo.id)
+                  void window.cloudblocks.saveCustomEdges(useUIStore.getState().customEdges)
+                  useUIStore.getState().selectEdge(null)
+                }}
+                style={{
+                  fontSize: 9, fontFamily: 'monospace', cursor: 'pointer',
+                  background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)',
+                  color: '#ef4444', borderRadius: 3, padding: '2px 8px', width: '100%',
+                }}
+              >
+                Delete edge
+              </button>
+            </div>
+          ) : (
+            <>
+              {selectedEdgeInfo.data && Object.keys(selectedEdgeInfo.data).filter((k) => k !== 'isIntegration').length > 0 && (
+                <div>
+                  <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                    METADATA
                   </div>
-                ))}
-            </div>
-          )}
-          {selectedEdgeInfo.label && (
-            <div className="mb-3">
-              <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>LABEL</div>
-              <div className="text-[9px]" style={{ color: 'var(--cb-text-primary)' }}>{selectedEdgeInfo.label}</div>
-            </div>
+                  {Object.entries(selectedEdgeInfo.data)
+                    .filter(([k]) => k !== 'isIntegration')
+                    .map(([k, v]) => (
+                      <div key={k} className="mb-1.5">
+                        <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{fieldLabel(k)}</div>
+                        <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{String(v ?? '—')}</div>
+                      </div>
+                    ))}
+                </div>
+              )}
+              {selectedEdgeInfo.label && (
+                <div className="mb-3">
+                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>LABEL</div>
+                  <div className="text-[9px]" style={{ color: 'var(--cb-text-primary)' }}>{selectedEdgeInfo.label}</div>
+                </div>
+              )}
+            </>
           )}
         </>
       ) : !node ? (

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { NodeType, CloudNode } from '../types/cloud'
+import type { NodeType, CloudNode, CustomEdge } from '../types/cloud'
 import type { NodeTypeMetadata } from '../types/plugin'
 
 export interface NodeFilter {
@@ -58,6 +58,7 @@ interface UIState {
   activeSidebarType:      NodeType | null
   pluginNodeTypes:        Record<string, NodeTypeMetadata>
   zoneSizes:              Record<string, { width: number; height: number }>
+  customEdges:            CustomEdge[]
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -99,6 +100,11 @@ interface UIState {
   setSidebarType:         (type: NodeType | null) => void
   setPluginNodeTypes:     (meta: Record<string, NodeTypeMetadata>) => void
   setZoneSize:            (id: string, size: { width: number; height: number }) => void
+  addCustomEdge:          (edge: CustomEdge) => void
+  removeCustomEdge:       (id: string) => void
+  updateCustomEdgeLabel:  (id: string, label: string) => void
+  updateCustomEdgeColor:  (id: string, color: CustomEdge['color']) => void
+  setCustomEdges:         (edges: CustomEdge[]) => void
 }
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -130,6 +136,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   activeSidebarType:    null,
   pluginNodeTypes:      {},
   zoneSizes:            {},
+  customEdges:          [],
 
   setView:             (view) => set({ view }),
   selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -252,4 +259,13 @@ export const useUIStore = create<UIState>((set, get) => ({
   setPluginNodeTypes: (meta) => set({ pluginNodeTypes: meta }),
   setZoneSize: (id, size) =>
     set((s) => ({ zoneSizes: { ...s.zoneSizes, [id]: size } })),
+  addCustomEdge: (edge) => set((s) => ({ customEdges: [...s.customEdges, edge] })),
+  removeCustomEdge: (id) => set((s) => ({ customEdges: s.customEdges.filter((e) => e.id !== id) })),
+  updateCustomEdgeLabel: (id, label) => set((s) => ({
+    customEdges: s.customEdges.map((e) => e.id === id ? { ...e, label } : e),
+  })),
+  updateCustomEdgeColor: (id, color) => set((s) => ({
+    customEdges: s.customEdges.map((e) => e.id === id ? { ...e, color } : e),
+  })),
+  setCustomEdges: (edges) => set({ customEdges: edges }),
 }))
