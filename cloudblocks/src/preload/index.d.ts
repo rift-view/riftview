@@ -21,6 +21,11 @@ interface Window {
     invalidateCloudFront(id: string, path: string): Promise<{ code: number }>
     deleteAcm(arn: string): Promise<{ code: number }>
     exportTerraform(nodes: import('../renderer/types/cloud').CloudNode[]): Promise<{ success: boolean; skippedTypes?: string[] }>
+    terraformDeploy(hcl: string, region: string): Promise<
+      | { status: 'success'; output: string }
+      | { status: 'error'; output: string }
+      | { status: 'not_found' }
+    >
     exportPng(): Promise<{ success: boolean; filePath?: string }>
     listAwsProfiles(): Promise<string[]>
     onUpdateAvailable(cb: () => void): () => void
