@@ -1,9 +1,11 @@
 import type { NodeProps } from '@xyflow/react'
 
 interface ApigwNodeData {
-  label:    string
-  endpoint?: string
-  dimmed?:  boolean
+  label:             string
+  endpoint?:         string
+  collapsed?:        boolean
+  onToggleCollapse?: () => void
+  dimmed?:           boolean
 }
 
 export function ApigwNode({ data }: NodeProps): React.JSX.Element {
@@ -42,6 +44,17 @@ export function ApigwNode({ data }: NodeProps): React.JSX.Element {
         <span style={{ color: '#c4b5fd', fontSize: 10, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {d.label}
         </span>
+        <button
+          onClick={(e) => { e.stopPropagation(); d.onToggleCollapse?.() }}
+          title={d.collapsed ? 'Expand routes' : 'Collapse routes'}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: '#c4b5fd', fontSize: 10, padding: '0 2px',
+            lineHeight: 1, flexShrink: 0,
+          }}
+        >
+          {d.collapsed ? '▸' : '▾'}
+        </button>
       </div>
     </div>
   )

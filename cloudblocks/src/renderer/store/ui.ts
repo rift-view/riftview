@@ -48,6 +48,7 @@ interface UIState {
   lockedNodes:        Set<string>
   collapsedSubnets:   Set<string>
   collapsedVpcs:      Set<string>
+  collapsedApigws:    Set<string>
   showAbout:          boolean
   showSettings:       boolean
   annotations:        Record<string, string>
@@ -80,6 +81,8 @@ interface UIState {
   isSubnetCollapsed:    (id: string) => boolean
   toggleVpc:            (id: string) => void
   isVpcCollapsed:       (id: string) => boolean
+  toggleApigw:          (id: string) => void
+  isApigwCollapsed:     (id: string) => boolean
   applyTidyLayout:      (view: 'topology' | 'graph', positions: Record<string, { x: number; y: number }>) => void
   setShowAbout:         (v: boolean) => void
   setShowSettings:      (v: boolean) => void
@@ -126,6 +129,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   lockedNodes:       new Set<string>(),
   collapsedSubnets:  new Set<string>(),
   collapsedVpcs:     new Set<string>(),
+  collapsedApigws:   new Set<string>(),
   showAbout:         false,
   showSettings:      false,
   annotations:       {},
@@ -216,6 +220,14 @@ export const useUIStore = create<UIState>((set, get) => ({
       return { collapsedVpcs: next }
     }),
   isVpcCollapsed: (id) => get().collapsedVpcs.has(id),
+  toggleApigw: (id) =>
+    set((s) => {
+      const next = new Set(s.collapsedApigws)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return { collapsedApigws: next }
+    }),
+  isApigwCollapsed: (id) => get().collapsedApigws.has(id),
   applyTidyLayout: (view, positions) =>
     set((s) => ({
       nodePositions: {

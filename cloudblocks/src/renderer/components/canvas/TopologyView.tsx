@@ -87,6 +87,7 @@ function buildFlowNodes(
   highlightedIds: Set<string> | null,
   collapsedSubnets: Set<string>,
   collapsedVpcs: Set<string>,
+  collapsedApigws: Set<string>,
   selectedRegions: string[],
   showRegionIndicators: boolean,
   regionColorMap: Record<string, string>,
@@ -271,11 +272,16 @@ function buildFlowNodes(
   })
 
   apigws.forEach((api) => {
-    const routes = routesByApi.get(api.id) ?? []
-    const longestLabel = routes.reduce((max, r) => Math.max(max, r.label.length), 0)
+    const allRoutes = routesByApi.get(api.id) ?? []
+    const isCollapsed = collapsedApigws.has(api.id)
+    const routes = isCollapsed ? [] : allRoutes
+    // longestLabel always computed from allRoutes so width doesn't shrink on collapse
+    const longestLabel = Math.max(16, ...allRoutes.map((r) => r.label.length))
     const apigwW = Math.max(APIGW_MIN_W, longestLabel * 7 + APIGW_PAD * 2)
-    const apigwH = APIGW_HEADER + APIGW_PAD + routes.length * (APIGW_ROUTE_H + APIGW_ROUTE_GAP) + APIGW_PAD
-    const apigwHFinal = Math.max(80, apigwH)
+    const apigwH = isCollapsed
+      ? APIGW_HEADER
+      : APIGW_HEADER + APIGW_PAD + allRoutes.length * (APIGW_ROUTE_H + APIGW_ROUTE_GAP) + APIGW_PAD
+    const apigwHFinal = Math.max(isCollapsed ? APIGW_HEADER : 80, apigwH)
     maxVpcHeight = Math.max(maxVpcHeight, apigwHFinal)
 
     nodes.push({
@@ -283,7 +289,12 @@ function buildFlowNodes(
       type:     'apigw',
       position: { x: vpcX, y: vpcY },
       style:    { width: apigwW, height: apigwHFinal },
-      data:     { label: api.label, endpoint: api.metadata.endpoint as string | undefined, dimmed: highlightedIds !== null && !highlightedIds.has(api.id) },
+      data:     {
+        label: api.label,
+        endpoint: api.metadata.endpoint as string | undefined,
+        collapsed: isCollapsed,
+        dimmed: highlightedIds !== null && !highlightedIds.has(api.id),
+      },
       selected: api.id === selectedId,
     })
 
@@ -438,6 +449,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const toggleSubnet       = useUIStore((s) => s.toggleSubnet)
   const collapsedVpcs      = useUIStore((s) => s.collapsedVpcs)
   const toggleVpc          = useUIStore((s) => s.toggleVpc)
+  const collapsedApigws    = useUIStore((s) => s.collapsedApigws)
+  const toggleApigw        = useUIStore((s) => s.toggleApigw)
   const annotations        = useUIStore((s) => s.annotations)
   const stickyNotes        = useUIStore((s) => s.stickyNotes)
   const setNodePosition    = useUIStore((s) => s.setNodePosition)
@@ -520,7 +533,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   }, [allNodes, importedNodes, showRegionIndicators, selectedRegions])
 
   const flowNodes: Node[] = useMemo(() => {
-    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets, collapsedVpcs, selectedRegions, showRegionIndicators, regionColorMap, topologyPositions, zoneSizes)
+    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets, collapsedVpcs, collapsedApigws, selectedRegions, showRegionIndicators, regionColorMap, topologyPositions, zoneSizes)
     const mapped = raw.map((n) => {
       const isMultiSelected = selectedNodeIds.size > 1 && selectedNodeIds.has(n.id)
       const isLocked = lockedNodes.has(n.id)
@@ -572,6 +585,22 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
           data: {
             ...n.data as object,
             onToggleCollapse: () => toggleVpc(n.id),
+            annotation: annotations[n.id],
+            ...(isLocked ? { locked: true } : {}),
+          },
+        }
+      }
+
+      // For top-level apigw nodes, inject toggleApigw callback
+      if (n.type === 'apigw') {
+        return {
+          ...n,
+          position,
+          ...lockProps,
+          style: { ...n.style, ...multiSelectStyle },
+          data: {
+            ...n.data as object,
+            onToggleCollapse: () => toggleApigw(n.id),
             annotation: annotations[n.id],
             ...(isLocked ? { locked: true } : {}),
           },
@@ -660,7 +689,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       const d = fn.data as { driftStatus?: string }
       return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
     })
-  }, [allNodes, selectedId, selectedNodeIds, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, collapsedVpcs, toggleVpc, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete, zoneSizes, setZoneSize])
+  }, [allNodes, selectedId, selectedNodeIds, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, collapsedVpcs, toggleVpc, collapsedApigws, toggleApigw, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete, zoneSizes, setZoneSize])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
