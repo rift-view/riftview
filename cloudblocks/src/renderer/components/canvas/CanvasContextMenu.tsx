@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useUIStore } from '../../store/ui'
+import { useCloudStore } from '../../store/cloud'
+import { computeTidyLayout } from '../../utils/tidyLayout'
 
 interface Props {
   x: number
@@ -22,12 +24,15 @@ const CREATABLE = [
 
 export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
   const setActiveCreate = useUIStore((s) => s.setActiveCreate)
+  const view            = useUIStore((s) => s.view)
+  const applyTidyLayout = useUIStore((s) => s.applyTidyLayout)
+  const nodes           = useCloudStore((s) => s.nodes)
   const [pendingResource, setPendingResource] = useState<string | null>(null)
 
   const menuStyle: React.CSSProperties = {
     position: 'fixed', top: y, left: x,
     background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-accent)', borderRadius: '4px',
-    fontFamily: 'monospace', fontSize: '10px', zIndex: 1000, minWidth: '160px',
+    fontFamily: 'monospace', fontSize: '10px', zIndex: 1000, minWidth: '165px',
     boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
   }
 
@@ -43,9 +48,18 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
   const itemStyle: React.CSSProperties = { padding: '5px 10px', color: 'var(--cb-text-secondary)', cursor: 'pointer' }
   const sectionLabel: React.CSSProperties = { padding: '4px 10px 2px', color: 'var(--cb-text-muted)', fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' }
 
-  function selectView(view: 'topology' | 'graph'): void {
+  function handleTidy(): void {
+    if (nodes.length === 0) return
+    const viewKey = view === 'topology' ? 'topology' : 'graph'
+    const positions = computeTidyLayout(nodes, viewKey)
+    applyTidyLayout(viewKey, positions)
+    window.dispatchEvent(new CustomEvent('cloudblocks:fitview'))
+    onClose()
+  }
+
+  function selectView(v: 'topology' | 'graph'): void {
     if (!pendingResource) return
-    setActiveCreate({ resource: pendingResource, view })
+    setActiveCreate({ resource: pendingResource, view: v })
     onClose()
   }
 
@@ -59,6 +73,26 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
       <div style={menuStyle}>
         {!pendingResource ? (
           <>
+            {/* Canvas section */}
+            <div style={sectionLabel}>Canvas</div>
+            <div
+              style={itemStyle}
+              onClick={() => { window.dispatchEvent(new CustomEvent('cloudblocks:add-sticky-note')); onClose() }}
+              onMouseEnter={hoverOn}
+              onMouseLeave={hoverOff}
+            >
+              ✎ &nbsp;Add Note
+            </div>
+            <div
+              style={{ ...itemStyle, borderBottom: '1px solid var(--cb-border-strong)' }}
+              onClick={handleTidy}
+              onMouseEnter={hoverOn}
+              onMouseLeave={hoverOff}
+            >
+              ⊞ &nbsp;Tidy Layout
+            </div>
+
+            {/* Create section */}
             <div style={sectionLabel}>Create Resource</div>
             {CREATABLE.map((item) => (
               <div
