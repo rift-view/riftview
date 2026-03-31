@@ -61,15 +61,15 @@ describe('Sidebar scan error badges', () => {
     expect(badges).toHaveLength(2)
   })
 
-  it('shows ⚠ on the Parameters section header even when no SSM params exist', () => {
+  it('shows ⚠ SSM error inside Management category even when no SSM params exist', () => {
     useCloudStore.setState({
       nodes: [],  // no ssm-param nodes → ssmGroups will be empty
       scanErrors: [{ service: 'ssm', region: 'us-east-1', message: 'AccessDenied' }],
     })
     render(<Sidebar />)
-    // Parameters header must render
-    expect(screen.getByText('Parameters')).toBeInTheDocument()
-    // ⚠ badge must also be present
+    // SSM is now grouped under the Management category header
+    expect(screen.getByText(/⊟ Management/i)).toBeInTheDocument()
+    // ⚠ badge inside Management must still be present (with full error as title)
     const badge = screen.getByTitle('[ssm] us-east-1 — AccessDenied')
     expect(badge).toBeInTheDocument()
   })

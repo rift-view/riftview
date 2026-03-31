@@ -6,36 +6,63 @@ import type { NodeType, CloudNode } from '../types/cloud'
 import SidebarFilterDialog from './modals/SidebarFilterDialog'
 import { SCAN_KEY_TO_TYPE } from '../utils/scanKeyMap'
 
-const TYPE_LABELS: Record<string, string> = {
-  vpc: 'VPC', ec2: 'EC2', rds: 'RDS', s3: 'S3', lambda: 'Lambda',
-  alb: 'ALB', 'security-group': 'Security Group', igw: 'IGW',
-}
+type ServiceDef = { type: NodeType; label: string; hasCreate: boolean; resource?: string }
 
-const SERVICES: { type: NodeType; label: string; hasCreate: boolean; resource?: string }[] = [
-  { type: 'vpc',            label: 'VPC',             hasCreate: true },
-  { type: 'ec2',            label: 'EC2',             hasCreate: true },
-  { type: 'rds',            label: 'RDS',             hasCreate: true },
-  { type: 's3',             label: 'S3',              hasCreate: true },
-  { type: 'lambda',         label: 'Lambda',          hasCreate: true },
-  { type: 'alb',            label: 'ALB',             hasCreate: true },
-  { type: 'security-group', label: 'Security Group',  hasCreate: true,  resource: 'sg' },
-  { type: 'acm',            label: 'ACM',             hasCreate: true },
-  { type: 'cloudfront',     label: 'CloudFront',      hasCreate: true },
-  { type: 'apigw',          label: 'API Gateway',     hasCreate: true },
-  { type: 'sqs',            label: 'SQS',             hasCreate: true },
-  { type: 'sns',            label: 'SNS',             hasCreate: true },
-  { type: 'dynamo',         label: 'DynamoDB',        hasCreate: true },
-  { type: 'secret',         label: 'Secrets Manager', hasCreate: true },
-  { type: 'ecr-repo',       label: 'ECR',             hasCreate: true,  resource: 'ecr' },
-  { type: 'sfn',            label: 'Step Functions',  hasCreate: true },
-  { type: 'eventbridge-bus', label: 'EventBridge',   hasCreate: true },
-  { type: 'igw',            label: 'IGW',             hasCreate: false },
-  { type: 'subnet',         label: 'Subnet',          hasCreate: false },
-  { type: 'nat-gateway',    label: 'NAT Gateway',     hasCreate: false },
-  { type: 'r53-zone',       label: 'Route 53',        hasCreate: false },
-  { type: 'apigw-route',    label: 'API Route',       hasCreate: false },
+const CATEGORIES: { label: string; services: ServiceDef[] }[] = [
+  { label: 'Compute', services: [
+    { type: 'ec2',    label: 'EC2',    hasCreate: true },
+    { type: 'lambda', label: 'Lambda', hasCreate: true },
+  ]},
+  { label: 'Networking', services: [
+    { type: 'vpc',            label: 'VPC',            hasCreate: true },
+    { type: 'subnet',         label: 'Subnet',         hasCreate: false },
+    { type: 'security-group', label: 'Security Group', hasCreate: true, resource: 'sg' },
+    { type: 'igw',            label: 'IGW',            hasCreate: false },
+    { type: 'nat-gateway',    label: 'NAT Gateway',    hasCreate: false },
+  ]},
+  { label: 'Storage', services: [
+    { type: 's3', label: 'S3', hasCreate: true },
+  ]},
+  { label: 'Database', services: [
+    { type: 'rds',    label: 'RDS',      hasCreate: true },
+    { type: 'dynamo', label: 'DynamoDB', hasCreate: true },
+  ]},
+  { label: 'Messaging', services: [
+    { type: 'sqs',             label: 'SQS',         hasCreate: true },
+    { type: 'sns',             label: 'SNS',         hasCreate: true },
+    { type: 'eventbridge-bus', label: 'EventBridge', hasCreate: true },
+  ]},
+  { label: 'Edge & API', services: [
+    { type: 'cloudfront',  label: 'CloudFront',  hasCreate: true },
+    { type: 'apigw',       label: 'API Gateway', hasCreate: true },
+    { type: 'apigw-route', label: 'API Route',   hasCreate: false },
+  ]},
+  { label: 'Security', services: [
+    { type: 'acm',    label: 'ACM',             hasCreate: true },
+    { type: 'secret', label: 'Secrets Manager', hasCreate: true },
+  ]},
+  { label: 'Management', services: [] }, // SSM only — rendered via ssmGroups below
+  { label: 'Orchestration', services: [
+    { type: 'sfn', label: 'Step Functions', hasCreate: true },
+  ]},
+  { label: 'Containers', services: [
+    { type: 'ecr-repo', label: 'ECR', hasCreate: true, resource: 'ecr' },
+  ]},
+  { label: 'Load Balancing', services: [
+    { type: 'alb', label: 'ALB', hasCreate: true },
+  ]},
+  { label: 'DNS', services: [
+    { type: 'r53-zone', label: 'Route 53', hasCreate: false },
+  ]},
 ]
 
+function getTypeLabel(type: NodeType): string {
+  for (const cat of CATEGORIES) {
+    const svc = cat.services.find((s) => s.type === type)
+    if (svc) return svc.label
+  }
+  return type.toUpperCase()
+}
 
 function getSsmPrefix(label: string): string {
   if (!label.startsWith('/')) return '(ungrouped)'
@@ -54,19 +81,31 @@ export function Sidebar(): React.JSX.Element {
   const setView           = useUIStore((s) => s.setView)
   const expandedSsmGroups = useUIStore((s) => s.expandedSsmGroups)
   const toggleSsmGroup    = useUIStore((s) => s.toggleSsmGroup)
-  const activeSidebarType  = useUIStore((s) => s.activeSidebarType)
-  const addFilter          = useUIStore((s) => s.addFilter)
-  const removeFilter       = useUIStore((s) => s.removeFilter)
-  const setSidebarType     = useUIStore((s) => s.setSidebarType)
+  const activeSidebarType = useUIStore((s) => s.activeSidebarType)
+  const addFilter         = useUIStore((s) => s.addFilter)
+  const removeFilter      = useUIStore((s) => s.removeFilter)
+  const setSidebarType    = useUIStore((s) => s.setSidebarType)
   const nodes             = useCloudStore((s) => s.nodes)
   const scanErrors        = useCloudStore((s) => s.scanErrors)
   const settings          = useCloudStore((s) => s.settings)
   const setCommandPreview = useCliStore((s) => s.setCommandPreview)
   const setPendingCommand = useCliStore((s) => s.setPendingCommand)
-
   const pluginNodeTypes   = useUIStore((s) => s.pluginNodeTypes)
 
   const [filterTarget, setFilterTarget] = useState<NodeType | null>(null)
+
+  // All categories start expanded
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    () => new Set(CATEGORIES.map((c) => c.label))
+  )
+  function toggleCategory(label: string): void {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev)
+      if (next.has(label)) next.delete(label)
+      else next.add(label)
+      return next
+    })
+  }
 
   const sidebarFilterActive = activeSidebarType !== null
 
@@ -149,10 +188,6 @@ export function Sidebar(): React.JSX.Element {
       className="flex flex-col py-2 overflow-y-auto h-full"
       style={{ background: 'var(--cb-bg-panel)', borderRight: '1px solid var(--cb-border-strong)' }}
     >
-      <div className="px-2.5 text-[9px] uppercase tracking-widest mb-1" style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace' }}>
-        Services
-      </div>
-
       {nodes.length === 0 && (
         <div className="px-2.5 mt-2 mb-3" style={{ fontFamily: 'monospace' }}>
           <div className="text-[8px] leading-relaxed" style={{ color: 'var(--cb-text-muted)' }}>
@@ -164,124 +199,145 @@ export function Sidebar(): React.JSX.Element {
         </div>
       )}
 
-      {SERVICES.map((s) => {
-        const count        = counts[s.type] ?? 0
-        const isActive     = activeSidebarType === s.type
-        const errTooltip   = errorsByType.get(s.type)
-        const activeStyle: React.CSSProperties = {
-          ...serviceRowStyle,
-          border:     '1px solid var(--cb-accent)',
-          color:      'var(--cb-accent)',
-          background: 'var(--cb-bg-elevated)',
-          cursor:     'pointer',
-        }
+      {/* Service categories */}
+      {CATEGORIES.map((cat) => {
+        const isManagement = cat.label === 'Management'
+        const catCount = cat.services.reduce((sum, s) => sum + (counts[s.type] ?? 0), 0)
+          + (isManagement ? nodes.filter((n) => n.type === 'ssm-param').length : 0)
+        const isExpanded = expandedCategories.has(cat.label)
+
         return (
-          <div
-            key={s.type}
-            draggable={s.hasCreate}
-            onDragStart={s.hasCreate ? (e) => e.dataTransfer.setData('text/plain', s.resource ?? s.type) : undefined}
-            onClick={() => { if (isActive) { removeFilter('sidebar-type') } else setFilterTarget(s.type) }}
-            className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
-            style={{ ...(isActive ? activeStyle : serviceRowStyle), cursor: s.hasCreate ? 'grab' : 'default' }}
-          >
-            <span>
-              ⬡ {s.label}
-              {errTooltip && (
-                <span title={errTooltip} style={{ color: '#f59e0b', fontSize: 10, marginLeft: 4 }}>⚠</span>
-              )}
-            </span>
-            {count > 0 && (
-              <span style={badgeStyle}>
-                {count}
-              </span>
+          <div key={cat.label}>
+            {/* Category header */}
+            <div
+              onClick={() => toggleCategory(cat.label)}
+              className="flex items-center justify-between mx-1.5 mb-0.5 px-2 py-1 rounded cursor-pointer text-[9px] font-mono uppercase tracking-widest"
+              style={{ color: 'var(--cb-text-muted)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--cb-bg-hover)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <span>{isExpanded ? '⊟' : '⊞'} {cat.label}</span>
+              {catCount > 0 && <span style={badgeStyle}>{catCount}</span>}
+            </div>
+
+            {/* Category items */}
+            {isExpanded && (
+              <>
+                {cat.services.map((s) => {
+                  const count      = counts[s.type] ?? 0
+                  const isActive   = activeSidebarType === s.type
+                  const errTooltip = errorsByType.get(s.type)
+                  const activeStyle: React.CSSProperties = {
+                    ...serviceRowStyle,
+                    border:     '1px solid var(--cb-accent)',
+                    color:      'var(--cb-accent)',
+                    background: 'var(--cb-bg-elevated)',
+                    cursor:     'pointer',
+                  }
+                  return (
+                    <div
+                      key={s.type}
+                      draggable={s.hasCreate}
+                      onDragStart={s.hasCreate ? (e) => e.dataTransfer.setData('text/plain', s.resource ?? s.type) : undefined}
+                      onClick={() => { if (isActive) { removeFilter('sidebar-type') } else setFilterTarget(s.type) }}
+                      className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
+                      style={{ ...(isActive ? activeStyle : serviceRowStyle), cursor: s.hasCreate ? 'grab' : 'default', paddingLeft: 20 }}
+                    >
+                      <span>
+                        ⬡ {s.label}
+                        {errTooltip && (
+                          <span title={errTooltip} style={{ color: '#f59e0b', fontSize: 10, marginLeft: 4 }}>⚠</span>
+                        )}
+                      </span>
+                      {count > 0 && <span style={badgeStyle}>{count}</span>}
+                    </div>
+                  )
+                })}
+
+                {/* Management: SSM sub-groups rendered inline */}
+                {isManagement && (ssmGroups.length > 0 || ssmErrTooltip) && (
+                  <>
+                    {ssmErrTooltip && (
+                      <div className="mx-1.5 px-2.5 text-[9px] font-mono" style={{ color: '#f59e0b' }}>
+                        <span title={ssmErrTooltip}>⚠ SSM error</span>
+                      </div>
+                    )}
+                    {ssmGroups.map(({ prefix, nodes: groupNodes }) => {
+                      if (groupNodes.length === 1) {
+                        const node = groupNodes[0]
+                        return (
+                          <div
+                            key={node.id}
+                            draggable
+                            onDragStart={(e) => e.dataTransfer.setData('text/plain', 'ssm-param')}
+                            className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
+                            style={{ ...serviceRowStyle, paddingLeft: 20 }}
+                            title={node.label}
+                          >
+                            <span className="truncate">⬡ {node.label}</span>
+                          </div>
+                        )
+                      }
+
+                      const isGroupExpanded = expandedSsmGroups.has(prefix)
+                      return (
+                        <div key={prefix}>
+                          <div
+                            onClick={() => toggleSsmGroup(prefix)}
+                            className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-pointer"
+                            style={{ color: 'var(--cb-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 20 }}
+                          >
+                            <span className="truncate">{isGroupExpanded ? '⊟' : '⊞'} {prefix}/</span>
+                            <span style={badgeStyle}>{groupNodes.length}</span>
+                          </div>
+                          {isGroupExpanded && groupNodes
+                            .slice()
+                            .sort((a, b) => a.label.localeCompare(b.label))
+                            .map((node) => (
+                              <div
+                                key={node.id}
+                                draggable
+                                onDragStart={(e) => e.dataTransfer.setData('text/plain', 'ssm-param')}
+                                className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
+                                style={{ ...serviceRowStyle, paddingLeft: 28 }}
+                                title={node.label}
+                              >
+                                <span className="truncate">⬡ {node.label}</span>
+                              </div>
+                            ))}
+                        </div>
+                      )
+                    })}
+                  </>
+                )}
+              </>
             )}
           </div>
         )
       })}
 
-      {pluginServices.map(([type, meta]) => (
-        <div
-          key={type}
-          draggable
-          onDragStart={(e) => e.dataTransfer.setData('text/plain', type)}
-          onClick={() => { /* plugin types skip the filter dialog for now */ }}
-          className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
-          style={{ ...serviceRowStyle, cursor: 'grab' }}
-        >
-          <span>⬡ {meta.displayName}</span>
-        </div>
-      ))}
-
-      {(ssmGroups.length > 0 || ssmErrTooltip) && (
+      {/* Plugin services (always shown flat, no category) */}
+      {pluginServices.length > 0 && (
         <>
-          <div
-            className="px-2.5 text-[9px] uppercase tracking-widest mt-3 mb-1"
-            style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace', display: 'flex', alignItems: 'center', gap: 4 }}
-          >
-            <span>Parameters</span>
-            {ssmErrTooltip && (
-              <span title={ssmErrTooltip} style={{ color: '#f59e0b', fontSize: 10 }}>⚠</span>
-            )}
+          <div className="px-2.5 text-[9px] uppercase tracking-widest mt-3 mb-1" style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace' }}>
+            Plugins
           </div>
-
-          {ssmGroups.map(({ prefix, nodes: groupNodes }) => {
-            if (groupNodes.length === 1) {
-              // Single param — show ungrouped
-              const node = groupNodes[0]
-              return (
-                <div
-                  key={node.id}
-                  draggable
-                  onDragStart={(e) => e.dataTransfer.setData('text/plain', 'ssm-param')}
-                  className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
-                  style={serviceRowStyle}
-                  title={node.label}
-                >
-                  <span className="truncate">⬡ {node.label}</span>
-                </div>
-              )
-            }
-
-            const isExpanded = expandedSsmGroups.has(prefix)
-            return (
-              <div key={prefix}>
-                {/* Group header */}
-                <div
-                  onClick={() => toggleSsmGroup(prefix)}
-                  className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-pointer"
-                  style={{
-                    color:          'var(--cb-text-muted)',
-                    display:        'flex',
-                    alignItems:     'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <span className="truncate">{isExpanded ? '⊟' : '⊞'} {prefix}/</span>
-                  <span style={badgeStyle}>{groupNodes.length}</span>
-                </div>
-
-                {/* Expanded param rows */}
-                {isExpanded && groupNodes
-                  .slice()
-                  .sort((a, b) => a.label.localeCompare(b.label))
-                  .map((node) => (
-                    <div
-                      key={node.id}
-                      draggable
-                      onDragStart={(e) => e.dataTransfer.setData('text/plain', 'ssm-param')}
-                      className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
-                      style={{ ...serviceRowStyle, paddingLeft: 16 }}
-                      title={node.label}
-                    >
-                      <span className="truncate">⬡ {node.label}</span>
-                    </div>
-                  ))}
-              </div>
-            )
-          })}
+          {pluginServices.map(([type, meta]) => (
+            <div
+              key={type}
+              draggable
+              onDragStart={(e) => e.dataTransfer.setData('text/plain', type)}
+              onClick={() => { /* plugin types skip the filter dialog for now */ }}
+              className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
+              style={{ ...serviceRowStyle, cursor: 'grab' }}
+            >
+              <span>⬡ {meta.displayName}</span>
+            </div>
+          ))}
         </>
       )}
 
+      {/* Views */}
       <div className="px-2.5 text-[9px] uppercase tracking-widest mt-3 mb-1" style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace' }}>
         Views
       </div>
@@ -307,7 +363,7 @@ export function Sidebar(): React.JSX.Element {
           count={counts[filterTarget] ?? 0}
           onClose={() => setFilterTarget(null)}
           onConfirm={() => {
-            const label = TYPE_LABELS[filterTarget] ?? filterTarget.toUpperCase()
+            const label = getTypeLabel(filterTarget)
             const count = counts[filterTarget] ?? 0
             const type  = filterTarget
             addFilter({ id: 'sidebar-type', label, test: (n) => n.type === type })
