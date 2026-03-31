@@ -195,7 +195,7 @@ export default function App(): React.JSX.Element | null {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden" style={{ background: 'var(--cb-bg-app)' }}>
-      <TitleBar />
+      <TitleBar onScan={triggerScan} />
       <RegionBar />
       {errorMessage && <ErrorBanner message={errorMessage} onDismiss={() => setError(null)} />}
       <div className="flex flex-1 overflow-hidden">
@@ -204,7 +204,7 @@ export default function App(): React.JSX.Element | null {
         </div>
         <ResizeHandle onResize={(delta) => setSidebarWidth((w) => Math.max(80, Math.min(320, w + delta)))} />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          <CloudCanvas onScan={triggerScan} onNodeContextMenu={handleNodeContextMenu} />
+          <CloudCanvas onNodeContextMenu={handleNodeContextMenu} />
           <CommandDrawer />
         </div>
         <ResizeHandle onResize={(delta) => setInspectorWidth((w) => Math.max(140, Math.min(400, w - delta)))} />
