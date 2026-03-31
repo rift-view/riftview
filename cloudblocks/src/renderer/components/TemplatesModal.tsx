@@ -304,7 +304,7 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
     void window.cloudblocks.terraformDeploy(current.hcl, region, profile.endpoint).then((result) => {
       if (result.status === 'not_found') {
         setDeployState('error')
-        setDeployOutput('terraform binary not found. Install terraform and restart Cloudblocks.')
+        setDeployOutput('Terraform not installed — install it from terraform.io and restart Cloudblocks.')
       } else if (result.status === 'error') {
         setDeployState('error')
         setDeployOutput(result.output)
