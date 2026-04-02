@@ -27,7 +27,7 @@ import { promisify } from 'util'
 import { randomUUID } from 'crypto'
 import { buildLocalStackProvider } from '../terraform/provider'
 const execFileAsync = promisify(execFile)
-import { parseTfState } from '../aws/tfstate/parser'
+import { parseTfState, parseTfStateModules } from '../aws/tfstate/parser'
 import { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from '../aws/iam/fetcher'
 import type { IamAnalysisResult } from '../../renderer/types/iam'
 import type { NodeType } from '../../renderer/types/cloud'
@@ -56,6 +56,7 @@ let cliEngine:      CliEngine       | null = null
 let clients:        AwsClients      | null = null
 let activeProfile:  string = 'default'
 let activeEndpoint: string | undefined
+let activeRegions:  string[] = ['us-east-1']
 
 export function registerHandlers(win: BrowserWindow): void {
   // List available AWS profiles
@@ -376,6 +377,39 @@ export function registerHandlers(win: BrowserWindow): void {
 
   ipcMain.handle(IPC.TFSTATE_CLEAR, () => ({ ok: true }))
 
+  // List modules in a tfstate file — opens native file dialog, groups resources by module segment
+  ipcMain.handle(IPC.TFSTATE_LIST_MODULES, async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      filters: [{ name: 'Terraform State', extensions: ['tfstate', 'json'] }],
+      properties: ['openFile'],
+    })
+    if (canceled || !filePaths[0]) return { modules: [] }
+    try {
+      const raw = await fsp.readFile(filePaths[0], 'utf-8')
+      const modules = parseTfStateModules(raw)
+      return { modules }
+    } catch (err) {
+      return { modules: [], error: (err as Error).message }
+    }
+  })
+
+  // Save baseline — persist current cloud nodes as drift reference
+  ipcMain.handle(
+    IPC.TFSTATE_SAVE_BASELINE,
+    (_event, { nodes, profileName, region }: { nodes: CloudNode[]; profileName: string; region: string }): { ok: boolean } => {
+      try {
+        const dir = path.join(app.getPath('userData'), 'baselines')
+        fs.mkdirSync(dir, { recursive: true })
+        const file = path.join(dir, `${profileName}-${region}.json`)
+        fs.writeFileSync(file, JSON.stringify(nodes, null, 2), 'utf-8')
+        return { ok: true }
+      } catch (err) {
+        console.error('TFSTATE_SAVE_BASELINE error:', err)
+        return { ok: false }
+      }
+    }
+  )
+
   // List AWS credential profiles from ~/.aws/credentials
   ipcMain.handle(IPC.AWS_LIST_PROFILES, (): string[] => {
     const credFile = path.join(os.homedir(), '.aws', 'credentials')
@@ -440,6 +474,20 @@ export function registerHandlers(win: BrowserWindow): void {
     }
   })
 
+  // Retry a single scan service — re-activates credentials and re-runs all plugins
+  // for the primary active region. Returns ok:true if the named service no longer errors.
+  ipcMain.handle(IPC.SCAN_RETRY_SERVICE, async (_event, { service }: { service: string }): Promise<{ ok: boolean }> => {
+    try {
+      const region = activeRegions[0] ?? 'us-east-1'
+      await pluginRegistry.activateAll(activeProfile, [region], activeEndpoint)
+      const result = await pluginRegistry.scanAll(region)
+      const stillErrored = result.errors.some((e) => e.service === service)
+      return { ok: !stillErrored }
+    } catch {
+      return { ok: false }
+    }
+  })
+
   // Initialise engine for the default session
   cliEngine = new CliEngine(win)
 }
@@ -448,6 +496,7 @@ async function restartScanner(win: BrowserWindow, profile: string, regions: stri
   scanner?.stop()
   activeProfile  = profile
   activeEndpoint = endpoint
+  activeRegions  = regions
   // Activate plugin credentials for all requested regions before starting the scanner.
   // This must run once per profile/region change — not on every scan cycle.
   await pluginRegistry.activateAll(profile, regions, endpoint)

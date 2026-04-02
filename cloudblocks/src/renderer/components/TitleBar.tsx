@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
-import type { AwsProfile } from '../types/cloud'
+import type { AwsProfile, CloudNode } from '../types/cloud'
+import type { TfModuleInfo } from '../types/tfstate'
 import TemplatesModal from './TemplatesModal'
+import TfModuleSelectorModal from './modals/TfModuleSelectorModal'
 import { getMonthlyEstimate, formatPrice } from '../utils/pricing'
 
 const LOCAL_PROFILE_NAME     = 'local'
@@ -35,6 +37,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
 
   const [showTemplates, setShowTemplates] = useState(false)
   const [costHover, setCostHover]         = useState(false)
+  const [tfModules, setTfModules]         = useState<TfModuleInfo[] | null>(null)
   const importRef = useRef<HTMLDivElement>(null)
   const exportRef = useRef<HTMLDivElement>(null)
 
@@ -100,21 +103,46 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
     window.cloudblocks.selectProfile(newProfile)
   }
 
+  function applyImportedNodes(selectedNodes: CloudNode[]): void {
+    if (selectedNodes.length === 0) return
+    useCloudStore.getState().setImportedNodes(selectedNodes)
+    window.dispatchEvent(new CustomEvent('cloudblocks:fitview'))
+    useUIStore.getState().showToast(`Imported ${selectedNodes.length} resources from Terraform state`, 'success')
+  }
+
   async function handleImportTfState(): Promise<void> {
     setImportOpen(false)
     try {
-      const result = await window.cloudblocks.importTfState()
-      if (result.error) {
-        useUIStore.getState().showToast(result.error, 'error')
+      const result = await window.cloudblocks.listTfStateModules()
+      if (!result.modules || result.modules.length === 0) {
+        // No modules returned (dialog cancelled or empty) — fall back to legacy import
+        const fallback = await window.cloudblocks.importTfState()
+        if (fallback.error) {
+          useUIStore.getState().showToast(fallback.error, 'error')
+          return
+        }
+        applyImportedNodes(fallback.nodes)
         return
       }
-      if (result.nodes.length > 0) {
-        useCloudStore.getState().setImportedNodes(result.nodes)
-        useUIStore.getState().showToast(`Imported ${result.nodes.length} resources from Terraform state`, 'success')
+      if (result.modules.length === 1) {
+        // Single module — skip selector, import directly
+        applyImportedNodes(result.modules[0].nodes)
+        return
       }
+      // Multiple modules — open selector modal
+      setTfModules(result.modules)
     } catch {
       useUIStore.getState().showToast('Failed to import Terraform state', 'error')
     }
+  }
+
+  function handleModuleConfirm(selectedNodes: CloudNode[]): void {
+    setTfModules(null)
+    applyImportedNodes(selectedNodes)
+  }
+
+  function handleModuleCancel(): void {
+    setTfModules(null)
   }
 
   const statusColor = connStatus === 'connected' ? '#28c840' : connStatus === 'error' ? '#ff5f57' : '#febc2e'
@@ -390,6 +418,14 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
 
       {showTemplates && (
         <TemplatesModal onClose={() => setShowTemplates(false)} />
+      )}
+
+      {tfModules && (
+        <TfModuleSelectorModal
+          modules={tfModules}
+          onConfirm={handleModuleConfirm}
+          onCancel={handleModuleCancel}
+        />
       )}
     </div>
   )

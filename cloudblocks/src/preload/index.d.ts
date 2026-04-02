@@ -35,8 +35,11 @@ interface Window {
     saveCustomEdges(edges: import('../renderer/types/cloud').CustomEdge[]): Promise<void>
     importTfState(): Promise<{ nodes: import('../renderer/types/cloud').CloudNode[]; error?: string }>
     clearTfState(): Promise<{ ok: boolean }>
+    listTfStateModules(): Promise<{ modules: import('../renderer/types/tfstate').TfModuleInfo[]; error?: string }>
+    saveBaseline(nodes: import('../renderer/types/cloud').CloudNode[], profileName: string, region: string): Promise<{ ok: boolean }>
     analyzeIam(nodeId: string, nodeType: import('../renderer/types/cloud').NodeType, metadata: Record<string, unknown>): Promise<import('../renderer/types/iam').IamAnalysisResult>
     notifyDrift(count: number): Promise<void>
     onPluginMetadata(cb: (meta: Record<string, import('../renderer/types/plugin').NodeTypeMetadata>) => void): () => void
+    retryScanService(service: string): Promise<{ ok: boolean }>
   }
 }
