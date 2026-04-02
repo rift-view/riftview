@@ -3,6 +3,7 @@ import type { CloudNode } from '../types/cloud'
 export interface DeleteOptions {
   skipFinalSnapshot?: boolean
   force?: boolean
+  disableProtectionFirst?: boolean
 }
 
 export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): string[][] {
@@ -14,9 +15,14 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
     case 'security-group':
       return [['ec2', 'delete-security-group', '--group-id', node.id]]
     case 'rds': {
-      const args = ['rds', 'delete-db-instance', '--db-instance-identifier', node.id]
-      if (opts.skipFinalSnapshot) args.push('--skip-final-snapshot')
-      return [args]
+      const cmds: string[][] = []
+      if (opts.disableProtectionFirst) {
+        cmds.push(['rds', 'modify-db-instance', '--db-instance-identifier', node.id, '--no-deletion-protection'])
+      }
+      const deleteArgs = ['rds', 'delete-db-instance', '--db-instance-identifier', node.id]
+      if (opts.skipFinalSnapshot) deleteArgs.push('--skip-final-snapshot')
+      cmds.push(deleteArgs)
+      return cmds
     }
     case 's3': {
       const args = ['s3', 'rb', `s3://${node.id}`]
@@ -48,6 +54,8 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
     case 'sfn':
       return [['stepfunctions', 'delete-state-machine', '--state-machine-arn', node.id]]
     case 'eventbridge-bus':
+      // The default event bus cannot be deleted
+      if (node.label === 'default') return []
       return [['events', 'delete-event-bus', '--name', node.label]]
     case 'r53-zone':
       return [['route53', 'delete-hosted-zone', '--id', node.id]]
@@ -55,6 +63,8 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
       return [['ssm', 'delete-parameter', '--name', node.label]]
     case 'subnet':
       return [['ec2', 'delete-subnet', '--subnet-id', node.id]]
+    case 'nat-gateway':
+      return [['ec2', 'delete-nat-gateway', '--nat-gateway-id', node.id]]
     case 'igw': {
       const vpcId = node.parentId ?? (node.metadata.vpcId as string | undefined)
       if (vpcId) {
@@ -66,9 +76,9 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
       return [['ec2', 'delete-internet-gateway', '--internet-gateway-id', node.id]]
     }
     default:
-      // Intentionally partial: cloudfront, nat-gateway
-      // do not yet have delete commands wired up. Returning [] means the DeleteDialog will
-      // show no preview command, which is the intended safe behaviour until each is implemented.
+      // Intentionally partial: cloudfront does not yet have a delete command wired up.
+      // Returning [] means the DeleteDialog will show no preview command,
+      // which is the intended safe behaviour until each is implemented.
       return []
   }
 }
