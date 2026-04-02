@@ -32,6 +32,9 @@ export const IPC = {
   PLUGIN_METADATA:  'plugin:metadata',        // push: main → renderer
   CUSTOM_EDGES_SAVE: 'custom-edges:save',      // invoke → void
   CUSTOM_EDGES_LOAD: 'custom-edges:load',      // invoke → CustomEdge[]
+  TFSTATE_LIST_MODULES:  'tfstate:list-modules',   // invoke → { modules: TfModuleInfo[]; error?: string }
+  TFSTATE_SAVE_BASELINE: 'tfstate:save-baseline',  // invoke → { ok: boolean }
+  SCAN_RETRY_SERVICE:    'scan:retry-service',      // invoke → { ok: boolean }
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]

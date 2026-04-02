@@ -94,6 +94,7 @@ contextBridge.exposeInMainWorld('cloudblocks', {
   // Terraform state import
   importTfState: () => ipcRenderer.invoke(IPC.TFSTATE_IMPORT),
   clearTfState:  () => ipcRenderer.invoke(IPC.TFSTATE_CLEAR),
+  listTfStateModules: () => ipcRenderer.invoke(IPC.TFSTATE_LIST_MODULES),
 
   // IAM Least-Privilege Advisor
   analyzeIam: (nodeId: string, nodeType: NodeType, metadata: Record<string, unknown>) =>
@@ -108,4 +109,12 @@ contextBridge.exposeInMainWorld('cloudblocks', {
     ipcRenderer.on(IPC.PLUGIN_METADATA, handler)
     return () => ipcRenderer.removeListener(IPC.PLUGIN_METADATA, handler)
   },
+
+  // Save baseline for drift detection
+  saveBaseline: (nodes: import('../renderer/types/cloud').CloudNode[], profileName: string, region: string): Promise<{ ok: boolean }> =>
+    ipcRenderer.invoke(IPC.TFSTATE_SAVE_BASELINE, { nodes, profileName, region }),
+
+  // Retry a single scan service
+  retryScanService: (service: string): Promise<{ ok: boolean }> =>
+    ipcRenderer.invoke(IPC.SCAN_RETRY_SERVICE, { service }),
 })
