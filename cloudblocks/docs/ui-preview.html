@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html data-theme="dark" lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cloudblocks — UI Redesign Preview</title>
+  <style>
+    :root {
+      --cb-bg-app:         #080c14;
+      --cb-bg-panel:       #0d1117;
+      --cb-bg-elevated:    #1a2332;
+      --cb-bg-hover:       #1e2d40;
+      --cb-border:         #30363d;
+      --cb-border-strong:  #1e2d40;
+      --cb-text-primary:   #e6edf3;
+      --cb-text-secondary: #aaaaaa;
+      --cb-text-muted:     #666666;
+      --cb-accent:         #FF9900;
+      --cb-canvas-bg:      #080c14;
+      --cb-canvas-grid:    #1a1a2e;
+      --cb-minimap-bg:     #0d1320;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: monospace;
+      background: var(--cb-bg-app);
+      color: var(--cb-text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Shared buttons ── */
+    .btn {
+      font-family: monospace; font-size: 9px;
+      border-radius: 4px; padding: 2px 8px;
+      cursor: pointer; white-space: nowrap;
+      border: 1px solid var(--cb-border);
+      background: var(--cb-bg-elevated);
+      color: var(--cb-text-secondary);
+    }
+    .btn:hover { background: var(--cb-bg-hover); }
+    .btn-accent { border-color: var(--cb-accent); color: var(--cb-accent); }
+    .btn-active { border-color: #64b5f6; color: #64b5f6; }
+    .sep-v { width: 1px; height: 14px; background: #30363d; flex-shrink: 0; }
+
+    /* ────────────────────────────────────────────
+       TITLEBAR
+    ──────────────────────────────────────────── */
+    .titlebar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 12px; height: 36px; flex-shrink: 0;
+      background: var(--cb-bg-panel);
+      border-bottom: 1px solid var(--cb-border-strong);
+    }
+    .traffic-lights { display: flex; gap: 6px; margin-right: 8px; }
+    .traffic-lights span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green  { background: #28c840; }
+    .wordmark { font-size: 11px; font-weight: bold; letter-spacing: 0.2em; color: var(--cb-accent); }
+    .spacer { flex: 1; }
+
+    .profile-select {
+      font-family: monospace; font-size: 10px;
+      padding: 2px 8px; border-radius: 4px;
+      background: var(--cb-bg-elevated);
+      border: 1px solid var(--cb-accent);
+      color: var(--cb-accent); cursor: pointer;
+    }
+    .conn-status { display: flex; align-items: center; gap: 6px; }
+    .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: #28c840; box-shadow: 0 0 6px #28c840; }
+    .conn-label { font-size: 9px; color: #28c840; }
+    .scan-group { display: flex; align-items: center; gap: 8px; }
+    .scan-meta { font-size: 11px; color: var(--cb-text-muted); white-space: nowrap; }
+    .cost-pill {
+      font-size: 11px; color: #22c55e; white-space: nowrap;
+      padding: 1px 6px; border-radius: 3px;
+      border: 1px solid rgba(34,197,94,0.3);
+      background: rgba(34,197,94,0.05);
+    }
+
+    /* ── Dropdown wrapper (shared for Import + Export) ── */
+    .dropdown-wrap { position: relative; }
+    .dropdown-wrap input[type=checkbox] { display: none; }
+    .dropdown-wrap input:checked ~ .dropdown-menu { display: block; }
+    .dropdown-menu {
+      display: none;
+      position: absolute; top: calc(100% + 4px); left: 0;
+      background: var(--cb-bg-elevated);
+      border: 1px solid var(--cb-border-strong);
+      border-radius: 4px; overflow: hidden;
+      min-width: 150px; z-index: 200;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+    .dropdown-menu button {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; text-align: left;
+      background: none; border: none;
+      border-bottom: 1px solid var(--cb-border);
+      padding: 6px 12px;
+      font-family: monospace; font-size: 10px;
+      color: var(--cb-text-secondary); cursor: pointer;
+    }
+    .dropdown-menu button:last-child { border-bottom: none; }
+    .dropdown-menu button:hover { background: var(--cb-bg-hover); }
+    .dropdown-menu .menu-icon { font-size: 12px; width: 16px; text-align: center; }
+    .dropdown-menu .menu-label { flex: 1; }
+    .dropdown-menu .menu-sub { font-size: 9px; color: var(--cb-text-muted); }
+
+    /* ── Export dropdown (right-aligned) ── */
+    .dropdown-wrap.right .dropdown-menu { left: auto; right: 0; }
+
+    /* ────────────────────────────────────────────
+       DRIFT MODE STRIP
+    ──────────────────────────────────────────── */
+    .drift-strip {
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 12px; height: 28px; flex-shrink: 0;
+      background: rgba(239,68,68,0.06);
+      border-bottom: 1px solid rgba(239,68,68,0.2);
+    }
+    .drift-label { font-size: 10px; color: #ef4444; font-weight: bold; letter-spacing: 0.05em; }
+    .drift-counts { display: flex; align-items: center; gap: 10px; font-size: 10px; }
+    .drift-matched   { color: #22c55e; }
+    .drift-unmanaged { color: #f59e0b; }
+    .drift-missing   { color: #ef4444; }
+    .drift-actions { margin-left: auto; display: flex; gap: 6px; }
+
+    /* ────────────────────────────────────────────
+       MAIN AREA
+    ──────────────────────────────────────────── */
+    .main-area { display: flex; flex: 1; overflow: hidden; min-height: 480px; }
+
+    /* ────────────────────────────────────────────
+       SIDEBAR
+    ──────────────────────────────────────────── */
+    .sidebar {
+      width: 188px; flex-shrink: 0;
+      background: var(--cb-bg-panel);
+      border-right: 1px solid var(--cb-border-strong);
+      overflow-y: auto;
+    }
+
+    /* Category accordion */
+    .category { border-bottom: 1px solid var(--cb-border); }
+    .category input[type=checkbox] { display: none; }
+    .category-label {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 10px;
+      font-size: 9px; font-family: monospace;
+      color: var(--cb-text-muted);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      cursor: pointer; user-select: none;
+    }
+    .category-label:hover { background: var(--cb-bg-hover); color: var(--cb-text-secondary); }
+    .cat-right { display: flex; align-items: center; gap: 6px; }
+    .cat-total {
+      font-size: 9px; padding: 0px 5px;
+      border-radius: 8px;
+      background: var(--cb-bg-elevated);
+      border: 1px solid var(--cb-border);
+      color: var(--cb-text-muted);
+    }
+    .cat-chevron { font-size: 9px; transition: transform 0.15s; display: inline-block; }
+    .category input:checked ~ .category-label .cat-chevron { transform: rotate(90deg); }
+    .category-items { display: none; }
+    .category input:checked ~ .category-items { display: block; }
+
+    .sidebar-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 4px 10px 4px 18px;
+      font-size: 10px; color: var(--cb-text-secondary); cursor: pointer;
+    }
+    .sidebar-item:hover { background: var(--cb-bg-hover); }
+    .sidebar-badge {
+      font-size: 9px; padding: 0px 5px; border-radius: 8px;
+      background: var(--cb-bg-elevated);
+      border: 1px solid var(--cb-border);
+      color: var(--cb-text-muted);
+    }
+    .sidebar-item.active { color: var(--cb-text-primary); }
+    .sidebar-item.active .sidebar-badge { border-color: var(--cb-accent); color: var(--cb-accent); }
+
+    /* ────────────────────────────────────────────
+       CANVAS AREA
+    ──────────────────────────────────────────── */
+    .canvas-area {
+      flex: 1; position: relative; overflow: hidden;
+      background: var(--cb-canvas-bg);
+      background-image:
+        linear-gradient(var(--cb-canvas-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--cb-canvas-grid) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    /* ── Canvas toolbar (viewport only) ── */
+    .canvas-toolbar {
+      position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+      z-index: 10; display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border-radius: 6px;
+      background: var(--cb-minimap-bg);
+      border: 1px solid var(--cb-border-strong);
+    }
+    .slot-btn {
+      font-family: monospace; font-size: 9px;
+      border-radius: 4px; padding: 2px 6px;
+      cursor: pointer; min-width: 20px; text-align: center;
+      border: 1px solid var(--cb-border);
+      background: transparent; color: #444;
+    }
+    .slot-btn.saved { border-color: var(--cb-border-strong); color: var(--cb-text-secondary); }
+    .slot-btn.active { border-color: var(--cb-accent); color: var(--cb-accent); background: var(--cb-bg-elevated); }
+    .slot-name { font-size: 10px; color: var(--cb-text-muted); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── Mock VPC nodes ── */
+    .mock-vpc {
+      position: absolute; top: 80px; left: 50px;
+      width: 320px; height: 190px;
+      border: 1px solid #22d3ee44; border-radius: 6px;
+      background: rgba(34,211,238,0.04);
+    }
+    .mock-vpc-label {
+      position: absolute; top: -10px; left: 10px;
+      font-size: 9px; color: #22d3ee88;
+      background: var(--cb-canvas-bg); padding: 0 4px;
+    }
+    .mock-node {
+      position: absolute; width: 70px; height: 50px;
+      border-radius: 4px; background: var(--cb-bg-elevated);
+      border: 1px solid var(--cb-border-strong);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; flex-direction: column; gap: 3px;
+      color: var(--cb-text-muted);
+    }
+    .mock-node .icon { font-size: 14px; }
+    .node-ec2  { top: 35px; left: 25px;  border-color: #64b5f6; }
+    .node-s3   { top: 35px; left: 135px; border-color: #f59e0b; }
+    .node-rds  { top: 110px; left: 75px; border-color: #22c55e; }
+    .node-lambda { position: absolute; top: 80px; left: 420px; width: 70px; height: 50px;
+      border-radius: 4px; background: var(--cb-bg-elevated); border: 1px solid #8b5cf6;
+      display: flex; align-items: center; justify-content: center; font-size: 9px;
+      flex-direction: column; gap: 3px; color: var(--cb-text-muted); }
+
+    /* ── Context menu ── */
+    .context-menu {
+      position: absolute; top: 155px; left: 420px;
+      background: var(--cb-bg-elevated);
+      border: 1px solid var(--cb-border-strong);
+      border-radius: 5px; overflow: hidden; min-width: 165px;
+      z-index: 50; box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+    .ctx-header {
+      padding: 4px 12px; font-size: 9px;
+      color: var(--cb-text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--cb-border);
+    }
+    .ctx-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px; font-size: 10px;
+      color: var(--cb-text-secondary); cursor: pointer;
+      border-bottom: 1px solid var(--cb-border);
+    }
+    .ctx-item:last-child { border-bottom: none; }
+    .ctx-item:hover { background: var(--cb-bg-hover); }
+
+    /* ── Inspector ── */
+    .inspector {
+      width: 220px; flex-shrink: 0;
+      background: var(--cb-bg-panel);
+      border-left: 1px solid var(--cb-border-strong);
+      padding: 12px 10px;
+    }
+    .inspector-title { font-size: 10px; color: var(--cb-text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .inspector-name  { font-size: 13px; color: var(--cb-text-primary); margin-bottom: 4px; }
+    .inspector-type  { font-size: 10px; color: #64b5f6; margin-bottom: 12px; }
+    .inspector-row   { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid var(--cb-border); }
+    .inspector-key   { font-size: 9px; color: var(--cb-text-muted); }
+    .inspector-val   { font-size: 9px; color: var(--cb-text-secondary); }
+
+    /* ── Section labels (preview chrome only) ── */
+    .preview-label {
+      background: rgba(255,153,0,0.08);
+      border-top: 1px solid rgba(255,153,0,0.2);
+      padding: 3px 12px; font-size: 9px;
+      color: var(--cb-accent); letter-spacing: 0.12em;
+      text-transform: uppercase; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="preview-label">▸ TITLEBAR</div>
+
+  <!-- ═══════════════════════════════════════════ TITLEBAR ═══ -->
+  <div class="titlebar">
+    <div class="traffic-lights">
+      <span class="dot-red"></span>
+      <span class="dot-yellow"></span>
+      <span class="dot-green"></span>
+    </div>
+    <span class="wordmark">CLOUDBLOCKS</span>
+    <div class="spacer"></div>
+
+    <select class="profile-select">
+      <option>default</option>
+      <option>staging</option>
+      <option>─────────</option>
+      <option>⬡ Local</option>
+    </select>
+
+    <div class="conn-status">
+      <div class="conn-dot"></div>
+      <span class="conn-label">connected</span>
+    </div>
+
+    <div class="sep-v"></div>
+
+    <div class="scan-group">
+      <button class="btn btn-accent">⟳ Scan</button>
+      <span class="scan-meta">scanned 2m ago</span>
+      <span class="cost-pill">$34.20/mo</span>
+    </div>
+
+    <div class="sep-v"></div>
+
+    <!-- ↓ Import dropdown -->
+    <div class="dropdown-wrap">
+      <input type="checkbox" id="import-dd" />
+      <label class="btn" for="import-dd" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">
+        ↑ Import ▾
+      </label>
+      <div class="dropdown-menu">
+        <button>
+          <span class="menu-icon">⬡</span>
+          <span class="menu-label">Terraform</span>
+          <span class="menu-sub">.tfstate</span>
+        </button>
+        <button>
+          <span class="menu-icon">⊞</span>
+          <span class="menu-label">Templates</span>
+          <span class="menu-sub">starter blueprints</span>
+        </button>
+        <button>
+          <span class="menu-icon">⬡</span>
+          <span class="menu-label">SAM</span>
+          <span class="menu-sub">template.yaml</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ↓ Export dropdown -->
+    <div class="dropdown-wrap right">
+      <input type="checkbox" id="export-dd" />
+      <label class="btn" for="export-dd" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">
+        ↓ Export ▾
+      </label>
+      <div class="dropdown-menu">
+        <button>
+          <span class="menu-icon">⬡</span>
+          <span class="menu-label">Terraform HCL</span>
+        </button>
+        <button>
+          <span class="menu-icon">↓</span>
+          <span class="menu-label">PNG</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sep-v"></div>
+
+    <button class="btn">⚙</button>
+    <button class="btn">?</button>
+  </div>
+
+  <!-- ═══ DRIFT STRIP ═══ -->
+  <div class="preview-label">▸ DRIFT MODE STRIP (conditional — when TF state imported)</div>
+  <div class="drift-strip">
+    <span class="drift-label">⊘ DRIFT MODE</span>
+    <div class="drift-counts">
+      <span class="drift-matched">✓ 12 matched</span>
+      <span class="drift-unmanaged">! 3 unmanaged</span>
+      <span class="drift-missing">✕ 2 missing</span>
+    </div>
+    <div class="drift-actions">
+      <button class="btn" style="border-color:#ef4444;color:#ef4444">⊘ Drift only</button>
+      <button class="btn" style="border-color:#f59e0b;color:#f59e0b">Clear TF ×</button>
+    </div>
+  </div>
+
+  <!-- ═══ MAIN AREA ═══ -->
+  <div class="preview-label">▸ SIDEBAR (collapsible categories) + CANVAS TOOLBAR + CONTEXT MENU</div>
+  <div class="main-area">
+
+    <!-- ── SIDEBAR ── -->
+    <div class="sidebar">
+
+      <div class="category">
+        <input type="checkbox" id="cat-compute" checked />
+        <label class="category-label" for="cat-compute">
+          Compute
+          <div class="cat-right">
+            <span class="cat-total">6</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item active">EC2 Instance <span class="sidebar-badge" style="border-color:var(--cb-accent);color:var(--cb-accent)">4</span></div>
+          <div class="sidebar-item">Lambda <span class="sidebar-badge">2</span></div>
+        </div>
+      </div>
+
+      <div class="category">
+        <input type="checkbox" id="cat-networking" checked />
+        <label class="category-label" for="cat-networking">
+          Networking
+          <div class="cat-right">
+            <span class="cat-total">9</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item">VPC <span class="sidebar-badge">2</span></div>
+          <div class="sidebar-item">Subnet <span class="sidebar-badge">4</span></div>
+          <div class="sidebar-item">Security Group <span class="sidebar-badge">3</span></div>
+          <div class="sidebar-item">IGW <span class="sidebar-badge">2</span></div>
+          <div class="sidebar-item">NAT Gateway <span class="sidebar-badge">1</span></div>
+        </div>
+      </div>
+
+      <div class="category">
+        <input type="checkbox" id="cat-storage" />
+        <label class="category-label" for="cat-storage">
+          Storage
+          <div class="cat-right">
+            <span class="cat-total">7</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item">S3 Bucket <span class="sidebar-badge">7</span></div>
+        </div>
+      </div>
+
+      <div class="category">
+        <input type="checkbox" id="cat-database" />
+        <label class="category-label" for="cat-database">
+          Database
+          <div class="cat-right">
+            <span class="cat-total">4</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item">RDS <span class="sidebar-badge">2</span></div>
+          <div class="sidebar-item">DynamoDB <span class="sidebar-badge">2</span></div>
+        </div>
+      </div>
+
+      <div class="category">
+        <input type="checkbox" id="cat-messaging" />
+        <label class="category-label" for="cat-messaging">
+          Messaging
+          <div class="cat-right">
+            <span class="cat-total">7</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item">SQS <span class="sidebar-badge">3</span></div>
+          <div class="sidebar-item">SNS <span class="sidebar-badge">2</span></div>
+          <div class="sidebar-item">EventBridge <span class="sidebar-badge">2</span></div>
+        </div>
+      </div>
+
+      <div class="category">
+        <input type="checkbox" id="cat-edge" />
+        <label class="category-label" for="cat-edge">
+          Edge & API
+          <div class="cat-right">
+            <span class="cat-total">5</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item">CloudFront <span class="sidebar-badge">2</span></div>
+          <div class="sidebar-item">API Gateway <span class="sidebar-badge">2</span></div>
+          <div class="sidebar-item">API Route <span class="sidebar-badge">3</span></div>
+        </div>
+      </div>
+
+      <div class="category">
+        <input type="checkbox" id="cat-security" />
+        <label class="category-label" for="cat-security">
+          Security
+          <div class="cat-right">
+            <span class="cat-total">3</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item">ACM <span class="sidebar-badge">1</span></div>
+          <div class="sidebar-item">Secrets Manager <span class="sidebar-badge">2</span></div>
+        </div>
+      </div>
+
+      <div class="category">
+        <input type="checkbox" id="cat-management" />
+        <label class="category-label" for="cat-management">
+          Management
+          <div class="cat-right">
+            <span class="cat-total">5</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item">SSM Parameters <span class="sidebar-badge">5</span></div>
+        </div>
+      </div>
+
+      <div class="category">
+        <input type="checkbox" id="cat-orchestration" />
+        <label class="category-label" for="cat-orchestration">
+          Orchestration
+          <div class="cat-right">
+            <span class="cat-total">2</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item">Step Functions <span class="sidebar-badge">2</span></div>
+        </div>
+      </div>
+
+      <div class="category">
+        <input type="checkbox" id="cat-containers" />
+        <label class="category-label" for="cat-containers">
+          Containers
+          <div class="cat-right">
+            <span class="cat-total">1</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item">ECR <span class="sidebar-badge">1</span></div>
+        </div>
+      </div>
+
+      <div class="category">
+        <input type="checkbox" id="cat-lb" />
+        <label class="category-label" for="cat-lb">
+          Load Balancing
+          <div class="cat-right">
+            <span class="cat-total">1</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item">ALB <span class="sidebar-badge">1</span></div>
+        </div>
+      </div>
+
+      <div class="category">
+        <input type="checkbox" id="cat-dns" />
+        <label class="category-label" for="cat-dns">
+          DNS
+          <div class="cat-right">
+            <span class="cat-total">2</span>
+            <span class="cat-chevron">▶</span>
+          </div>
+        </label>
+        <div class="category-items">
+          <div class="sidebar-item">Route 53 <span class="sidebar-badge">2</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── CANVAS ── -->
+    <div class="canvas-area">
+
+      <!-- Viewport toolbar -->
+      <div class="canvas-toolbar">
+        <button class="btn">⊞ Fit</button>
+        <button class="btn">+</button>
+        <button class="btn">−</button>
+        <div class="sep-v"></div>
+        <button class="btn btn-active">⇢ Integrations</button>
+        <button class="btn">▦ Grid</button>
+        <div class="sep-v"></div>
+        <button class="btn btn-active">⊞ Topology</button>
+        <button class="btn">◈ Graph</button>
+        <div class="sep-v"></div>
+        <button class="slot-btn active">1</button>
+        <button class="slot-btn saved">2</button>
+        <button class="slot-btn">3</button>
+        <button class="slot-btn">4</button>
+        <span class="slot-name">prod-overview</span>
+      </div>
+
+      <!-- Mock nodes -->
+      <div class="mock-vpc">
+        <span class="mock-vpc-label">vpc-0a1b2c3d · 10.0.0.0/16</span>
+        <div class="mock-node node-ec2"><span class="icon">⬡</span>i-abc123</div>
+        <div class="mock-node node-s3"><span class="icon">⬡</span>my-bucket</div>
+        <div class="mock-node node-rds"><span class="icon">⬡</span>prod-db</div>
+      </div>
+      <div class="mock-node node-lambda"><span class="icon">⬡</span>fn-handler</div>
+
+      <!-- Context menu (right-click) -->
+      <div class="context-menu">
+        <div class="ctx-header">Canvas</div>
+        <div class="ctx-item">✎ &nbsp;Add Sticky Note</div>
+        <div class="ctx-item">⊞ &nbsp;Tidy Layout</div>
+        <div class="ctx-header">Import</div>
+        <div class="ctx-item">⬡ &nbsp;Terraform</div>
+        <div class="ctx-item">⊞ &nbsp;Templates…</div>
+        <div class="ctx-item">⬡ &nbsp;SAM</div>
+        <div class="ctx-header">Create</div>
+        <div class="ctx-item">+ &nbsp;EC2 Instance</div>
+        <div class="ctx-item">+ &nbsp;S3 Bucket</div>
+        <div class="ctx-item">+ &nbsp;Lambda</div>
+      </div>
+
+    </div>
+
+    <!-- ── Inspector ── -->
+    <div class="inspector">
+      <div class="inspector-title">Inspector</div>
+      <div class="inspector-name">i-0abc12def</div>
+      <div class="inspector-type">EC2 Instance</div>
+      <div class="inspector-row"><span class="inspector-key">Region</span><span class="inspector-val">us-east-1</span></div>
+      <div class="inspector-row"><span class="inspector-key">State</span><span class="inspector-val" style="color:#22c55e">running</span></div>
+      <div class="inspector-row"><span class="inspector-key">Type</span><span class="inspector-val">t3.medium</span></div>
+      <div class="inspector-row"><span class="inspector-key">VPC</span><span class="inspector-val">vpc-0a1b2c3d</span></div>
+      <div class="inspector-row"><span class="inspector-key">AMI</span><span class="inspector-val">ami-0abcdef</span></div>
+    </div>
+
+  </div>
+
+  <div class="preview-label">
+    ▸ SUMMARY · TitleBar: Scan+cost · Import▾ (Terraform/Templates/SAM) · Export▾ · Sidebar: 12 collapsible categories · Canvas toolbar: viewport-only · Drift strip: conditional
+  </div>
+
+</body>
+</html>
