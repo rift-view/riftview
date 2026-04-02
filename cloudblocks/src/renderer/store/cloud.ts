@@ -31,6 +31,7 @@ interface CloudState {
   scanErrors:      ScanError[]
   selectedRegions: string[]
   importedNodes:   CloudNode[]
+  previousCounts:  Record<string, number>
 
   applyDelta:          (delta: ScanDelta, generation?: number) => void
   setScanStatus:       (status: 'idle' | 'scanning' | 'error') => void
@@ -51,6 +52,7 @@ interface CloudState {
   clearScanErrors:   () => void
   setImportedNodes:  (nodes: CloudNode[]) => void
   clearImportedNodes: () => void
+  setPreviousCounts: (c: Record<string, number>) => void
 }
 
 export const useCloudStore = create<CloudState>((set) => ({
@@ -67,6 +69,7 @@ export const useCloudStore = create<CloudState>((set) => ({
   scanErrors:      [],
   selectedRegions: ['us-east-1'],
   importedNodes:   [],
+  previousCounts:  {},
 
   applyDelta: (delta, generation) =>
     set((state) => {
@@ -146,6 +149,7 @@ export const useCloudStore = create<CloudState>((set) => ({
     }))
     useUIStore.getState().resetDriftFilter()
   },
+  setPreviousCounts: (c) => set({ previousCounts: c }),
 }))
 
 // test-only factory — allows isolated store instances in unit tests
@@ -164,6 +168,7 @@ export function createCloudStore(): StoreApi<CloudState> {
     scanErrors:      [],
     selectedRegions: ['us-east-1'],
     importedNodes:   [],
+    previousCounts:  {},
 
     applyDelta: (delta, generation) =>
       set((state) => {
@@ -229,5 +234,6 @@ export function createCloudStore(): StoreApi<CloudState> {
       }))
       useUIStore.getState().resetDriftFilter()
     },
+    setPreviousCounts: (c) => set({ previousCounts: c }),
   }))
 }
