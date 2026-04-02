@@ -34,6 +34,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
   const lastScannedAt = useCloudStore((s) => s.lastScannedAt)
 
   const [showTemplates, setShowTemplates] = useState(false)
+  const [costHover, setCostHover]         = useState(false)
   const importRef = useRef<HTMLDivElement>(null)
   const exportRef = useRef<HTMLDivElement>(null)
 
@@ -214,15 +215,87 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
         </span>
       )}
 
-      {nodes.length > 0 && (
-        <span style={{
-          fontSize: 11, color: '#22c55e', fontFamily: 'monospace', whiteSpace: 'nowrap',
-          padding: '1px 6px', borderRadius: 3,
-          border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.05)',
-        }}>
-          {formatPrice(totalCost)}
-        </span>
-      )}
+      {nodes.length > 0 && (() => {
+        const nodesWithCost = nodes
+          .map((n) => ({
+            id: n.id,
+            label: n.label ?? n.id,
+            type: n.type,
+            cost: getMonthlyEstimate(n.type, n.region ?? 'us-east-1') ?? 0,
+          }))
+          .filter((n) => n.cost > 0)
+          .sort((a, b) => b.cost - a.cost)
+        const top5 = nodesWithCost.slice(0, 5)
+        const remainder = nodesWithCost.length - top5.length
+        const hasPopover = top5.length > 0
+
+        return (
+          <div
+            style={{ position: 'relative' }}
+            onMouseEnter={() => { if (hasPopover) setCostHover(true) }}
+            onMouseLeave={() => setCostHover(false)}
+          >
+            <span style={{
+              fontSize: 11, color: '#22c55e', fontFamily: 'monospace', whiteSpace: 'nowrap',
+              padding: '1px 6px', borderRadius: 3,
+              border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.05)',
+              cursor: hasPopover ? 'default' : undefined,
+            }}>
+              {formatPrice(totalCost)}
+            </span>
+
+            {costHover && hasPopover && (
+              <div style={{
+                position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
+                marginTop: 6, zIndex: 300,
+                background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border-strong)',
+                borderRadius: 4, padding: '6px 0', minWidth: 220,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+              }}>
+                <div style={{
+                  fontSize: 9, fontFamily: 'monospace', color: 'var(--cb-text-muted)',
+                  padding: '0 10px 4px', textTransform: 'uppercase', letterSpacing: '0.08em',
+                  borderBottom: '1px solid var(--cb-border)',
+                }}>
+                  Top cost by node
+                </div>
+                {top5.map((n) => (
+                  <div key={n.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '4px 10px', fontFamily: 'monospace', fontSize: 10,
+                  }}>
+                    <span style={{
+                      flex: 1, color: 'var(--cb-text-secondary)',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }} title={n.label}>
+                      {n.label}
+                    </span>
+                    <span style={{
+                      fontSize: 9, color: 'var(--cb-text-muted)',
+                      background: 'var(--cb-bg-panel)', borderRadius: 2,
+                      padding: '1px 4px', flexShrink: 0,
+                    }}>
+                      {n.type}
+                    </span>
+                    <span style={{ color: '#22c55e', flexShrink: 0, fontSize: 10 }}>
+                      ~${n.cost.toFixed(2)}/mo
+                    </span>
+                  </div>
+                ))}
+                {remainder > 0 && (
+                  <div style={{
+                    padding: '3px 10px 0', fontFamily: 'monospace', fontSize: 9,
+                    color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border)',
+                    marginTop: 2,
+                  }}>
+                    …and {remainder} more
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       <div className="w-px h-4 flex-shrink-0" style={{ background: 'var(--cb-border-strong)' }} />
 
