@@ -61,4 +61,25 @@ describe('DriftModeStrip', () => {
     fireEvent.click(screen.getByText(/clear tf/i))
     await vi.waitFor(() => expect(clearImportedNodes).toHaveBeenCalled())
   })
+
+  it('component unmounts (returns null) after Clear TF empties importedNodes', async () => {
+    // clearTfState resolves and then clearImportedNodes drains importedNodes to []
+    window.cloudblocks = {
+      ...window.cloudblocks,
+      clearTfState: vi.fn().mockImplementation(async () => {
+        useCloudStore.setState({ importedNodes: [] })
+        return { ok: true }
+      }),
+    } as unknown as typeof window.cloudblocks
+
+    const { container } = render(<DriftModeStrip />)
+
+    // Strip is visible before click
+    expect(container.firstChild).not.toBeNull()
+
+    fireEvent.click(screen.getByText(/clear tf/i))
+
+    // After the async clear resolves, importedNodes is empty → component returns null
+    await vi.waitFor(() => expect(container.firstChild).toBeNull())
+  })
 })
