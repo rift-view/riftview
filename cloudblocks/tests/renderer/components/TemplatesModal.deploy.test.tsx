@@ -41,8 +41,11 @@ function makeCloudblocks(overrides: Partial<typeof window.cloudblocks> = {}): ty
     terraformDeploy:      vi.fn().mockResolvedValue({ status: 'not_found' }),
     loadCustomEdges:      vi.fn().mockResolvedValue([]),
     saveCustomEdges:      vi.fn().mockResolvedValue(undefined),
+    listTfStateModules:   vi.fn().mockResolvedValue({ modules: [] }),
+    saveBaseline:         vi.fn().mockResolvedValue({ ok: true }),
+    retryScanService:     vi.fn().mockResolvedValue({ ok: true }),
     ...overrides,
-  }
+  } as typeof window.cloudblocks
 }
 
 const noop = (): void => {}
