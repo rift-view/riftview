@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Sidebar } from '../Sidebar'
 import { SCAN_KEY_TO_TYPE } from '../../utils/scanKeyMap'
@@ -19,7 +19,7 @@ const DEFAULT_SETTINGS = {
 
 beforeEach(() => {
   useCloudStore.setState({ nodes: [], scanErrors: [], settings: DEFAULT_SETTINGS })
-  useUIStore.setState({ view: 'topology', sidebarFilter: null, expandedSsmGroups: new Set(), pluginNodeTypes: {} })
+  useUIStore.setState({ view: 'topology', activeFilterTypes: new Set(), activeSidebarType: null, expandedSsmGroups: new Set(), pluginNodeTypes: {} })
   useCliStore.setState({ commandPreview: [], pendingCommand: null })
 })
 
@@ -117,6 +117,103 @@ describe('Plugin node types in Sidebar', () => {
     })
     render(<Sidebar />)
     expect(screen.queryByText('⬡ Azure Read Only')).not.toBeInTheDocument()
+  })
+})
+
+describe('Sidebar instant multi-select filter', () => {
+  it('toggles a type active immediately on click without a dialog', () => {
+    render(<Sidebar />)
+    const ec2Row = screen.getByText('⬡ EC2').closest('div')!
+    fireEvent.click(ec2Row)
+    expect(useUIStore.getState().activeFilterTypes.has('ec2')).toBe(true)
+  })
+
+  it('clicking a second type adds it to the active set', () => {
+    render(<Sidebar />)
+    fireEvent.click(screen.getByText('⬡ EC2').closest('div')!)
+    fireEvent.click(screen.getByText('⬡ Lambda').closest('div')!)
+    const { activeFilterTypes } = useUIStore.getState()
+    expect(activeFilterTypes.has('ec2')).toBe(true)
+    expect(activeFilterTypes.has('lambda')).toBe(true)
+  })
+
+  it('clicking an active type deactivates it instantly', () => {
+    useUIStore.setState({ activeFilterTypes: new Set(['ec2']), activeSidebarType: 'ec2' })
+    render(<Sidebar />)
+    fireEvent.click(screen.getByText('⬡ EC2').closest('div')!)
+    expect(useUIStore.getState().activeFilterTypes.has('ec2')).toBe(false)
+  })
+
+  it('sets command preview to include all active type labels when filter applied', () => {
+    useCloudStore.setState({
+      nodes: [
+        { id: '1', type: 'ec2', label: 'i-1', region: 'us-east-1', raw: {} },
+        { id: '2', type: 'lambda', label: 'fn-1', region: 'us-east-1', raw: {} },
+      ],
+    })
+    render(<Sidebar />)
+    fireEvent.click(screen.getByText('⬡ EC2').closest('div')!)
+    fireEvent.click(screen.getByText('⬡ Lambda').closest('div')!)
+    const preview = useCliStore.getState().commandPreview
+    expect(preview.length).toBeGreaterThan(0)
+    expect(preview[0]).toMatch(/\[Filter\]/)
+    expect(preview[0]).toMatch(/EC2/)
+    expect(preview[0]).toMatch(/Lambda/)
+  })
+
+  it('clears command preview and filter when all types deselected', () => {
+    useCloudStore.setState({
+      nodes: [{ id: '1', type: 'ec2', label: 'i-1', region: 'us-east-1', raw: {} }],
+    })
+    render(<Sidebar />)
+    const ec2Row = screen.getByText('⬡ EC2').closest('div')!
+    fireEvent.click(ec2Row)
+    fireEvent.click(ec2Row)
+    expect(useUIStore.getState().activeFilterTypes.size).toBe(0)
+    expect(useCliStore.getState().commandPreview).toEqual([])
+  })
+})
+
+describe('Sidebar category accordion', () => {
+  it('all categories start expanded', () => {
+    render(<Sidebar />)
+    // Check that multiple category headers are visible with the expanded icon
+    expect(screen.getByText(/⊟ Compute/i)).toBeInTheDocument()
+    expect(screen.getByText(/⊟ Networking/i)).toBeInTheDocument()
+    expect(screen.getByText(/⊟ Storage/i)).toBeInTheDocument()
+    // Service rows from those categories should be visible
+    expect(screen.getByText('⬡ EC2')).toBeInTheDocument()
+    expect(screen.getByText('⬡ S3')).toBeInTheDocument()
+  })
+
+  it('clicking a category header collapses it', () => {
+    render(<Sidebar />)
+    // EC2 is in the Compute category — it should be visible before collapse
+    expect(screen.getByText('⬡ EC2')).toBeInTheDocument()
+
+    // Click the Compute category header to collapse it
+    const computeHeader = screen.getByText(/⊟ Compute/i).closest('div')!
+    fireEvent.click(computeHeader)
+
+    // After collapse, the header shows the collapsed icon and EC2 row is gone
+    expect(screen.getByText(/⊞ Compute/i)).toBeInTheDocument()
+    expect(screen.queryByText('⬡ EC2')).not.toBeInTheDocument()
+  })
+
+  it('clicking a collapsed header expands it again', () => {
+    render(<Sidebar />)
+
+    // Collapse the Compute category
+    const computeHeader = screen.getByText(/⊟ Compute/i).closest('div')!
+    fireEvent.click(computeHeader)
+    expect(screen.queryByText('⬡ EC2')).not.toBeInTheDocument()
+
+    // Click again to expand
+    const collapsedHeader = screen.getByText(/⊞ Compute/i).closest('div')!
+    fireEvent.click(collapsedHeader)
+
+    // EC2 row should be visible again
+    expect(screen.getByText('⬡ EC2')).toBeInTheDocument()
   })
 })
 

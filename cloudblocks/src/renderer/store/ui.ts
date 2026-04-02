@@ -56,6 +56,7 @@ interface UIState {
   driftFilterActive:      boolean
   driftBannerDismissed:   boolean
   activeFilters:          NodeFilter[]
+  activeFilterTypes:      Set<NodeType>
   activeSidebarType:      NodeType | null
   pluginNodeTypes:        Record<string, NodeTypeMetadata>
   zoneSizes:              Record<string, { width: number; height: number }>
@@ -100,7 +101,7 @@ interface UIState {
   addFilter:              (filter: NodeFilter) => void
   removeFilter:           (id: string) => void
   clearFilters:           () => void
-  setSidebarType:         (type: NodeType | null) => void
+  toggleSidebarType:      (type: NodeType) => void
   setPluginNodeTypes:     (meta: Record<string, NodeTypeMetadata>) => void
   setZoneSize:            (id: string, size: { width: number; height: number }) => void
   addCustomEdge:          (edge: CustomEdge) => void
@@ -137,6 +138,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   driftFilterActive:    false,
   driftBannerDismissed: false,
   activeFilters:        [],
+  activeFilterTypes:    new Set<NodeType>(),
   activeSidebarType:    null,
   pluginNodeTypes:      {},
   zoneSizes:            {},
@@ -265,9 +267,22 @@ export const useUIStore = create<UIState>((set, get) => ({
     set((s) => ({
       activeFilters:     s.activeFilters.filter((f) => f.id !== id),
       activeSidebarType: id === 'sidebar-type' ? null : s.activeSidebarType,
+      // Reuse the existing Set reference when it is already empty to avoid
+      // triggering a dependency-change loop in Sidebar's useEffect.
+      activeFilterTypes: id === 'sidebar-type' && s.activeFilterTypes.size > 0
+        ? new Set<NodeType>()
+        : s.activeFilterTypes,
     })),
-  clearFilters: () => set({ activeFilters: [], activeSidebarType: null }),
+  clearFilters: () => set({ activeFilters: [], activeSidebarType: null, activeFilterTypes: new Set<NodeType>() }),
   setSidebarType: (type) => set({ activeSidebarType: type }),
+  toggleSidebarType: (type) =>
+    set((s) => {
+      const next = new Set(s.activeFilterTypes)
+      if (next.has(type)) next.delete(type)
+      else next.add(type)
+      const firstActive = next.size > 0 ? (next.values().next().value as NodeType) : null
+      return { activeFilterTypes: next, activeSidebarType: firstActive }
+    }),
   setPluginNodeTypes: (meta) => set({ pluginNodeTypes: meta }),
   setZoneSize: (id, size) =>
     set((s) => ({ zoneSizes: { ...s.zoneSizes, [id]: size } })),
