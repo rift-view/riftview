@@ -1,9 +1,8 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { useUIStore } from '../store/ui'
 import { useCloudStore } from '../store/cloud'
 import { useCliStore } from '../store/cli'
 import type { NodeType, CloudNode } from '../types/cloud'
-import SidebarFilterDialog from './modals/SidebarFilterDialog'
 import { SCAN_KEY_TO_TYPE } from '../utils/scanKeyMap'
 
 type ServiceDef = { type: NodeType; label: string; hasCreate: boolean; resource?: string }
@@ -77,22 +76,19 @@ interface SsmGroup {
 }
 
 export function Sidebar(): React.JSX.Element {
-  const view              = useUIStore((s) => s.view)
-  const setView           = useUIStore((s) => s.setView)
-  const expandedSsmGroups = useUIStore((s) => s.expandedSsmGroups)
-  const toggleSsmGroup    = useUIStore((s) => s.toggleSsmGroup)
-  const activeSidebarType = useUIStore((s) => s.activeSidebarType)
-  const addFilter         = useUIStore((s) => s.addFilter)
-  const removeFilter      = useUIStore((s) => s.removeFilter)
-  const setSidebarType    = useUIStore((s) => s.setSidebarType)
-  const nodes             = useCloudStore((s) => s.nodes)
-  const scanErrors        = useCloudStore((s) => s.scanErrors)
-  const settings          = useCloudStore((s) => s.settings)
-  const setCommandPreview = useCliStore((s) => s.setCommandPreview)
-  const setPendingCommand = useCliStore((s) => s.setPendingCommand)
-  const pluginNodeTypes   = useUIStore((s) => s.pluginNodeTypes)
-
-  const [filterTarget, setFilterTarget] = useState<NodeType | null>(null)
+  const view               = useUIStore((s) => s.view)
+  const setView            = useUIStore((s) => s.setView)
+  const expandedSsmGroups  = useUIStore((s) => s.expandedSsmGroups)
+  const toggleSsmGroup     = useUIStore((s) => s.toggleSsmGroup)
+  const activeFilterTypes  = useUIStore((s) => s.activeFilterTypes)
+  const addFilter          = useUIStore((s) => s.addFilter)
+  const removeFilter       = useUIStore((s) => s.removeFilter)
+  const nodes              = useCloudStore((s) => s.nodes)
+  const scanErrors         = useCloudStore((s) => s.scanErrors)
+  const settings           = useCloudStore((s) => s.settings)
+  const setCommandPreview  = useCliStore((s) => s.setCommandPreview)
+  const setPendingCommand  = useCliStore((s) => s.setPendingCommand)
+  const pluginNodeTypes    = useUIStore((s) => s.pluginNodeTypes)
 
   // All categories start expanded
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
@@ -107,14 +103,35 @@ export function Sidebar(): React.JSX.Element {
     })
   }
 
-  const sidebarFilterActive = activeSidebarType !== null
+  function handleTypeClick(type: NodeType): void {
+    const next = new Set(activeFilterTypes)
+    if (next.has(type)) {
+      next.delete(type)
+    } else {
+      next.add(type)
+    }
 
-  useEffect(() => {
-    if (!sidebarFilterActive) {
+    // Compute first active for backward-compat activeSidebarType
+    const firstActive = next.size > 0 ? (next.values().next().value as NodeType) : null
+    useUIStore.setState({ activeFilterTypes: next, activeSidebarType: firstActive })
+
+    if (next.size === 0) {
+      removeFilter('sidebar-type')
       setCommandPreview([])
       setPendingCommand(null)
+    } else {
+      const types  = Array.from(next)
+      const labels = types.map((t) => getTypeLabel(t))
+      const matchingCount = nodes.filter((n) => next.has(n.type as NodeType)).length
+      addFilter({
+        id:    'sidebar-type',
+        label: labels.join(', '),
+        test:  (n) => next.has(n.type as NodeType),
+      })
+      setCommandPreview([`[Filter] ${labels.join(', ')} · ${matchingCount} node${matchingCount === 1 ? '' : 's'}`])
+      setPendingCommand(null)
     }
-  }, [sidebarFilterActive, setCommandPreview, setPendingCommand])
+  }
 
   const counts = useMemo(
     () => nodes.reduce<Record<string, number>>(
@@ -225,7 +242,7 @@ export function Sidebar(): React.JSX.Element {
               <>
                 {cat.services.map((s) => {
                   const count      = counts[s.type] ?? 0
-                  const isActive   = activeSidebarType === s.type
+                  const isActive   = activeFilterTypes.has(s.type)
                   const errTooltip = errorsByType.get(s.type)
                   const activeStyle: React.CSSProperties = {
                     ...serviceRowStyle,
@@ -239,7 +256,7 @@ export function Sidebar(): React.JSX.Element {
                       key={s.type}
                       draggable={s.hasCreate}
                       onDragStart={s.hasCreate ? (e) => e.dataTransfer.setData('text/plain', s.resource ?? s.type) : undefined}
-                      onClick={() => { if (isActive) { removeFilter('sidebar-type') } else setFilterTarget(s.type) }}
+                      onClick={() => handleTypeClick(s.type)}
                       className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
                       style={{ ...(isActive ? activeStyle : serviceRowStyle), cursor: s.hasCreate ? 'grab' : 'default', paddingLeft: 20 }}
                     >
@@ -327,7 +344,7 @@ export function Sidebar(): React.JSX.Element {
               key={type}
               draggable
               onDragStart={(e) => e.dataTransfer.setData('text/plain', type)}
-              onClick={() => { /* plugin types skip the filter dialog for now */ }}
+              onClick={() => { /* plugin types skip the filter for now */ }}
               className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
               style={{ ...serviceRowStyle, cursor: 'grab' }}
             >
@@ -356,24 +373,6 @@ export function Sidebar(): React.JSX.Element {
           {v === 'topology' ? '⊞' : '◈'} {v.charAt(0).toUpperCase() + v.slice(1)}
         </div>
       ))}
-
-      {filterTarget && (
-        <SidebarFilterDialog
-          type={filterTarget}
-          count={counts[filterTarget] ?? 0}
-          onClose={() => setFilterTarget(null)}
-          onConfirm={() => {
-            const label = getTypeLabel(filterTarget)
-            const count = counts[filterTarget] ?? 0
-            const type  = filterTarget
-            addFilter({ id: 'sidebar-type', label, test: (n) => n.type === type })
-            setSidebarType(type)
-            setCommandPreview([`[Filter] ${label} · ${count} node${count === 1 ? '' : 's'}`])
-            setPendingCommand(null)
-            setFilterTarget(null)
-          }}
-        />
-      )}
     </div>
   )
 }
