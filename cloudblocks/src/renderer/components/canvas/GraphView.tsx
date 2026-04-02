@@ -1,3 +1,4 @@
+// @deprecated — no new features; consolidation into TopologyView planned post-1.0
 import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react'
 import { ReactFlow, Background, BackgroundVariant, MiniMap, useReactFlow, type Node, type Edge, type NodeChange, type OnSelectionChangeParams, type Connection } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
