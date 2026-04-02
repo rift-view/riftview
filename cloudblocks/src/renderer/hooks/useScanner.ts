@@ -30,7 +30,12 @@ export function useScanner(): { triggerScan: () => void } {
 
   return {
     triggerScan: () => {
-      const { selectedRegions } = useCloudStore.getState()
+      const { selectedRegions, nodes } = useCloudStore.getState()
+      const counts = nodes.reduce<Record<string, number>>(
+        (acc, n) => ({ ...acc, [n.type]: (acc[n.type] ?? 0) + 1 }),
+        {},
+      )
+      useCloudStore.getState().setPreviousCounts(counts)
       window.cloudblocks.startScan(selectedRegions)
     },
   }

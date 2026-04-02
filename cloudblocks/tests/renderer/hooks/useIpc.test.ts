@@ -42,6 +42,9 @@ beforeEach(() => {
     terraformDeploy:      vi.fn().mockResolvedValue({ status: 'not_found' }),
     loadCustomEdges:      vi.fn().mockResolvedValue([]),
     saveCustomEdges:      vi.fn().mockResolvedValue(undefined),
+    listTfStateModules:   vi.fn().mockResolvedValue({ modules: [] }),
+    saveBaseline:         vi.fn().mockResolvedValue({ ok: true }),
+    retryScanService:     vi.fn().mockResolvedValue({ ok: true }),
   }
   useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })

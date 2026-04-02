@@ -84,6 +84,8 @@ export function Sidebar(): React.JSX.Element {
   const addFilter          = useUIStore((s) => s.addFilter)
   const removeFilter       = useUIStore((s) => s.removeFilter)
   const nodes              = useCloudStore((s) => s.nodes)
+  const scanStatus         = useCloudStore((s) => s.scanStatus)
+  const previousCounts     = useCloudStore((s) => s.previousCounts)
   const scanErrors         = useCloudStore((s) => s.scanErrors)
   const settings           = useCloudStore((s) => s.settings)
   const setCommandPreview  = useCliStore((s) => s.setCommandPreview)
@@ -251,6 +253,9 @@ export function Sidebar(): React.JSX.Element {
                     background: 'var(--cb-bg-elevated)',
                     cursor:     'pointer',
                   }
+                  const isScanning = scanStatus === 'scanning'
+                  const staleCount = previousCounts[s.type] ?? 0
+                  const showStale  = isScanning && count === 0 && staleCount > 0
                   return (
                     <div
                       key={s.type}
@@ -267,6 +272,7 @@ export function Sidebar(): React.JSX.Element {
                         )}
                       </span>
                       {count > 0 && <span style={badgeStyle}>{count}</span>}
+                      {showStale && <span style={{ ...badgeStyle, opacity: 0.4 }}>{staleCount}</span>}
                     </div>
                   )
                 })}
