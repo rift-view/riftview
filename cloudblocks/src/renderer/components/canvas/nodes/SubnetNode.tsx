@@ -16,8 +16,8 @@ export function SubnetNode({ data }: NodeProps): React.JSX.Element {
   return (
     <div
       style={{
-        background:   `${color}09`,
-        border:       `1px solid ${color}55`,
+        background:   `${color}10`,
+        border:       `1.5px dashed ${color}88`,
         borderRadius: 6,
         minWidth:     140,
         minHeight:    d.collapsed ? 32 : 80,
