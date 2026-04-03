@@ -8,6 +8,9 @@ const mockClient = { send: mockSend } as unknown as SFNClient
 const MACHINE_ARN = 'arn:aws:states:us-east-1:123456789:stateMachine:my-machine'
 const LAMBDA_ARN  = 'arn:aws:lambda:us-east-1:123456789:function:my-fn'
 const LAMBDA_ARN2 = 'arn:aws:lambda:us-east-1:123456789:function:other-fn'
+const SQS_ARN     = 'arn:aws:sqs:us-east-1:123456789:my-queue'
+const SNS_ARN     = 'arn:aws:sns:us-east-1:123456789:my-topic'
+const CHILD_SFN_ARN = 'arn:aws:states:us-east-1:123456789:stateMachine:child-machine'
 
 function listResponse(machines: { stateMachineArn: string; name: string }[]): { stateMachines: { stateMachineArn: string; name: string }[] } {
   return { stateMachines: machines }
@@ -96,12 +99,11 @@ describe('listStateMachines', () => {
     expect(targets).toContain(LAMBDA_ARN2)
   })
 
-  it('ignores non-Lambda Resources such as SQS, SNS, and states::: SDK integrations', async () => {
+  it('ignores Resources that do not match any known target prefix', async () => {
     const definition = JSON.stringify({
       States: {
-        SendSqs: { Type: 'Task', Resource: 'arn:aws:states:::sqs:sendMessage' },
-        PublishSns: { Type: 'Task', Resource: 'arn:aws:sns:us-east-1:123456789:my-topic' },
-        SdkIntegration: { Type: 'Task', Resource: 'arn:aws:states:::dynamodb:putItem' },
+        SdkDynamo: { Type: 'Task', Resource: 'arn:aws:dynamodb:us-east-1:123:table/my-table' },
+        Wait: { Type: 'Wait', Seconds: 10 },
       },
     })
     mockSend
@@ -111,6 +113,62 @@ describe('listStateMachines', () => {
     const nodes = await listStateMachines(mockClient, 'us-east-1')
 
     expect(nodes[0].integrations).toBeUndefined()
+  })
+
+  it('emits trigger integrations for SQS and SNS target ARNs in Task states', async () => {
+    const definition = JSON.stringify({
+      States: {
+        SendMessage: { Type: 'Task', Resource: SQS_ARN },
+        PublishTopic: { Type: 'Task', Resource: SNS_ARN },
+      },
+    })
+    mockSend
+      .mockResolvedValueOnce(listResponse([{ stateMachineArn: MACHINE_ARN, name: 'my-machine' }]))
+      .mockResolvedValueOnce(describeResponse(definition))
+
+    const nodes = await listStateMachines(mockClient, 'us-east-1')
+
+    expect(nodes[0].integrations).toHaveLength(2)
+    const targets = nodes[0].integrations?.map((i) => i.targetId)
+    expect(targets).toContain(SQS_ARN)
+    expect(targets).toContain(SNS_ARN)
+    expect(nodes[0].integrations?.every((i) => i.edgeType === 'trigger')).toBe(true)
+  })
+
+  it('emits trigger integration for nested SFN execution target', async () => {
+    const definition = JSON.stringify({
+      States: {
+        RunChild: { Type: 'Task', Resource: CHILD_SFN_ARN },
+      },
+    })
+    mockSend
+      .mockResolvedValueOnce(listResponse([{ stateMachineArn: MACHINE_ARN, name: 'my-machine' }]))
+      .mockResolvedValueOnce(describeResponse(definition))
+
+    const nodes = await listStateMachines(mockClient, 'us-east-1')
+
+    expect(nodes[0].integrations).toHaveLength(1)
+    expect(nodes[0].integrations?.[0]).toEqual({ targetId: CHILD_SFN_ARN, edgeType: 'trigger' })
+  })
+
+  it('de-duplicates when the same SQS queue appears in multiple states', async () => {
+    const definition = JSON.stringify({
+      States: {
+        Step1: { Type: 'Task', Resource: SQS_ARN },
+        Step2: { Type: 'Task', Resource: SQS_ARN },
+        Step3: { Type: 'Task', Resource: LAMBDA_ARN },
+      },
+    })
+    mockSend
+      .mockResolvedValueOnce(listResponse([{ stateMachineArn: MACHINE_ARN, name: 'my-machine' }]))
+      .mockResolvedValueOnce(describeResponse(definition))
+
+    const nodes = await listStateMachines(mockClient, 'us-east-1')
+
+    expect(nodes[0].integrations).toHaveLength(2)
+    const targets = nodes[0].integrations?.map((i) => i.targetId)
+    expect(targets).toContain(SQS_ARN)
+    expect(targets).toContain(LAMBDA_ARN)
   })
 
   it('returns node without integrations when DescribeStateMachine fails', async () => {
