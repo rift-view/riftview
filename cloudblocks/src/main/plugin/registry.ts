@@ -52,6 +52,21 @@ export class PluginRegistry {
     this._credentials.clear()
   }
 
+  /**
+   * Scan a single named service across all registered plugins.
+   * Returns the result from the first plugin that owns the service name,
+   * or undefined if no plugin recognises it.
+   */
+  async scanService(serviceName: string, region: string): Promise<PluginScanResult | undefined> {
+    for (const plugin of this._plugins) {
+      if (!plugin.scanService) continue
+      const credentials = this._credentials.get(`${plugin.id}::${region}`)
+      const result = await plugin.scanService(serviceName, { credentials, region })
+      if (result !== undefined) return result
+    }
+    return undefined
+  }
+
   async scanAll(region: string): Promise<PluginScanResult> {
     const allNodes: CloudNode[] = []
     const allErrors: PluginScanResult['errors'] = []
