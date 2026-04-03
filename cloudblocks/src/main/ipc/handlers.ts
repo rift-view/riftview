@@ -474,13 +474,17 @@ export function registerHandlers(win: BrowserWindow): void {
     }
   })
 
-  // Retry a single scan service — re-activates credentials and re-runs all plugins
-  // for the primary active region. Returns ok:true if the named service no longer errors.
+  // Retry a single scan service — runs only that service's scanner for the primary
+  // active region, pushes a scoped SCAN_DELTA to the renderer, and returns ok:true
+  // if the service no longer produces an error.
   ipcMain.handle(IPC.SCAN_RETRY_SERVICE, async (_event, { service }: { service: string }): Promise<{ ok: boolean }> => {
+    if (!scanner) return { ok: false }
     try {
       const region = activeRegions[0] ?? 'us-east-1'
-      await pluginRegistry.activateAll(activeProfile, [region], activeEndpoint)
-      const result = await pluginRegistry.scanAll(region)
+      const result = await pluginRegistry.scanService(service, region)
+      if (!result) return { ok: false }
+      const existingErrors = scanner.currentScanErrors
+      scanner.applyServiceRetry(result.nodes, result.errors, existingErrors, service)
       const stillErrored = result.errors.some((e) => e.service === service)
       return { ok: !stillErrored }
     } catch {

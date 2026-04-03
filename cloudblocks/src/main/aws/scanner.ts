@@ -48,6 +48,7 @@ export class ResourceScanner {
   private timer: NodeJS.Timeout | null = null
   private currentNodes: CloudNode[] = []
   private intervalMs: number | 'manual'
+  currentScanErrors: Array<{ service: string; region: string; message: string }> = []
 
   constructor(
     private profile: string,
@@ -75,6 +76,47 @@ export class ResourceScanner {
 
   triggerManualScan(): void {
     this.scan()
+  }
+
+  /**
+   * Re-scan a single service, update currentNodes for those nodes only, and
+   * push a scoped SCAN_DELTA to the renderer.
+   *
+   * @param freshNodes  Nodes returned by the per-service scan
+   * @param serviceErrors  Errors from the per-service scan (empty on success)
+   * @param existingScanErrors  Current full scanErrors list from the last full scan
+   * @param serviceName  The service key being retried (used to drop/keep its error entry)
+   */
+  applyServiceRetry(
+    freshNodes: import('../../renderer/types/cloud').CloudNode[],
+    serviceErrors: Array<{ service: string; region: string; message: string }>,
+    existingScanErrors: Array<{ service: string; region: string; message: string }>,
+    serviceName: string,
+  ): void {
+    // Compute which node IDs previously came from this service by intersecting
+    // currentNodes with the IDs returned by the fresh scan plus any IDs that
+    // are now absent (removed).  Since we have no per-service node-type mapping
+    // here, we treat all fresh node IDs as the definitive set for this service
+    // and compute the delta against currentNodes for those IDs only.
+    const freshMap = new Map(freshNodes.map((n) => [n.id, n]))
+    const prevServiceNodes = this.currentNodes.filter((n) => freshMap.has(n.id))
+
+    const delta = computeDelta(prevServiceNodes, freshNodes)
+
+    // Merge fresh nodes into currentNodes
+    const currentMap = new Map(this.currentNodes.map((n) => [n.id, n]))
+    for (const n of freshNodes) currentMap.set(n.id, n)
+    for (const id of delta.removed) currentMap.delete(id)
+    this.currentNodes = Array.from(currentMap.values())
+
+    // Build updated error list: remove stale entry for this service, add new ones
+    const updatedErrors = [
+      ...existingScanErrors.filter((e) => e.service !== serviceName),
+      ...serviceErrors,
+    ]
+
+    this.currentScanErrors = updatedErrors
+    this.window.webContents.send(IPC.SCAN_DELTA, { ...delta, scanErrors: updatedErrors })
   }
 
   updateRegions(regions: string[]): void {
@@ -107,7 +149,8 @@ export class ResourceScanner {
 
       const delta = computeDelta(this.currentNodes, nextNodes)
 
-      this.currentNodes = nextNodes
+      this.currentNodes      = nextNodes
+      this.currentScanErrors = scanErrors
       this.window.webContents.send(IPC.SCAN_DELTA, { ...delta, scanErrors })
       this.window.webContents.send(IPC.SCAN_STATUS, 'idle')
 

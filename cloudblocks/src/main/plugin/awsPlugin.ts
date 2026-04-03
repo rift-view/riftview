@@ -29,6 +29,35 @@ function errCatch(service: string, region: string, errors: PluginScanResult['err
   }
 }
 
+type ServiceScanner = (clients: AwsClients, region: string) => Promise<CloudNode[]>
+
+// Maps the service key used in catch_() calls to its scanner function.
+// Used by scanService() to scope a retry to a single named service.
+const SERVICE_SCANNERS: Record<string, ServiceScanner> = {
+  'ec2:instances':  (c, r) => describeInstances(c.ec2, r),
+  'ec2:vpcs':       (c, r) => describeVpcs(c.ec2, r),
+  'ec2:subnets':    (c, r) => describeSubnets(c.ec2, r),
+  'security-group': (c, r) => describeSecurityGroups(c.ec2, r),
+  'rds':            (c, r) => describeDBInstances(c.rds, r),
+  's3':             (c, r) => listBuckets(c.s3, r),
+  'lambda':         (c, r) => listFunctions(c.lambda, r),
+  'alb':            (c, r) => describeLoadBalancers(c.alb, r),
+  'acm':            (c)    => listCertificates(c.acm),
+  'cloudfront':     (c)    => listDistributions(c.cloudfront),
+  'apigw':          (c, r) => listApis(c.apigw, r),
+  'igw':            (c, r) => listInternetGateways(c.ec2, r),
+  'nat-gateway':    (c, r) => listNatGateways(c.ec2, r),
+  'sqs':            (c, r) => listQueues(c.sqs, c.lambda, r),
+  'secret':         (c, r) => listSecrets(c.secrets, r),
+  'ecr-repo':       (c, r) => listRepositories(c.ecr, r),
+  'sns':            (c, r) => listTopics(c.sns, r),
+  'dynamo':         (c, r) => listTables(c.dynamo, c.lambda, r),
+  'ssm-param':      (c, r) => listParameters(c.ssm, r),
+  'r53-zone':       (c)    => listHostedZones(c.r53),
+  'sfn':            (c, r) => listStateMachines(c.sfn, r),
+  'eventbridge-bus':(c, r) => listEventBuses(c.eventbridge, r),
+}
+
 const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
   ec2:               { label: 'EC2',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'EC2',    displayName: 'EC2 Instance',              hasCreate: true  },
   vpc:               { label: 'VPC',    borderColor: '#1976D2', badgeColor: '#1976D2', shortLabel: 'VPC',    displayName: 'VPC',                       hasCreate: true  },
@@ -71,6 +100,22 @@ export const awsPlugin: CloudblocksPlugin = {
 
   createCredentials(profile: string, region: string, endpoint?: string): AwsClients {
     return createClients(profile, region, endpoint)
+  },
+
+  async scanService(serviceName: string, context: ScanContext): Promise<PluginScanResult | undefined> {
+    const scanner = SERVICE_SCANNERS[serviceName]
+    if (!scanner) return undefined
+    const clients = context.credentials as AwsClients
+    const region = context.region
+    const errors: PluginScanResult['errors'] = []
+    try {
+      const raw = await scanner(clients, region)
+      const nodes = raw.map((node) => ({ ...node, region: node.region ?? region }))
+      return { nodes, errors }
+    } catch (e) {
+      errors.push({ service: serviceName, region, message: (e as Error)?.message ?? String(e) })
+      return { nodes: [], errors }
+    }
   },
 
   async scan(context: ScanContext): Promise<PluginScanResult> {
