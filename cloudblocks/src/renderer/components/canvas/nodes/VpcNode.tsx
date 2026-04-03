@@ -14,7 +14,7 @@ export function VpcNode({ data }: NodeProps): React.JSX.Element {
     <div
       style={{
         background:   'rgba(25, 118, 210, 0.04)',
-        border:       '1px solid rgba(25, 118, 210, 0.5)',
+        border:       '2px solid rgba(25, 118, 210, 0.65)',
         borderRadius: 8,
         minWidth:     200,
         minHeight:    d.collapsed ? 48 : 120,
@@ -28,8 +28,8 @@ export function VpcNode({ data }: NodeProps): React.JSX.Element {
       {/* Header bar */}
       <div
         style={{
-          background:   'rgba(25, 118, 210, 0.12)',
-          borderBottom: '1px solid rgba(25, 118, 210, 0.3)',
+          background:   'rgba(25, 118, 210, 0.15)',
+          borderBottom: '1px solid rgba(25, 118, 210, 0.4)',
           padding:      '5px 10px',
           display:      'flex',
           alignItems:   'center',
