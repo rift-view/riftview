@@ -3,6 +3,7 @@ import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
 interface TfStateResource {
   type: string
   name: string
+  module?: string
   instances: Array<{ attributes: Record<string, unknown> }> | null
 }
 
@@ -183,4 +184,50 @@ export function parseTfState(raw: string): CloudNode[] {
         mapResource(r.type, r.name, sanitizeAttributes(instance.attributes ?? {}))
       )
     )
+}
+
+export interface TfModuleGroup {
+  name: string
+  resourceCount: number
+  nodes: CloudNode[]
+}
+
+export function parseTfStateModules(raw: string): TfModuleGroup[] {
+  let state: TfState
+  try {
+    state = JSON.parse(raw) as TfState
+  } catch {
+    throw new Error('Invalid tfstate file: not valid JSON')
+  }
+  if (!Array.isArray(state.resources)) {
+    throw new Error('Invalid tfstate file: missing resources array')
+  }
+
+  const groups = new Map<string, { nodes: CloudNode[]; resourceCount: number }>()
+
+  for (const r of state.resources) {
+    if (!r.type.startsWith('aws_')) continue
+    // module.vpc.aws_vpc.main → top-level segment is "vpc"; no module field → "(root)"
+    const moduleName = r.module
+      ? r.module.replace(/^module\./, '').split('.')[0] ?? '(root)'
+      : '(root)'
+
+    let group = groups.get(moduleName)
+    if (!group) {
+      group = { nodes: [], resourceCount: 0 }
+      groups.set(moduleName, group)
+    }
+
+    const instances = r.instances ?? []
+    for (const instance of instances) {
+      group.nodes.push(mapResource(r.type, r.name, sanitizeAttributes(instance.attributes ?? {})))
+      group.resourceCount++
+    }
+  }
+
+  return Array.from(groups.entries()).map(([name, g]) => ({
+    name,
+    resourceCount: g.resourceCount,
+    nodes: g.nodes,
+  }))
 }

@@ -17,6 +17,7 @@ export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogP
   const [input, setInput] = useState('')
   const [skipSnapshot, setSkipSnapshot] = useState(false)
   const [force, setForce] = useState(false)
+  const [disableProtection, setDisableProtection] = useState(false)
 
   const confirmed = input === node.id
 
@@ -64,6 +65,13 @@ export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogP
           </label>
         )}
 
+        {node.type === 'rds' && node.metadata?.deletionProtection === true && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--cb-text-secondary)', marginBottom: 8, cursor: 'pointer' }}>
+            <input type="checkbox" checked={disableProtection} onChange={e => setDisableProtection(e.target.checked)} />
+            Disable deletion protection first
+          </label>
+        )}
+
         <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, marginBottom: 12 }}>This action cannot be undone.</div>
 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -79,6 +87,7 @@ export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogP
               const opts: DeleteOptions = {}
               if (skipSnapshot) opts.skipFinalSnapshot = true
               if (force) opts.force = true
+              if (disableProtection) opts.disableProtectionFirst = true
               onConfirm(opts)
             }}
             style={{

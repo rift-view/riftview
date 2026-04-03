@@ -41,6 +41,12 @@ export interface CloudblocksPlugin {
   readonly nodeTypeMetadata: Readonly<Record<string, NodeTypeMetadata>>
   createCredentials(profile: string, region: string, endpoint?: string): unknown
   scan(context: ScanContext): Promise<PluginScanResult>
+  /**
+   * Scan a single named service (e.g. 'ecr-repo', 'lambda') within this plugin.
+   * Returns undefined if the service is not owned by this plugin.
+   * Used by the scan:retry-service IPC handler to scope retries to one service.
+   */
+  scanService?(serviceName: string, context: ScanContext): Promise<PluginScanResult | undefined>
   scanExtras?(region: string): Promise<void>
   commands?: PluginCommandHandlers
   hclGenerators?: Record<string, PluginHclGenerator>
