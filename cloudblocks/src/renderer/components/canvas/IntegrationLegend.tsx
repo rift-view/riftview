@@ -55,22 +55,23 @@ export default function IntegrationLegend(): React.JSX.Element | null {
       </div>
 
       {/* Edge type rows */}
-      {(Object.entries(EDGE_TYPE_STYLES) as [EdgeType, { color: string; label: string }][]).map(
+      {(Object.entries(EDGE_TYPE_STYLES) as [EdgeType, { color: string; label: string; strokeDasharray: string; animated: boolean }][]).map(
         ([edgeType, { color, label }]) => (
           <div
             key={edgeType}
             style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}
           >
-            <span
-              style={{
-                display:      'inline-block',
-                width:        8,
-                height:       8,
-                borderRadius: '50%',
-                background:   color,
-                flexShrink:   0,
-              }}
-            />
+            <svg width="24" height="8" style={{ flexShrink: 0 }}>
+              <line
+                x1="0" y1="4" x2="24" y2="4"
+                stroke={color}
+                strokeWidth="2"
+                strokeDasharray={
+                  edgeType === 'origin' ? undefined :
+                  edgeType === 'trigger' ? '6 3' : '2 4'
+                }
+              />
+            </svg>
             <span style={{ color: 'var(--cb-text)' }}>{label}</span>
           </div>
         )
