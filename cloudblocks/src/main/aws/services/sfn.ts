@@ -1,7 +1,17 @@
 import { SFNClient, ListStateMachinesCommand, DescribeStateMachineCommand } from '@aws-sdk/client-sfn'
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
-function extractLambdaArns(definition: string): string[] {
+function isKnownTarget(resource: string): boolean {
+  if (resource.startsWith('arn:aws:lambda:')) return true
+  if (resource.startsWith('arn:aws:sqs:')) return true
+  if (resource.startsWith('arn:aws:sns:')) return true
+  // Match real nested SFN ARNs (contain 'stateMachine') but not SDK integration resources
+  // such as 'arn:aws:states:::lambda:invoke' which use triple-colon with no region/account.
+  if (resource.startsWith('arn:aws:states:') && resource.includes('stateMachine')) return true
+  return false
+}
+
+function extractTargetArns(definition: string): { targetId: string; edgeType: EdgeType }[] {
   try {
     const parsed = JSON.parse(definition) as {
       States?: Record<string, {
@@ -9,17 +19,17 @@ function extractLambdaArns(definition: string): string[] {
         Parameters?: { FunctionName?: unknown }
       }>
     }
-    const arns = new Set<string>()
+    const seen = new Map<string, EdgeType>()
     for (const state of Object.values(parsed.States ?? {})) {
-      if (typeof state.Resource === 'string' && state.Resource.startsWith('arn:aws:lambda:')) {
-        arns.add(state.Resource)
+      if (typeof state.Resource === 'string' && isKnownTarget(state.Resource)) {
+        seen.set(state.Resource, 'trigger')
       }
       const fnName = state.Parameters?.FunctionName
       if (typeof fnName === 'string' && fnName.startsWith('arn:aws:lambda:')) {
-        arns.add(fnName)
+        seen.set(fnName, 'trigger')
       }
     }
-    return Array.from(arns)
+    return Array.from(seen.entries()).map(([targetId, edgeType]) => ({ targetId, edgeType }))
   } catch {
     return []
   }
@@ -47,13 +57,8 @@ export async function listStateMachines(client: SFNClient, region: string): Prom
 
         if (!described.definition) return base
 
-        const lambdaArns = extractLambdaArns(described.definition)
-        if (lambdaArns.length === 0) return base
-
-        const integrations: { targetId: string; edgeType: EdgeType }[] = lambdaArns.map((arn) => ({
-          targetId: arn,
-          edgeType: 'trigger' as EdgeType,
-        }))
+        const integrations: { targetId: string; edgeType: EdgeType }[] = extractTargetArns(described.definition)
+        if (integrations.length === 0) return base
 
         return { ...base, integrations }
       }),

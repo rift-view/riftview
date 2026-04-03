@@ -24,15 +24,20 @@ export async function describeLoadBalancers(
       try {
         const tgRes = await client.send(new DescribeTargetGroupsCommand({ LoadBalancerArn: lb.LoadBalancerArn }))
         const instanceIds: string[] = []
+        const lambdaArns: string[] = []
         for (const tg of tgRes.TargetGroups ?? []) {
           const healthRes = await client.send(new DescribeTargetHealthCommand({ TargetGroupArn: tg.TargetGroupArn }))
           for (const desc of healthRes.TargetHealthDescriptions ?? []) {
             const id = desc.Target?.Id
             if (id?.startsWith('i-')) instanceIds.push(id)
+            if (id?.startsWith('arn:aws:lambda:')) lambdaArns.push(id)
           }
         }
-        if (instanceIds.length > 0) {
-          integrations = instanceIds.map((id) => ({ targetId: id, edgeType: 'origin' as const }))
+        if (instanceIds.length > 0 || lambdaArns.length > 0) {
+          integrations = [
+            ...instanceIds.map((id) => ({ targetId: id, edgeType: 'origin' as const })),
+            ...lambdaArns.map((arn) => ({ targetId: arn, edgeType: 'trigger' as const })),
+          ]
         }
       } catch { /* ignore */ }
       return {

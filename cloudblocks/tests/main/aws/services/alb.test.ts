@@ -62,6 +62,60 @@ describe('describeLoadBalancers', () => {
     ])
   })
 
+  it('populates integrations when target groups have Lambda ARN targets', async () => {
+    mockSend
+      .mockResolvedValueOnce({
+        LoadBalancers: [{
+          LoadBalancerName: 'prod-alb',
+          LoadBalancerArn: 'arn:aws:elasticloadbalancing:us-east-1:123:loadbalancer/app/prod-alb/abc',
+          State: { Code: 'active' },
+          VpcId: 'vpc-0abc',
+        }],
+      })
+      .mockResolvedValueOnce({
+        TargetGroups: [{ TargetGroupArn: 'arn:aws:elasticloadbalancing:us-east-1:123:targetgroup/lambda-tg/xyz' }],
+      })
+      .mockResolvedValueOnce({
+        TargetHealthDescriptions: [
+          { Target: { Id: 'arn:aws:lambda:us-east-1:123:function:my-fn' } },
+        ],
+      })
+    const nodes = await describeLoadBalancers(mockClient, 'us-east-1')
+    expect(nodes[0].integrations).toHaveLength(1)
+    expect(nodes[0].integrations?.[0]).toEqual({
+      targetId: 'arn:aws:lambda:us-east-1:123:function:my-fn',
+      edgeType: 'trigger',
+    })
+  })
+
+  it('populates integrations for both EC2 and Lambda targets in the same target group', async () => {
+    mockSend
+      .mockResolvedValueOnce({
+        LoadBalancers: [{
+          LoadBalancerName: 'mixed-alb',
+          LoadBalancerArn: 'arn:aws:elasticloadbalancing:us-east-1:123:loadbalancer/app/mixed-alb/def',
+          State: { Code: 'active' },
+          VpcId: 'vpc-0abc',
+        }],
+      })
+      .mockResolvedValueOnce({
+        TargetGroups: [{ TargetGroupArn: 'arn:aws:elasticloadbalancing:us-east-1:123:targetgroup/mixed-tg/abc' }],
+      })
+      .mockResolvedValueOnce({
+        TargetHealthDescriptions: [
+          { Target: { Id: 'i-1234567890abcdef0' } },
+          { Target: { Id: 'arn:aws:lambda:us-east-1:123:function:my-fn' } },
+          { Target: { Id: '10.0.0.5' } }, // IP target — should be excluded
+        ],
+      })
+    const nodes = await describeLoadBalancers(mockClient, 'us-east-1')
+    expect(nodes[0].integrations).toHaveLength(2)
+    const ec2 = nodes[0].integrations?.find((i) => i.targetId === 'i-1234567890abcdef0')
+    const lambda = nodes[0].integrations?.find((i) => i.targetId === 'arn:aws:lambda:us-east-1:123:function:my-fn')
+    expect(ec2?.edgeType).toBe('origin')
+    expect(lambda?.edgeType).toBe('trigger')
+  })
+
   it('leaves integrations undefined when target group fetch fails', async () => {
     mockSend
       .mockResolvedValueOnce({
