@@ -339,8 +339,8 @@ function buildFlowNodes(
     })
   })
 
-  // Add region zone containers if multi-region indicators are enabled
-  if (showRegionIndicators && selectedRegions.length >= 2) {
+  // Add region zone containers if region indicators are enabled
+  if (showRegionIndicators && selectedRegions.length >= 1) {
     for (const region of selectedRegions) {
       const zoneId = `region-zone-${region}`
       const regionNodeIds = new Set(
