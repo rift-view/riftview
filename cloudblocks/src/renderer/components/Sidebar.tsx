@@ -259,11 +259,9 @@ export function Sidebar(): React.JSX.Element {
                   return (
                     <div
                       key={s.type}
-                      draggable={s.hasCreate}
-                      onDragStart={s.hasCreate ? (e) => e.dataTransfer.setData('text/plain', s.resource ?? s.type) : undefined}
                       onClick={() => handleTypeClick(s.type)}
                       className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
-                      style={{ ...(isActive ? activeStyle : serviceRowStyle), cursor: s.hasCreate ? 'grab' : 'default', paddingLeft: 20 }}
+                      style={{ ...(isActive ? activeStyle : serviceRowStyle), cursor: 'pointer', paddingLeft: 20 }}
                     >
                       <span>
                         ⬡ {s.label}
@@ -291,9 +289,7 @@ export function Sidebar(): React.JSX.Element {
                         return (
                           <div
                             key={node.id}
-                            draggable
-                            onDragStart={(e) => e.dataTransfer.setData('text/plain', 'ssm-param')}
-                            className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
+                            className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-pointer"
                             style={{ ...serviceRowStyle, paddingLeft: 20 }}
                             title={node.label}
                           >
@@ -319,9 +315,7 @@ export function Sidebar(): React.JSX.Element {
                             .map((node) => (
                               <div
                                 key={node.id}
-                                draggable
-                                onDragStart={(e) => e.dataTransfer.setData('text/plain', 'ssm-param')}
-                                className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-grab"
+                                className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-pointer"
                                 style={{ ...serviceRowStyle, paddingLeft: 28 }}
                                 title={node.label}
                               >
@@ -348,11 +342,9 @@ export function Sidebar(): React.JSX.Element {
           {pluginServices.map(([type, meta]) => (
             <div
               key={type}
-              draggable
-              onDragStart={(e) => e.dataTransfer.setData('text/plain', type)}
               onClick={() => { /* plugin types skip the filter for now */ }}
               className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
-              style={{ ...serviceRowStyle, cursor: 'grab' }}
+              style={{ ...serviceRowStyle, cursor: 'pointer' }}
             >
               <span>⬡ {meta.displayName}</span>
             </div>
