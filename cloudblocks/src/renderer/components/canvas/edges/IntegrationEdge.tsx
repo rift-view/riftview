@@ -5,16 +5,21 @@ import type { EdgeType, IntegrationEdgeData } from '../../../types/cloud'
 type IntegrationEdgeType = Edge<IntegrationEdgeData, 'integration'>
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const EDGE_TYPE_STYLES: Record<EdgeType, { color: string; label: string }> = {
-  trigger:      { color: '#f59e0b', label: 'triggers' },
-  subscription: { color: '#14b8a6', label: 'subscribes to' },
-  origin:       { color: '#6366f1', label: 'serves' },
+export const EDGE_TYPE_STYLES: Record<EdgeType, {
+  color: string
+  label: string
+  strokeDasharray: string
+  animated: boolean
+}> = {
+  trigger:      { color: '#f59e0b', label: 'triggers',      strokeDasharray: '6 3',  animated: true  },
+  subscription: { color: '#14b8a6', label: 'subscribes to', strokeDasharray: '2 4',  animated: true  },
+  origin:       { color: '#6366f1', label: 'serves',        strokeDasharray: 'none', animated: false },
 }
 
-const ANIMATION_DURATION: Record<EdgeType, string> = {
+const FLOW_DURATION: Record<EdgeType, string> = {
   trigger:      '1s',
-  subscription: '1.5s',
-  origin:       '2s',
+  subscription: '2s',
+  origin:       '0s',  // unused but keeps the Record exhaustive
 }
 
 // Inject the dash-flow keyframe once into the document head
@@ -45,7 +50,7 @@ export default function IntegrationEdge({
 
   const edgeType: EdgeType = data?.edgeType ?? 'trigger'
   const { color, label } = EDGE_TYPE_STYLES[edgeType]
-  const duration = ANIMATION_DURATION[edgeType]
+  const duration = FLOW_DURATION[edgeType]
 
   const [hovered, setHovered] = useState(false)
 
@@ -78,8 +83,12 @@ export default function IntegrationEdge({
         style={{
           stroke: color,
           strokeWidth: 1.5,
-          strokeDasharray: '6 3',
-          animation: `dash-flow ${duration} linear infinite`,
+          strokeDasharray: EDGE_TYPE_STYLES[edgeType].strokeDasharray === 'none'
+            ? undefined
+            : EDGE_TYPE_STYLES[edgeType].strokeDasharray,
+          animation: EDGE_TYPE_STYLES[edgeType].animated
+            ? `dash-flow ${duration} linear infinite`
+            : undefined,
         }}
       />
       <EdgeLabelRenderer>

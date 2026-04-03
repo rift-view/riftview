@@ -10,13 +10,11 @@ describe('IntegrationLegend', () => {
     expect(screen.getByText('serves')).toBeTruthy()
   })
 
-  it('renders a colored swatch for each edge type', () => {
+  it('renders an SVG line preview for each edge type', () => {
     const { container } = render(<IntegrationLegend />)
-    // Each row has a swatch span with borderRadius '50%'
-    const swatches = Array.from(container.querySelectorAll('span')).filter(
-      (el) => (el as HTMLElement).style.borderRadius === '50%'
-    )
-    expect(swatches).toHaveLength(3)
+    // Each row now has an SVG line element instead of a dot swatch
+    const lines = container.querySelectorAll('svg line')
+    expect(lines).toHaveLength(3)
   })
 
   it('renders the title "Integration Edges"', () => {
