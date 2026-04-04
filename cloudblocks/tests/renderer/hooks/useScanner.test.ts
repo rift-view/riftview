@@ -42,6 +42,7 @@ beforeEach(() => {
     listTfStateModules:   vi.fn().mockResolvedValue({ modules: [] }),
     saveBaseline:         vi.fn().mockResolvedValue({ ok: true }),
     retryScanService:     vi.fn().mockResolvedValue({ ok: true }),
+    saveExportImage:      vi.fn().mockResolvedValue({ success: true }),
   }
   useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })

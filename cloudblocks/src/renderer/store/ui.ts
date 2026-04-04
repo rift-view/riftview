@@ -62,6 +62,7 @@ interface UIState {
   pluginNodeTypes:        Record<string, NodeTypeMetadata>
   zoneSizes:              Record<string, { width: number; height: number }>
   customEdges:            CustomEdge[]
+  isExporting:            boolean
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -108,6 +109,7 @@ interface UIState {
   setPluginNodeTypes:     (meta: Record<string, NodeTypeMetadata>) => void
   setZoneSize:            (id: string, size: { width: number; height: number }) => void
   addCustomEdge:          (edge: CustomEdge) => void
+  setIsExporting:         (v: boolean) => void
   removeCustomEdge:       (id: string) => void
   updateCustomEdgeLabel:  (id: string, label: string) => void
   updateCustomEdgeColor:  (id: string, color: CustomEdge['color']) => void
@@ -147,6 +149,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   pluginNodeTypes:      {},
   zoneSizes:            {},
   customEdges:          [],
+  isExporting:          false,
 
   setView:             (view) => set({ view }),
   selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -307,4 +310,5 @@ export const useUIStore = create<UIState>((set, get) => ({
     customEdges: s.customEdges.map((e) => e.id === id ? { ...e, color } : e),
   })),
   setCustomEdges: (edges) => set({ customEdges: edges }),
+  setIsExporting: (v) => set({ isExporting: v }),
 }))

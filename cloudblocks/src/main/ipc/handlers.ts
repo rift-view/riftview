@@ -271,6 +271,23 @@ export function registerHandlers(win: BrowserWindow): void {
     }
   })
 
+  // Canvas image export — receive data URL from renderer, show native save dialog
+  ipcMain.handle(IPC.CANVAS_SAVE_IMAGE, async (_e, dataUrl: string, defaultName: string) => {
+    try {
+      const { filePath } = await dialog.showSaveDialog(win, {
+        defaultPath: defaultName,
+        filters: [{ name: 'PNG Image', extensions: ['png'] }],
+      })
+      if (!filePath) return { success: false }
+      const base64 = dataUrl.replace(/^data:image\/png;base64,/, '')
+      fs.writeFileSync(filePath, Buffer.from(base64, 'base64'))
+      return { success: true, filePath }
+    } catch (err) {
+      console.error('CANVAS_SAVE_IMAGE error:', err)
+      return { success: false }
+    }
+  })
+
   // Terraform HCL export — generate file and open native save dialog
   ipcMain.handle(IPC.TERRAFORM_EXPORT, async (_e, nodes: CloudNode[]) => {
     try {

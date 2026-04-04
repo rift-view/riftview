@@ -68,8 +68,11 @@ contextBridge.exposeInMainWorld('cloudblocks', {
   terraformDeploy: (hcl: string, region: string, endpoint?: string) =>
     ipcRenderer.invoke(IPC.TERRAFORM_DEPLOY, hcl, region, endpoint),
 
-  // Canvas PNG export
+  // Canvas PNG export (legacy whole-window capture)
   exportPng: (): Promise<{ success: boolean; filePath?: string }> => ipcRenderer.invoke(IPC.CANVAS_EXPORT_PNG),
+  // Canvas image export — renderer captures via html-to-image, main process shows save dialog
+  saveExportImage: (dataUrl: string, defaultName: string): Promise<{ success: boolean; filePath?: string }> =>
+    ipcRenderer.invoke(IPC.CANVAS_SAVE_IMAGE, dataUrl, defaultName),
 
   // List AWS credential profile names from ~/.aws/credentials
   listAwsProfiles: (): Promise<string[]> => ipcRenderer.invoke(IPC.AWS_LIST_PROFILES),
