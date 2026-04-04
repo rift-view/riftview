@@ -66,4 +66,22 @@ describe('buildConsoleUrl', () => {
     expect(url).toContain('cognito')
     expect(url).toContain('us-east-1_ABCDEFGH')
   })
+
+  it('returns EKS URL with cluster name', () => {
+    const url = buildConsoleUrl(makeNode({ type: 'eks', label: 'my-cluster', region: 'us-east-1' }))
+    expect(url).toContain('eks')
+    expect(url).toContain('my-cluster')
+  })
+
+  it('returns OpenSearch URL with domain name', () => {
+    const url = buildConsoleUrl(makeNode({ type: 'opensearch', label: 'my-domain', region: 'us-east-1' }))
+    expect(url).toContain('opensearch')
+    expect(url).toContain('my-domain')
+  })
+
+  it('returns MSK URL', () => {
+    const url = buildConsoleUrl(makeNode({ type: 'msk', label: 'my-cluster', region: 'us-east-1' }))
+    expect(url).not.toBeNull()
+    expect(url).toContain('msk')
+  })
 })

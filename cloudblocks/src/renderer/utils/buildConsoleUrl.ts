@@ -69,6 +69,12 @@ export function buildConsoleUrl(node: CloudNode): string | null {
     }
     case 'elasticache':
       return `https://console.aws.amazon.com/elasticache/home?region=${r}#/redis`
+    case 'eks':
+      return `https://console.aws.amazon.com/eks/home?region=${r}#/clusters/${encodeURIComponent(label)}`
+    case 'opensearch':
+      return `https://console.aws.amazon.com/aos/home?region=${r}#opensearch/domains/${encodeURIComponent(label)}`
+    case 'msk':
+      return `https://console.aws.amazon.com/msk/home?region=${r}#/clusters`
     case 'apigw-route':
     case 'unknown':
       return null
