@@ -3,8 +3,9 @@ import {
   ListClustersCommand,
   ListServicesCommand,
   DescribeServicesCommand,
+  DescribeTaskDefinitionCommand,
 } from '@aws-sdk/client-ecs'
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus, EdgeType } from '../../../renderer/types/cloud'
 
 function ecsStatusToNodeStatus(status: string | undefined): NodeStatus {
   if (status === 'ACTIVE')   return 'running'
@@ -41,6 +42,22 @@ export async function listEcsServices(client: ECSClient, region: string): Promis
           for (const svc of descRes.services ?? []) {
             if (!svc.serviceArn) continue
 
+            const integrations: { targetId: string; edgeType: EdgeType }[] = []
+            if (svc.taskDefinition) {
+              try {
+                const tdRes = await client.send(new DescribeTaskDefinitionCommand({ taskDefinition: svc.taskDefinition }))
+                for (const container of tdRes.taskDefinition?.containerDefinitions ?? []) {
+                  const image = container.image
+                  // ECR images: account.dkr.ecr.region.amazonaws.com/repo:tag
+                  if (image?.includes('.dkr.ecr.')) {
+                    // Strip tag/digest to get repo URI (ECR node ID)
+                    const repoUri = image.replace(/[:@][^/]*$/, '')
+                    integrations.push({ targetId: repoUri, edgeType: 'origin' })
+                  }
+                }
+              } catch { /* ignore */ }
+            }
+
             nodes.push({
               id:     svc.serviceArn,
               type:   'ecs',
@@ -54,6 +71,7 @@ export async function listEcsServices(client: ECSClient, region: string): Promis
                 runningCount: svc.runningCount,
                 launchType:   svc.launchType,
               },
+              ...(integrations.length > 0 ? { integrations } : {}),
             })
           }
         }
