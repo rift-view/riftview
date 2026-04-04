@@ -41,6 +41,16 @@ export function resolveIntegrationTargetId(nodes: CloudNode[], targetId: string)
   })
   if (ecrMatch) return ecrMatch.id
 
+  // Match against OpenSearch endpoint hostname
+  const osMatch = nodes.find(n => {
+    if (n.type !== 'opensearch') return false
+    const ep = n.metadata.endpoint as string | undefined
+    if (!ep) return false
+    const host = ep.replace(/^https?:\/\//, '').split('/')[0] ?? ep
+    return host === targetId || ep === targetId
+  })
+  if (osMatch) return osMatch.id
+
   // No match — return original (edge won't render but won't crash)
   return targetId
 }
