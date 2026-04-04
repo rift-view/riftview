@@ -34,14 +34,24 @@ function extractEnvVarIntegrations(
     if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) {
       results.push({ targetId: value, edgeType: 'trigger' })
     }
+    // RDS hostname: *.rds.amazonaws.com → resolved to RDS node via metadata.endpoint
+    if (/\.rds\.amazonaws\.com$/.test(value)) {
+      results.push({ targetId: value, edgeType: 'trigger' })
+    }
   }
   return results
 }
 
 export async function listFunctions(client: LambdaClient, region: string): Promise<CloudNode[]> {
   try {
-    const res = await client.send(new ListFunctionsCommand({}))
-    return Promise.all((res.Functions ?? []).map(async (fn): Promise<CloudNode> => {
+    const allFunctions: { FunctionArn?: string; FunctionName?: string; State?: string; Runtime?: string; Handler?: string; VpcConfig?: { VpcId?: string } }[] = []
+    let marker: string | undefined
+    do {
+      const res = await client.send(new ListFunctionsCommand({ Marker: marker }))
+      allFunctions.push(...(res.Functions ?? []))
+      marker = res.NextMarker
+    } while (marker)
+    return Promise.all(allFunctions.map(async (fn): Promise<CloudNode> => {
       const allIntegrations: { targetId: string; edgeType: 'trigger' }[] = []
       // Add event source mappings (SQS triggers)
       try {

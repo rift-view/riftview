@@ -17,7 +17,7 @@ export async function describeDBInstances(client: RDSClient, region: string): Pr
       label:    db.DBInstanceIdentifier ?? 'RDS',
       status:   rdsStatusToNodeStatus(db.DBInstanceStatus),
       region,
-      metadata: { engine: db.Engine, instanceClass: db.DBInstanceClass },
+      metadata: { engine: db.Engine, instanceClass: db.DBInstanceClass, endpoint: db.Endpoint?.Address },
       parentId: db.DBSubnetGroup?.VpcId,
     }))
   } catch {
