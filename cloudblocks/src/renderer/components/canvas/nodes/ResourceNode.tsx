@@ -122,7 +122,7 @@ function getNodeMeta(nodeType: NodeType, m: Record<string, unknown>): string | u
     case 'dynamo':      return m.billingMode as string | undefined
     case 'sqs':         return typeof m.messages === 'number' && m.messages > 0 ? `${m.messages} msg` : undefined
     case 'alb':         return m.type as string | undefined
-    case 'msk':         return m.clusterType as string | undefined
+    case 'msk':         return (m.instanceType as string | undefined) ?? (m.clusterType as string | undefined)
     case 'opensearch':  return m.engineVersion as string | undefined
     default:            return undefined
   }
