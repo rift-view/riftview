@@ -22,6 +22,7 @@ import type { CloudNode, EdgeType, IntegrationEdgeData, CustomEdge } from '../..
 import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
 import IntegrationEdge from './edges/IntegrationEdge'
 import UserEdge from './edges/UserEdge'
+import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../utils/filterToHide'
 import IntegrationLegend from './IntegrationLegend'
 
 const SNAP_GRID_SIZE = 20
@@ -580,20 +581,30 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
 
   const allNodes = useMemo(() => [...cloudNodes, ...pendingNodes], [cloudNodes, pendingNodes])
 
-  // Compute highlighted set for focus mode
+  // Filter-to-hide: nodes not matching any active filter are excluded from the canvas entirely
+  const visibleNodes = useMemo(
+    () => applyNodeFilters(allNodes, activeFilters),
+    [allNodes, activeFilters],
+  )
+
+  // Clear selection when the selected node is hidden by an active filter
+  useEffect(() => {
+    if (!selectedId || activeFilters.length === 0) return
+    const visibleIds = new Set(visibleNodes.map((n) => n.id))
+    if (!visibleIds.has(selectedId)) selectNode(null)
+  }, [visibleNodes, selectedId, activeFilters.length, selectNode])
+
+  // Compute highlighted set for selection-based neighbour dimming only
   const highlightedIds = useMemo<Set<string> | null>(() => {
-    if (activeFilters.length > 0) {
-      return new Set(allNodes.filter((n) => activeFilters.some((f) => f.test(n))).map((n) => n.id))
-    }
     if (!selectedId) return null
-    const rawEdges = buildTopologyEdges(allNodes)
+    const rawEdges = buildTopologyEdges(visibleNodes)
     const neighbours = new Set<string>([selectedId])
     for (const e of rawEdges) {
       if (e.source === selectedId) neighbours.add(e.target)
       if (e.target === selectedId) neighbours.add(e.source)
     }
     return neighbours
-  }, [selectedId, allNodes, activeFilters])
+  }, [selectedId, visibleNodes])
 
   // Track in-flight drag positions so controlled nodes follow the mouse.
   // Only persisted to the store on drag-end; cleared on drop.
@@ -621,7 +632,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   }, [allNodes, importedNodes, showRegionIndicators, selectedRegions])
 
   const flowNodes: Node[] = useMemo(() => {
-    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets, collapsedVpcs, collapsedApigws, expandedGroups, selectedRegions, showRegionIndicators, regionColorMap, topologyPositions, zoneSizes)
+    const raw = buildFlowNodes(visibleNodes, selectedId, highlightedIds, collapsedSubnets, collapsedVpcs, collapsedApigws, expandedGroups, selectedRegions, showRegionIndicators, regionColorMap, topologyPositions, zoneSizes)
     const mapped = raw.map((n) => {
       const isMultiSelected = selectedNodeIds.size > 1 && selectedNodeIds.has(n.id)
       const isLocked = lockedNodes.has(n.id)
@@ -777,7 +788,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       const d = fn.data as { driftStatus?: string }
       return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
     })
-  }, [allNodes, selectedId, selectedNodeIds, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, collapsedVpcs, toggleVpc, collapsedApigws, toggleApigw, expandedGroups, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete, zoneSizes, setZoneSize])
+  }, [visibleNodes, selectedId, selectedNodeIds, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, collapsedVpcs, toggleVpc, collapsedApigws, toggleApigw, expandedGroups, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete, zoneSizes, setZoneSize])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
@@ -831,14 +842,15 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   }, [topLevelNodeIds, stickyNoteIds, setNodePosition, livePositions, topologyPositions, allNodes])
 
   const flowEdges: Edge[] = useMemo(() => {
-    const raw = buildTopologyEdges(allNodes)
+    const visibleIds = new Set(visibleNodes.map((n) => n.id))
+    const raw = filterEdgesByVisibleNodes(buildTopologyEdges(visibleNodes), visibleIds)
     const filtered = showIntegrations
       ? raw
       : raw.filter((e) => !(e.data as IntegrationEdgeData | undefined)?.isIntegration)
 
     // Hide subscription edges for SNS nodes with 2+ subscriptions when unselected
     const snsWithManySubscriptions = new Set(
-      allNodes
+      visibleNodes
         .filter((n) => n.type === 'sns' && (n.integrations?.filter((i) => i.edgeType === 'subscription').length ?? 0) >= 2)
         .map((n) => n.id)
     )
@@ -868,7 +880,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       data:   { isCustom: true as const, color: ce.color, label: ce.label },
     }))
     return [...withOpacity, ...userEdges]
-  }, [allNodes, selectedId, showIntegrations, customEdges])
+  }, [visibleNodes, selectedId, showIntegrations, customEdges])
 
   return (
     // Wrapper must receive a concrete height from its parent (flex-1) for ReactFlow to fill correctly
