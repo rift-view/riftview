@@ -31,6 +31,9 @@ export type NodeType =
   | 'kinesis'
   | 'ecs'
   | 'elasticache'
+  | 'eks'
+  | 'opensearch'
+  | 'msk'
   | 'unknown'
 
 export type EdgeType = 'trigger' | 'origin' | 'subscription'

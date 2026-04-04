@@ -32,6 +32,9 @@ const TYPE_BADGE_COLOR = {
   kinesis:           '#8b5cf6',
   ecs:               '#FF9900',
   elasticache:       '#22c55e',
+  eks:               '#FF9900',
+  opensearch:        '#005EB8',
+  msk:               '#FF9900',
   'unknown':         '#6b7280',
 } satisfies Record<NodeType, string>
 
@@ -64,6 +67,9 @@ const TYPE_SHORT = {
   kinesis:           'KDS',
   ecs:               'ECS',
   elasticache:       'REDIS',
+  eks:               'EKS',
+  opensearch:        'OS',
+  msk:               'MSK',
   'unknown':         '?',
 } satisfies Record<NodeType, string>
 
