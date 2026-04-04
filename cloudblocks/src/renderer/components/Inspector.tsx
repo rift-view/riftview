@@ -751,7 +751,11 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                         label={target ? target.label : (integ.targetId.split('/').pop() ?? integ.targetId)}
                         label2={target?.type}
                         edgeType={integ.edgeType}
-                        onClick={() => target && useUIStore.getState().selectNode(target.id)}
+                        onClick={() => {
+                        if (!target) return
+                        useUIStore.getState().selectNode(target.id)
+                        window.dispatchEvent(new CustomEvent('cloudblocks:fitnode', { detail: { nodeId: target.id } }))
+                      }}
                       />
                     ))}
                   </>
@@ -770,7 +774,10 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                           label={src.label}
                           label2={src.type}
                           edgeType={e.edgeType}
-                          onClick={() => useUIStore.getState().selectNode(src.id)}
+                          onClick={() => {
+                            useUIStore.getState().selectNode(src.id)
+                            window.dispatchEvent(new CustomEvent('cloudblocks:fitnode', { detail: { nodeId: src.id } }))
+                          }}
                         />
                       )
                     })}
