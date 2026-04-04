@@ -38,6 +38,16 @@ function extractEnvVarIntegrations(
     if (/\.rds\.amazonaws\.com$/.test(value)) {
       results.push({ targetId: value, edgeType: 'trigger' })
     }
+    // OpenSearch: *.es.amazonaws.com or *.aoss.amazonaws.com
+    if (/\.(es|aoss)\.amazonaws\.com/.test(value)) {
+      // Normalise: strip https:// prefix and trailing path
+      const host = value.replace(/^https?:\/\//, '').split('/')[0] ?? value
+      results.push({ targetId: host, edgeType: 'trigger' })
+    }
+    // ElastiCache: *.cache.amazonaws.com
+    if (/\.cache\.amazonaws\.com$/.test(value)) {
+      results.push({ targetId: value, edgeType: 'trigger' })
+    }
   }
   return results
 }
