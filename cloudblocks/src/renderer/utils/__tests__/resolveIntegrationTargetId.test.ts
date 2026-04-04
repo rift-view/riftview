@@ -72,4 +72,32 @@ describe('resolveIntegrationTargetId', () => {
       'some-domain.elb.amazonaws.com'
     )
   })
+
+  it('resolves CloudFront domain to CloudFront node id via metadata.domainName', () => {
+    const cfDomain = 'd1234abcd.cloudfront.net'
+    const nodes = [
+      makeNode({ id: 'EDFDVBD6EXAMPLE', type: 'cloudfront', metadata: { domainName: cfDomain } }),
+    ]
+    expect(resolveIntegrationTargetId(nodes, cfDomain)).toBe('EDFDVBD6EXAMPLE')
+  })
+
+  it('resolves RDS endpoint hostname to RDS node id via metadata.endpoint', () => {
+    const rdsHost = 'my-db.cxxx.us-east-1.rds.amazonaws.com'
+    const nodes = [
+      makeNode({ id: 'my-db-instance', type: 'rds', metadata: { endpoint: rdsHost } }),
+    ]
+    expect(resolveIntegrationTargetId(nodes, rdsHost)).toBe('my-db-instance')
+  })
+
+  it('resolves ECR image URI (exact) to ECR node id', () => {
+    const uri = '123456789.dkr.ecr.us-east-1.amazonaws.com/my-repo'
+    const nodes = [makeNode({ id: 'ecr-node-id', type: 'ecr-repo', metadata: { uri } })]
+    expect(resolveIntegrationTargetId(nodes, uri)).toBe('ecr-node-id')
+  })
+
+  it('resolves ECR image URI with tag to ECR node id', () => {
+    const uri = '123456789.dkr.ecr.us-east-1.amazonaws.com/my-repo'
+    const nodes = [makeNode({ id: 'ecr-node-id', type: 'ecr-repo', metadata: { uri } })]
+    expect(resolveIntegrationTargetId(nodes, `${uri}:latest`)).toBe('ecr-node-id')
+  })
 })
