@@ -20,7 +20,8 @@ export const IPC = {
   CF_INVALIDATE:   'cloudfront:invalidate', // invoke → { code: number }
   TERRAFORM_EXPORT: 'terraform:export',     // invoke → { success: boolean }
   TERRAFORM_DEPLOY: 'terraform:deploy',    // invoke → TerraformDeployResult
-  CANVAS_EXPORT_PNG: 'canvas:export-png',   // invoke → { success: boolean; filePath?: string }
+  CANVAS_EXPORT_PNG:  'canvas:export-png',    // invoke → { success: boolean; filePath?: string }
+  CANVAS_SAVE_IMAGE:  'canvas:save-image',   // invoke(dataUrl, defaultName) → { success: boolean; filePath?: string }
   AWS_LIST_PROFILES: 'aws:list-profiles',   // invoke → string[]
   UPDATE_AVAILABLE: 'update:available',      // push → void (main → renderer)
   ANNOTATIONS_LOAD: 'annotations:load',      // invoke → Record<string, string>
