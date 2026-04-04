@@ -172,7 +172,7 @@ describe('listFunctions', () => {
     expect(nodes[0].integrations?.[0].targetId).toBe(sqsArn)
   })
 
-  it('ignores env vars that do not contain ARNs', async () => {
+  it('ignores env vars that are plain strings with no recognisable pattern', async () => {
     mockSend
       .mockResolvedValueOnce({
         Functions: [{
@@ -187,11 +187,34 @@ describe('listFunctions', () => {
           Variables: {
             STAGE: 'production',
             LOG_LEVEL: 'info',
-            DB_HOST: 'my-db.cluster.us-east-1.rds.amazonaws.com',
+            PORT: '8080',
           },
         },
       })
     const nodes = await listFunctions(mockClient, 'us-east-1')
     expect(nodes[0].integrations).toBeUndefined()
+  })
+
+  it('adds integration from RDS hostname in env vars', async () => {
+    mockSend
+      .mockResolvedValueOnce({
+        Functions: [{
+          FunctionName: 'db-fn',
+          FunctionArn: 'arn:aws:lambda:us-east-1:123:function:db-fn',
+          State: 'Active',
+        }],
+      })
+      .mockResolvedValueOnce({ EventSourceMappings: [] })
+      .mockResolvedValueOnce({
+        Environment: {
+          Variables: {
+            DB_HOST: 'my-db.cluster.us-east-1.rds.amazonaws.com',
+          },
+        },
+      })
+    const nodes = await listFunctions(mockClient, 'us-east-1')
+    expect(nodes[0].integrations).toEqual([
+      { targetId: 'my-db.cluster.us-east-1.rds.amazonaws.com', edgeType: 'trigger' },
+    ])
   })
 })
