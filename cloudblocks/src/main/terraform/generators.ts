@@ -261,6 +261,113 @@ function generateEventBridgeBus(node: CloudNode): string {
 }`
 }
 
+function generateSes(node: CloudNode): string {
+  const name = sanitizeName(node.label, node.id)
+  return `resource "aws_ses_email_identity" "${name}" {
+  email = "${node.label}"
+}`
+}
+
+function generateCognito(node: CloudNode): string {
+  const name = sanitizeName(node.label, node.id)
+  return `resource "aws_cognito_user_pool" "${name}" {
+  name = "${node.label}"
+}`
+}
+
+function generateKinesis(node: CloudNode): string {
+  const name = sanitizeName(node.label, node.id)
+  const mode = str(node.metadata['streamMode'], 'PROVISIONED')
+  return `resource "aws_kinesis_stream" "${name}" {
+  name             = "${node.label}"
+  shard_count      = ${mode === 'ON_DEMAND' ? 'null  # ON_DEMAND mode' : '1'}
+  stream_mode_details {
+    stream_mode = "${mode}"
+  }
+}`
+}
+
+function generateEcs(node: CloudNode): string {
+  const name = sanitizeName(node.label, node.id)
+  const cluster = str(node.metadata['clusterName'] as string | undefined, 'REPLACE_WITH_CLUSTER')
+  const launchType = str(node.metadata['launchType'] as string | undefined, 'FARGATE')
+  return `resource "aws_ecs_service" "${name}" {
+  name            = "${node.label}"
+  cluster         = "${cluster}"
+  launch_type     = "${launchType}"
+  desired_count   = ${node.metadata['desiredCount'] ?? 1}
+  task_definition = "REPLACE_WITH_TASK_DEFINITION_ARN"
+}`
+}
+
+function generateElastiCache(node: CloudNode): string {
+  const name = sanitizeName(node.label, node.id)
+  const engine = str(node.metadata['engine'] as string | undefined, 'redis')
+  const nodeType = str(node.metadata['nodeType'] as string | undefined, 'cache.t3.micro')
+  if (engine === 'redis') {
+    return `resource "aws_elasticache_replication_group" "${name}" {
+  replication_group_id = "${node.label}"
+  description          = "${node.label}"
+  node_type            = "${nodeType}"
+  num_cache_clusters   = ${node.metadata['numCaches'] ?? 1}
+}`
+  }
+  return `resource "aws_elasticache_cluster" "${name}" {
+  cluster_id           = "${node.label}"
+  engine               = "${engine}"
+  node_type            = "${nodeType}"
+  num_cache_nodes      = 1
+}`
+}
+
+function generateEks(node: CloudNode): string {
+  const name = sanitizeName(node.label, node.id)
+  const version = str(node.metadata['version'] as string | undefined, 'REPLACE_WITH_VERSION')
+  return `resource "aws_eks_cluster" "${name}" {
+  name     = "${node.label}"
+  version  = "${version}"
+  role_arn = "REPLACE_WITH_ROLE_ARN"
+
+  vpc_config {
+    subnet_ids = ["REPLACE_WITH_SUBNET_IDS"]
+  }
+}`
+}
+
+function generateOpenSearch(node: CloudNode): string {
+  const name = sanitizeName(node.label, node.id)
+  const version = str(node.metadata['engineVersion'] as string | undefined, 'OpenSearch_2.11')
+  return `resource "aws_opensearch_domain" "${name}" {
+  domain_name    = "${node.label}"
+  engine_version = "${version}"
+
+  cluster_config {
+    instance_type = "t3.small.search"
+  }
+}`
+}
+
+function generateMsk(node: CloudNode): string {
+  const name = sanitizeName(node.label, node.id)
+  const clusterType = str(node.metadata['clusterType'] as string | undefined, 'PROVISIONED')
+  return `resource "aws_msk_cluster" "${name}" {
+  cluster_name           = "${node.label}"
+  kafka_version          = "REPLACE_WITH_KAFKA_VERSION"
+  number_of_broker_nodes = 3
+
+  broker_node_group_info {
+    instance_type   = "kafka.m5.large"
+    client_subnets  = ["REPLACE_WITH_SUBNET_IDS"]
+    storage_info {
+      ebs_storage_info {
+        volume_size = 100
+      }
+    }
+  }
+  # cluster_type = "${clusterType}"
+}`
+}
+
 export const terraformGenerators: TerraformGeneratorMap = {
   'vpc': generateVpc,
   'subnet': generateSubnet,
@@ -285,13 +392,13 @@ export const terraformGenerators: TerraformGeneratorMap = {
   'r53-zone': generateR53Zone,
   'sfn': generateSfn,
   'eventbridge-bus': generateEventBridgeBus,
-  'ses': () => '',
-  'cognito': () => '',
-  'kinesis': () => '',
-  'ecs': () => '',
-  'elasticache': () => '',
-  'eks': () => '',
-  'opensearch': () => '',
-  'msk': () => '',
+  'ses': generateSes,
+  'cognito': generateCognito,
+  'kinesis': generateKinesis,
+  'ecs': generateEcs,
+  'elasticache': generateElastiCache,
+  'eks': generateEks,
+  'opensearch': generateOpenSearch,
+  'msk': generateMsk,
   'unknown': () => '',
 }
