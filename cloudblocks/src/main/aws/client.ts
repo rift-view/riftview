@@ -16,6 +16,11 @@ import { Route53Client } from '@aws-sdk/client-route-53'
 import { SFNClient } from '@aws-sdk/client-sfn'
 import { EventBridgeClient } from '@aws-sdk/client-eventbridge'
 import { IAMClient } from '@aws-sdk/client-iam'
+import { SESClient } from '@aws-sdk/client-ses'
+import { CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider'
+import { KinesisClient } from '@aws-sdk/client-kinesis'
+import { ECSClient } from '@aws-sdk/client-ecs'
+import { ElastiCacheClient } from '@aws-sdk/client-elasticache'
 
 export interface AwsClients {
   ec2: EC2Client
@@ -36,6 +41,11 @@ export interface AwsClients {
   sfn: SFNClient
   eventbridge: EventBridgeClient
   iam: IAMClient
+  ses: SESClient
+  cognito: CognitoIdentityProviderClient
+  kinesis:      KinesisClient
+  ecs:          ECSClient
+  elasticache:  ElastiCacheClient
 }
 
 // Creates a fresh set of AWS SDK clients for the given profile + region.
@@ -78,5 +88,10 @@ export function createClients(profile: string, region: string, endpoint?: string
     sfn:        new SFNClient(config),
     eventbridge: new EventBridgeClient(config),
     iam:         new IAMClient(config),
+    ses:         new SESClient(config),
+    cognito:     new CognitoIdentityProviderClient(config),
+    kinesis:     new KinesisClient(config),
+    ecs:         new ECSClient(config),
+    elasticache: new ElastiCacheClient(config),
   }
 }

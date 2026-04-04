@@ -23,4 +23,9 @@ export const SCAN_KEY_TO_TYPE: Record<string, NodeType> = {
   'r53':                 'r53-zone',
   'sfn':                 'sfn',
   'eventbridge':         'eventbridge-bus',
+  'ses':                 'ses',
+  'cognito':             'cognito',
+  'kinesis':             'kinesis',
+  'ecs':                 'ecs',
+  'elasticache':         'elasticache',
 }
