@@ -279,7 +279,21 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             { key: 'REGION', val: node.region },
           ].map(({ key, val }) => (
             <div key={key} className="mb-3">
-              <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>{key}</div>
+              <div className="flex items-center gap-1 mb-0.5">
+                <span className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>{key}</span>
+                {key === 'ID' && (
+                  <button
+                    onClick={() => void navigator.clipboard.writeText(val)}
+                    title="Copy to clipboard"
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'var(--cb-text-muted)', fontSize: 8, padding: '0 1px', lineHeight: 1,
+                    }}
+                  >
+                    ⧉
+                  </button>
+                )}
+              </div>
               <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>{val}</div>
             </div>
           ))}
