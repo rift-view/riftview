@@ -697,10 +697,95 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             </div>
           )}
 
+          {/* ECR-specific metadata */}
+          {node.type === 'ecr-repo' && (
+            <div>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                REPOSITORY
+              </div>
+              {typeof node.metadata.uri === 'string' && node.metadata.uri && (
+                <div className="mb-1.5">
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>URI</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)', flex: 1 }}>{node.metadata.uri as string}</span>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(node.metadata.uri as string)}
+                      title="Copy URI"
+                      style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 2, padding: '1px 4px', color: 'var(--cb-text-muted)', fontFamily: 'monospace', fontSize: 8, cursor: 'pointer', flexShrink: 0 }}
+                    >⎘</button>
+                  </div>
+                </div>
+              )}
+              {!isImported && (
+                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
+                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ElastiCache-specific metadata */}
+          {node.type === 'elasticache' && (
+            <div>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                CACHE
+              </div>
+              {[
+                { k: 'ENGINE',    v: node.metadata.engine    as string | undefined },
+                { k: 'NODE TYPE', v: node.metadata.nodeType  as string | undefined },
+                { k: 'CLUSTERS',  v: node.metadata.numCaches != null ? String(node.metadata.numCaches) : undefined },
+              ].filter(({ v }) => v).map(({ k, v }) => (
+                <div key={k} className="mb-1.5">
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
+                  <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>{v}</div>
+                </div>
+              ))}
+              {typeof node.metadata.endpoint === 'string' && node.metadata.endpoint && (
+                <div className="mb-1.5">
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>ENDPOINT</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)', flex: 1 }}>{node.metadata.endpoint as string}</span>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(node.metadata.endpoint as string)}
+                      title="Copy endpoint"
+                      style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 2, padding: '1px 4px', color: 'var(--cb-text-muted)', fontFamily: 'monospace', fontSize: 8, cursor: 'pointer', flexShrink: 0 }}
+                    >⎘</button>
+                  </div>
+                </div>
+              )}
+              {!isImported && (
+                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
+                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* EKS-specific metadata */}
+          {node.type === 'eks' && (
+            <div>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                CLUSTER
+              </div>
+              {[
+                { k: 'VERSION',  v: node.metadata.version as string | undefined },
+                { k: 'ENDPOINT', v: node.metadata.endpoint as string | undefined },
+              ].filter(({ v }) => v).map(({ k, v }) => (
+                <div key={k} className="mb-1.5">
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
+                  <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{v}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Default metadata + buttons for all other node types */}
           {node.type !== 'acm' && node.type !== 'cloudfront' && node.type !== 'apigw' && node.type !== 'apigw-route'
             && node.type !== 'lambda' && node.type !== 'ecs' && node.type !== 'rds'
-            && node.type !== 'sqs' && node.type !== 'dynamo' && (
+            && node.type !== 'sqs' && node.type !== 'dynamo'
+            && node.type !== 'ecr-repo' && node.type !== 'elasticache' && node.type !== 'eks' && (
             <>
               {Object.entries(node.metadata).length > 0 && (
                 <div>
