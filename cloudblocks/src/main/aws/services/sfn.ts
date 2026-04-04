@@ -11,20 +11,39 @@ function isKnownTarget(resource: string): boolean {
   return false
 }
 
+// DynamoDB SDK integration resource prefixes
+const DYNAMO_RESOURCES = new Set([
+  'arn:aws:states:::dynamodb:putItem',
+  'arn:aws:states:::dynamodb:getItem',
+  'arn:aws:states:::dynamodb:updateItem',
+  'arn:aws:states:::dynamodb:deleteItem',
+  'arn:aws:states:::dynamodb:query',
+  'arn:aws:states:::dynamodb:scan',
+])
+
 function extractTargetArns(definition: string): { targetId: string; edgeType: EdgeType }[] {
   try {
     const parsed = JSON.parse(definition) as {
       States?: Record<string, {
         Resource?: unknown
-        Parameters?: { FunctionName?: unknown }
+        Parameters?: Record<string, unknown>
       }>
     }
     const seen = new Map<string, EdgeType>()
     for (const state of Object.values(parsed.States ?? {})) {
-      if (typeof state.Resource === 'string' && isKnownTarget(state.Resource)) {
-        seen.set(state.Resource, 'trigger')
+      const resource = state.Resource
+      if (typeof resource === 'string') {
+        if (isKnownTarget(resource)) {
+          seen.set(resource, 'trigger')
+        }
+        // DynamoDB direct SDK integrations — extract table name from Parameters
+        if (DYNAMO_RESOURCES.has(resource)) {
+          const tableName = state.Parameters?.['TableName']
+          if (typeof tableName === 'string') seen.set(tableName, 'trigger')
+        }
       }
-      const fnName = state.Parameters?.FunctionName
+      // Lambda via Parameters.FunctionName
+      const fnName = state.Parameters?.['FunctionName']
       if (typeof fnName === 'string' && fnName.startsWith('arn:aws:lambda:')) {
         seen.set(fnName, 'trigger')
       }
