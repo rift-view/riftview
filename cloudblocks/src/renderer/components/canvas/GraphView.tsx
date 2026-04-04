@@ -310,6 +310,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
             vpcLabel:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcLabel : undefined,
             vpcColor:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcColor : undefined,
             region:    n.region,
+            metadata:  n.metadata,
             // API Gateway route extra fields
             method:    n.type === 'apigw-route' ? n.metadata.method as string | undefined : undefined,
             path:      n.type === 'apigw-route' ? n.metadata.path   as string | undefined : undefined,
@@ -344,7 +345,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           id:       n.id,
           type:     'resource' as const,
           position: livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: 50 },
-          data:     { label: n.label, nodeType: n.type, status: n.status, region: n.region, driftStatus: n.driftStatus },
+          data:     { label: n.label, nodeType: n.type, status: n.status, region: n.region, driftStatus: n.driftStatus, metadata: n.metadata },
           selected: n.id === selectedId,
         }))
 

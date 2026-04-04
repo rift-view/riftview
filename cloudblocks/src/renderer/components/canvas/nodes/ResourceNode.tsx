@@ -107,6 +107,25 @@ interface ResourceNodeData {
   annotation?:  string  // user note — shows indicator badge if non-empty
   regionColor?: string  // multi-region accent strip on left edge
   subscribers?: string[]  // SNS only — subscriber node labels
+  metadata?:    Record<string, unknown>  // raw node metadata for inline hint display
+}
+
+function getNodeMeta(nodeType: NodeType, m: Record<string, unknown>): string | undefined {
+  switch (nodeType) {
+    case 'ec2':         return m.instanceType as string | undefined
+    case 'lambda':      return m.runtime as string | undefined
+    case 'rds':         return m.engine as string | undefined
+    case 'eks':         return m.version ? `k8s ${m.version as string}` : undefined
+    case 'elasticache': return (m.engine as string | undefined) ?? 'redis'
+    case 'ecs':         return m.launchType as string | undefined
+    case 'kinesis':     return m.streamMode as string | undefined
+    case 'dynamo':      return m.billingMode as string | undefined
+    case 'sqs':         return typeof m.messages === 'number' && m.messages > 0 ? `${m.messages} msg` : undefined
+    case 'alb':         return m.type as string | undefined
+    case 'msk':         return m.clusterType as string | undefined
+    case 'opensearch':  return m.engineVersion as string | undefined
+    default:            return undefined
+  }
 }
 
 export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
@@ -116,6 +135,7 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
   const stripeColor = d.driftStatus ? driftStripeColor(d.driftStatus) : statusStripeColor(d.status)
   const typeLabel   = (TYPE_LABEL as Record<string, string>)[d.nodeType] ?? pluginMeta?.label ?? d.nodeType.toUpperCase()
   const isImported  = d.status === 'imported'
+  const meta        = d.metadata ? getNodeMeta(d.nodeType, d.metadata) : undefined
 
   return (
     <div
@@ -194,6 +214,17 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
       >
         {d.label}
       </div>
+
+      {/* Metadata hint — key attribute for reference diagram clarity */}
+      {meta && (
+        <div
+          className="mt-0.5"
+          style={{ fontSize: 9, color: 'var(--cb-text-muted)', letterSpacing: '0.03em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}
+          title={meta}
+        >
+          {meta}
+        </div>
+      )}
 
       {/* VPC badge — graph view only */}
       {d.vpcLabel && (
