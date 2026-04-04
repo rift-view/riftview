@@ -545,8 +545,10 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                 METADATA
               </div>
               {[
-                { k: 'RUNTIME', v: node.metadata.runtime as string | undefined },
-                { k: 'HANDLER', v: node.metadata.handler as string | undefined },
+                { k: 'RUNTIME',  v: node.metadata.runtime    as string | undefined },
+                { k: 'HANDLER',  v: node.metadata.handler    as string | undefined },
+                { k: 'TIMEOUT',  v: node.metadata.timeout    != null ? `${String(node.metadata.timeout)}s` : undefined },
+                { k: 'MEMORY',   v: node.metadata.memorySize != null ? `${String(node.metadata.memorySize)} MB` : undefined },
               ].filter(({ v }) => v).map(({ k, v }) => (
                 <div key={k} className="mb-1.5">
                   <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
