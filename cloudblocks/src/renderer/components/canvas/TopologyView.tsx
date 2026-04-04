@@ -157,7 +157,7 @@ function buildFlowNodes(
           x: GLOBAL_PAD + col * (RES_W + RES_GAP_X),
           y: GLOBAL_LABEL + row * (RES_H + RES_GAP_Y),
         },
-        data:     { label: n.label, nodeType: n.type, status: n.status, driftStatus: n.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(n.id) },
+        data:     { label: n.label, nodeType: n.type, status: n.status, driftStatus: n.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(n.id), metadata: n.metadata },
         selected: n.id === selectedId,
         zIndex:   1,
       })
@@ -309,7 +309,7 @@ function buildFlowNodes(
               parentId: subnet.id,
               extent:   'parent',
               position: pos,
-              data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor },
+              data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor, metadata: r.metadata },
               selected: r.id === selectedId,
               zIndex:   1,
             })
@@ -336,7 +336,7 @@ function buildFlowNodes(
             x: VPC_PAD + col * (RES_W + RES_GAP_X),
             y: subnetBottom + row * (RES_H + RES_GAP_Y),
           },
-          data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor },
+          data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor, metadata: r.metadata },
           selected: r.id === selectedId,
         })
       })
@@ -421,7 +421,7 @@ function buildFlowNodes(
       id:       r.id,
       type:     'resource',
       position: { x: 40 + (i % ROOT_COLS) * (RES_W + RES_GAP_X + 40), y: rootY + Math.floor(i / ROOT_COLS) * (RES_H + RES_GAP_Y + 20) },
-      data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, region: r.region, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor },
+      data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, region: r.region, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor, metadata: r.metadata },
       selected: r.id === selectedId,
     })
   })
@@ -744,7 +744,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
           id:       n.id,
           type:     'resource',
           position: topologyPositions[n.id] ?? { x: 50, y: 50 },
-          data:     { label: n.label, nodeType: n.type, status: n.status, driftStatus: n.driftStatus },
+          data:     { label: n.label, nodeType: n.type, status: n.status, driftStatus: n.driftStatus, metadata: n.metadata },
           selected: n.id === selectedId,
         }
         if (parentExists) {
