@@ -11,8 +11,14 @@ function mskStatusToNodeStatus(state: string | undefined): NodeStatus {
 
 export async function listMskClusters(client: KafkaClient, region: string): Promise<CloudNode[]> {
   try {
-    const res = await client.send(new ListClustersV2Command({}))
-    return (res.ClusterInfoList ?? []).map((cluster): CloudNode => {
+    const allClusters: import('@aws-sdk/client-kafka').Cluster[] = []
+    let nextToken: string | undefined
+    do {
+      const res = await client.send(new ListClustersV2Command({ NextToken: nextToken }))
+      allClusters.push(...(res.ClusterInfoList ?? []))
+      nextToken = res.NextToken
+    } while (nextToken)
+    return allClusters.map((cluster): CloudNode => {
       const firstSubnet =
         cluster.Provisioned?.BrokerNodeGroupInfo?.ClientSubnets?.[0] ??
         cluster.Serverless?.VpcConfigs?.[0]?.SubnetIds?.[0]

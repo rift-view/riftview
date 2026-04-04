@@ -37,10 +37,11 @@ export async function listTopics(client: SNSClient, region: string): Promise<Clo
           edgeType: 'subscription' as EdgeType,
         }))
 
-      if (integrations.length > 0) {
-        return { ...node, integrations }
+      const enriched: CloudNode = {
+        ...node,
+        metadata: { subscriptionCount: integrations.length },
       }
-      return node
+      return integrations.length > 0 ? { ...enriched, integrations } : enriched
     }),
   )
 
