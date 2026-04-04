@@ -58,6 +58,7 @@ export async function listEcsServices(client: ECSClient, region: string): Promis
               } catch { /* ignore */ }
             }
 
+            const firstSubnet = svc.networkConfiguration?.awsvpcConfiguration?.subnets?.[0]
             nodes.push({
               id:     svc.serviceArn,
               type:   'ecs',
@@ -71,6 +72,7 @@ export async function listEcsServices(client: ECSClient, region: string): Promis
                 runningCount: svc.runningCount,
                 launchType:   svc.launchType,
               },
+              ...(firstSubnet ? { parentId: firstSubnet } : {}),
               ...(integrations.length > 0 ? { integrations } : {}),
             })
           }
