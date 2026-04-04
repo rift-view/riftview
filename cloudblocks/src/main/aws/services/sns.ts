@@ -5,8 +5,14 @@ import { scanFlatService } from './scanFlatService'
 export async function listTopics(client: SNSClient, region: string): Promise<CloudNode[]> {
   const nodes = await scanFlatService<SNSClient, { TopicArn?: string }>(client, region, {
     fetch: async (c) => {
-      const res = await c.send(new ListTopicsCommand({}))
-      return res.Topics ?? []
+      const topics: { TopicArn?: string }[] = []
+      let nextToken: string | undefined
+      do {
+        const res = await c.send(new ListTopicsCommand({ NextToken: nextToken }))
+        topics.push(...(res.Topics ?? []))
+        nextToken = res.NextToken
+      } while (nextToken)
+      return topics
     },
     map: (item, region): CloudNode => ({
       id:       item.TopicArn ?? '',

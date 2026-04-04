@@ -7,8 +7,12 @@ import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 export async function listSecrets(client: SecretsManagerClient, region: string): Promise<CloudNode[]> {
   let secretList: { ARN?: string; Name?: string; Description?: string; LastRotatedDate?: Date; RotationLambdaARN?: string }[] = []
   try {
-    const res = await client.send(new ListSecretsCommand({}))
-    secretList = res.SecretList ?? []
+    let nextToken: string | undefined
+    do {
+      const res = await client.send(new ListSecretsCommand({ NextToken: nextToken }))
+      secretList.push(...(res.SecretList ?? []))
+      nextToken = res.NextToken
+    } while (nextToken)
   } catch {
     return []
   }
