@@ -112,19 +112,23 @@ interface ResourceNodeData {
 
 function getNodeMeta(nodeType: NodeType, m: Record<string, unknown>): string | undefined {
   switch (nodeType) {
-    case 'ec2':         return m.instanceType as string | undefined
-    case 'lambda':      return m.runtime as string | undefined
-    case 'rds':         return m.engine as string | undefined
-    case 'eks':         return m.version ? `k8s ${m.version as string}` : undefined
-    case 'elasticache': return (m.engine as string | undefined) ?? 'redis'
-    case 'ecs':         return m.launchType as string | undefined
-    case 'kinesis':     return m.streamMode as string | undefined
-    case 'dynamo':      return m.billingMode as string | undefined
-    case 'sqs':         return typeof m.messages === 'number' && m.messages > 0 ? `${m.messages} msg` : undefined
-    case 'alb':         return m.type as string | undefined
-    case 'msk':         return (m.instanceType as string | undefined) ?? (m.clusterType as string | undefined)
-    case 'opensearch':  return m.engineVersion as string | undefined
-    default:            return undefined
+    case 'ec2':             return m.instanceType as string | undefined
+    case 'lambda':          return m.runtime as string | undefined
+    case 'rds':             return m.engine as string | undefined
+    case 'eks':             return m.version ? `k8s ${m.version as string}` : undefined
+    case 'elasticache':     return (m.engine as string | undefined) ?? 'redis'
+    case 'ecs':             return m.launchType as string | undefined
+    case 'kinesis':         return m.streamMode as string | undefined
+    case 'dynamo':          return m.billingMode as string | undefined
+    case 'sqs':             return typeof m.messages === 'number' && m.messages > 0 ? `${m.messages} msg` : undefined
+    case 'alb':             return m.type as string | undefined
+    case 'msk':             return (m.instanceType as string | undefined) ?? (m.clusterType as string | undefined)
+    case 'opensearch':      return m.engineVersion as string | undefined
+    case 'ssm-param':       return m.type as string | undefined
+    case 'sfn':             return m.type as string | undefined
+    case 'eventbridge-bus': return typeof m.ruleCount === 'number' && m.ruleCount > 0 ? `${m.ruleCount} rules` : undefined
+    case 'apigw':           return m.protocolType as string | undefined
+    default:                return undefined
   }
 }
 

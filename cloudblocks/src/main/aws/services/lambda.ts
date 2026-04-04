@@ -41,7 +41,9 @@ function extractEnvVarIntegrations(
       value.startsWith('arn:aws:sqs:') ||
       value.startsWith('arn:aws:sns:') ||
       value.startsWith('arn:aws:secretsmanager:') ||
-      value.startsWith('arn:aws:states:')
+      value.startsWith('arn:aws:states:') ||
+      value.startsWith('arn:aws:events:') ||
+      value.startsWith('arn:aws:kinesis:')
     ) {
       results.push({ targetId: value, edgeType: 'trigger' })
     }
