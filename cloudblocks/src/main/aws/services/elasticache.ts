@@ -35,6 +35,7 @@ export async function listCacheClusters(client: ElastiCacheClient, region: strin
               nodeType:    rg.CacheNodeType,
               numCaches:   rg.MemberClusters?.length ?? 0,
               clusterMode: rg.ClusterEnabled ? 'cluster' : 'standalone',
+              endpoint:    rg.NodeGroups?.[0]?.PrimaryEndpoint?.Address,
             },
           })
         }
@@ -61,6 +62,7 @@ export async function listCacheClusters(client: ElastiCacheClient, region: strin
             metadata: {
               engine:   cluster.Engine,
               nodeType: cluster.CacheNodeType,
+              endpoint: cluster.CacheNodes?.[0]?.Endpoint?.Address,
             },
           })
         }

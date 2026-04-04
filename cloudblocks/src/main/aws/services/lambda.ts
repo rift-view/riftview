@@ -14,6 +14,27 @@ function extractEnvVarIntegrations(
   if (!envVars) return []
   const results: { targetId: string; edgeType: 'trigger' }[] = []
   for (const value of Object.values(envVars)) {
+    // SES identity: plain email address → matches SES node ID (check before ARN gate)
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) {
+      results.push({ targetId: value, edgeType: 'trigger' })
+      continue
+    }
+    // RDS hostname: *.rds.amazonaws.com → resolved to RDS node via metadata.endpoint
+    if (/\.rds\.amazonaws\.com$/.test(value)) {
+      results.push({ targetId: value, edgeType: 'trigger' })
+      continue
+    }
+    // OpenSearch: *.es.amazonaws.com or *.aoss.amazonaws.com
+    if (/\.(es|aoss)\.amazonaws\.com/.test(value)) {
+      const host = value.replace(/^https?:\/\//, '').split('/')[0] ?? value
+      results.push({ targetId: host, edgeType: 'trigger' })
+      continue
+    }
+    // ElastiCache: *.cache.amazonaws.com
+    if (/\.cache\.amazonaws\.com$/.test(value)) {
+      results.push({ targetId: value, edgeType: 'trigger' })
+      continue
+    }
     if (!value.includes('arn:aws:')) continue
     // Match ARN patterns for services whose node IDs are ARNs
     if (
@@ -30,23 +51,10 @@ function extractEnvVarIntegrations(
       const tableName = value.split(':table/')[1]?.split('/')[0]
       if (tableName) results.push({ targetId: tableName, edgeType: 'trigger' })
     }
-    // SES identity: plain email address → matches SES node ID
-    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) {
-      results.push({ targetId: value, edgeType: 'trigger' })
-    }
-    // RDS hostname: *.rds.amazonaws.com → resolved to RDS node via metadata.endpoint
-    if (/\.rds\.amazonaws\.com$/.test(value)) {
-      results.push({ targetId: value, edgeType: 'trigger' })
-    }
-    // OpenSearch: *.es.amazonaws.com or *.aoss.amazonaws.com
-    if (/\.(es|aoss)\.amazonaws\.com/.test(value)) {
-      // Normalise: strip https:// prefix and trailing path
-      const host = value.replace(/^https?:\/\//, '').split('/')[0] ?? value
-      results.push({ targetId: host, edgeType: 'trigger' })
-    }
-    // ElastiCache: *.cache.amazonaws.com
-    if (/\.cache\.amazonaws\.com$/.test(value)) {
-      results.push({ targetId: value, edgeType: 'trigger' })
+    // S3: arn:aws:s3:::bucket-name or arn:aws:s3:::bucket-name/prefix
+    if (value.startsWith('arn:aws:s3:::')) {
+      const bucketName = value.replace('arn:aws:s3:::', '').split('/')[0]
+      if (bucketName) results.push({ targetId: bucketName, edgeType: 'trigger' })
     }
   }
   return results

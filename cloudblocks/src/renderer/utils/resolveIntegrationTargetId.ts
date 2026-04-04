@@ -51,6 +51,15 @@ export function resolveIntegrationTargetId(nodes: CloudNode[], targetId: string)
   })
   if (osMatch) return osMatch.id
 
+  // Match against ElastiCache primary endpoint hostname (*.cache.amazonaws.com)
+  const ecMatch = nodes.find(n => {
+    if (n.type !== 'elasticache') return false
+    const ep = n.metadata.endpoint as string | undefined
+    if (!ep) return false
+    return ep === targetId || targetId.startsWith(ep)
+  })
+  if (ecMatch) return ecMatch.id
+
   // No match — return original (edge won't render but won't crash)
   return targetId
 }
