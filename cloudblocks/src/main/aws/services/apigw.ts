@@ -60,7 +60,24 @@ export async function listApis(client: ApiGatewayV2Client, region: string): Prom
       apiNodes.map((api) => listRoutes(client, api.id, region))
     )
 
-    return [...apiNodes, ...routeGroups.flat()]
+    // Aggregate Lambda ARNs from routes back onto the parent API node
+    const enrichedApiNodes = apiNodes.map((api, i) => {
+      const lambdaArns = [...new Set(
+        routeGroups[i]!
+          .flatMap((r) => r.integrations ?? [])
+          .filter((e) => e.targetId.startsWith('arn:aws:lambda:'))
+          .map((e) => e.targetId)
+      )]
+      if (lambdaArns.length === 0) return api
+      const existingTargets = new Set((api.integrations ?? []).map((e) => e.targetId))
+      const newEdges = lambdaArns
+        .filter((arn) => !existingTargets.has(arn))
+        .map((arn) => ({ targetId: arn, edgeType: 'trigger' as EdgeType }))
+      if (newEdges.length === 0) return api
+      return { ...api, integrations: [...(api.integrations ?? []), ...newEdges] }
+    })
+
+    return [...enrichedApiNodes, ...routeGroups.flat()]
   } catch {
     return []
   }
