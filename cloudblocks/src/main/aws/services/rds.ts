@@ -10,8 +10,14 @@ function rdsStatusToNodeStatus(status: string | undefined): NodeStatus {
 
 export async function describeDBInstances(client: RDSClient, region: string): Promise<CloudNode[]> {
   try {
-    const res = await client.send(new DescribeDBInstancesCommand({}))
-    return (res.DBInstances ?? []).map((db): CloudNode => ({
+    const allInstances: { DBInstanceIdentifier?: string; DBInstanceStatus?: string; Engine?: string; DBInstanceClass?: string; Endpoint?: { Address?: string }; DBSubnetGroup?: { VpcId?: string } }[] = []
+    let marker: string | undefined
+    do {
+      const res = await client.send(new DescribeDBInstancesCommand({ Marker: marker }))
+      allInstances.push(...(res.DBInstances ?? []))
+      marker = res.Marker
+    } while (marker)
+    return allInstances.map((db): CloudNode => ({
       id:       db.DBInstanceIdentifier ?? 'unknown',
       type:     'rds',
       label:    db.DBInstanceIdentifier ?? 'RDS',

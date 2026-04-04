@@ -7,6 +7,7 @@ import { edgeTypeLabel } from '../utils/edgeTypeLabel'
 import { getMonthlyEstimate, formatPrice } from '../utils/pricing'
 import { IamAdvisor } from './IamAdvisor'
 import { buildConsoleUrl } from '../utils/buildConsoleUrl'
+import { resolveIntegrationTargetId } from '../utils/resolveIntegrationTargetId'
 
 function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unknown>; tfMetadata: Record<string, unknown> }): React.JSX.Element {
   const allKeys = Array.from(new Set([...Object.keys(metadata), ...Object.keys(tfMetadata)]))
@@ -597,6 +598,39 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                 </>
               )}
             </>
+          )}
+
+          {/* Connections panel — outgoing integration edges */}
+          {(node.integrations?.length ?? 0) > 0 && (
+            <div style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}>
+              <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+                Connections ({node.integrations!.length})
+              </div>
+              {node.integrations!.map((integ, i) => {
+                const allNodes = [...nodes, ...importedNodes]
+                const resolvedId = resolveIntegrationTargetId(allNodes, integ.targetId)
+                const target = allNodes.find((n) => n.id === resolvedId)
+                const edgeColor = integ.edgeType === 'trigger' ? '#a78bfa' : integ.edgeType === 'subscription' ? '#34d399' : '#60a5fa'
+                return (
+                  <div
+                    key={i}
+                    style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 4, cursor: target ? 'pointer' : 'default' }}
+                    onClick={() => target && useUIStore.getState().selectNode(target.id)}
+                    title={target ? `Select ${target.label}` : integ.targetId}
+                  >
+                    <span style={{ fontSize: 6, color: edgeColor, fontWeight: 700, minWidth: 40, textTransform: 'uppercase', flexShrink: 0 }}>
+                      {integ.edgeType}
+                    </span>
+                    <span style={{ fontSize: 9, color: target ? 'var(--cb-text-primary)' : 'var(--cb-text-muted)', wordBreak: 'break-all', flex: 1 }}>
+                      {target ? target.label : integ.targetId.split('/').pop() ?? integ.targetId}
+                    </span>
+                    {target && (
+                      <span style={{ fontSize: 7, color: 'var(--cb-text-muted)', flexShrink: 0 }}>{target.type}</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           )}
 
           {/* IAM Permissions — EC2, Lambda, S3 only, hidden for imported nodes */}

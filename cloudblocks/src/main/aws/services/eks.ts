@@ -11,8 +11,13 @@ function eksStatusToNodeStatus(status: string | undefined): NodeStatus {
 
 export async function listEksClusters(client: EKSClient, region: string): Promise<CloudNode[]> {
   try {
-    const listRes = await client.send(new ListClustersCommand({}))
-    const names = listRes.clusters ?? []
+    const names: string[] = []
+    let nextToken: string | undefined
+    do {
+      const listRes = await client.send(new ListClustersCommand({ nextToken }))
+      names.push(...(listRes.clusters ?? []))
+      nextToken = listRes.nextToken
+    } while (nextToken)
     return Promise.all(names.map(async (name): Promise<CloudNode> => {
       try {
         const descRes = await client.send(new DescribeClusterCommand({ name }))
