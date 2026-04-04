@@ -18,9 +18,14 @@ export async function listEcsServices(client: ECSClient, region: string): Promis
   try {
     const nodes: CloudNode[] = []
 
-    // List all clusters
-    const clustersRes = await client.send(new ListClustersCommand({}))
-    const clusterArns = clustersRes.clusterArns ?? []
+    // List all clusters (paginated)
+    const clusterArns: string[] = []
+    let clusterToken: string | undefined
+    do {
+      const clustersRes = await client.send(new ListClustersCommand({ nextToken: clusterToken }))
+      clusterArns.push(...(clustersRes.clusterArns ?? []))
+      clusterToken = clustersRes.nextToken
+    } while (clusterToken)
 
     for (const clusterArn of clusterArns) {
       try {
