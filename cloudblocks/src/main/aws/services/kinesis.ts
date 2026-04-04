@@ -25,7 +25,7 @@ export async function listStreams(client: KinesisClient, region: string): Promis
           label:    summary.StreamName ?? summary.StreamARN,
           status:   kinesisStatusToNodeStatus(summary.StreamStatus),
           region,
-          metadata: { streamName: summary.StreamName, streamArn: summary.StreamARN },
+          metadata: { streamName: summary.StreamName, streamArn: summary.StreamARN, streamMode: summary.StreamModeDetails?.StreamMode ?? 'PROVISIONED' },
         })
       }
       nextToken = res.NextToken
