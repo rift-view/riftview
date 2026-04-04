@@ -43,6 +43,10 @@ export async function listEcsServices(client: ECSClient, region: string): Promis
             if (!svc.serviceArn) continue
 
             const integrations: { targetId: string; edgeType: EdgeType }[] = []
+            // ALB associations via target group ARNs
+            for (const lb of svc.loadBalancers ?? []) {
+              if (lb.targetGroupArn) integrations.push({ targetId: lb.targetGroupArn, edgeType: 'origin' })
+            }
             if (svc.taskDefinition) {
               try {
                 const tdRes = await client.send(new DescribeTaskDefinitionCommand({ taskDefinition: svc.taskDefinition }))

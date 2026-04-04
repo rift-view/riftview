@@ -51,6 +51,14 @@ export function resolveIntegrationTargetId(nodes: CloudNode[], targetId: string)
   })
   if (osMatch) return osMatch.id
 
+  // Match ALB by target group ARN (ECS services → ALB via target group)
+  const albByTgMatch = nodes.find(n => {
+    if (n.type !== 'alb') return false
+    const tgArns = n.metadata.targetGroupArns as string[] | undefined
+    return tgArns?.includes(targetId) ?? false
+  })
+  if (albByTgMatch) return albByTgMatch.id
+
   // Match against ElastiCache primary endpoint hostname (*.cache.amazonaws.com)
   const ecMatch = nodes.find(n => {
     if (n.type !== 'elasticache') return false

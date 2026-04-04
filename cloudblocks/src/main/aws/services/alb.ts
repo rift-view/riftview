@@ -28,9 +28,11 @@ export async function describeLoadBalancers(
     } while (marker)
     return Promise.all(allLbs.map(async (lb): Promise<CloudNode> => {
       const allIntegrations: { targetId: string; edgeType: 'origin' | 'trigger' }[] = []
+      const targetGroupArns: string[] = []
       try {
         const tgRes = await client.send(new DescribeTargetGroupsCommand({ LoadBalancerArn: lb.LoadBalancerArn }))
         for (const tg of tgRes.TargetGroups ?? []) {
+          if (tg.TargetGroupArn) targetGroupArns.push(tg.TargetGroupArn)
           const healthRes = await client.send(new DescribeTargetHealthCommand({ TargetGroupArn: tg.TargetGroupArn }))
           for (const desc of healthRes.TargetHealthDescriptions ?? []) {
             const id = desc.Target?.Id
@@ -59,7 +61,7 @@ export async function describeLoadBalancers(
         label:    lb.LoadBalancerName ?? 'ALB',
         status:   albStatusToNodeStatus(lb.State?.Code),
         region,
-        metadata: { dnsName: lb.DNSName, scheme: lb.Scheme, type: lb.Type },
+        metadata: { dnsName: lb.DNSName, scheme: lb.Scheme, type: lb.Type, targetGroupArns },
         parentId: lb.VpcId,
         integrations,
       }
