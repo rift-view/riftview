@@ -697,6 +697,81 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             </div>
           )}
 
+          {/* EC2-specific metadata */}
+          {node.type === 'ec2' && (
+            <div>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                INSTANCE
+              </div>
+              {[
+                { k: 'TYPE',       v: node.metadata.instanceType as string | undefined },
+                { k: 'AMI',        v: node.metadata.ami          as string | undefined },
+                { k: 'PRIVATE IP', v: node.metadata.privateIp    as string | undefined },
+                { k: 'PUBLIC IP',  v: node.metadata.publicIp     as string | undefined },
+              ].filter(({ v }) => v).map(({ k, v }) => (
+                <div key={k} className="mb-1.5">
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span className="text-[8px]" style={{ color: 'var(--cb-text-secondary)', flex: 1 }}>{v}</span>
+                    {(k === 'PRIVATE IP' || k === 'PUBLIC IP') && (
+                      <button onClick={() => navigator.clipboard.writeText(v!)}
+                        title="Copy" style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 2, padding: '1px 4px', color: 'var(--cb-text-muted)', fontFamily: 'monospace', fontSize: 8, cursor: 'pointer', flexShrink: 0 }}>⎘</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {Array.isArray(node.metadata.securityGroupIds) && (node.metadata.securityGroupIds as string[]).length > 0 && (
+                <div className="mb-1.5">
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)', marginBottom: 3 }}>SECURITY GROUPS</div>
+                  {(node.metadata.securityGroupIds as string[]).map((sgId) => {
+                    const sgNode = [...nodes, ...importedNodes].find(n => n.id === sgId)
+                    return (
+                      <div key={sgId}
+                        style={{ fontSize: 8, color: '#c084fc', cursor: 'pointer', marginBottom: 2 }}
+                        onClick={() => {
+                          useUIStore.getState().selectNode(sgId)
+                          window.dispatchEvent(new CustomEvent('cloudblocks:fitnode', { detail: { nodeId: sgId } }))
+                        }}
+                        title={`Go to ${sgNode?.label ?? sgId}`}
+                      >
+                        ↗ {sgNode?.label ?? sgId}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              {!isImported && (
+                <>
+                  <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                    <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
+                    <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                  </div>
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Quick actions</div>
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                      {node.status !== 'stopped' && (
+                        <button onClick={() => onQuickAction(node, 'stop')}
+                          style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #febc2e', borderRadius: 2, padding: '2px 8px', color: '#febc2e', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                          Stop
+                        </button>
+                      )}
+                      {node.status === 'stopped' && (
+                        <button onClick={() => onQuickAction(node, 'start')}
+                          style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #28c840', borderRadius: 2, padding: '2px 8px', color: '#28c840', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                          Start
+                        </button>
+                      )}
+                      <button onClick={() => onQuickAction(node, 'reboot')}
+                        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #64b5f6', borderRadius: 2, padding: '2px 8px', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                        Reboot
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           {/* SNS-specific metadata */}
           {node.type === 'sns' && (
             <div>
@@ -806,7 +881,8 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
           {node.type !== 'acm' && node.type !== 'cloudfront' && node.type !== 'apigw' && node.type !== 'apigw-route'
             && node.type !== 'lambda' && node.type !== 'ecs' && node.type !== 'rds'
             && node.type !== 'sqs' && node.type !== 'dynamo' && node.type !== 'sns'
-            && node.type !== 'ecr-repo' && node.type !== 'elasticache' && node.type !== 'eks' && (
+            && node.type !== 'ecr-repo' && node.type !== 'elasticache' && node.type !== 'eks'
+            && node.type !== 'ec2' && (
             <>
               {Object.entries(node.metadata).length > 0 && (
                 <div>
@@ -823,46 +899,10 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
               )}
 
               {!isImported && (
-                <>
-                  <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                    <button
-                      onClick={() => onEdit(node)}
-                      style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                    >
-                      ✎ Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(node)}
-                      style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                    >
-                      ✕ Delete
-                    </button>
-                  </div>
-
-                  {node.type === 'ec2' && (
-                    <div style={{ marginTop: 8 }}>
-                      <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Quick actions</div>
-                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {node.status !== 'stopped' && (
-                          <button onClick={() => onQuickAction(node, 'stop')}
-                            style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #febc2e', borderRadius: 2, padding: '2px 8px', color: '#febc2e', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
-                            Stop
-                          </button>
-                        )}
-                        {node.status === 'stopped' && (
-                          <button onClick={() => onQuickAction(node, 'start')}
-                            style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #28c840', borderRadius: 2, padding: '2px 8px', color: '#28c840', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
-                            Start
-                          </button>
-                        )}
-                        <button onClick={() => onQuickAction(node, 'reboot')}
-                          style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #64b5f6', borderRadius: 2, padding: '2px 8px', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
-                          Reboot
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
+                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
+                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                </div>
               )}
             </>
           )}
