@@ -697,6 +697,27 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             </div>
           )}
 
+          {/* SNS-specific metadata */}
+          {node.type === 'sns' && (
+            <div>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                TOPIC
+              </div>
+              <div className="mb-1.5">
+                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>SUBSCRIBERS</div>
+                <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>
+                  {node.metadata.subscriptionCount != null ? String(node.metadata.subscriptionCount) : '—'}
+                </div>
+              </div>
+              {!isImported && (
+                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
+                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ECR-specific metadata */}
           {node.type === 'ecr-repo' && (
             <div>
@@ -784,7 +805,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
           {/* Default metadata + buttons for all other node types */}
           {node.type !== 'acm' && node.type !== 'cloudfront' && node.type !== 'apigw' && node.type !== 'apigw-route'
             && node.type !== 'lambda' && node.type !== 'ecs' && node.type !== 'rds'
-            && node.type !== 'sqs' && node.type !== 'dynamo'
+            && node.type !== 'sqs' && node.type !== 'dynamo' && node.type !== 'sns'
             && node.type !== 'ecr-repo' && node.type !== 'elasticache' && node.type !== 'eks' && (
             <>
               {Object.entries(node.metadata).length > 0 && (
