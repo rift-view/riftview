@@ -26,6 +26,7 @@ const CATEGORIES: { label: string; services: ServiceDef[] }[] = [
     { type: 'rds',          label: 'RDS',          hasCreate: true },
     { type: 'dynamo',       label: 'DynamoDB',     hasCreate: true },
     { type: 'elasticache',  label: 'ElastiCache',  hasCreate: false },
+    { type: 'opensearch',   label: 'OpenSearch',   hasCreate: false },
   ]},
   { label: 'Messaging', services: [
     { type: 'sqs',             label: 'SQS',         hasCreate: true },
@@ -33,6 +34,7 @@ const CATEGORIES: { label: string; services: ServiceDef[] }[] = [
     { type: 'eventbridge-bus', label: 'EventBridge', hasCreate: true },
     { type: 'ses',             label: 'SES',         hasCreate: false },
     { type: 'kinesis',         label: 'Kinesis',     hasCreate: false },
+    { type: 'msk',             label: 'MSK',         hasCreate: false },
   ]},
   { label: 'Edge & API', services: [
     { type: 'cloudfront',  label: 'CloudFront',  hasCreate: true },
@@ -51,6 +53,7 @@ const CATEGORIES: { label: string; services: ServiceDef[] }[] = [
   { label: 'Containers', services: [
     { type: 'ecr-repo', label: 'ECR', hasCreate: true, resource: 'ecr' },
     { type: 'ecs', label: 'ECS', hasCreate: false },
+    { type: 'eks', label: 'EKS', hasCreate: false },
   ]},
   { label: 'Load Balancing', services: [
     { type: 'alb', label: 'ALB', hasCreate: true },

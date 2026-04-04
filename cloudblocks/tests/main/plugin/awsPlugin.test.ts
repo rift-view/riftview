@@ -36,12 +36,16 @@ vi.mock('../../../src/main/aws/services/cognito',     () => ({ listUserPools:   
 vi.mock('../../../src/main/aws/services/kinesis',     () => ({ listStreams:            vi.fn().mockResolvedValue([]) }))
 vi.mock('../../../src/main/aws/services/ecs',         () => ({ listEcsServices:        vi.fn().mockResolvedValue([]) }))
 vi.mock('../../../src/main/aws/services/elasticache', () => ({ listCacheClusters:      vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/eks',         () => ({ listEksClusters:        vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/opensearch',  () => ({ listOpenSearchDomains:  vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/msk',         () => ({ listMskClusters:        vi.fn().mockResolvedValue([]) }))
 
 const ALL_NODE_TYPES = [
   'ec2', 'vpc', 'subnet', 'rds', 's3', 'lambda', 'alb', 'security-group',
   'igw', 'acm', 'cloudfront', 'apigw', 'apigw-route', 'sqs', 'secret',
   'ecr-repo', 'sns', 'dynamo', 'ssm-param', 'nat-gateway', 'r53-zone',
-  'sfn', 'eventbridge-bus', 'ses', 'cognito', 'kinesis', 'ecs', 'elasticache', 'unknown',
+  'sfn', 'eventbridge-bus', 'ses', 'cognito', 'kinesis', 'ecs', 'elasticache',
+  'eks', 'opensearch', 'msk', 'unknown',
 ] as const
 
 describe('awsPlugin', () => {
@@ -62,7 +66,7 @@ describe('awsPlugin', () => {
     expect(awsPlugin.displayName).toBe('Amazon Web Services')
   })
 
-  it('nodeTypes contains all 29 NodeType values', () => {
+  it('nodeTypes contains all 32 NodeType values', () => {
     for (const t of ALL_NODE_TYPES) {
       expect(awsPlugin.nodeTypes).toContain(t)
     }

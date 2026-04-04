@@ -24,6 +24,9 @@ import { listUserPools } from '../aws/services/cognito'
 import { listStreams } from '../aws/services/kinesis'
 import { listEcsServices } from '../aws/services/ecs'
 import { listCacheClusters } from '../aws/services/elasticache'
+import { listEksClusters } from '../aws/services/eks'
+import { listOpenSearchDomains } from '../aws/services/opensearch'
+import { listMskClusters } from '../aws/services/msk'
 import type { CloudblocksPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from './types'
 import type { CloudNode } from '../../renderer/types/cloud'
 
@@ -66,6 +69,9 @@ const SERVICE_SCANNERS: Record<string, ServiceScanner> = {
   'kinesis':        (c, r) => listStreams(c.kinesis, r),
   'ecs':            (c, r) => listEcsServices(c.ecs, r),
   'elasticache':    (c, r) => listCacheClusters(c.elasticache, r),
+  'eks':            (c, r) => listEksClusters(c.eks, r),
+  'opensearch':     (c, r) => listOpenSearchDomains(c.opensearch, r),
+  'msk':            (c, r) => listMskClusters(c.msk, r),
 }
 
 const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
@@ -97,6 +103,9 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
   kinesis:           { label: 'KDS',    borderColor: '#8b5cf6', badgeColor: '#8b5cf6', shortLabel: 'KDS',    displayName: 'Kinesis Data Stream',         hasCreate: false },
   ecs:               { label: 'ECS',   borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'ECS',   displayName: 'ECS Service',                 hasCreate: false },
   elasticache:       { label: 'REDIS', borderColor: '#22c55e', badgeColor: '#22c55e', shortLabel: 'REDIS', displayName: 'ElastiCache Cluster',          hasCreate: false },
+  eks:               { label: 'EKS',   borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'EKS',   displayName: 'EKS Cluster',                 hasCreate: false },
+  opensearch:        { label: 'OS',    borderColor: '#005EB8', badgeColor: '#005EB8', shortLabel: 'OS',    displayName: 'OpenSearch Domain',           hasCreate: false },
+  msk:               { label: 'MSK',   borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'MSK',   displayName: 'MSK Cluster',                 hasCreate: false },
   unknown:           { label: '?',      borderColor: '#6b7280', badgeColor: '#6b7280', shortLabel: '?',      displayName: 'Unknown',                   hasCreate: false },
 }
 
@@ -108,7 +117,8 @@ export const awsPlugin: CloudblocksPlugin = {
     'ec2', 'vpc', 'subnet', 'rds', 's3', 'lambda', 'alb', 'security-group',
     'igw', 'acm', 'cloudfront', 'apigw', 'apigw-route', 'sqs', 'secret',
     'ecr-repo', 'sns', 'dynamo', 'ssm-param', 'nat-gateway', 'r53-zone',
-    'sfn', 'eventbridge-bus', 'ses', 'cognito', 'kinesis', 'ecs', 'elasticache', 'unknown',
+    'sfn', 'eventbridge-bus', 'ses', 'cognito', 'kinesis', 'ecs', 'elasticache',
+    'eks', 'opensearch', 'msk', 'unknown',
   ],
 
   nodeTypeMetadata: NODE_TYPE_METADATA,
@@ -167,6 +177,9 @@ export const awsPlugin: CloudblocksPlugin = {
       listStreams(clients.kinesis, region).catch(catch_('kinesis')),
       listEcsServices(clients.ecs, region).catch(catch_('ecs')),
       listCacheClusters(clients.elasticache, region).catch(catch_('elasticache')),
+      listEksClusters(clients.eks, region).catch(catch_('eks')),
+      listOpenSearchDomains(clients.opensearch, region).catch(catch_('opensearch')),
+      listMskClusters(clients.msk, region).catch(catch_('msk')),
     ])
 
     const nodes = results.flat().map((node) => ({ ...node, region: node.region ?? region }))
