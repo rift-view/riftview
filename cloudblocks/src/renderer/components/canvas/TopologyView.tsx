@@ -85,15 +85,17 @@ const SUBNET_COLLAPSED_H = 32
 
 const GROUP_THRESHOLD = 3
 
-// Returns the number of visual items after aggregating same-type groups
-function effectiveItemCount(resources: CloudNode[]): number {
+// Returns the number of visual items after aggregating same-type groups.
+// expandedGroups: group IDs (format: `group-{subnetId}-{nodeType}`) that are currently expanded.
+function effectiveItemCount(resources: CloudNode[], subnetId: string, expandedGroups: Set<string>): number {
   const typeCounts = new Map<string, number>()
   for (const r of resources) {
     typeCounts.set(r.type, (typeCounts.get(r.type) ?? 0) + 1)
   }
   let count = 0
-  for (const c of typeCounts.values()) {
-    count += c >= GROUP_THRESHOLD ? 1 : c
+  for (const [type, c] of typeCounts.entries()) {
+    const groupId = `group-${subnetId}-${type}`
+    count += (c >= GROUP_THRESHOLD && !expandedGroups.has(groupId)) ? 1 : c
   }
   return count
 }
@@ -105,6 +107,7 @@ function buildFlowNodes(
   collapsedSubnets: Set<string>,
   collapsedVpcs: Set<string>,
   collapsedApigws: Set<string>,
+  expandedGroups: Set<string>,
   selectedRegions: string[],
   showRegionIndicators: boolean,
   regionColorMap: Record<string, string>,
@@ -192,8 +195,8 @@ function buildFlowNodes(
   vpcs.forEach((vpc) => {
     const vpcSubnets = subnetsByVpc.get(vpc.id) ?? []
     const subSizes   = vpcSubnets.map((s) => {
-      if (collapsedSubnets.has(s.id)) return { w: subnetSize(effectiveItemCount(resourcesByParent.get(s.id) ?? [])).w, h: SUBNET_COLLAPSED_H }
-      return subnetSize(effectiveItemCount(resourcesByParent.get(s.id) ?? []))
+      if (collapsedSubnets.has(s.id)) return { w: subnetSize(effectiveItemCount(resourcesByParent.get(s.id) ?? [], s.id, expandedGroups)).w, h: SUBNET_COLLAPSED_H }
+      return subnetSize(effectiveItemCount(resourcesByParent.get(s.id) ?? [], s.id, expandedGroups))
     })
     const totalSubW  = subSizes.reduce((sum, s) => sum + s.w, 0) + Math.max(0, vpcSubnets.length - 1) * SUB_GAP
     const maxSubH    = subSizes.length > 0 ? Math.max(...subSizes.map((s) => s.h)) : 120
@@ -258,7 +261,18 @@ function buildFlowNodes(
           }
         }
         groups.sort((a, b) => b.nodes.length - a.nodes.length)
-        const effectiveItems: EffectiveItem[] = [...groups, ...individuals]
+
+        // Flatten: expanded groups render as individual nodes in the grid
+        const effectiveItems: EffectiveItem[] = []
+        for (const item of [...groups, ...individuals]) {
+          if (item.kind === 'group' && expandedGroups.has(`group-${subnet.id}-${item.nodeType}`)) {
+            for (const n of item.nodes) {
+              effectiveItems.push({ kind: 'individual', nodeType: item.nodeType, nodes: [n] })
+            }
+          } else {
+            effectiveItems.push(item)
+          }
+        }
 
         effectiveItems.forEach((item, ei) => {
           const col = ei % RES_COLS
@@ -524,6 +538,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   const toggleVpc          = useUIStore((s) => s.toggleVpc)
   const collapsedApigws    = useUIStore((s) => s.collapsedApigws)
   const toggleApigw        = useUIStore((s) => s.toggleApigw)
+  const expandedGroups     = useUIStore((s) => s.expandedGroups)
   const annotations        = useUIStore((s) => s.annotations)
   const stickyNotes        = useUIStore((s) => s.stickyNotes)
   const setNodePosition    = useUIStore((s) => s.setNodePosition)
@@ -606,7 +621,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
   }, [allNodes, importedNodes, showRegionIndicators, selectedRegions])
 
   const flowNodes: Node[] = useMemo(() => {
-    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets, collapsedVpcs, collapsedApigws, selectedRegions, showRegionIndicators, regionColorMap, topologyPositions, zoneSizes)
+    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds, collapsedSubnets, collapsedVpcs, collapsedApigws, expandedGroups, selectedRegions, showRegionIndicators, regionColorMap, topologyPositions, zoneSizes)
     const mapped = raw.map((n) => {
       const isMultiSelected = selectedNodeIds.size > 1 && selectedNodeIds.has(n.id)
       const isLocked = lockedNodes.has(n.id)
@@ -762,7 +777,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       const d = fn.data as { driftStatus?: string }
       return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
     })
-  }, [allNodes, selectedId, selectedNodeIds, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, collapsedVpcs, toggleVpc, collapsedApigws, toggleApigw, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete, zoneSizes, setZoneSize])
+  }, [allNodes, selectedId, selectedNodeIds, highlightedIds, topologyPositions, livePositions, lockedNodes, collapsedSubnets, toggleSubnet, collapsedVpcs, toggleVpc, collapsedApigws, toggleApigw, expandedGroups, annotations, importedNodes, driftFilterActive, selectedRegions, showRegionIndicators, regionColorMap, stickyNotes, onStickyNotesSave, onStickyNoteDelete, zoneSizes, setZoneSize])
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)

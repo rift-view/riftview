@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { NodeType } from '../../../types/cloud'
 import { useUIStore } from '../../../store/ui'
+import { useShallow } from 'zustand/react/shallow'
 
 // Minimal subset of TYPE_BORDER/TYPE_LABEL — sourced from ResourceNode.tsx.
 // Kept here to avoid a circular import from ResourceNode.
@@ -66,15 +67,19 @@ interface ResourceGroupNodeData {
   dimmed?:  boolean
 }
 
-export function ResourceGroupNode({ data, selected }: NodeProps): React.JSX.Element {
+export function ResourceGroupNode({ data, selected, id }: NodeProps): React.JSX.Element {
   const d = data as unknown as ResourceGroupNodeData
-  const pluginMeta  = useUIStore.getState().pluginNodeTypes[d.nodeType]
-  const borderColor = TYPE_BORDER[d.nodeType] ?? pluginMeta?.borderColor ?? '#6b7280'
-  const typeLabel   = TYPE_LABEL[d.nodeType] ?? pluginMeta?.label ?? d.nodeType.toUpperCase()
+  const pluginMeta    = useUIStore.getState().pluginNodeTypes[d.nodeType]
+  const borderColor   = TYPE_BORDER[d.nodeType] ?? pluginMeta?.borderColor ?? '#6b7280'
+  const typeLabel     = TYPE_LABEL[d.nodeType] ?? pluginMeta?.label ?? d.nodeType.toUpperCase()
+  const isExpanded    = useUIStore(useShallow((s) => s.expandedGroups.has(id)))
+  const toggleExpand  = useUIStore((s) => s.toggleGroupExpand)
 
   return (
     <div
       data-selected={selected}
+      onClick={(e) => { e.stopPropagation(); toggleExpand(id) }}
+      title={isExpanded ? `Collapse ${d.count} ${typeLabel} nodes` : `Expand ${d.count} ${typeLabel} nodes`}
       style={{
         position:   'relative',
         background: 'var(--cb-bg-panel)',
@@ -87,6 +92,7 @@ export function ResourceGroupNode({ data, selected }: NodeProps): React.JSX.Elem
         opacity:    d.dimmed ? 0.25 : 1,
         filter:     d.dimmed ? 'grayscale(60%)' : 'none',
         transition: 'opacity 0.2s, filter 0.2s',
+        cursor:     'pointer',
         boxShadow: selected
           ? `0 0 10px ${borderColor}55, 3px 3px 0 var(--cb-bg-elevated), 6px 6px 0 var(--cb-bg-elevated)`
           : `2px 2px 0 var(--cb-bg-elevated), 4px 4px 0 var(--cb-bg-elevated)`,
@@ -107,12 +113,15 @@ export function ResourceGroupNode({ data, selected }: NodeProps): React.JSX.Elem
         </span>
       </div>
 
-      {/* Count */}
+      {/* Count + expand indicator */}
       <div
-        className="text-[11px] font-medium leading-tight"
+        className="text-[11px] font-medium leading-tight flex items-center gap-1"
         style={{ color: 'var(--cb-text-primary)' }}
       >
-        × {d.count}
+        <span>× {d.count}</span>
+        <span style={{ fontSize: 8, color: 'var(--cb-text-muted)', marginLeft: 2 }}>
+          {isExpanded ? '▾' : '▸'}
+        </span>
       </div>
     </div>
   )
