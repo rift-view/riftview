@@ -28,4 +28,7 @@ export const SCAN_KEY_TO_TYPE: Record<string, NodeType> = {
   'kinesis':             'kinesis',
   'ecs':                 'ecs',
   'elasticache':         'elasticache',
+  'eks':                 'eks',
+  'opensearch':          'opensearch',
+  'msk':                 'msk',
 }

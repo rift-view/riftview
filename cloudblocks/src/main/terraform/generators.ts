@@ -290,5 +290,8 @@ export const terraformGenerators: TerraformGeneratorMap = {
   'kinesis': () => '',
   'ecs': () => '',
   'elasticache': () => '',
+  'eks': () => '',
+  'opensearch': () => '',
+  'msk': () => '',
   'unknown': () => '',
 }

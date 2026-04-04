@@ -21,6 +21,9 @@ import { CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-
 import { KinesisClient } from '@aws-sdk/client-kinesis'
 import { ECSClient } from '@aws-sdk/client-ecs'
 import { ElastiCacheClient } from '@aws-sdk/client-elasticache'
+import { EKSClient } from '@aws-sdk/client-eks'
+import { OpenSearchClient } from '@aws-sdk/client-opensearch'
+import { KafkaClient } from '@aws-sdk/client-kafka'
 
 export interface AwsClients {
   ec2: EC2Client
@@ -46,6 +49,9 @@ export interface AwsClients {
   kinesis:      KinesisClient
   ecs:          ECSClient
   elasticache:  ElastiCacheClient
+  eks:          EKSClient
+  opensearch:   OpenSearchClient
+  msk:          KafkaClient
 }
 
 // Creates a fresh set of AWS SDK clients for the given profile + region.
@@ -93,5 +99,8 @@ export function createClients(profile: string, region: string, endpoint?: string
     kinesis:     new KinesisClient(config),
     ecs:         new ECSClient(config),
     elasticache: new ElastiCacheClient(config),
+    eks:         new EKSClient(config),
+    opensearch:  new OpenSearchClient(config),
+    msk:         new KafkaClient(config),
   }
 }
