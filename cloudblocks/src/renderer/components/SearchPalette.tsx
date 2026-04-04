@@ -27,6 +27,11 @@ const TYPE_BADGE_COLOR = {
   'r53-zone':       '#FF9900',
   sfn:              '#FF9900',
   'eventbridge-bus': '#FF9900',
+  ses:               '#FF9900',
+  cognito:           '#FF9900',
+  kinesis:           '#8b5cf6',
+  ecs:               '#FF9900',
+  elasticache:       '#22c55e',
   'unknown':         '#6b7280',
 } satisfies Record<NodeType, string>
 
@@ -54,6 +59,11 @@ const TYPE_SHORT = {
   'r53-zone':       'R53',
   sfn:              'SFN',
   'eventbridge-bus': 'EB',
+  ses:               'SES',
+  cognito:           'COGNITO',
+  kinesis:           'KDS',
+  ecs:               'ECS',
+  elasticache:       'REDIS',
   'unknown':         '?',
 } satisfies Record<NodeType, string>
 

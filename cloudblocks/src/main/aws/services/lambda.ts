@@ -30,6 +30,10 @@ function extractEnvVarIntegrations(
       const tableName = value.split(':table/')[1]?.split('/')[0]
       if (tableName) results.push({ targetId: tableName, edgeType: 'trigger' })
     }
+    // SES identity: plain email address → matches SES node ID
+    if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) {
+      results.push({ targetId: value, edgeType: 'trigger' })
+    }
   }
   return results
 }
@@ -43,8 +47,8 @@ export async function listFunctions(client: LambdaClient, region: string): Promi
       try {
         const mappingsRes = await client.send(new ListEventSourceMappingsCommand({ FunctionName: fn.FunctionArn }))
         for (const m of mappingsRes.EventSourceMappings ?? []) {
-          if (m.EventSourceArn?.startsWith('arn:aws:sqs:')) {
-            allIntegrations.push({ targetId: m.EventSourceArn, edgeType: 'trigger' })
+          if (m.EventSourceArn?.startsWith('arn:aws:sqs:') || m.EventSourceArn?.startsWith('arn:aws:kinesis:')) {
+            allIntegrations.push({ targetId: m.EventSourceArn!, edgeType: 'trigger' })
           }
         }
       } catch { /* ignore */ }

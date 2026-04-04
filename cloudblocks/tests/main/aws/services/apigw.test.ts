@@ -17,6 +17,8 @@ describe('listApis', () => {
     mockSend.mockResolvedValueOnce({
       Items: [{ ApiId: 'api-123', Name: 'my-api', ProtocolType: 'HTTP', ApiEndpoint: 'https://api.example.com' }],
     })
+    // GetAuthorizersCommand — no Cognito authorizers
+    mockSend.mockResolvedValueOnce({ Items: [] })
     // GetIntegrationsCommand
     mockSend.mockResolvedValueOnce({
       Items: [{ IntegrationId: 'integ-1', IntegrationType: 'AWS_PROXY', IntegrationUri: lambdaArn }],
@@ -40,6 +42,8 @@ describe('listApis', () => {
     mockSend.mockResolvedValueOnce({
       Items: [{ ApiId: 'api-123', Name: 'my-api', ProtocolType: 'HTTP', ApiEndpoint: 'https://api.example.com' }],
     })
+    // GetAuthorizersCommand — no Cognito authorizers
+    mockSend.mockResolvedValueOnce({ Items: [] })
     // GetIntegrationsCommand — no items
     mockSend.mockResolvedValueOnce({ Items: [] })
     // GetRoutesCommand — route with no Target
@@ -61,6 +65,8 @@ describe('listApis', () => {
     mockSend.mockResolvedValueOnce({
       Items: [{ ApiId: 'api-123', Name: 'my-api', ProtocolType: 'HTTP', ApiEndpoint: 'https://api.example.com' }],
     })
+    // GetAuthorizersCommand — no Cognito authorizers
+    mockSend.mockResolvedValueOnce({ Items: [] })
     // GetIntegrationsCommand
     mockSend.mockResolvedValueOnce({
       Items: [{ IntegrationId: 'integ-1', IntegrationType: 'AWS_PROXY', IntegrationUri: nonLambdaUri }],
@@ -82,6 +88,8 @@ describe('listApis', () => {
     mockSend.mockResolvedValueOnce({
       Items: [{ ApiId: 'api-123', Name: 'my-api', ProtocolType: 'HTTP', ApiEndpoint: 'https://api.example.com' }],
     })
+    // GetAuthorizersCommand — no Cognito authorizers
+    mockSend.mockResolvedValueOnce({ Items: [] })
     // GetIntegrationsCommand — no items
     mockSend.mockResolvedValueOnce({ Items: [] })
     // GetRoutesCommand — no items

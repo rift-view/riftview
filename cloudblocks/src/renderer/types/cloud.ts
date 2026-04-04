@@ -26,6 +26,11 @@ export type NodeType =
   | 'r53-zone'
   | 'sfn'
   | 'eventbridge-bus'
+  | 'ses'
+  | 'cognito'
+  | 'kinesis'
+  | 'ecs'
+  | 'elasticache'
   | 'unknown'
 
 export type EdgeType = 'trigger' | 'origin' | 'subscription'

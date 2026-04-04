@@ -16,7 +16,13 @@ export function ApigwNode({ data }: NodeProps): React.JSX.Element {
         background:   'rgba(139, 92, 246, 0.04)',
         border:       '1px solid rgba(139, 92, 246, 0.5)',
         borderRadius: 8,
-        minWidth:     240,
+        // width/height: 100% fills the React Flow wrapper in TopologyView
+        // (wrapper gets explicit style.width/height from buildFlowNodes).
+        // In GraphView the wrapper auto-sizes, so minWidth/minHeight take over.
+        width:        '100%',
+        height:       '100%',
+        boxSizing:    'border-box',
+        minWidth:     Math.max(280, d.label.length * 8 + 120),
         minHeight:    80,
         fontFamily:   'monospace',
         overflow:     'hidden',
