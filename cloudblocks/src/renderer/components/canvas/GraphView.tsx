@@ -18,6 +18,7 @@ import IntegrationEdge from './edges/IntegrationEdge'
 import UserEdge from './edges/UserEdge'
 import IntegrationLegend from './IntegrationLegend'
 import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
+import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../utils/filterToHide'
 
 const SNAP_GRID_SIZE = 20
 
@@ -242,41 +243,52 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
   const allNodes = useMemo(() => [...cloudNodes, ...pendingNodes], [cloudNodes, pendingNodes])
 
-  const byId = useMemo(() => new Map(allNodes.map((n) => [n.id, n])), [allNodes])
+  // Filter-to-hide: nodes not matching any active filter are excluded from the canvas entirely
+  const visibleNodes = useMemo(
+    () => applyNodeFilters(allNodes, activeFilters),
+    [allNodes, activeFilters],
+  )
+
+  // Clear selection when the selected node is hidden by an active filter
+  const selectNodeFn = useUIStore((s) => s.selectNode)
+  useEffect(() => {
+    if (!selectedId || activeFilters.length === 0) return
+    const visibleIds = new Set(visibleNodes.map((n) => n.id))
+    if (!visibleIds.has(selectedId)) selectNodeFn(null)
+  }, [visibleNodes, selectedId, activeFilters.length, selectNodeFn])
+
+  const byId = useMemo(() => new Map(visibleNodes.map((n) => [n.id, n])), [visibleNodes])
 
   const vpcColorMap = useMemo(() => {
     const map = new Map<string, string>()
     let idx = 0
-    allNodes.forEach((n) => {
+    visibleNodes.forEach((n) => {
       if (n.type === 'vpc' && !map.has(n.id)) {
         map.set(n.id, VPC_PALETTE[idx % VPC_PALETTE.length])
         idx++
       }
     })
     return map
-  }, [allNodes])
+  }, [visibleNodes])
 
-  // Compute highlighted set for focus mode
+  // Compute highlighted set for selection-based neighbour dimming only
   const highlightedIds = useMemo<Set<string> | null>(() => {
-    if (activeFilters.length > 0) {
-      return new Set(allNodes.filter((n) => activeFilters.some((f) => f.test(n))).map((n) => n.id))
-    }
     if (!selectedId) return null
-    const rawEdges = deriveEdges(allNodes)
+    const rawEdges = deriveEdges(visibleNodes)
     const neighbours = new Set<string>([selectedId])
     for (const e of rawEdges) {
       if (e.source === selectedId) neighbours.add(e.target)
       if (e.target === selectedId) neighbours.add(e.source)
     }
     return neighbours
-  }, [selectedId, allNodes, activeFilters])
+  }, [selectedId, visibleNodes])
 
   // Track in-flight drag positions so controlled nodes follow the mouse.
   const [livePositions, setLivePositions] = useState<Record<string, { x: number; y: number }>>({})
 
   const flowNodes: Node[] = useMemo(
     () => {
-      const mapped = allNodes.map((n, i) => {
+      const mapped = visibleNodes.map((n, i) => {
         const vpc      = findVpcAncestor(n, byId)
         const vpcColor = vpc ? (vpcColorMap.get(vpc.id) ?? undefined) : undefined
         const vpcLabel = vpc ? vpc.label : undefined
@@ -328,7 +340,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
               ? n.integrations
                   .filter((i) => i.edgeType === 'subscription')
                   .map((i) => {
-                    const resolved = resolveIntegrationTargetId(allNodes, i.targetId)
+                    const resolved = resolveIntegrationTargetId(visibleNodes, i.targetId)
                     return byId.get(resolved)?.label ?? resolved
                   })
               : undefined,
@@ -374,18 +386,19 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
         return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
       })
     },
-    [allNodes, selectedId, selectedNodeIds, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes, driftFilterActive, stickyNotes, onStickyNotesSave, onStickyNoteDelete],
+    [visibleNodes, selectedId, selectedNodeIds, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes, driftFilterActive, stickyNotes, onStickyNotesSave, onStickyNoteDelete],
   )
 
   const flowEdges: Edge[] = useMemo(() => {
-    const raw = deriveEdges(allNodes)
+    const visibleIds = new Set(visibleNodes.map((n) => n.id))
+    const raw = filterEdgesByVisibleNodes(deriveEdges(visibleNodes), visibleIds)
     const filtered = showIntegrations
       ? raw
       : raw.filter((e) => !(e.data as IntegrationEdgeData | undefined)?.isIntegration)
 
     // Hide subscription edges for SNS nodes with 2+ subscriptions when unselected
     const snsWithManySubscriptions = new Set(
-      allNodes
+      visibleNodes
         .filter((n) => n.type === 'sns' && (n.integrations?.filter((i) => i.edgeType === 'subscription').length ?? 0) >= 2)
         .map((n) => n.id)
     )
@@ -415,7 +428,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       data:   { isCustom: true as const, color: ce.color, label: ce.label },
     }))
     return [...withOpacity, ...userEdges]
-  }, [allNodes, selectedId, showIntegrations, customEdges])
+  }, [visibleNodes, selectedId, showIntegrations, customEdges])
 
   return (
     // Wrapper must receive a concrete height from its parent (flex-1) for ReactFlow to fill correctly
