@@ -34,6 +34,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
   const nodes         = useCloudStore((s) => s.nodes)
   const scanStatus    = useCloudStore((s) => s.scanStatus)
   const lastScannedAt = useCloudStore((s) => s.lastScannedAt)
+  const isExporting   = useUIStore((s) => s.isExporting)
 
   const [showTemplates, setShowTemplates] = useState(false)
   const [costHover, setCostHover]         = useState(false)
@@ -358,8 +359,10 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
 
       {/* Export dropdown */}
       <div ref={exportRef} style={{ position: 'relative' }}>
-        <button onClick={() => setExportOpen((o) => !o)} style={btnBase}>↓ Export ▾</button>
-        {exportOpen && (
+        <button onClick={() => { if (!isExporting) setExportOpen((o) => !o) }} style={{ ...btnBase, opacity: isExporting ? 0.5 : 1 }}>
+          {isExporting ? '⏳ Exporting…' : '↓ Export ▾'}
+        </button>
+        {exportOpen && !isExporting && (
           <div style={{ ...dropdownMenu, right: 0 }}>
             <button
               onClick={() => {
@@ -386,14 +389,31 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
             <button
               onClick={() => {
                 setExportOpen(false)
-                window.cloudblocks.exportPng().then((res) => {
-                  if (res.success) useUIStore.getState().showToast('PNG exported', 'success')
-                  else useUIStore.getState().showToast('Export cancelled', 'error')
-                }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
+                window.dispatchEvent(new CustomEvent('cloudblocks:export-canvas', { detail: { format: 'clipboard' } }))
               }}
-              style={{ ...dropdownItem, borderBottom: 'none' }}
+              disabled={nodes.length === 0}
+              style={{
+                ...dropdownItem,
+                color: nodes.length === 0 ? 'var(--cb-text-muted)' : 'var(--cb-text-secondary)',
+                cursor: nodes.length === 0 ? 'not-allowed' : 'pointer',
+              }}
             >
-              ↓ PNG
+              ⎘ Copy diagram to clipboard
+            </button>
+            <button
+              onClick={() => {
+                setExportOpen(false)
+                window.dispatchEvent(new CustomEvent('cloudblocks:export-canvas', { detail: { format: 'file' } }))
+              }}
+              disabled={nodes.length === 0}
+              style={{
+                ...dropdownItem,
+                borderBottom: 'none',
+                color: nodes.length === 0 ? 'var(--cb-text-muted)' : 'var(--cb-text-secondary)',
+                cursor: nodes.length === 0 ? 'not-allowed' : 'pointer',
+              }}
+            >
+              ↓ Save diagram as PNG
             </button>
           </div>
         )}

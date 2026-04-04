@@ -27,6 +27,7 @@ interface Window {
       | { status: 'not_found' }
     >
     exportPng(): Promise<{ success: boolean; filePath?: string }>
+    saveExportImage(dataUrl: string, defaultName: string): Promise<{ success: boolean; filePath?: string }>
     listAwsProfiles(): Promise<string[]>
     onUpdateAvailable(cb: () => void): () => void
     loadAnnotations(): Promise<Record<string, string>>

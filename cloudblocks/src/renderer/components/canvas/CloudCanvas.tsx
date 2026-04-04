@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
@@ -13,6 +13,7 @@ import { DriftModeStrip } from './DriftModeStrip'
 import { EmptyCanvasState } from './EmptyCanvasState'
 import { BulkActionToolbar } from './BulkActionToolbar'
 import type { CloudNode } from '../../types/cloud'
+import { exportCanvasToPng } from '../../utils/exportCanvas'
 
 interface Props {
   onNodeContextMenu: (node: CloudNode, x: number, y: number) => void
@@ -57,6 +58,16 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
     window.addEventListener('cloudblocks:fitview', handler)
     return () => window.removeEventListener('cloudblocks:fitview', handler)
   }, [fitView])
+
+  // Listen for canvas export requests from TitleBar
+  const handleExport = useCallback((e: Event) => {
+    const format = (e as CustomEvent<{ format: 'clipboard' | 'file' }>).detail?.format ?? 'file'
+    void exportCanvasToPng(fitView, format)
+  }, [fitView])
+  useEffect(() => {
+    window.addEventListener('cloudblocks:export-canvas', handleExport)
+    return () => window.removeEventListener('cloudblocks:export-canvas', handleExport)
+  }, [handleExport])
 
   // Listen for "Add Note" shortcut / button
   useEffect(() => {
