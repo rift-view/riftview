@@ -49,6 +49,7 @@ interface UIState {
   collapsedSubnets:   Set<string>
   collapsedVpcs:      Set<string>
   collapsedApigws:    Set<string>
+  expandedGroups:     Set<string>
   showAbout:          boolean
   showSettings:       boolean
   annotations:        Record<string, string>
@@ -84,6 +85,8 @@ interface UIState {
   isVpcCollapsed:       (id: string) => boolean
   toggleApigw:          (id: string) => void
   isApigwCollapsed:     (id: string) => boolean
+  toggleGroupExpand:    (id: string) => void
+  isGroupExpanded:      (id: string) => boolean
   applyTidyLayout:      (view: 'topology' | 'graph', positions: Record<string, { x: number; y: number }>) => void
   setShowAbout:         (v: boolean) => void
   setShowSettings:      (v: boolean) => void
@@ -131,6 +134,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   collapsedSubnets:  new Set<string>(),
   collapsedVpcs:     new Set<string>(),
   collapsedApigws:   new Set<string>(),
+  expandedGroups:    new Set<string>(),
   showAbout:         false,
   showSettings:      false,
   annotations:       {},
@@ -230,6 +234,14 @@ export const useUIStore = create<UIState>((set, get) => ({
       return { collapsedApigws: next }
     }),
   isApigwCollapsed: (id) => get().collapsedApigws.has(id),
+  toggleGroupExpand: (id) =>
+    set((s) => {
+      const next = new Set(s.expandedGroups)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return { expandedGroups: next }
+    }),
+  isGroupExpanded: (id) => get().expandedGroups.has(id),
   applyTidyLayout: (view, positions) =>
     set((s) => ({
       nodePositions: {
