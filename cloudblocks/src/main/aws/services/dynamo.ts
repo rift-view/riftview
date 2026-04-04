@@ -21,20 +21,25 @@ export async function listTables(
 
   const nodes = await Promise.all(
     tableNames.map(async (name): Promise<CloudNode> => {
+      const descRes = await client
+        .send(new DescribeTableCommand({ TableName: name }))
+        .catch(() => null)
+
+      const table = descRes?.Table
       const baseNode: CloudNode = {
         id: name,
         type: 'dynamo',
         label: name,
         status: 'running',
         region,
-        metadata: {},
+        metadata: {
+          billingMode: table?.BillingModeSummary?.BillingMode ?? 'PROVISIONED',
+          itemCount:   table?.ItemCount,
+          sizeBytes:   table?.TableSizeBytes,
+        },
       }
 
-      const descRes = await client
-        .send(new DescribeTableCommand({ TableName: name }))
-        .catch(() => null)
-
-      const streamArn = descRes?.Table?.LatestStreamArn
+      const streamArn = table?.LatestStreamArn
       if (!streamArn) return baseNode
 
       const mappingRes = await lambdaClient

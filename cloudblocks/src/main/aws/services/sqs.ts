@@ -28,7 +28,7 @@ export async function listQueues(client: SQSClient, lambdaClient: LambdaClient, 
   const enriched = await Promise.all(
     nodes.map(async (node): Promise<CloudNode> => {
       const attrRes = await client
-        .send(new GetQueueAttributesCommand({ QueueUrl: node.id, AttributeNames: ['QueueArn'] }))
+        .send(new GetQueueAttributesCommand({ QueueUrl: node.id, AttributeNames: ['QueueArn', 'ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible'] }))
         .catch((): { Attributes: Record<string, string> } => ({ Attributes: {} }))
 
       const queueArn = attrRes.Attributes?.['QueueArn']
@@ -45,7 +45,16 @@ export async function listQueues(client: SQSClient, lambdaClient: LambdaClient, 
           edgeType: 'trigger',
         }))
 
-      const enrichedNode: CloudNode = { ...node, id: queueArn }
+      const msgs = attrRes.Attributes?.['ApproximateNumberOfMessages']
+      const inFlight = attrRes.Attributes?.['ApproximateNumberOfMessagesNotVisible']
+      const enrichedNode: CloudNode = {
+        ...node,
+        id: queueArn,
+        metadata: {
+          ...(msgs != null ? { messages: Number(msgs) } : {}),
+          ...(inFlight != null ? { inFlight: Number(inFlight) } : {}),
+        },
+      }
       return integrations.length > 0 ? { ...enrichedNode, integrations } : enrichedNode
     })
   )
