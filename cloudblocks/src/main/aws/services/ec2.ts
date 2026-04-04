@@ -25,15 +25,27 @@ function ec2StatusToNodeStatus(state: string | undefined): NodeStatus {
 
 export async function describeInstances(client: EC2Client, region: string): Promise<CloudNode[]> {
   try {
-    const res = await client.send(new DescribeInstancesCommand({}))
-    const instances: Instance[] = res.Reservations?.flatMap((r) => r.Instances ?? []) ?? []
+    const instances: Instance[] = []
+    let nextToken: string | undefined
+    do {
+      const res = await client.send(new DescribeInstancesCommand({ NextToken: nextToken }))
+      instances.push(...(res.Reservations?.flatMap((r) => r.Instances ?? []) ?? []))
+      nextToken = res.NextToken
+    } while (nextToken)
     return instances.map((i): CloudNode => ({
       id:       i.InstanceId ?? 'unknown',
       type:     'ec2',
       label:    nameTag(i.Tags) ?? i.InstanceId ?? 'EC2',
       status:   ec2StatusToNodeStatus(i.State?.Name),
       region,
-      metadata: { instanceType: i.InstanceType, vpcId: i.VpcId, subnetId: i.SubnetId },
+      metadata: {
+        instanceType: i.InstanceType,
+        vpcId:        i.VpcId,
+        subnetId:     i.SubnetId,
+        publicIp:     i.PublicIpAddress,
+        privateIp:    i.PrivateIpAddress,
+        ami:          i.ImageId,
+      },
       parentId: i.SubnetId,
     }))
   } catch {
