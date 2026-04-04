@@ -24,6 +24,23 @@ export function resolveIntegrationTargetId(nodes: CloudNode[], targetId: string)
   })
   if (apigwMatch) return apigwMatch.id
 
+  // Match against CloudFront domain name (e.g. d1234.cloudfront.net)
+  const cfMatch = nodes.find(n => n.type === 'cloudfront' && n.metadata.domainName === targetId)
+  if (cfMatch) return cfMatch.id
+
+  // Match against RDS endpoint hostname (metadata.endpoint)
+  const rdsMatch = nodes.find(n => n.type === 'rds' && n.metadata.endpoint === targetId)
+  if (rdsMatch) return rdsMatch.id
+
+  // Match against ECR repo URI — exact match or URI-with-tag/digest stripped
+  const ecrMatch = nodes.find(n => {
+    if (n.type !== 'ecr-repo') return false
+    const uri = n.metadata.uri as string | undefined
+    if (!uri) return false
+    return uri === targetId || targetId.startsWith(uri + ':') || targetId.startsWith(uri + '@')
+  })
+  if (ecrMatch) return ecrMatch.id
+
   // No match — return original (edge won't render but won't crash)
   return targetId
 }
