@@ -600,38 +600,79 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             </>
           )}
 
-          {/* Connections panel — outgoing integration edges */}
-          {(node.integrations?.length ?? 0) > 0 && (
-            <div style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}>
-              <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
-                Connections ({node.integrations!.length})
+          {/* Connections panel — outgoing + incoming integration edges */}
+          {(() => {
+            const allNodes = [...nodes, ...importedNodes]
+            const outgoing = (node.integrations ?? []).map((integ) => {
+              const resolvedId = resolveIntegrationTargetId(allNodes, integ.targetId)
+              const target = allNodes.find((n) => n.id === resolvedId)
+              return { integ, target }
+            })
+            const incoming = allNodes.filter((n) =>
+              n.id !== node.id &&
+              (n.integrations ?? []).some((e) => resolveIntegrationTargetId(allNodes, e.targetId) === node.id)
+            )
+            if (outgoing.length === 0 && incoming.length === 0) return null
+            const edgeColor = (t: string) => t === 'trigger' ? '#a78bfa' : t === 'subscription' ? '#34d399' : '#60a5fa'
+            const ConnRow = ({ src, label, label2, edgeType, onClick }: { src?: CloudNode; label: string; label2?: string; edgeType: string; onClick: () => void }) => (
+              <div
+                style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 4, cursor: 'pointer' }}
+                onClick={onClick}
+                title={`Select ${label}`}
+              >
+                <span style={{ fontSize: 6, color: edgeColor(edgeType), fontWeight: 700, minWidth: 40, textTransform: 'uppercase', flexShrink: 0 }}>
+                  {edgeType}
+                </span>
+                <span style={{ fontSize: 9, color: src ? 'var(--cb-text-primary)' : 'var(--cb-text-muted)', wordBreak: 'break-all', flex: 1 }}>
+                  {label}
+                </span>
+                {label2 && (
+                  <span style={{ fontSize: 7, color: 'var(--cb-text-muted)', flexShrink: 0 }}>{label2}</span>
+                )}
               </div>
-              {node.integrations!.map((integ, i) => {
-                const allNodes = [...nodes, ...importedNodes]
-                const resolvedId = resolveIntegrationTargetId(allNodes, integ.targetId)
-                const target = allNodes.find((n) => n.id === resolvedId)
-                const edgeColor = integ.edgeType === 'trigger' ? '#a78bfa' : integ.edgeType === 'subscription' ? '#34d399' : '#60a5fa'
-                return (
-                  <div
-                    key={i}
-                    style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 4, cursor: target ? 'pointer' : 'default' }}
-                    onClick={() => target && useUIStore.getState().selectNode(target.id)}
-                    title={target ? `Select ${target.label}` : integ.targetId}
-                  >
-                    <span style={{ fontSize: 6, color: edgeColor, fontWeight: 700, minWidth: 40, textTransform: 'uppercase', flexShrink: 0 }}>
-                      {integ.edgeType}
-                    </span>
-                    <span style={{ fontSize: 9, color: target ? 'var(--cb-text-primary)' : 'var(--cb-text-muted)', wordBreak: 'break-all', flex: 1 }}>
-                      {target ? target.label : integ.targetId.split('/').pop() ?? integ.targetId}
-                    </span>
-                    {target && (
-                      <span style={{ fontSize: 7, color: 'var(--cb-text-muted)', flexShrink: 0 }}>{target.type}</span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
+            )
+            return (
+              <div style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}>
+                {outgoing.length > 0 && (
+                  <>
+                    <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+                      Outgoing ({outgoing.length})
+                    </div>
+                    {outgoing.map(({ integ, target }, i) => (
+                      <ConnRow
+                        key={i}
+                        src={target}
+                        label={target ? target.label : (integ.targetId.split('/').pop() ?? integ.targetId)}
+                        label2={target?.type}
+                        edgeType={integ.edgeType}
+                        onClick={() => target && useUIStore.getState().selectNode(target.id)}
+                      />
+                    ))}
+                  </>
+                )}
+                {incoming.length > 0 && (
+                  <>
+                    <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 6, marginTop: outgoing.length > 0 ? 8 : 0 }}>
+                      Incoming ({incoming.length})
+                    </div>
+                    {incoming.map((src, i) => {
+                      const e = (src.integrations ?? []).find((edge) => resolveIntegrationTargetId(allNodes, edge.targetId) === node.id)!
+                      return (
+                        <ConnRow
+                          key={i}
+                          src={src}
+                          label={src.label}
+                          label2={src.type}
+                          edgeType={e.edgeType}
+                          onClick={() => useUIStore.getState().selectNode(src.id)}
+                        />
+                      )
+                    })}
+                  </>
+                )}
+              </div>
+            )
+          })()}
 
           {/* IAM Permissions — EC2, Lambda, S3 only, hidden for imported nodes */}
           {node && IAM_SUPPORTED_TYPES.includes(node.type as NodeType) && !isImported && (

@@ -25,6 +25,7 @@ export async function listOpenSearchDomains(client: OpenSearchClient, region: st
         engineVersion: domain.EngineVersion,
         endpoint:      domain.Endpoint ?? domain.Endpoints?.['vpc'],
       },
+      parentId: domain.VPCOptions?.VPCId,
     }))
   } catch {
     return []
