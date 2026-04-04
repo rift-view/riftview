@@ -16,6 +16,7 @@ import { CloudFrontNode } from './nodes/CloudFrontNode'
 import { ApigwNode } from './nodes/ApigwNode'
 import { ApigwRouteNode } from './nodes/ApigwRouteNode'
 import { StickyNoteNode } from './nodes/StickyNoteNode'
+import { ResourceGroupNode } from './nodes/ResourceGroupNode'
 import { useStickyNoteCallbacks } from './nodes/useStickyNoteCallbacks'
 import type { CloudNode, EdgeType, IntegrationEdgeData, CustomEdge } from '../../types/cloud'
 import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
@@ -40,7 +41,8 @@ const NODE_TYPES = {
   cloudfront:    CloudFrontNode,
   apigw:         ApigwNode,
   'apigw-route': ApigwRouteNode,
-  'sticky-note': StickyNoteNode,
+  'sticky-note':    StickyNoteNode,
+  'resource-group': ResourceGroupNode,
   // Plugin-registered custom node renderers (populated at startup before first render)
   ...getPluginNodeComponents(),
 }
@@ -80,6 +82,21 @@ function subnetSize(resourceCount: number): { w: number; h: number } {
 }
 
 const SUBNET_COLLAPSED_H = 32
+
+const GROUP_THRESHOLD = 3
+
+// Returns the number of visual items after aggregating same-type groups
+function effectiveItemCount(resources: CloudNode[]): number {
+  const typeCounts = new Map<string, number>()
+  for (const r of resources) {
+    typeCounts.set(r.type, (typeCounts.get(r.type) ?? 0) + 1)
+  }
+  let count = 0
+  for (const c of typeCounts.values()) {
+    count += c >= GROUP_THRESHOLD ? 1 : c
+  }
+  return count
+}
 
 function buildFlowNodes(
   cloudNodes: CloudNode[],
@@ -175,8 +192,8 @@ function buildFlowNodes(
   vpcs.forEach((vpc) => {
     const vpcSubnets = subnetsByVpc.get(vpc.id) ?? []
     const subSizes   = vpcSubnets.map((s) => {
-      if (collapsedSubnets.has(s.id)) return { w: subnetSize((resourcesByParent.get(s.id) ?? []).length).w, h: SUBNET_COLLAPSED_H }
-      return subnetSize((resourcesByParent.get(s.id) ?? []).length)
+      if (collapsedSubnets.has(s.id)) return { w: subnetSize(effectiveItemCount(resourcesByParent.get(s.id) ?? [])).w, h: SUBNET_COLLAPSED_H }
+      return subnetSize(effectiveItemCount(resourcesByParent.get(s.id) ?? []))
     })
     const totalSubW  = subSizes.reduce((sum, s) => sum + s.w, 0) + Math.max(0, vpcSubnets.length - 1) * SUB_GAP
     const maxSubH    = subSizes.length > 0 ? Math.max(...subSizes.map((s) => s.h)) : 120
@@ -214,24 +231,75 @@ function buildFlowNodes(
 
       if (!isCollapsed) {
         const rNodes = resourcesByParent.get(subnet.id) ?? []
-        rNodes.forEach((r, ri) => {
-          const col = ri % RES_COLS
-          const row = Math.floor(ri / RES_COLS)
+
+        // Group resources by type — types with count >= GROUP_THRESHOLD become a single group node
+        const typeOrder = new Map<string, CloudNode[]>()
+        for (const r of rNodes) {
+          if (!typeOrder.has(r.type)) typeOrder.set(r.type, [])
+          typeOrder.get(r.type)!.push(r)
+        }
+
+        // Build the ordered list of "effective items" to place in the grid:
+        // group nodes first (sorted by count desc), then individual nodes
+        interface EffectiveItem {
+          kind:     'group' | 'individual'
+          nodeType: string
+          nodes:    CloudNode[]
+        }
+        const groups: EffectiveItem[] = []
+        const individuals: EffectiveItem[] = []
+        for (const [type, typeNodes] of typeOrder.entries()) {
+          if (typeNodes.length >= GROUP_THRESHOLD) {
+            groups.push({ kind: 'group', nodeType: type, nodes: typeNodes })
+          } else {
+            for (const n of typeNodes) {
+              individuals.push({ kind: 'individual', nodeType: type, nodes: [n] })
+            }
+          }
+        }
+        groups.sort((a, b) => b.nodes.length - a.nodes.length)
+        const effectiveItems: EffectiveItem[] = [...groups, ...individuals]
+
+        effectiveItems.forEach((item, ei) => {
+          const col = ei % RES_COLS
+          const row = Math.floor(ei / RES_COLS)
+          const pos = {
+            x: SUB_PAD_X + col * (RES_W + RES_GAP_X),
+            y: SUB_PAD_Y + row * (RES_H + RES_GAP_Y),
+          }
           const regionColor = showRegionIndicators && selectedRegions.length >= 2
-            ? (regionColorMap[r.region] ?? undefined)
+            ? (regionColorMap[item.nodes[0].region] ?? undefined)
             : undefined
-          nodes.push({
-            id:       r.id,
-            type:     'resource',
-            parentId: subnet.id,
-            extent:   'parent',
-            position: {
-              x: SUB_PAD_X + col * (RES_W + RES_GAP_X),
-              y: SUB_PAD_Y + row * (RES_H + RES_GAP_Y),
-            },
-            data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor },
-            selected: r.id === selectedId,
-          })
+
+          if (item.kind === 'group') {
+            const groupId = `group-${subnet.id}-${item.nodeType}`
+            nodes.push({
+              id:       groupId,
+              type:     'resource-group',
+              parentId: subnet.id,
+              extent:   'parent',
+              position: pos,
+              data:     {
+                nodeType: item.nodeType,
+                count:    item.nodes.length,
+                dimmed:   highlightedIds !== null && !item.nodes.some((n) => highlightedIds.has(n.id)),
+              },
+              selected: item.nodes.some((n) => n.id === selectedId),
+              zIndex:   1,
+            })
+          } else {
+            const r = item.nodes[0]
+            nodes.push({
+              id:       r.id,
+              type:     'resource',
+              parentId: subnet.id,
+              extent:   'parent',
+              position: pos,
+              data:     { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id), regionColor },
+              selected: r.id === selectedId,
+              zIndex:   1,
+            })
+          }
         })
       }
       subX += sw + SUB_GAP
@@ -275,9 +343,14 @@ function buildFlowNodes(
     const allRoutes = routesByApi.get(api.id) ?? []
     const isCollapsed = collapsedApigws.has(api.id)
     const routes = isCollapsed ? [] : allRoutes
-    // longestLabel always computed from allRoutes so width doesn't shrink on collapse
-    const longestLabel = Math.max(16, ...allRoutes.map((r) => r.label.length))
-    const apigwW = Math.max(APIGW_MIN_W, longestLabel * 7 + APIGW_PAD * 2)
+    // longestRouteLabel always computed from allRoutes so width doesn't shrink on collapse.
+    // api.label uses *8+120: heavier font in header with badge+button overhead.
+    const longestRouteLabel = allRoutes.length > 0 ? Math.max(...allRoutes.map((r) => r.label.length)) : 0
+    const apigwW = Math.max(
+      APIGW_MIN_W,
+      longestRouteLabel * 7 + APIGW_PAD * 2,
+      api.label.length * 8 + 120,
+    )
     const apigwH = isCollapsed
       ? APIGW_HEADER
       : APIGW_HEADER + APIGW_PAD + allRoutes.length * (APIGW_ROUTE_H + APIGW_ROUTE_GAP) + APIGW_PAD
@@ -723,47 +796,13 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       // Allow top-level AWS nodes and sticky note nodes to have positions tracked
       if (!topLevelNodeIds.has(change.id) && !stickyNoteIds.has(change.id)) continue
 
-      // Co-move: when a zone is dragged, apply the same delta to all member nodes
-      if (change.id.startsWith('region-zone-') && change.position) {
-        const prevPos = livePositions[change.id] ?? topologyPositions[change.id] ?? null
-        if (prevPos) {
-          const dx = change.position.x - prevPos.x
-          const dy = change.position.y - prevPos.y
-          if (dx !== 0 || dy !== 0) {
-            const region = change.id.slice('region-zone-'.length)
-            const memberIds = allNodes
-              .filter((n) => n.region === region && !n.parentId)
-              .map((n) => n.id)
-            for (const memberId of memberIds) {
-              const memberPrev = livePositions[memberId] ?? topologyPositions[memberId]
-              if (memberPrev) {
-                nextLive[memberId] = { x: memberPrev.x + dx, y: memberPrev.y + dy }
-              }
-            }
-          }
-        }
-      }
-
+      // Region zones move independently — only the zone itself is repositioned,
+      // member service nodes stay in place.
       if (change.dragging) {
         nextLive[change.id] = change.position
       } else {
         toClear.push(change.id)
         setNodePosition('topology', change.id, change.position)
-
-        // Persist member positions when zone drag ends
-        if (change.id.startsWith('region-zone-')) {
-          const region = change.id.slice('region-zone-'.length)
-          const memberIds = allNodes
-            .filter((n) => n.region === region && !n.parentId)
-            .map((n) => n.id)
-          for (const memberId of memberIds) {
-            const finalPos = nextLive[memberId] ?? livePositions[memberId] ?? topologyPositions[memberId]
-            if (finalPos) {
-              toClear.push(memberId)
-              setNodePosition('topology', memberId, finalPos)
-            }
-          }
-        }
       }
     }
 

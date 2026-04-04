@@ -285,5 +285,10 @@ export const terraformGenerators: TerraformGeneratorMap = {
   'r53-zone': generateR53Zone,
   'sfn': generateSfn,
   'eventbridge-bus': generateEventBridgeBus,
+  'ses': () => '',
+  'cognito': () => '',
+  'kinesis': () => '',
+  'ecs': () => '',
+  'elasticache': () => '',
   'unknown': () => '',
 }

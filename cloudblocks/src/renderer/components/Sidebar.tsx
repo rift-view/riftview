@@ -23,13 +23,16 @@ const CATEGORIES: { label: string; services: ServiceDef[] }[] = [
     { type: 's3', label: 'S3', hasCreate: true },
   ]},
   { label: 'Database', services: [
-    { type: 'rds',    label: 'RDS',      hasCreate: true },
-    { type: 'dynamo', label: 'DynamoDB', hasCreate: true },
+    { type: 'rds',          label: 'RDS',          hasCreate: true },
+    { type: 'dynamo',       label: 'DynamoDB',     hasCreate: true },
+    { type: 'elasticache',  label: 'ElastiCache',  hasCreate: false },
   ]},
   { label: 'Messaging', services: [
     { type: 'sqs',             label: 'SQS',         hasCreate: true },
     { type: 'sns',             label: 'SNS',         hasCreate: true },
     { type: 'eventbridge-bus', label: 'EventBridge', hasCreate: true },
+    { type: 'ses',             label: 'SES',         hasCreate: false },
+    { type: 'kinesis',         label: 'Kinesis',     hasCreate: false },
   ]},
   { label: 'Edge & API', services: [
     { type: 'cloudfront',  label: 'CloudFront',  hasCreate: true },
@@ -38,7 +41,8 @@ const CATEGORIES: { label: string; services: ServiceDef[] }[] = [
   ]},
   { label: 'Security', services: [
     { type: 'acm',    label: 'ACM',             hasCreate: true },
-    { type: 'secret', label: 'Secrets Manager', hasCreate: true },
+    { type: 'secret',  label: 'Secrets Manager', hasCreate: true },
+    { type: 'cognito', label: 'Cognito',          hasCreate: false },
   ]},
   { label: 'Management', services: [] }, // SSM only — rendered via ssmGroups below
   { label: 'Orchestration', services: [
@@ -46,6 +50,7 @@ const CATEGORIES: { label: string; services: ServiceDef[] }[] = [
   ]},
   { label: 'Containers', services: [
     { type: 'ecr-repo', label: 'ECR', hasCreate: true, resource: 'ecr' },
+    { type: 'ecs', label: 'ECS', hasCreate: false },
   ]},
   { label: 'Load Balancing', services: [
     { type: 'alb', label: 'ALB', hasCreate: true },

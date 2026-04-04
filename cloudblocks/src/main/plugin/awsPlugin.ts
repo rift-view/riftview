@@ -19,6 +19,11 @@ import { listParameters } from '../aws/services/ssm'
 import { listHostedZones } from '../aws/services/r53'
 import { listStateMachines } from '../aws/services/sfn'
 import { listEventBuses } from '../aws/services/eventbridge'
+import { listIdentities } from '../aws/services/ses'
+import { listUserPools } from '../aws/services/cognito'
+import { listStreams } from '../aws/services/kinesis'
+import { listEcsServices } from '../aws/services/ecs'
+import { listCacheClusters } from '../aws/services/elasticache'
 import type { CloudblocksPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from './types'
 import type { CloudNode } from '../../renderer/types/cloud'
 
@@ -56,6 +61,11 @@ const SERVICE_SCANNERS: Record<string, ServiceScanner> = {
   'r53-zone':       (c)    => listHostedZones(c.r53),
   'sfn':            (c, r) => listStateMachines(c.sfn, r),
   'eventbridge-bus':(c, r) => listEventBuses(c.eventbridge, r),
+  'ses':            (c, r) => listIdentities(c.ses, r),
+  'cognito':        (c, r) => listUserPools(c.cognito, r),
+  'kinesis':        (c, r) => listStreams(c.kinesis, r),
+  'ecs':            (c, r) => listEcsServices(c.ecs, r),
+  'elasticache':    (c, r) => listCacheClusters(c.elasticache, r),
 }
 
 const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
@@ -82,6 +92,11 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
   'r53-zone':        { label: 'R53',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'R53',    displayName: 'Route 53 Hosted Zone',      hasCreate: true  },
   sfn:               { label: 'SFN',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'SFN',    displayName: 'Step Functions State Machine', hasCreate: true },
   'eventbridge-bus': { label: 'EB',     borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'EB',     displayName: 'EventBridge Bus',           hasCreate: true  },
+  ses:               { label: 'SES',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'SES',    displayName: 'SES Identity',               hasCreate: false },
+  cognito:           { label: 'COGNITO',borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'COGNITO',displayName: 'Cognito User Pool',           hasCreate: false },
+  kinesis:           { label: 'KDS',    borderColor: '#8b5cf6', badgeColor: '#8b5cf6', shortLabel: 'KDS',    displayName: 'Kinesis Data Stream',         hasCreate: false },
+  ecs:               { label: 'ECS',   borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'ECS',   displayName: 'ECS Service',                 hasCreate: false },
+  elasticache:       { label: 'REDIS', borderColor: '#22c55e', badgeColor: '#22c55e', shortLabel: 'REDIS', displayName: 'ElastiCache Cluster',          hasCreate: false },
   unknown:           { label: '?',      borderColor: '#6b7280', badgeColor: '#6b7280', shortLabel: '?',      displayName: 'Unknown',                   hasCreate: false },
 }
 
@@ -93,7 +108,7 @@ export const awsPlugin: CloudblocksPlugin = {
     'ec2', 'vpc', 'subnet', 'rds', 's3', 'lambda', 'alb', 'security-group',
     'igw', 'acm', 'cloudfront', 'apigw', 'apigw-route', 'sqs', 'secret',
     'ecr-repo', 'sns', 'dynamo', 'ssm-param', 'nat-gateway', 'r53-zone',
-    'sfn', 'eventbridge-bus', 'unknown',
+    'sfn', 'eventbridge-bus', 'ses', 'cognito', 'kinesis', 'ecs', 'elasticache', 'unknown',
   ],
 
   nodeTypeMetadata: NODE_TYPE_METADATA,
@@ -147,6 +162,11 @@ export const awsPlugin: CloudblocksPlugin = {
       listHostedZones(clients.r53).catch(catch_('r53-zone')),
       listStateMachines(clients.sfn, region).catch(catch_('sfn')),
       listEventBuses(clients.eventbridge, region).catch(catch_('eventbridge-bus')),
+      listIdentities(clients.ses, region).catch(catch_('ses')),
+      listUserPools(clients.cognito, region).catch(catch_('cognito')),
+      listStreams(clients.kinesis, region).catch(catch_('kinesis')),
+      listEcsServices(clients.ecs, region).catch(catch_('ecs')),
+      listCacheClusters(clients.elasticache, region).catch(catch_('elasticache')),
     ])
 
     const nodes = results.flat().map((node) => ({ ...node, region: node.region ?? region }))

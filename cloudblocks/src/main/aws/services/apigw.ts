@@ -3,6 +3,7 @@ import {
   GetApisCommand,
   GetRoutesCommand,
   GetIntegrationsCommand,
+  GetAuthorizersCommand,
 } from '@aws-sdk/client-apigatewayv2'
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
@@ -19,6 +20,23 @@ export async function listApis(client: ApiGatewayV2Client, region: string): Prom
         if (api.ProtocolType !== 'HTTP') continue
         if (!api.ApiId) continue
 
+        // Detect Cognito authorizers
+        let apigwIntegrations: { targetId: string; edgeType: import('../../../renderer/types/cloud').EdgeType }[] | undefined
+        try {
+          const authRes = await client.send(new GetAuthorizersCommand({ ApiId: api.ApiId }))
+          const cognitoIntegrations: { targetId: string; edgeType: import('../../../renderer/types/cloud').EdgeType }[] = []
+          for (const auth of authRes.Items ?? []) {
+            if (auth.AuthorizerType === 'JWT' && auth.JwtConfiguration?.Issuer) {
+              // Extract userPoolId from Cognito issuer URL
+              const match = auth.JwtConfiguration.Issuer.match(/\/([^/]+)$/)
+              if (match?.[1]) {
+                cognitoIntegrations.push({ targetId: match[1], edgeType: 'trigger' })
+              }
+            }
+          }
+          if (cognitoIntegrations.length > 0) apigwIntegrations = cognitoIntegrations
+        } catch { /* ignore */ }
+
         apiNodes.push({
           id:     api.ApiId,
           type:   'apigw',
@@ -30,6 +48,7 @@ export async function listApis(client: ApiGatewayV2Client, region: string): Prom
             protocolType: 'HTTP',
             corsOrigins:  api.CorsConfiguration?.AllowOrigins ?? [],
           },
+          ...(apigwIntegrations ? { integrations: apigwIntegrations } : {}),
         })
       }
 

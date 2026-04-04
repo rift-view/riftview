@@ -242,6 +242,11 @@ describe('SCAN_KEY_TO_TYPE contract', () => {
       'r53',
       'sfn',
       'eventbridge',
+      'ses',
+      'cognito',
+      'kinesis',
+      'ecs',
+      'elasticache',
     ])
     const actualKeys = new Set(Object.keys(SCAN_KEY_TO_TYPE))
     expect(actualKeys).toEqual(expectedKeys)
