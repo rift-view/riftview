@@ -19,8 +19,14 @@ export async function describeLoadBalancers(
   region: string,
 ): Promise<CloudNode[]> {
   try {
-    const res = await client.send(new DescribeLoadBalancersCommand({}))
-    return Promise.all((res.LoadBalancers ?? []).map(async (lb): Promise<CloudNode> => {
+    const allLbs: { LoadBalancerArn?: string; LoadBalancerName?: string; State?: { Code?: string }; DNSName?: string; Scheme?: string; Type?: string; VpcId?: string }[] = []
+    let marker: string | undefined
+    do {
+      const res = await client.send(new DescribeLoadBalancersCommand({ Marker: marker }))
+      allLbs.push(...(res.LoadBalancers ?? []))
+      marker = res.NextMarker
+    } while (marker)
+    return Promise.all(allLbs.map(async (lb): Promise<CloudNode> => {
       const allIntegrations: { targetId: string; edgeType: 'origin' | 'trigger' }[] = []
       try {
         const tgRes = await client.send(new DescribeTargetGroupsCommand({ LoadBalancerArn: lb.LoadBalancerArn }))
