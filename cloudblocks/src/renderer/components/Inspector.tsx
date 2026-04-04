@@ -643,9 +643,64 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
             </div>
           )}
 
+          {/* SQS-specific metadata */}
+          {node.type === 'sqs' && (
+            <div>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                QUEUE STATS
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
+                {[
+                  { k: 'MESSAGES',  v: node.metadata.messages  != null ? String(node.metadata.messages)  : '—' },
+                  { k: 'IN FLIGHT', v: node.metadata.inFlight   != null ? String(node.metadata.inFlight)  : '—' },
+                ].map(({ k, v }) => (
+                  <div key={k} style={{ background: 'var(--cb-bg-elevated)', borderRadius: 3, padding: '4px 6px', border: '1px solid var(--cb-border)' }}>
+                    <div style={{ fontSize: 7, color: 'var(--cb-text-muted)', marginBottom: 2 }}>{k}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--cb-text-primary)', fontFamily: 'monospace' }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              {node.label.endsWith('.fifo') && (
+                <div style={{ fontSize: 8, color: '#a78bfa', marginBottom: 6 }}>FIFO queue</div>
+              )}
+              {!isImported && (
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
+                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* DynamoDB-specific metadata */}
+          {node.type === 'dynamo' && (
+            <div>
+              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                TABLE STATS
+              </div>
+              {[
+                { k: 'BILLING',    v: node.metadata.billingMode as string | undefined },
+                { k: 'ITEMS',      v: node.metadata.itemCount != null ? Number(node.metadata.itemCount).toLocaleString() : undefined },
+                { k: 'SIZE',       v: node.metadata.sizeBytes  != null ? `${(Number(node.metadata.sizeBytes) / 1024 / 1024).toFixed(1)} MB` : undefined },
+              ].filter(({ v }) => v).map(({ k, v }) => (
+                <div key={k} className="mb-1.5">
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
+                  <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>{v}</div>
+                </div>
+              ))}
+              {!isImported && (
+                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
+                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Default metadata + buttons for all other node types */}
           {node.type !== 'acm' && node.type !== 'cloudfront' && node.type !== 'apigw' && node.type !== 'apigw-route'
-            && node.type !== 'lambda' && node.type !== 'ecs' && node.type !== 'rds' && (
+            && node.type !== 'lambda' && node.type !== 'ecs' && node.type !== 'rds'
+            && node.type !== 'sqs' && node.type !== 'dynamo' && (
             <>
               {Object.entries(node.metadata).length > 0 && (
                 <div>
