@@ -3,6 +3,7 @@ import {
   DescribeLoadBalancersCommand,
   DescribeTargetGroupsCommand,
   DescribeTargetHealthCommand,
+  DescribeListenersCommand,
 } from '@aws-sdk/client-elastic-load-balancing-v2'
 import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
 
@@ -20,26 +21,32 @@ export async function describeLoadBalancers(
   try {
     const res = await client.send(new DescribeLoadBalancersCommand({}))
     return Promise.all((res.LoadBalancers ?? []).map(async (lb): Promise<CloudNode> => {
-      let integrations: CloudNode['integrations'] = undefined
+      const allIntegrations: { targetId: string; edgeType: 'origin' | 'trigger' }[] = []
       try {
         const tgRes = await client.send(new DescribeTargetGroupsCommand({ LoadBalancerArn: lb.LoadBalancerArn }))
-        const instanceIds: string[] = []
-        const lambdaArns: string[] = []
         for (const tg of tgRes.TargetGroups ?? []) {
           const healthRes = await client.send(new DescribeTargetHealthCommand({ TargetGroupArn: tg.TargetGroupArn }))
           for (const desc of healthRes.TargetHealthDescriptions ?? []) {
             const id = desc.Target?.Id
-            if (id?.startsWith('i-')) instanceIds.push(id)
-            if (id?.startsWith('arn:aws:lambda:')) lambdaArns.push(id)
+            if (id?.startsWith('i-')) allIntegrations.push({ targetId: id, edgeType: 'origin' })
+            if (id?.startsWith('arn:aws:lambda:')) allIntegrations.push({ targetId: id, edgeType: 'trigger' })
           }
         }
-        if (instanceIds.length > 0 || lambdaArns.length > 0) {
-          integrations = [
-            ...instanceIds.map((id) => ({ targetId: id, edgeType: 'origin' as const })),
-            ...lambdaArns.map((arn) => ({ targetId: arn, edgeType: 'trigger' as const })),
-          ]
+      } catch { /* ignore */ }
+      try {
+        // ACM certificates used by HTTPS listeners
+        const listenersRes = await client.send(new DescribeListenersCommand({ LoadBalancerArn: lb.LoadBalancerArn }))
+        const certArns = [...new Set(
+          (listenersRes.Listeners ?? [])
+            .flatMap((l) => l.Certificates ?? [])
+            .map((c) => c.CertificateArn)
+            .filter((arn): arn is string => !!arn && arn.includes(':certificate/')),
+        )]
+        for (const arn of certArns) {
+          allIntegrations.push({ targetId: arn, edgeType: 'origin' })
         }
       } catch { /* ignore */ }
+      const integrations = allIntegrations.length > 0 ? allIntegrations : undefined
       return {
         id:       lb.LoadBalancerArn ?? lb.LoadBalancerName ?? 'unknown',
         type:     'alb',
