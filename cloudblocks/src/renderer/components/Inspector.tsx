@@ -6,6 +6,7 @@ import { fieldLabel } from '../utils/fieldLabels'
 import { edgeTypeLabel } from '../utils/edgeTypeLabel'
 import { getMonthlyEstimate, formatPrice } from '../utils/pricing'
 import { IamAdvisor } from './IamAdvisor'
+import { buildConsoleUrl } from '../utils/buildConsoleUrl'
 
 function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unknown>; tfMetadata: Record<string, unknown> }): React.JSX.Element {
   const allKeys = Array.from(new Set([...Object.keys(metadata), ...Object.keys(tfMetadata)]))
@@ -244,6 +245,33 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
           >
             {lockedNodes.has(node.id) ? '⊠ Locked' : '◈ Lock'}
           </button>
+
+          {/* AWS Console deep link */}
+          {(() => {
+            const consoleUrl = buildConsoleUrl(node)
+            if (!consoleUrl) return null
+            return (
+              <button
+                onClick={() => window.open(consoleUrl, '_blank')}
+                style={{
+                  width: '100%',
+                  background: 'var(--cb-bg-elevated)',
+                  border: '1px solid var(--cb-border)',
+                  borderRadius: 3,
+                  color: 'var(--cb-text-muted)',
+                  fontFamily: 'monospace',
+                  fontSize: 9,
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  textAlign: 'left',
+                  marginBottom: 8,
+                  letterSpacing: '0.03em',
+                }}
+              >
+                ⎋ Open in AWS Console ↗
+              </button>
+            )
+          })()}
 
           {[
             { key: 'ID',     val: node.id },

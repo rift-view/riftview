@@ -41,6 +41,11 @@ function extractTargetArns(definition: string): { targetId: string; edgeType: Ed
           const tableName = state.Parameters?.['TableName']
           if (typeof tableName === 'string') seen.set(tableName, 'trigger')
         }
+        // S3 SDK integrations — extract bucket name from Parameters
+        if (resource.startsWith('arn:aws:states:::s3:')) {
+          const bucketName = state.Parameters?.['Bucket']
+          if (typeof bucketName === 'string') seen.set(bucketName, 'trigger')
+        }
       }
       // Lambda via Parameters.FunctionName
       const fnName = state.Parameters?.['FunctionName']
