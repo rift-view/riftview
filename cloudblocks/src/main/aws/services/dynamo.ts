@@ -9,8 +9,12 @@ export async function listTables(
 ): Promise<CloudNode[]> {
   let tableNames: string[] = []
   try {
-    const res = await client.send(new ListTablesCommand({}))
-    tableNames = res.TableNames ?? []
+    let exclusiveStartTableName: string | undefined
+    do {
+      const res = await client.send(new ListTablesCommand({ ExclusiveStartTableName: exclusiveStartTableName }))
+      tableNames.push(...(res.TableNames ?? []))
+      exclusiveStartTableName = res.LastEvaluatedTableName
+    } while (exclusiveStartTableName)
   } catch {
     return []
   }
