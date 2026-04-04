@@ -63,18 +63,26 @@ export async function listFunctions(client: LambdaClient, region: string): Promi
     } while (marker)
     return Promise.all(allFunctions.map(async (fn): Promise<CloudNode> => {
       const allIntegrations: { targetId: string; edgeType: 'trigger' }[] = []
-      // Add event source mappings (SQS triggers)
+      // Add event source mappings (SQS / Kinesis / MSK triggers)
       try {
         const mappingsRes = await client.send(new ListEventSourceMappingsCommand({ FunctionName: fn.FunctionArn }))
         for (const m of mappingsRes.EventSourceMappings ?? []) {
-          if (m.EventSourceArn?.startsWith('arn:aws:sqs:') || m.EventSourceArn?.startsWith('arn:aws:kinesis:')) {
+          if (
+            m.EventSourceArn?.startsWith('arn:aws:sqs:') ||
+            m.EventSourceArn?.startsWith('arn:aws:kinesis:') ||
+            m.EventSourceArn?.startsWith('arn:aws:kafka:')
+          ) {
             allIntegrations.push({ targetId: m.EventSourceArn!, edgeType: 'trigger' })
           }
         }
       } catch { /* ignore */ }
-      // Add env var ARN integrations (dedup by targetId)
+      // Capture timeout/memory from config; also add env var ARN integrations
+      let timeout: number | undefined
+      let memorySize: number | undefined
       try {
         const configRes = await client.send(new GetFunctionConfigurationCommand({ FunctionName: fn.FunctionArn }))
+        timeout = configRes.Timeout
+        memorySize = configRes.MemorySize
         const envVarIntegrations = extractEnvVarIntegrations(configRes.Environment?.Variables)
         const existingTargets = new Set(allIntegrations.map((i) => i.targetId))
         for (const i of envVarIntegrations) {
@@ -91,7 +99,7 @@ export async function listFunctions(client: LambdaClient, region: string): Promi
         label:    fn.FunctionName ?? 'Lambda',
         status:   lambdaStatusToNodeStatus(fn.State),
         region,
-        metadata: { runtime: fn.Runtime, handler: fn.Handler },
+        metadata: { runtime: fn.Runtime, handler: fn.Handler, timeout, memorySize },
         parentId: fn.VpcConfig?.VpcId,
         integrations,
       }
