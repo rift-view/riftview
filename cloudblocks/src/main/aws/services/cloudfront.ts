@@ -45,6 +45,8 @@ export async function listDistributions(client: CloudFrontClient): Promise<Cloud
         ...origins
           .filter((o) => o.type === 'ALB' || o.type === 'APIGW')
           .map((o) => ({ targetId: o.domainName, edgeType: 'origin' as EdgeType })),
+        // ACM certificate used by this distribution
+        ...(certArn ? [{ targetId: certArn, edgeType: 'origin' as EdgeType }] : []),
       ]
 
       const node: CloudNode = {
