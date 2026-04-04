@@ -6,8 +6,14 @@ import { scanFlatService } from './scanFlatService'
 export async function listQueues(client: SQSClient, lambdaClient: LambdaClient, region: string): Promise<CloudNode[]> {
   const nodes = await scanFlatService(client, region, {
     fetch: async (c) => {
-      const res = await c.send(new ListQueuesCommand({}))
-      return res.QueueUrls ?? []
+      const urls: string[] = []
+      let nextToken: string | undefined
+      do {
+        const res = await c.send(new ListQueuesCommand({ NextToken: nextToken }))
+        urls.push(...(res.QueueUrls ?? []))
+        nextToken = res.NextToken
+      } while (nextToken)
+      return urls
     },
     map: (url, region): CloudNode => ({
       id:       url,

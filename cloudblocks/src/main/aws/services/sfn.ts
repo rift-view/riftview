@@ -61,8 +61,13 @@ function extractTargetArns(definition: string): { targetId: string; edgeType: Ed
 
 export async function listStateMachines(client: SFNClient, region: string): Promise<CloudNode[]> {
   try {
-    const res = await client.send(new ListStateMachinesCommand({}))
-    const machines = res.stateMachines ?? []
+    const machines: { stateMachineArn?: string; name?: string; type?: string; creationDate?: Date }[] = []
+    let nextToken: string | undefined
+    do {
+      const res = await client.send(new ListStateMachinesCommand({ nextToken }))
+      machines.push(...(res.stateMachines ?? []))
+      nextToken = res.nextToken
+    } while (nextToken)
 
     return Promise.all(
       machines.map(async (item): Promise<CloudNode> => {

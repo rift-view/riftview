@@ -19,8 +19,13 @@ function acmStatusToNodeStatus(status: string | undefined): NodeStatus {
 
 export async function listCertificates(client: ACMClient): Promise<CloudNode[]> {
   try {
-    const listRes = await client.send(new ListCertificatesCommand({}))
-    const summaries = listRes.CertificateSummaryList ?? []
+    const summaries: { CertificateArn?: string }[] = []
+    let nextToken: string | undefined
+    do {
+      const listRes = await client.send(new ListCertificatesCommand({ NextToken: nextToken }))
+      summaries.push(...(listRes.CertificateSummaryList ?? []))
+      nextToken = listRes.NextToken
+    } while (nextToken)
 
     const nodes = await Promise.all(
       summaries.map(async (summary): Promise<CloudNode | null> => {
