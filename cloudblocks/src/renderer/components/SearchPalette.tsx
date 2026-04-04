@@ -75,11 +75,15 @@ const TYPE_SHORT = {
 
 // Metadata field keys to search and how to label them in the subtitle
 const META_FIELDS: { key: string; label: string }[] = [
-  { key: 'arn',        label: 'ARN' },
-  { key: 'region',     label: 'Region' },
-  { key: 'endpoint',   label: 'Endpoint' },
-  { key: 'dnsName',    label: 'DNS' },
-  { key: 'bucketName', label: 'Bucket' },
+  { key: 'arn',         label: 'ARN' },
+  { key: 'region',      label: 'Region' },
+  { key: 'endpoint',    label: 'Endpoint' },
+  { key: 'dnsName',     label: 'DNS' },
+  { key: 'bucketName',  label: 'Bucket' },
+  { key: 'privateIp',   label: 'Private IP' },
+  { key: 'publicIp',    label: 'Public IP' },
+  { key: 'uri',         label: 'URI' },
+  { key: 'instanceType', label: 'Type' },
 ]
 
 function getMetaMatch(node: CloudNode, q: string): string | null {

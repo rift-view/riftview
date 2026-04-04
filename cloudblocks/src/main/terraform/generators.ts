@@ -30,7 +30,6 @@ function generateSubnet(node: CloudNode): string {
 
 function generateEc2(node: CloudNode): string {
   const name = sanitizeName(node.label, node.id)
-  // ami is not stored in metadata — emit a placeholder the user must fill in
   const ami = str(node.metadata['ami'], 'REPLACE_WITH_AMI_ID')
   const instanceType = str(node.metadata['instanceType'])
   return `resource "aws_instance" "${name}" {\n  ami           = "${ami}"\n  instance_type = "${instanceType}"\n}`
