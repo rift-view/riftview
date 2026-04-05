@@ -29,7 +29,7 @@ export default function UserEdge({
   const { setEdges } = useReactFlow()
 
   const persist = (): void => {
-    void window.cloudblocks.saveCustomEdges(useUIStore.getState().customEdges)
+    void window.terminus.saveCustomEdges(useUIStore.getState().customEdges)
   }
 
   const handleColorChange = (newColor: CustomEdgeColor): void => {

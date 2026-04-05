@@ -45,11 +45,11 @@ export function CommandDrawer(): React.JSX.Element {
 
   // Subscribe to IPC streaming events
   useEffect(() => {
-    const offOutput = window.cloudblocks.onCliOutput((entry) => {
+    const offOutput = window.terminus.onCliOutput((entry) => {
       appendCliOutput(entry)
       setExpanded(true)
     })
-    const offDone = window.cloudblocks.onCliDone((result) => {
+    const offDone = window.terminus.onCliDone((result) => {
       setRunning(false)
       setExitCode(result.code)
       if (result.code === 0) {
@@ -70,10 +70,10 @@ export function CommandDrawer(): React.JSX.Element {
       setExpanded(true)
       clearCliOutput()
       try {
-        const result = await window.cloudblocks.runCli(pendingCommand)
+        const result = await window.terminus.runCli(pendingCommand)
         if (result.code === 0) {
           useUIStore.getState().showToast('Done')
-          await window.cloudblocks.startScan()
+          await window.terminus.startScan()
         } else {
           useUIStore.getState().showToast('Command failed', 'error')
         }
@@ -93,7 +93,7 @@ export function CommandDrawer(): React.JSX.Element {
   }
 
   function handleCancel(): void {
-    window.cloudblocks.cancelCli()
+    window.terminus.cancelCli()
     clearPendingNodes()
     setRunning(false)
     setExpanded(false)

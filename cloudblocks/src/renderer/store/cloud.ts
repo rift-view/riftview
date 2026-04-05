@@ -92,7 +92,7 @@ export const useCloudStore = create<CloudState>((set) => ({
         ).length
         if (driftedCount > 0 && state.settings.notifyOnDrift) {
           useUIStore.getState().resetDriftBanner()
-          void window.cloudblocks.notifyDrift(driftedCount)
+          void window.terminus.notifyDrift(driftedCount)
         }
         return { nodes: applied.nodes, importedNodes: applied.importedNodes, lastScannedAt: new Date() }
       }
@@ -117,12 +117,12 @@ export const useCloudStore = create<CloudState>((set) => ({
   setKeyPairs: (pairs) => set({ keyPairs: pairs }),
 
   loadSettings: async () => {
-    const s = await window.cloudblocks.getSettings()
+    const s = await window.terminus.getSettings()
     applyTheme(s.theme ?? 'dark')
     set({ settings: s })
   },
   saveSettings: async (s: Settings) => {
-    await window.cloudblocks.setSettings(s)
+    await window.terminus.setSettings(s)
     set({ settings: s })
   },
 

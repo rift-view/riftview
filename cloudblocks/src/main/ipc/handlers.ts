@@ -485,7 +485,7 @@ export function registerHandlers(win: BrowserWindow): void {
     const w = BrowserWindow.getAllWindows()[0]
     if (w && !w.isFocused()) {
       new Notification({
-        title: 'Cloudblocks — Drift Detected',
+        title: 'Terminus — Drift Detected',
         body:  `${count} resource${count === 1 ? '' : 's'} drifted from Terraform state`,
       }).show()
     }

@@ -1,5 +1,5 @@
 interface Window {
-  cloudblocks: {
+  terminus: {
     listProfiles(): Promise<import('../renderer/types/cloud').AwsProfile[]>
     selectProfile(profile: import('../renderer/types/cloud').AwsProfile): Promise<void>
     selectRegion(region: string, endpoint?: string): Promise<void>

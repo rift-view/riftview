@@ -15,7 +15,7 @@ export function ScanErrorStrip(): React.JSX.Element | null {
   async function handleRetry(service: string, region: string): Promise<void> {
     setRetrying((prev) => new Set(prev).add(service))
     try {
-      const result = await window.cloudblocks.retryScanService(service)
+      const result = await window.terminus.retryScanService(service)
       if (result.ok) {
         setScanErrors(scanErrors.filter((e) => !(e.service === service && e.region === region)))
       } else {

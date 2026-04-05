@@ -4,7 +4,7 @@ import { useScanner } from '../../../src/renderer/hooks/useScanner'
 import { useCloudStore } from '../../../src/renderer/store/cloud'
 
 beforeEach(() => {
-  window.cloudblocks = {
+  window.terminus = {
     listProfiles:  vi.fn().mockResolvedValue([{ name: 'default' }]),
     selectProfile: vi.fn().mockResolvedValue(undefined),
     selectRegion:  vi.fn().mockResolvedValue(undefined),
@@ -50,12 +50,12 @@ beforeEach(() => {
 describe('useScanner', () => {
   it('calls selectProfile with first profile on mount', async () => {
     renderHook(() => useScanner())
-    await waitFor(() => expect(window.cloudblocks.selectProfile).toHaveBeenCalledWith({ name: 'default' }))
+    await waitFor(() => expect(window.terminus.selectProfile).toHaveBeenCalledWith({ name: 'default' }))
   })
 
   it('triggerScan calls startScan', () => {
     const { result } = renderHook(() => useScanner())
     result.current.triggerScan()
-    expect(window.cloudblocks.startScan).toHaveBeenCalled()
+    expect(window.terminus.startScan).toHaveBeenCalled()
   })
 })

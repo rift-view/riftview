@@ -27,7 +27,7 @@ import { listCacheClusters } from '../aws/services/elasticache'
 import { listEksClusters } from '../aws/services/eks'
 import { listOpenSearchDomains } from '../aws/services/opensearch'
 import { listMskClusters } from '../aws/services/msk'
-import type { CloudblocksPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from './types'
+import type { TerminusPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from './types'
 import type { CloudNode } from '../../renderer/types/cloud'
 
 function errCatch(service: string, region: string, errors: PluginScanResult['errors']) {
@@ -109,8 +109,8 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
   unknown:           { label: '?',      borderColor: '#6b7280', badgeColor: '#6b7280', shortLabel: '?',      displayName: 'Unknown',                   hasCreate: false },
 }
 
-export const awsPlugin: CloudblocksPlugin = {
-  id: 'com.cloudblocks.aws',
+export const awsPlugin: TerminusPlugin = {
+  id: 'com.terminus.aws',
   displayName: 'Amazon Web Services',
 
   nodeTypes: [

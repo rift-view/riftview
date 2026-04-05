@@ -7,7 +7,7 @@ export function Onboarding(): React.JSX.Element {
         <div className="text-[10px] mb-2" style={{ color: 'var(--cb-text-secondary)' }}>Run the following to configure AWS credentials:</div>
         <code className="text-[11px]" style={{ color: 'var(--cb-accent)' }}>aws configure</code>
         <div className="text-[10px] mt-3" style={{ color: 'var(--cb-text-muted)' }}>
-          Then restart Cloudblocks.
+          Then restart Terminus.
         </div>
       </div>
     </div>

@@ -54,7 +54,7 @@ export async function exportCanvasToPng(
       const lastScanAt = useCloudStore.getState().lastScannedAt
       const timestamp = lastScanAt ? new Date(lastScanAt).toISOString().slice(0, 16).replace('T', '-').replace(':', '') : 'export'
       const defaultName = `cloudblocks-${timestamp}.png`
-      await window.cloudblocks.saveExportImage(dataUrl, defaultName)
+      await window.terminus.saveExportImage(dataUrl, defaultName)
       showToast('Diagram saved', 'success')
     }
   } catch (err) {

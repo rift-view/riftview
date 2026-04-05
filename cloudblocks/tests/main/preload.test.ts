@@ -15,7 +15,7 @@ describe('preload bridge', () => {
   it('exposes cloudblocks API to main world', async () => {
     await import('../../src/preload/index')
     expect(contextBridge.exposeInMainWorld).toHaveBeenCalledWith(
-      'cloudblocks',
+      'terminus',
       expect.objectContaining({
         listProfiles:   expect.any(Function),
         selectProfile:  expect.any(Function),

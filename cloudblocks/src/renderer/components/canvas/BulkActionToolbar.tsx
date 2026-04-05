@@ -21,11 +21,11 @@ export function BulkActionToolbar(): React.JSX.Element | null {
       return
     }
     clearSelectedNodeIds()
-    await window.cloudblocks.runCli(commands)
+    await window.terminus.runCli(commands)
   }
 
   async function handleBulkExport(): Promise<void> {
-    const res = await window.cloudblocks.exportTerraform(selectedNodes)
+    const res = await window.terminus.exportTerraform(selectedNodes)
     if (res.success) {
       if (res.skippedTypes && res.skippedTypes.length > 0) {
         useUIStore.getState().showToast(

@@ -232,8 +232,8 @@ export function CreateModal(): React.JSX.Element | null {
     clearCliOutput()
 
     const runPromise = paramsRef.current!.resource === 'cloudfront'
-      ? window.cloudblocks.createCloudFront(paramsRef.current! as CloudFrontParams)
-      : window.cloudblocks.runCli(resolveCreateCommands(paramsRef.current!.resource, paramsRef.current! as unknown as Record<string, unknown>))
+      ? window.terminus.createCloudFront(paramsRef.current! as CloudFrontParams)
+      : window.terminus.runCli(resolveCreateCommands(paramsRef.current!.resource, paramsRef.current! as unknown as Record<string, unknown>))
 
     runPromise
       .then((result) => {
@@ -244,7 +244,7 @@ export function CreateModal(): React.JSX.Element | null {
           removeOptimisticNode(optimisticId)   // remove before scan — real node arrives via applyDelta
           setCommandPreview([])
           setActiveCreate(null)
-          window.cloudblocks.startScan()
+          window.terminus.startScan()
         } else {
           // CLI returned non-zero: remove optimistic node
           removeOptimisticNode(optimisticId)

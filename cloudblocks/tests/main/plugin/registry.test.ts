@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PluginRegistry } from '../../../src/main/plugin/registry'
-import type { CloudblocksPlugin } from '../../../src/main/plugin/types'
+import type { TerminusPlugin } from '../../../src/main/plugin/types'
 
 vi.mock('electron', () => ({ BrowserWindow: vi.fn() }))
 
-function makePlugin(id: string, nodeTypes: string[] = ['test-node']): CloudblocksPlugin {
+function makePlugin(id: string, nodeTypes: string[] = ['test-node']): TerminusPlugin {
   return {
     id,
     displayName: `Plugin ${id}`,

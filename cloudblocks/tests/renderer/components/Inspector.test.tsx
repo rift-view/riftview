@@ -10,7 +10,7 @@ import type { CloudNode } from '../../../src/renderer/types/cloud'
 const saveAnnotationsMock = vi.fn().mockResolvedValue(undefined)
 const analyzeIamMock      = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
 
-Object.defineProperty(window, 'cloudblocks', {
+Object.defineProperty(window, 'terminus', {
   value: { saveAnnotations: saveAnnotationsMock, analyzeIam: analyzeIamMock },
   writable: true,
 })
