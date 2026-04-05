@@ -224,7 +224,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
 
           {/* REMEDIATE section — flag-gated, unmanaged + matched only */}
           {flag('EXECUTION_ENGINE') && (node.driftStatus === 'unmanaged' || node.driftStatus === 'matched') && (() => {
-            const safeNode = node!
+            const safeNode = node as CloudNode
             const commands = buildRemediateCommands(safeNode)
             const hasCommands = commands.length > 0
 
