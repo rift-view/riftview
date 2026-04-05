@@ -144,24 +144,64 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
   const meta        = d.metadata ? getNodeMeta(d.nodeType, d.metadata) : undefined
   const actionRail  = flag('ACTION_RAIL')
 
+  const statusLang = flag('STATUS_LANGUAGE')
+
+  const statusLangStyle: React.CSSProperties = statusLang ? (() => {
+    switch (d.status) {
+      case 'error':
+        return { animation: 'cb-pulse-error 2s ease-in-out infinite' }
+      case 'stopped':
+        return { opacity: d.dimmed ? 0.25 : 0.5 }
+      case 'deleting':
+        return { animation: 'cb-fade-pulse 1.5s ease-in-out infinite' }
+      default:
+        return {}
+    }
+  })() : {}
+
   return (
     <div
       data-selected={selected}
       data-status={d.status}
-      className={`relative rounded${d.status === 'creating' ? ' animate-pulse' : ''}`}
+      className={`resource-node relative rounded${d.status === 'creating' ? ' animate-pulse' : ''}`}
       style={{
-        background:       'var(--cb-bg-panel)',
-        border:           `${selected ? '2px' : '1px'} ${isImported ? 'dashed' : 'solid'} ${borderColor}`,
-        borderLeft:       `3px ${isImported ? 'dashed' : 'solid'} ${stripeColor}`,
-        boxShadow:        selected ? `0 0 10px ${borderColor}55` : 'none',
-        fontFamily:  'monospace',
-        minWidth:    130,
-        padding:     '6px 10px 6px 8px',
-        opacity:     d.dimmed ? 0.25 : d.locked ? 0.6 : 1,
-        filter:      d.dimmed ? 'grayscale(60%)' : d.locked ? 'grayscale(30%)' : 'none',
-        transition:  'opacity 0.2s, filter 0.2s',
+        background:   'var(--cb-bg-panel)',
+        border:       `${selected ? '2px' : '1px'} ${isImported ? 'dashed' : 'solid'} ${borderColor}`,
+        borderLeft:   `3px ${isImported ? 'dashed' : 'solid'} ${stripeColor}`,
+        boxShadow:    selected ? `0 0 10px ${borderColor}55` : 'none',
+        fontFamily:   'monospace',
+        minWidth:     130,
+        padding:      '6px 10px 6px 8px',
+        opacity:      d.dimmed ? 0.25 : d.locked ? 0.6 : 1,
+        filter:       d.dimmed ? 'grayscale(60%)' : d.locked ? 'grayscale(30%)' : 'none',
+        transition:   'opacity 0.2s, filter 0.2s',
+        ...statusLangStyle,
       }}
     >
+      {/* STATUS_LANGUAGE shimmer — pending/creating loading sweep */}
+      {statusLang && (d.status === 'pending' || d.status === 'creating') && (
+        <div
+          style={{
+            position:      'absolute',
+            inset:         0,
+            overflow:      'hidden',
+            pointerEvents: 'none',
+            borderRadius:  'inherit',
+          }}
+        >
+          <div
+            style={{
+              position:   'absolute',
+              top:        0,
+              bottom:     0,
+              width:      '40%',
+              background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.18), transparent)',
+              animation:  'cb-shimmer 1.8s ease-in-out infinite',
+            }}
+          />
+        </div>
+      )}
+
       {/* ACTION_RAIL — hover action strip, shown when flag on and node not being dragged */}
       {actionRail && !dragging && (
         <ActionRail
@@ -232,7 +272,14 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
       <div
         className="text-[11px] font-medium leading-tight"
         title={d.label}
-        style={{ color: 'var(--cb-text-primary)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        style={{
+          color:        'var(--cb-text-primary)',
+          maxWidth:     140,
+          overflow:     'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace:   'nowrap',
+          fontStyle:    statusLang && d.status === 'unknown' ? 'italic' : 'normal',
+        }}
       >
         {d.label}
       </div>
