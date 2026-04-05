@@ -23,6 +23,7 @@ interface Props {
 function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
   const { fitView, zoomIn, zoomOut } = useReactFlow()
   const view           = useUIStore((s) => s.view)
+  const effectiveView  = (view === 'command' ? 'topology' : view) as 'topology' | 'graph'
   const setView        = useUIStore((s) => s.setView)
   const profile        = useCloudStore((s) => s.profile)
   const savedViews     = useUIStore((s) => s.savedViews)
@@ -96,13 +97,13 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
     } else if (slot === activeViewSlot) {
       setModalSlot(slot)
     } else {
-      loadView(slot, view as 'topology' | 'graph', () => fitView({ duration: 300 }))
+      loadView(slot, effectiveView, () => fitView({ duration: 300 }))
     }
   }
 
   function handleModalSave(name: string): void {
     if (modalSlot === null) return
-    saveView(modalSlot, name, view as 'topology' | 'graph')
+    saveView(modalSlot, name, effectiveView)
     setModalSlot(null)
   }
 
