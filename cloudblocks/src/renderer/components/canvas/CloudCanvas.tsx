@@ -96,13 +96,13 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
     } else if (slot === activeViewSlot) {
       setModalSlot(slot)
     } else {
-      loadView(slot, view, () => fitView({ duration: 300 }))
+      loadView(slot, view as 'topology' | 'graph', () => fitView({ duration: 300 }))
     }
   }
 
   function handleModalSave(name: string): void {
     if (modalSlot === null) return
-    saveView(modalSlot, name, view)
+    saveView(modalSlot, name, view as 'topology' | 'graph')
     setModalSlot(null)
   }
 

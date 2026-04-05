@@ -10,7 +10,7 @@ export interface NodeFilter {
 
 const TOAST_DURATION_MS = 2500
 
-type ViewKey = 'topology' | 'graph'
+type ViewKey = 'topology' | 'graph' | 'command'
 
 export interface StickyNote {
   id:       string
@@ -63,6 +63,7 @@ interface UIState {
   zoneSizes:              Record<string, { width: number; height: number }>
   customEdges:            CustomEdge[]
   isExporting:            boolean
+  commandPositions:       Record<string, { x: number; y: number }>
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -72,9 +73,9 @@ interface UIState {
   setActiveCreate:      (val: UIState['activeCreate']) => void
   showToast:            (message: string, type?: 'success' | 'error') => void
   clearToast:           () => void
-  setNodePosition:      (view: ViewKey, id: string, pos: { x: number; y: number }) => void
-  saveView:             (slot: number, name: string, view: ViewKey) => void
-  loadView:             (slot: number, view: ViewKey, fitViewFn: () => void) => void
+  setNodePosition:      (view: 'topology' | 'graph', id: string, pos: { x: number; y: number }) => void
+  saveView:             (slot: number, name: string, view: 'topology' | 'graph') => void
+  loadView:             (slot: number, view: 'topology' | 'graph', fitViewFn: () => void) => void
   toggleIntegrations:   () => void
   toggleSnapToGrid:     () => void
   toggleSsmGroup:       (prefix: string) => void
@@ -110,6 +111,7 @@ interface UIState {
   setZoneSize:            (id: string, size: { width: number; height: number }) => void
   addCustomEdge:          (edge: CustomEdge) => void
   setIsExporting:         (v: boolean) => void
+  setCommandPosition:     (nodeId: string, pos: { x: number; y: number }) => void
   removeCustomEdge:       (id: string) => void
   updateCustomEdgeLabel:  (id: string, label: string) => void
   updateCustomEdgeColor:  (id: string, color: CustomEdge['color']) => void
@@ -150,6 +152,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   zoneSizes:            {},
   customEdges:          [],
   isExporting:          false,
+  commandPositions:     {},
 
   setView:             (view) => set({ view }),
   selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -311,4 +314,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   })),
   setCustomEdges: (edges) => set({ customEdges: edges }),
   setIsExporting: (v) => set({ isExporting: v }),
+  setCommandPosition: (nodeId, pos) =>
+    set((s) => ({ commandPositions: { ...s.commandPositions, [nodeId]: pos } })),
 }))
