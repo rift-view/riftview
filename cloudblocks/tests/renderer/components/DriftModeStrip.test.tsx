@@ -9,10 +9,10 @@ const baseNode = (id: string, driftStatus: CloudNode['driftStatus']): CloudNode 
   ({ id, type: 'ec2', label: id, region: 'us-east-1', metadata: {}, driftStatus } as CloudNode)
 
 beforeEach(() => {
-  window.cloudblocks = {
-    ...window.cloudblocks,
+  window.terminus = {
+    ...window.terminus,
     clearTfState: vi.fn().mockResolvedValue({ ok: true }),
-  } as unknown as typeof window.cloudblocks
+  } as unknown as typeof window.terminus
   useCloudStore.setState({
     nodes: [
       baseNode('n1', 'matched'),
@@ -51,7 +51,7 @@ describe('DriftModeStrip', () => {
   it('clear button calls clearTfState IPC', async () => {
     render(<DriftModeStrip />)
     fireEvent.click(screen.getByText(/clear tf/i))
-    await vi.waitFor(() => expect(window.cloudblocks.clearTfState).toHaveBeenCalled())
+    await vi.waitFor(() => expect(window.terminus.clearTfState).toHaveBeenCalled())
   })
 
   it('clear button calls clearImportedNodes on success', async () => {
@@ -64,13 +64,13 @@ describe('DriftModeStrip', () => {
 
   it('component unmounts (returns null) after Clear TF empties importedNodes', async () => {
     // clearTfState resolves and then clearImportedNodes drains importedNodes to []
-    window.cloudblocks = {
-      ...window.cloudblocks,
+    window.terminus = {
+      ...window.terminus,
       clearTfState: vi.fn().mockImplementation(async () => {
         useCloudStore.setState({ importedNodes: [] })
         return { ok: true }
       }),
-    } as unknown as typeof window.cloudblocks
+    } as unknown as typeof window.terminus
 
     const { container } = render(<DriftModeStrip />)
 

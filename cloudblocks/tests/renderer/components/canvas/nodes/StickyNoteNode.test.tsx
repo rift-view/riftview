@@ -8,8 +8,8 @@ vi.mock('@xyflow/react', () => ({
   Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
 }))
 
-// Mock window.cloudblocks
-Object.defineProperty(window, 'cloudblocks', {
+// Mock window.terminus
+Object.defineProperty(window, 'terminus', {
   value: { saveAnnotations: vi.fn().mockResolvedValue(undefined) },
   writable: true,
 })

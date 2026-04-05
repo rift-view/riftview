@@ -10,7 +10,7 @@ import type { CloudNode } from '../../../../src/renderer/types/cloud'
 const runCliMock          = vi.fn().mockResolvedValue({ code: 0 })
 const exportTerraformMock = vi.fn().mockResolvedValue({ success: true })
 
-Object.defineProperty(window, 'cloudblocks', {
+Object.defineProperty(window, 'terminus', {
   value: { runCli: runCliMock, exportTerraform: exportTerraformMock },
   writable: true,
 })

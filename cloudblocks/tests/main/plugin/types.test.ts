@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import type { CloudblocksPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from '../../../src/main/plugin/types'
+import type { TerminusPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from '../../../src/main/plugin/types'
 
-describe('CloudblocksPlugin interface — structural shape', () => {
+describe('TerminusPlugin interface — structural shape', () => {
   it('NodeTypeMetadata has all required fields', () => {
     const meta: NodeTypeMetadata = {
       label:       'EC2',
@@ -26,8 +26,8 @@ describe('CloudblocksPlugin interface — structural shape', () => {
     expect(ctx.region).toBe('us-east-1')
   })
 
-  it('CloudblocksPlugin duck-type: minimal plugin object satisfies required fields', () => {
-    const plugin: CloudblocksPlugin = {
+  it('TerminusPlugin duck-type: minimal plugin object satisfies required fields', () => {
+    const plugin: TerminusPlugin = {
       id:              'com.test.plugin',
       displayName:     'Test Plugin',
       nodeTypes:       ['test-node'],

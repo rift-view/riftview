@@ -60,7 +60,7 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
   function runAnalysis(): void {
     setLoading(true)
     setHasRun(true)
-    window.cloudblocks
+    window.terminus
       .analyzeIam(node.id, node.type, node.metadata ?? {})
       .then((res) => {
         setResult(res)

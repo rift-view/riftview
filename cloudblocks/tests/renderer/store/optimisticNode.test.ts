@@ -4,7 +4,7 @@
  * The create flow in CreateModal:
  *  1. addOptimisticNode() immediately (so the canvas shows the node)
  *  2. addPendingNode()
- *  3. await window.cloudblocks.runCli(...)
+ *  3. await window.terminus.runCli(...)
  *     - success + code 0  -> leave optimistic node (next scan replaces it), close modal
  *     - success + code != 0 -> removeOptimisticNode() called
  *     - promise rejects   -> removeOptimisticNode() called

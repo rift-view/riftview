@@ -1,17 +1,17 @@
 // src/main/plugin/registry.ts
-import type { CloudblocksPlugin, NodeTypeMetadata, PluginHclGenerator, PluginScanResult } from './types'
+import type { TerminusPlugin, NodeTypeMetadata, PluginHclGenerator, PluginScanResult } from './types'
 import type { CloudNode } from '../../renderer/types/cloud'
 
 export class PluginRegistry {
-  private _plugins: CloudblocksPlugin[] = []
-  private _ownerByType = new Map<string, CloudblocksPlugin>()
+  private _plugins: TerminusPlugin[] = []
+  private _ownerByType = new Map<string, TerminusPlugin>()
   private _credentials = new Map<string, unknown>()
 
-  get plugins(): readonly CloudblocksPlugin[] {
+  get plugins(): readonly TerminusPlugin[] {
     return this._plugins
   }
 
-  register(plugin: CloudblocksPlugin): void {
+  register(plugin: TerminusPlugin): void {
     for (const nodeType of plugin.nodeTypes) {
       if (this._ownerByType.has(nodeType)) {
         const owner = this._ownerByType.get(nodeType)!

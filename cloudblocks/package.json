@@ -1,5 +1,5 @@
 {
-  "name": "cloudblocks",
+  "name": "terminus",
   "version": "1.0.0",
   "description": "Visual AWS infrastructure management desktop app",
   "main": "./out/main/index.js",

@@ -5,7 +5,7 @@ import { useCloudStore } from '../../../src/renderer/store/cloud'
 
 // ---- Helpers ---------------------------------------------------------------
 
-function makeCloudblocks(overrides: Partial<typeof window.cloudblocks> = {}): typeof window.cloudblocks {
+function makeTerminus(overrides: Partial<typeof window.terminus> = {}): typeof window.terminus {
   return {
     listProfiles:         vi.fn().mockResolvedValue([{ name: 'default' }]),
     selectProfile:        vi.fn().mockResolvedValue(undefined),
@@ -45,7 +45,7 @@ function makeCloudblocks(overrides: Partial<typeof window.cloudblocks> = {}): ty
     saveBaseline:         vi.fn().mockResolvedValue({ ok: true }),
     retryScanService:     vi.fn().mockResolvedValue({ ok: true }),
     ...overrides,
-  } as typeof window.cloudblocks
+  } as typeof window.terminus
 }
 
 const noop = (): void => {}
@@ -62,12 +62,12 @@ function setLocalProfile(): void {
 
 describe('TemplatesModal — terraformDeploy', () => {
   beforeEach(() => {
-    window.cloudblocks = makeCloudblocks()
+    window.terminus = makeTerminus()
     setLocalProfile()
   })
 
   it('shows "Terraform not installed" message when status is not_found', async () => {
-    window.cloudblocks = makeCloudblocks({
+    window.terminus = makeTerminus({
       terraformDeploy: vi.fn().mockResolvedValue({ status: 'not_found' }),
     })
 
@@ -83,7 +83,7 @@ describe('TemplatesModal — terraformDeploy', () => {
 
   it('shows error output when status is error', async () => {
     const errorMsg = 'Error: Failed to download provider'
-    window.cloudblocks = makeCloudblocks({
+    window.terminus = makeTerminus({
       terraformDeploy: vi.fn().mockResolvedValue({ status: 'error', output: errorMsg }),
     })
 
@@ -98,7 +98,7 @@ describe('TemplatesModal — terraformDeploy', () => {
 
   it('shows success output when status is success', async () => {
     const successMsg = 'Apply complete! Resources: 3 added, 0 changed, 0 destroyed.'
-    window.cloudblocks = makeCloudblocks({
+    window.terminus = makeTerminus({
       terraformDeploy: vi.fn().mockResolvedValue({ status: 'success', output: successMsg }),
       startScan:       vi.fn().mockResolvedValue(undefined),
     })
@@ -116,7 +116,7 @@ describe('TemplatesModal — terraformDeploy', () => {
     let resolve!: (v: { status: string; output?: string }) => void
     const pending = new Promise<{ status: string; output?: string }>((res) => { resolve = res })
 
-    window.cloudblocks = makeCloudblocks({
+    window.terminus = makeTerminus({
       terraformDeploy: vi.fn().mockReturnValue(pending),
     })
 

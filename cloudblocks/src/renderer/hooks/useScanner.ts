@@ -13,17 +13,17 @@ export function useScanner(): { triggerScan: () => void } {
     if (initialized.current) return
     initialized.current = true
 
-    window.cloudblocks.listProfiles().then((profiles) => {
+    window.terminus.listProfiles().then((profiles) => {
       if (profiles.length === 0) return
       const first = profiles[0]
       setProfile(first)
       // selectProfile in main reads the default region and starts the scanner
-      window.cloudblocks.selectProfile(first)
+      window.terminus.selectProfile(first)
       // Sync the region selector in the renderer with what main will use
       if (first.region) {
         setRegion(first.region)
         setSelectedRegions([first.region])  // reset to single region on profile change
-        window.cloudblocks.selectRegion(first.region)
+        window.terminus.selectRegion(first.region)
       }
     })
   }, [setProfile, setRegion, setSelectedRegions])
@@ -36,7 +36,7 @@ export function useScanner(): { triggerScan: () => void } {
         {},
       )
       useCloudStore.getState().setPreviousCounts(counts)
-      window.cloudblocks.startScan(selectedRegions)
+      window.terminus.startScan(selectedRegions)
     },
   }
 }
