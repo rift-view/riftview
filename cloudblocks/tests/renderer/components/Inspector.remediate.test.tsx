@@ -123,6 +123,13 @@ describe('Inspector REMEDIATE section', () => {
     await waitFor(() => expect(screen.getByText('✓ Done')).toBeTruthy())
   })
 
+  it('shows ✗ Failed when onRemediate resolves with non-zero exit code', async () => {
+    const onRemediate = vi.fn<OnRemediate>().mockResolvedValue({ code: 1 })
+    setup(baseNode({ driftStatus: 'unmanaged' }), onRemediate)
+    fireEvent.click(screen.getByText('Execute'))
+    await waitFor(() => expect(screen.getByText(/✗ Failed \(exit 1\)/)).toBeTruthy())
+  })
+
   it('Execute button disabled when onRemediate not provided', () => {
     setup(baseNode({ driftStatus: 'unmanaged' }))
     const btn = screen.getByText('Execute').closest('button')
