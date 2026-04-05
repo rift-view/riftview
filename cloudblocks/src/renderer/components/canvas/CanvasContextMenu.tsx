@@ -83,14 +83,16 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
             >
               ✎ &nbsp;Add Note
             </div>
-            <div
-              style={{ ...itemStyle, borderBottom: '1px solid var(--cb-border-strong)' }}
-              onClick={handleTidy}
-              onMouseEnter={hoverOn}
-              onMouseLeave={hoverOff}
-            >
-              ⊞ &nbsp;Tidy Layout
-            </div>
+            {view !== 'command' && (
+              <div
+                style={{ ...itemStyle, borderBottom: '1px solid var(--cb-border-strong)' }}
+                onClick={handleTidy}
+                onMouseEnter={hoverOn}
+                onMouseLeave={hoverOff}
+              >
+                ⊞ &nbsp;Tidy Layout
+              </div>
+            )}
 
             {/* Create section */}
             <div style={sectionLabel}>Create Resource</div>
