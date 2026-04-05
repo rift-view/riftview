@@ -7,6 +7,8 @@ import { edgeTypeLabel } from '../utils/edgeTypeLabel'
 import { getMonthlyEstimate, formatPrice } from '../utils/pricing'
 import { IamAdvisor } from './IamAdvisor'
 import { buildConsoleUrl } from '../utils/buildConsoleUrl'
+import { flag } from '../utils/flags'
+import { buildRemediateCommands } from '../utils/buildRemediateCommands'
 import { resolveIntegrationTargetId } from '../utils/resolveIntegrationTargetId'
 
 function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unknown>; tfMetadata: Record<string, unknown> }): React.JSX.Element {
@@ -47,9 +49,10 @@ interface InspectorProps {
   onEdit: (node: CloudNode) => void
   onQuickAction: (node: CloudNode, action: 'stop' | 'start' | 'reboot' | 'invalidate', meta?: { path?: string }) => void
   onAddRoute?: (apiId: string) => void
+  onRemediate?: (node: CloudNode, commands: string[][]) => Promise<{ code: number }>
 }
 
-export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: InspectorProps): React.JSX.Element {
+export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemediate }: InspectorProps): React.JSX.Element {
   const selectedId      = useUIStore((s) => s.selectedNodeId)
   const selectedEdgeInfo = useUIStore((s) => s.selectedEdgeInfo)
   const setActiveCreate = useUIStore((s) => s.setActiveCreate)
@@ -66,6 +69,13 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
 
   const [invalidatePath, setInvalidatePath] = useState('/*')
   const [acmDeleteError, setAcmDeleteError] = useState<string | null>(null)
+
+  type RemediateState = 'idle' | 'running' | 'done-ok' | `done-err:${number}`
+  const [remediateState, setRemediateState] = useState<RemediateState>('idle')
+
+  React.useEffect(() => {
+    setRemediateState('idle')
+  }, [selectedId])
 
   const IAM_SUPPORTED_TYPES: NodeType[] = ['ec2', 'lambda', 's3']
 
@@ -210,6 +220,98 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
               <DriftDiffTable metadata={node.metadata} tfMetadata={node.tfMetadata ?? {}} />
             </div>
           )}
+
+          {/* REMEDIATE section — flag-gated, unmanaged + matched only */}
+          {flag('EXECUTION_ENGINE') && (node.driftStatus === 'unmanaged' || node.driftStatus === 'matched') && (() => {
+            const safeNode = node!
+            const commands = buildRemediateCommands(safeNode)
+            const hasCommands = commands.length > 0
+
+            async function handleRemediate(): Promise<void> {
+              if (!onRemediate) return
+              setRemediateState('running')
+              try {
+                const result = await onRemediate(safeNode, commands)
+                setRemediateState(result.code === 0 ? 'done-ok' : `done-err:${result.code}`)
+              } catch {
+                setRemediateState('done-err:1')
+              }
+            }
+
+            return (
+              <div style={{
+                padding: '8px 10px',
+                borderRadius: 4,
+                background: 'rgba(167,139,250,0.07)',
+                border: '1px solid rgba(167,139,250,0.3)',
+                fontSize: 10,
+                marginBottom: 8,
+              }}>
+                <div style={{ fontWeight: 700, color: '#a78bfa', marginBottom: 6, fontSize: 9 }}>REMEDIATE</div>
+
+                {safeNode.driftStatus === 'unmanaged' && (
+                  <div style={{ color: '#f59e0b', marginBottom: 6, fontSize: 9 }}>⚠ Unmanaged — not in baseline.</div>
+                )}
+                {safeNode.driftStatus === 'matched' && hasCommands && (
+                  <div style={{ color: '#86efac', marginBottom: 6, fontSize: 9 }}>↺ Apply baseline values.</div>
+                )}
+
+                {hasCommands ? (
+                  <>
+                    <div style={{ marginBottom: 6 }}>
+                      {commands.map((argv, i) => {
+                        const full = 'aws ' + argv.join(' ')
+                        const display = full.length > 200 ? full.slice(0, 200) + '…' : full
+                        return (
+                          <div key={i} title={full} style={{
+                            fontFamily: 'monospace', fontSize: 8,
+                            color: 'var(--cb-text-secondary)',
+                            background: 'rgba(0,0,0,0.3)',
+                            borderRadius: 2, padding: '2px 5px', marginBottom: 2,
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                          }}>
+                            {display}
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    <div style={{ color: '#f59e0b', fontSize: 8, marginBottom: 6 }}>
+                      ⚠ This will modify live AWS infrastructure.
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <button
+                        onClick={() => void handleRemediate()}
+                        disabled={remediateState === 'running' || !onRemediate}
+                        style={{
+                          background: remediateState === 'running' ? 'rgba(107,114,128,0.3)' : 'rgba(167,139,250,0.15)',
+                          border: '1px solid rgba(167,139,250,0.5)',
+                          borderRadius: 3, padding: '3px 10px',
+                          color: remediateState === 'running' ? '#6b7280' : '#a78bfa',
+                          fontFamily: 'monospace', fontSize: 9, cursor: remediateState === 'running' || !onRemediate ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {remediateState === 'running' ? 'Executing…' : 'Execute'}
+                      </button>
+                      {remediateState === 'done-ok' && (
+                        <span style={{ color: '#4ade80', fontSize: 9 }}>✓ Done</span>
+                      )}
+                      {(remediateState as string).startsWith('done-err') && (
+                        <span style={{ color: '#f87171', fontSize: 9 }}>
+                          ✗ Failed (exit {remediateState.split(':')[1]})
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}>
+                    Manual remediation required — diff contains unsupported field types.
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {/* node type header */}
           <div className="text-[9px] font-bold mb-2 pb-1" style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}>

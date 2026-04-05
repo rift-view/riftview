@@ -186,6 +186,10 @@ export default function App(): React.JSX.Element | null {
     setPendingCommand(cmds)
   }
 
+  async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{ code: number }> {
+    return window.terminus.runCli(commands)
+  }
+
   const handleNodeContextMenu = (node: CloudNode, x: number, y: number): void => {
     setNodeMenu({ node, x, y })
   }
@@ -209,7 +213,7 @@ export default function App(): React.JSX.Element | null {
         </div>
         <ResizeHandle onResize={(delta) => setInspectorWidth((w) => Math.max(140, Math.min(400, w - delta)))} />
         <div style={{ width: inspectorWidth, flexShrink: 0, overflow: 'hidden' }}>
-          <Inspector onDelete={handleDeleteRequest} onEdit={node => setEditTarget(node)} onQuickAction={handleQuickAction} />
+          <Inspector onDelete={handleDeleteRequest} onEdit={node => setEditTarget(node)} onQuickAction={handleQuickAction} onRemediate={handleRemediate} />
         </div>
       </div>
       <CreateModal />
