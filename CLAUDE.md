@@ -152,6 +152,8 @@
   | M5.5 | ✅ Done | 11 new services (SQS, Secrets, ECR, SNS, DynamoDB, SSM, NAT, R53, SFN, EventBridge, IGW); store split; CloudProvider interface; drag-to-create |
   | Canvas QoL | ✅ Done | Panning fixes; persistent node positions; saved view slots 1–4 |
   | LocalStack & Polish | ✅ Done | Local emulator support; static creds injection; generic endpoint routing; CRT animation; snap-to-grid; blueprint gridlines; collapsible SSM groups; Terraform HCL export (vpc/subnet/ec2/s3/lambda); integration edges (SNS→SQS via ARN node ID); EC2 form local hints |
+  | Phase 0 | ✅ Done | Terminus rename (window.terminus, all 25 renderer files); feature flag system (VITE_FLAG_* + flag() util); Ladle component dev environment (port 61000, standalone vite config) |
+  | Phase 1 | ✅ Done | STATUS_LANGUAGE (error pulse, pending shimmer, stopped dim, deleting fade-pulse); ACTION_RAIL (Copy ARN + Open Console hover strip); COMMAND_BOARD (swim-lane view, 7-tier NODE_TIER, TierLabelNode, integration edges); all three flag-gated off by default; 874 tests |
   | M6 | Planned | Multi-cloud plugin architecture (Azure, GCP, Vercel) |
 
   ---
