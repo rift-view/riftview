@@ -568,7 +568,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       color:  '#8b5cf6',
     }
     addCustomEdge(edge)
-    void window.cloudblocks.saveCustomEdges(useUIStore.getState().customEdges)
+    void window.terminus.saveCustomEdges(useUIStore.getState().customEdges)
   }, [addCustomEdge])
 
   const onDrop = useCallback((e: React.DragEvent) => {

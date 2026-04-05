@@ -6,7 +6,7 @@ import { useCloudStore } from '../../../store/cloud'
 import { useUIStore } from '../../../store/ui'
 import { useCliStore } from '../../../store/cli'
 
-Object.defineProperty(window, 'cloudblocks', {
+Object.defineProperty(window, 'terminus', {
   value: {
     runCli:      vi.fn().mockResolvedValue({ code: 0 }),
     cancelCli:   vi.fn(),
@@ -69,7 +69,7 @@ it('renders ALB form title when activeCreate is alb', () => {
 it('blocks submission and does not call runCli when required ALB fields are empty', async () => {
   useUIStore.getState().setActiveCreate({ resource: 'alb', view: 'topology' })
   const runCli = vi.fn().mockResolvedValue({ code: 0 })
-  window.cloudblocks = { ...window.cloudblocks, runCli }
+  window.terminus = { ...window.terminus, runCli }
 
   render(<CreateModal />)
   window.dispatchEvent(new CustomEvent('commanddrawer:run'))
@@ -82,7 +82,7 @@ it('blocks submission and does not call runCli when required VPC fields are empt
   useUIStore.getState().setActiveCreate({ resource: 'vpc', view: 'topology' })
   const runCli = vi.fn().mockResolvedValue({ code: 0 })
   // Override the runCli mock (use same mock pattern as existing tests in this file)
-  window.cloudblocks = { ...window.cloudblocks, runCli }
+  window.terminus = { ...window.terminus, runCli }
 
   render(<CreateModal />)
   // Trigger Run without filling fields
@@ -100,7 +100,7 @@ it('renders R53 hosted zone form title when activeCreate is r53-zone', () => {
 it('blocks submission and does not call runCli when R53 domain name is empty', async () => {
   useUIStore.getState().setActiveCreate({ resource: 'r53-zone', view: 'topology' })
   const runCli = vi.fn().mockResolvedValue({ code: 0 })
-  window.cloudblocks = { ...window.cloudblocks, runCli }
+  window.terminus = { ...window.terminus, runCli }
 
   render(<CreateModal />)
   window.dispatchEvent(new CustomEvent('commanddrawer:run'))
@@ -117,7 +117,7 @@ it('renders SSM Parameter form title when activeCreate is ssm-param', () => {
 it('blocks submission and does not call runCli when SSM param name and value are empty', async () => {
   useUIStore.getState().setActiveCreate({ resource: 'ssm-param', view: 'topology' })
   const runCli = vi.fn().mockResolvedValue({ code: 0 })
-  window.cloudblocks = { ...window.cloudblocks, runCli }
+  window.terminus = { ...window.terminus, runCli }
 
   render(<CreateModal />)
   window.dispatchEvent(new CustomEvent('commanddrawer:run'))
@@ -134,7 +134,7 @@ it('renders Subnet form title when activeCreate is subnet', () => {
 it('blocks submission and does not call runCli when subnet vpcId and cidrBlock are empty', async () => {
   useUIStore.getState().setActiveCreate({ resource: 'subnet', view: 'topology' })
   const runCli = vi.fn().mockResolvedValue({ code: 0 })
-  window.cloudblocks = { ...window.cloudblocks, runCli }
+  window.terminus = { ...window.terminus, runCli }
 
   render(<CreateModal />)
   window.dispatchEvent(new CustomEvent('commanddrawer:run'))

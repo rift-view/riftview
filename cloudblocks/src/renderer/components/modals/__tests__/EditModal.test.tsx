@@ -24,13 +24,13 @@ const eventBridgeNode: CloudNode = {
 }
 
 beforeEach(() => {
-  window.cloudblocks = {
+  window.terminus = {
     runCli: vi.fn().mockResolvedValue({ code: 0 }),
     cancelCli: vi.fn(),
     onCliOutput: vi.fn().mockReturnValue(() => {}),
     onCliDone: vi.fn().mockReturnValue(() => {}),
     startScan: vi.fn().mockResolvedValue(undefined),
-  } as unknown as typeof window.cloudblocks
+  } as unknown as typeof window.terminus
 })
 
 describe('EditModal', () => {

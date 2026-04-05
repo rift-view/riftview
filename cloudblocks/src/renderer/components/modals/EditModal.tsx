@@ -70,11 +70,11 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
 
     if (paramsRef.current.resource === 'cloudfront') {
       try {
-        const result = await window.cloudblocks.updateCloudFront(node.id, paramsRef.current as CloudFrontEditParams)
+        const result = await window.terminus.updateCloudFront(node.id, paramsRef.current as CloudFrontEditParams)
         if (result.code === 0) {
           setCommandPreview([])
           onClose()
-          await window.cloudblocks.startScan()
+          await window.terminus.startScan()
         }
       } finally {
         setIsRunning(false)
@@ -84,13 +84,13 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
 
     const cmds = resolveEditCommands(node, paramsRef.current as unknown as Record<string, unknown>)
     if (cmds.length === 0) { setIsRunning(false); onClose(); return }
-    const unsubOutput = window.cloudblocks.onCliOutput(d => appendCliOutput(d))
+    const unsubOutput = window.terminus.onCliOutput(d => appendCliOutput(d))
     try {
-      const result = await window.cloudblocks.runCli(cmds)
+      const result = await window.terminus.runCli(cmds)
       if (result.code === 0) {
         setCommandPreview([])
         onClose()
-        await window.cloudblocks.startScan()
+        await window.terminus.startScan()
       }
     } finally {
       unsubOutput()

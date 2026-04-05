@@ -1,5 +1,5 @@
-appId: com.cloudblocks.desktop
-productName: cloudblocks
+appId: com.terminus.desktop
+productName: Terminus
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: cloudblocks
+  executableName: terminus
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

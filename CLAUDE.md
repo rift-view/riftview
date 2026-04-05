@@ -1,7 +1,7 @@
 ---
   # CLAUDE.md
 
-  ## Project: Cloudblocks
+  ## Project: Terminus
 
   Visual desktop app for AWS infrastructure management. Source lives in `cloudblocks/`. All commands run from `cloudblocks/` unless noted.
 
@@ -69,7 +69,7 @@
   - Credentials stay in main process, never cross to renderer
 
   ### IPC boundary
-  - `src/preload/index.d.ts` is the contract — every method on `window.cloudblocks` must be declared here
+  - `src/preload/index.d.ts` is the contract — every method on `window.terminus` must be declared here
   - Add new IPC channels to `channels.ts` first, then `handlers.ts`, then `preload/index.ts`, then `preload/index.d.ts`
 
   ### Adding a new AWS service (scan)
@@ -125,7 +125,7 @@
 
   **Drag-to-create:** Sidebar items are `draggable`. Canvas `onDrop` calls `setActiveCreate({ resource, view, dropPosition })` → `CreateModal` opens.
 
-  **Search-to-fly:** `⌘K` → `SearchPalette` → `App.tsx:handleSearchSelect` → `window.dispatchEvent(new CustomEvent('cloudblocks:fitnode', { detail: { nodeId } }))` → `CloudCanvas` fits view to node.
+  **Search-to-fly:** `⌘K` → `SearchPalette` → `App.tsx:handleSearchSelect` → `window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId } }))` → `CloudCanvas` fits view to node.
 
   **Saved views (slots 1–4):** `useUIStore.saveView(slot, name, view)` snapshots current `nodePositions`. `loadView` restores positions + calls `fitViewFn`.
 

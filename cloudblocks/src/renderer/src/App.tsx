@@ -86,20 +86,20 @@ export default function App(): React.JSX.Element | null {
   const handleSearchSelect = useCallback((nodeId: string) => {
     selectNode(nodeId)
     // fitView is called on the ReactFlow instance inside CanvasInner; we trigger it via a custom event
-    window.dispatchEvent(new CustomEvent('cloudblocks:fitnode', { detail: { nodeId } }))
+    window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId } }))
   }, [selectNode])
 
   useEffect(() => {
-    window.cloudblocks.listProfiles().then(setProfiles)
+    window.terminus.listProfiles().then(setProfiles)
     useCloudStore.getState().loadSettings()
 
-    window.cloudblocks.loadCustomEdges().then((saved) => {
+    window.terminus.loadCustomEdges().then((saved) => {
       if (saved.length > 0) {
         useUIStore.setState({ customEdges: saved })
       }
     })
 
-    window.cloudblocks.loadAnnotations().then((saved) => {
+    window.terminus.loadAnnotations().then((saved) => {
       if (Object.keys(saved).length === 0) return
       useUIStore.setState({ annotations: saved })
 
@@ -116,7 +116,7 @@ export default function App(): React.JSX.Element | null {
       }
     })
 
-    window.cloudblocks.getThemeOverrides().then((overrides) => {
+    window.terminus.getThemeOverrides().then((overrides) => {
       if (Object.keys(overrides).length === 0) return
       const el = document.getElementById('cb-theme-overrides') ?? document.createElement('style')
       el.id = 'cb-theme-overrides'
@@ -131,7 +131,7 @@ export default function App(): React.JSX.Element | null {
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'N') {
         e.preventDefault()
-        window.dispatchEvent(new CustomEvent('cloudblocks:add-sticky-note'))
+        window.dispatchEvent(new CustomEvent('terminus:add-sticky-note'))
       }
     }
     function onShowAbout(): void {
@@ -141,21 +141,21 @@ export default function App(): React.JSX.Element | null {
       useUIStore.getState().setShowSettings(true)
     }
     window.addEventListener('keydown', onKeyDown)
-    window.addEventListener('cloudblocks:show-about', onShowAbout)
-    window.addEventListener('cloudblocks:show-settings', onShowSettings)
+    window.addEventListener('terminus:show-about', onShowAbout)
+    window.addEventListener('terminus:show-settings', onShowSettings)
 
-    const removeUpdateListener = window.cloudblocks.onUpdateAvailable(() => {
+    const removeUpdateListener = window.terminus.onUpdateAvailable(() => {
       useUIStore.getState().showToast('Update downloaded — restart to apply', 'success')
     })
 
-    const removePluginMetadata = window.cloudblocks.onPluginMetadata((meta) => {
+    const removePluginMetadata = window.terminus.onPluginMetadata((meta) => {
       useUIStore.getState().setPluginNodeTypes(meta)
     })
 
     return () => {
       window.removeEventListener('keydown', onKeyDown)
-      window.removeEventListener('cloudblocks:show-about', onShowAbout)
-      window.removeEventListener('cloudblocks:show-settings', onShowSettings)
+      window.removeEventListener('terminus:show-about', onShowAbout)
+      window.removeEventListener('terminus:show-settings', onShowSettings)
       removeUpdateListener()
       removePluginMetadata()
     }
@@ -178,7 +178,7 @@ export default function App(): React.JSX.Element | null {
 
   const handleQuickAction = (node: CloudNode, action: 'stop' | 'start' | 'reboot' | 'invalidate', meta?: { path?: string }): void => {
     if (action === 'invalidate') {
-      window.cloudblocks.invalidateCloudFront(node.id, meta?.path ?? '/*')
+      window.terminus.invalidateCloudFront(node.id, meta?.path ?? '/*')
       return
     }
     const cmds = buildQuickActionCommand(node, action)

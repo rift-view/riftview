@@ -48,8 +48,8 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
   }, 0)
 
   useEffect(() => {
-    window.cloudblocks.listProfiles().then(setProfiles)
-    const unsub = window.cloudblocks.onConnStatus((status) => {
+    window.terminus.listProfiles().then(setProfiles)
+    const unsub = window.terminus.onConnStatus((status) => {
       setConnStatus(status === 'connected' ? 'connected' : 'error')
     })
     return unsub
@@ -64,8 +64,8 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
 
   useEffect(() => {
     const handler = (): void => setShowTemplates(true)
-    window.addEventListener('cloudblocks:show-templates', handler)
-    return () => window.removeEventListener('cloudblocks:show-templates', handler)
+    window.addEventListener('terminus:show-templates', handler)
+    return () => window.removeEventListener('terminus:show-templates', handler)
   }, [])
 
   // Close dropdowns on outside click
@@ -85,13 +85,13 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
       setProfile(newProfile)
       setEndpointInput(LOCAL_ENDPOINT_DEFAULT)
       setConnStatus('unknown')
-      window.cloudblocks.selectProfile(newProfile)
+      window.terminus.selectProfile(newProfile)
     } else {
       const newProfile: AwsProfile = { name }
       setProfile(newProfile)
       setEndpointInput('')
       setConnStatus('unknown')
-      window.cloudblocks.selectProfile(newProfile)
+      window.terminus.selectProfile(newProfile)
     }
   }
 
@@ -101,23 +101,23 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
     const newProfile: AwsProfile = { name: profile.name, endpoint: trimmed }
     setProfile(newProfile)
     setConnStatus('unknown')
-    window.cloudblocks.selectProfile(newProfile)
+    window.terminus.selectProfile(newProfile)
   }
 
   function applyImportedNodes(selectedNodes: CloudNode[]): void {
     if (selectedNodes.length === 0) return
     useCloudStore.getState().setImportedNodes(selectedNodes)
-    window.dispatchEvent(new CustomEvent('cloudblocks:fitview'))
+    window.dispatchEvent(new CustomEvent('terminus:fitview'))
     useUIStore.getState().showToast(`Imported ${selectedNodes.length} resources from Terraform state`, 'success')
   }
 
   async function handleImportTfState(): Promise<void> {
     setImportOpen(false)
     try {
-      const result = await window.cloudblocks.listTfStateModules()
+      const result = await window.terminus.listTfStateModules()
       if (!result.modules || result.modules.length === 0) {
         // No modules returned (dialog cancelled or empty) — fall back to legacy import
-        const fallback = await window.cloudblocks.importTfState()
+        const fallback = await window.terminus.importTfState()
         if (fallback.error) {
           useUIStore.getState().showToast(fallback.error, 'error')
           return
@@ -340,7 +340,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
             </button>
             <button
               style={dropdownItem}
-              onClick={() => { setImportOpen(false); window.dispatchEvent(new CustomEvent('cloudblocks:show-templates')) }}
+              onClick={() => { setImportOpen(false); window.dispatchEvent(new CustomEvent('terminus:show-templates')) }}
             >
               <span>⊞</span>
               <span style={{ flex: 1 }}>Templates</span>
@@ -367,7 +367,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
             <button
               onClick={() => {
                 setExportOpen(false)
-                window.cloudblocks.exportTerraform(nodes).then((res) => {
+                window.terminus.exportTerraform(nodes).then((res) => {
                   if (res.success) {
                     if (res.skippedTypes && res.skippedTypes.length > 0) {
                       useUIStore.getState().showToast(`Exported. Skipped: ${res.skippedTypes.join(', ')}`, 'error')
@@ -389,7 +389,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
             <button
               onClick={() => {
                 setExportOpen(false)
-                window.dispatchEvent(new CustomEvent('cloudblocks:export-canvas', { detail: { format: 'clipboard' } }))
+                window.dispatchEvent(new CustomEvent('terminus:export-canvas', { detail: { format: 'clipboard' } }))
               }}
               disabled={nodes.length === 0}
               style={{
@@ -403,7 +403,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
             <button
               onClick={() => {
                 setExportOpen(false)
-                window.dispatchEvent(new CustomEvent('cloudblocks:export-canvas', { detail: { format: 'file' } }))
+                window.dispatchEvent(new CustomEvent('terminus:export-canvas', { detail: { format: 'file' } }))
               }}
               disabled={nodes.length === 0}
               style={{
@@ -422,15 +422,15 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
       <div className="w-px h-4 flex-shrink-0" style={{ background: 'var(--cb-border-strong)' }} />
 
       <button
-        onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-settings'))}
+        onClick={() => window.dispatchEvent(new CustomEvent('terminus:show-settings'))}
         title="Settings"
         style={btnBase}
       >
         ⚙
       </button>
       <button
-        onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-about'))}
-        title="About Cloudblocks"
+        onClick={() => window.dispatchEvent(new CustomEvent('terminus:show-about'))}
+        title="About Terminus"
         style={btnBase}
       >
         ?

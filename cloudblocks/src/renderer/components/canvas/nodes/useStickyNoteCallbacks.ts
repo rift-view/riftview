@@ -19,7 +19,7 @@ export function useStickyNoteCallbacks(): {
       delete next[`sticky:${id}`]
       store.clearAnnotation(`sticky:${id}`)
     }
-    void window.cloudblocks.saveAnnotations(next)
+    void window.terminus.saveAnnotations(next)
   }, [updateStickyNote])
 
   const onDelete = useCallback((id: string) => {
@@ -28,7 +28,7 @@ export function useStickyNoteCallbacks(): {
     const next  = { ...store.annotations }
     delete next[`sticky:${id}`]
     store.clearAnnotation(`sticky:${id}`)
-    void window.cloudblocks.saveAnnotations(next)
+    void window.terminus.saveAnnotations(next)
   }, [removeStickyNote])
 
   return { onSave, onDelete }

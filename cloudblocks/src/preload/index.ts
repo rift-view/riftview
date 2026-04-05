@@ -5,7 +5,7 @@ import type { CloudFrontEditParams } from '../renderer/types/edit'
 import type { NodeTypeMetadata } from '../main/plugin/types'
 import { IPC } from '../main/ipc/channels'
 
-contextBridge.exposeInMainWorld('cloudblocks', {
+contextBridge.exposeInMainWorld('terminus', {
   listProfiles: () => ipcRenderer.invoke(IPC.PROFILES_LIST),
   selectProfile: (profile: AwsProfile) => ipcRenderer.invoke(IPC.PROFILE_SELECT, profile),
   selectRegion: (region: string, endpoint?: string) => ipcRenderer.invoke(IPC.REGION_SELECT, { region, endpoint }),

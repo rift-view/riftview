@@ -50,7 +50,7 @@ function renderAdvisor(node: CloudNode = EC2_NODE): ReturnType<typeof render> {
 describe('IamAdvisor', () => {
   beforeEach(() => {
     analyzeIamMock = vi.fn()
-    Object.defineProperty(window, 'cloudblocks', {
+    Object.defineProperty(window, 'terminus', {
       value: { analyzeIam: analyzeIamMock },
       writable: true,
       configurable: true,

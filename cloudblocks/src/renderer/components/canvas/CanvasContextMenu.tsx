@@ -53,7 +53,7 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
     const viewKey = view === 'topology' ? 'topology' : 'graph'
     const positions = computeTidyLayout(nodes, viewKey)
     applyTidyLayout(viewKey, positions)
-    window.dispatchEvent(new CustomEvent('cloudblocks:fitview'))
+    window.dispatchEvent(new CustomEvent('terminus:fitview'))
     onClose()
   }
 
@@ -77,7 +77,7 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
             <div style={sectionLabel}>Canvas</div>
             <div
               style={itemStyle}
-              onClick={() => { window.dispatchEvent(new CustomEvent('cloudblocks:add-sticky-note')); onClose() }}
+              onClick={() => { window.dispatchEvent(new CustomEvent('terminus:add-sticky-note')); onClose() }}
               onMouseEnter={hoverOn}
               onMouseLeave={hoverOff}
             >

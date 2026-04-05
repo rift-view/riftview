@@ -301,17 +301,17 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
   const handleDeploy = (): void => {
     setDeployState('deploying')
     setDeployOutput('')
-    void window.cloudblocks.terraformDeploy(current.hcl, region, profile.endpoint).then((result) => {
+    void window.terminus.terraformDeploy(current.hcl, region, profile.endpoint).then((result) => {
       if (result.status === 'not_found') {
         setDeployState('error')
-        setDeployOutput('Terraform not installed — install it from terraform.io and restart Cloudblocks.')
+        setDeployOutput('Terraform not installed — install it from terraform.io and restart Terminus.')
       } else if (result.status === 'error') {
         setDeployState('error')
         setDeployOutput(result.output)
       } else {
         setDeployState('success')
         setDeployOutput(result.output)
-        void window.cloudblocks.startScan()
+        void window.terminus.startScan()
       }
     }).catch((err: unknown) => {
       setDeployState('error')

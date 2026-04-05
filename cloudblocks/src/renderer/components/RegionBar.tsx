@@ -35,13 +35,13 @@ export function RegionBar(): React.JSX.Element {
     const next = selectedRegions.filter((x) => x !== r)
     setSelectedRegions(next)
     // Direct call intentional — RegionBar owns region selection, not useScanner
-    window.cloudblocks.startScan(next)
+    window.terminus.startScan(next)
   }
 
   function addRegion(r: string): void {
     const next = [...selectedRegions, r]
     setSelectedRegions(next)
-    window.cloudblocks.startScan(next)
+    window.terminus.startScan(next)
     setAddOpen(false)
   }
 

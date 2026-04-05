@@ -15,7 +15,7 @@ export function DriftModeStrip(): React.JSX.Element | null {
 
   async function handleClear(): Promise<void> {
     try {
-      await window.cloudblocks.clearTfState()
+      await window.terminus.clearTfState()
       useCloudStore.getState().clearImportedNodes()
     } catch {
       useUIStore.getState().showToast('Failed to clear Terraform import', 'error')

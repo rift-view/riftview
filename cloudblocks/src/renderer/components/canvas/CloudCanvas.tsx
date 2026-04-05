@@ -48,15 +48,15 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
       const { nodeId } = (e as CustomEvent<{ nodeId: string }>).detail
       fitView({ nodes: [{ id: nodeId }], duration: 400, padding: 0.5 })
     }
-    window.addEventListener('cloudblocks:fitnode', onFitNode)
-    return () => window.removeEventListener('cloudblocks:fitnode', onFitNode)
+    window.addEventListener('terminus:fitnode', onFitNode)
+    return () => window.removeEventListener('terminus:fitnode', onFitNode)
   }, [fitView])
 
   // Listen for tidy layout — fit the whole view after positions are applied
   useEffect(() => {
     const handler = (): void => { void fitView({ duration: 300 }) }
-    window.addEventListener('cloudblocks:fitview', handler)
-    return () => window.removeEventListener('cloudblocks:fitview', handler)
+    window.addEventListener('terminus:fitview', handler)
+    return () => window.removeEventListener('terminus:fitview', handler)
   }, [fitView])
 
   // Listen for canvas export requests from TitleBar
@@ -65,8 +65,8 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
     void exportCanvasToPng(fitView, format)
   }, [fitView])
   useEffect(() => {
-    window.addEventListener('cloudblocks:export-canvas', handleExport)
-    return () => window.removeEventListener('cloudblocks:export-canvas', handleExport)
+    window.addEventListener('terminus:export-canvas', handleExport)
+    return () => window.removeEventListener('terminus:export-canvas', handleExport)
   }, [handleExport])
 
   // Listen for "Add Note" shortcut / button
@@ -76,10 +76,10 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
       const note: StickyNote = { id, content: '', position: { x: 120, y: 120 } }
       addStickyNote(note)
       setAnnotation(`sticky:${id}`, '')
-      void window.cloudblocks.saveAnnotations({ ...useUIStore.getState().annotations, [`sticky:${id}`]: '' })
+      void window.terminus.saveAnnotations({ ...useUIStore.getState().annotations, [`sticky:${id}`]: '' })
     }
-    window.addEventListener('cloudblocks:add-sticky-note', onAddStickyNote)
-    return () => window.removeEventListener('cloudblocks:add-sticky-note', onAddStickyNote)
+    window.addEventListener('terminus:add-sticky-note', onAddStickyNote)
+    return () => window.removeEventListener('terminus:add-sticky-note', onAddStickyNote)
   }, [addStickyNote, setAnnotation])
 
   const btnBase = { fontFamily: 'monospace', fontSize: '9px', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }

@@ -39,7 +39,7 @@ describe('EmptyCanvasState', () => {
 
   it('calls startScan with selectedRegions when "Start Scan" is clicked', () => {
     const startScan = vi.fn().mockResolvedValue(undefined)
-    window.cloudblocks = { ...window.cloudblocks, startScan }
+    window.terminus = { ...window.terminus, startScan }
     useCloudStore.setState({ selectedRegions: ['us-east-1', 'eu-west-1'] })
     render(<EmptyCanvasState />)
     fireEvent.click(screen.getByRole('button', { name: /start scan/i }))

@@ -40,7 +40,7 @@ export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
       <div style={dialog}>
         {/* App name */}
         <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--cb-accent)', letterSpacing: '0.04em', marginBottom: 6 }}>
-          Cloudblocks
+          Terminus
         </div>
 
         {/* Tagline */}

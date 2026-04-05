@@ -92,13 +92,13 @@ export function EmptyCanvasState(): React.JSX.Element | null {
         </div>
         <button
           style={btnStyle}
-          onClick={() => window.cloudblocks.startScan(selectedRegions)}
+          onClick={() => window.terminus.startScan(selectedRegions)}
         >
           Start Scan
         </button>
         <button
           style={{ ...btnStyle, marginTop: 8, borderColor: 'var(--cb-border)', color: 'var(--cb-text-secondary)', fontSize: 11 }}
-          onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-templates'))}
+          onClick={() => window.dispatchEvent(new CustomEvent('terminus:show-templates'))}
         >
           Browse Templates
         </button>

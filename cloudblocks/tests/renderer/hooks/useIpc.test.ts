@@ -7,7 +7,7 @@ const unsubDelta  = vi.fn()
 const unsubStatus = vi.fn()
 
 beforeEach(() => {
-  window.cloudblocks = {
+  window.terminus = {
     listProfiles:  vi.fn().mockResolvedValue([]),
     selectProfile: vi.fn().mockResolvedValue(undefined),
     selectRegion:  vi.fn().mockResolvedValue(undefined),
@@ -53,8 +53,8 @@ beforeEach(() => {
 describe('useIpc', () => {
   it('subscribes to onScanDelta and onScanStatus on mount', () => {
     renderHook(() => useIpc())
-    expect(window.cloudblocks.onScanDelta).toHaveBeenCalled()
-    expect(window.cloudblocks.onScanStatus).toHaveBeenCalled()
+    expect(window.terminus.onScanDelta).toHaveBeenCalled()
+    expect(window.terminus.onScanStatus).toHaveBeenCalled()
   })
 
   it('unsubscribes on unmount', () => {

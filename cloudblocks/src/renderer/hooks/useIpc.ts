@@ -11,21 +11,21 @@ export function useIpc(): void {
   const setScanErrors = useCloudStore((s) => s.setScanErrors)
 
   useEffect(() => {
-    const unsubDelta  = window.cloudblocks.onScanDelta((delta) => {
+    const unsubDelta  = window.terminus.onScanDelta((delta) => {
       // Capture the generation at the moment the delta arrives so stale
       // deltas from a previous profile/region scan are discarded.
       const generation = useCloudStore.getState().scanGeneration
       applyDelta(delta, generation)
       setScanErrors(delta.scanErrors ?? [])
     })
-    const unsubStatus = window.cloudblocks.onScanStatus((status) => {
+    const unsubStatus = window.terminus.onScanStatus((status) => {
       setScanStatus(status as 'idle' | 'scanning' | 'error')
     })
-    const unsubConn = window.cloudblocks.onConnStatus((status) => {
+    const unsubConn = window.terminus.onConnStatus((status) => {
       if (status === 'error') setError('Connection failed. Check your AWS credentials and network.')
       else setError(null)
     })
-    const unsubKeypairs = window.cloudblocks.onScanKeypairs((pairs: string[]) => {
+    const unsubKeypairs = window.terminus.onScanKeypairs((pairs: string[]) => {
       setKeyPairs(pairs)
     })
     return () => { unsubDelta(); unsubStatus(); unsubConn(); unsubKeypairs() }

@@ -34,7 +34,7 @@ export interface PluginCommandHandlers {
 
 export type PluginHclGenerator = (node: CloudNode) => string
 
-export interface CloudblocksPlugin {
+export interface TerminusPlugin {
   readonly id: string
   readonly displayName: string
   readonly nodeTypes: readonly string[]

@@ -55,7 +55,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
   const [endpointInput, setEndpointInput] = useState<string>(profile.endpoint ?? '')
 
   useEffect(() => {
-    window.cloudblocks.listAwsProfiles().then(setAwsProfiles).catch(() => setAwsProfiles(['default']))
+    window.terminus.listAwsProfiles().then(setAwsProfiles).catch(() => setAwsProfiles(['default']))
   }, [])
 
   // Close on Escape

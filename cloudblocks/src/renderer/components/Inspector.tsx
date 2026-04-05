@@ -131,7 +131,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                   value={(selectedEdgeInfo.data as { label?: string } | undefined)?.label ?? ''}
                   onChange={(e) => {
                     useUIStore.getState().updateCustomEdgeLabel(selectedEdgeInfo.id, e.target.value)
-                    void window.cloudblocks.saveCustomEdges(useUIStore.getState().customEdges)
+                    void window.terminus.saveCustomEdges(useUIStore.getState().customEdges)
                   }}
                   placeholder="add label…"
                   style={{
@@ -146,7 +146,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
               <button
                 onClick={() => {
                   useUIStore.getState().removeCustomEdge(selectedEdgeInfo.id)
-                  void window.cloudblocks.saveCustomEdges(useUIStore.getState().customEdges)
+                  void window.terminus.saveCustomEdges(useUIStore.getState().customEdges)
                   useUIStore.getState().selectEdge(null)
                 }}
                 style={{
@@ -730,7 +730,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                         style={{ fontSize: 8, color: '#c084fc', cursor: 'pointer', marginBottom: 2 }}
                         onClick={() => {
                           useUIStore.getState().selectNode(sgId)
-                          window.dispatchEvent(new CustomEvent('cloudblocks:fitnode', { detail: { nodeId: sgId } }))
+                          window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId: sgId } }))
                         }}
                         title={`Go to ${sgNode?.label ?? sgId}`}
                       >
@@ -955,7 +955,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                         onClick={() => {
                         if (!target) return
                         useUIStore.getState().selectNode(target.id)
-                        window.dispatchEvent(new CustomEvent('cloudblocks:fitnode', { detail: { nodeId: target.id } }))
+                        window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId: target.id } }))
                       }}
                       />
                     ))}
@@ -977,7 +977,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                           edgeType={e.edgeType}
                           onClick={() => {
                             useUIStore.getState().selectNode(src.id)
-                            window.dispatchEvent(new CustomEvent('cloudblocks:fitnode', { detail: { nodeId: src.id } }))
+                            window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId: src.id } }))
                           }}
                         />
                       )
@@ -1003,7 +1003,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
                     clearAnnotation(node.id)
                     const next = { ...useUIStore.getState().annotations }
                     delete next[node.id]
-                    void window.cloudblocks.saveAnnotations(next)
+                    void window.terminus.saveAnnotations(next)
                   }}
                   style={{ background: 'none', border: 'none', color: 'var(--cb-text-muted)', cursor: 'pointer', fontSize: 9, padding: 0, lineHeight: 1 }}
                   title="Clear note"
@@ -1016,7 +1016,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute }: Inspe
               onBlur={(e) => {
                 const next = { ...useUIStore.getState().annotations, [node.id]: e.target.value }
                 if (!e.target.value) delete next[node.id]
-                void window.cloudblocks.saveAnnotations(next)
+                void window.terminus.saveAnnotations(next)
               }}
               placeholder="Add a note about this resource..."
               rows={4}

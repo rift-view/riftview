@@ -58,8 +58,8 @@ describe('awsPlugin', () => {
     awsPlugin = mod.awsPlugin
   })
 
-  it('has id "com.cloudblocks.aws"', () => {
-    expect(awsPlugin.id).toBe('com.cloudblocks.aws')
+  it('has id "com.terminus.aws"', () => {
+    expect(awsPlugin.id).toBe('com.terminus.aws')
   })
 
   it('has displayName "Amazon Web Services"', () => {

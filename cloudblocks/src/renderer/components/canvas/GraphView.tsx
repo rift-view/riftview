@@ -207,7 +207,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       color:  '#8b5cf6',
     }
     addCustomEdge(edge)
-    void window.cloudblocks.saveCustomEdges(useUIStore.getState().customEdges)
+    void window.terminus.saveCustomEdges(useUIStore.getState().customEdges)
   }, [addCustomEdge])
 
   const onSelectionChange = useCallback(({ nodes: selected }: OnSelectionChangeParams) => {
