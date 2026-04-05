@@ -13,6 +13,7 @@ import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
 import { ResourceNode } from './nodes/ResourceNode'
 import type { CloudNode, NodeType } from '../../types/cloud'
+import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
 
 // ── Tier mapping ──────────────────────────────────────────────────────────────
 
@@ -145,10 +146,13 @@ function buildCommandEdges(cloudNodes: CloudNode[], showIntegrations: boolean): 
   for (const node of cloudNodes) {
     if (!node.integrations) continue
     for (const { targetId, edgeType } of node.integrations) {
+      const resolvedTargetId = resolveIntegrationTargetId(cloudNodes, targetId)
+      const targetExists = cloudNodes.some((n) => n.id === resolvedTargetId)
+      if (!targetExists) continue
       edges.push({
-        id:       `cmd-${node.id}-${targetId}`,
+        id:       `cmd-${node.id}-${resolvedTargetId}`,
         source:   node.id,
-        target:   targetId,
+        target:   resolvedTargetId,
         type:     'default',
         animated: edgeType === 'trigger',
         style:    { stroke: edgeType === 'trigger' ? '#64b5f6' : '#555', strokeWidth: 1.2 },
@@ -191,15 +195,14 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     for (const c of changes) {
       if (c.type !== 'position') continue
-      const pc = c as { type: 'position'; id: string; position?: XYPosition; dragging?: boolean }
-      if (!pc.position) continue
-      if (pc.dragging) {
-        setLivePositions((prev) => ({ ...prev, [pc.id]: pc.position! }))
+      if (!c.position) continue
+      if (c.dragging) {
+        setLivePositions((prev) => ({ ...prev, [c.id]: c.position! }))
       } else {
-        setCommandPosition(pc.id, pc.position!)
+        setCommandPosition(c.id, c.position!)
         setLivePositions((prev) => {
           const next = { ...prev }
-          delete next[pc.id]
+          delete next[c.id]
           return next
         })
       }
