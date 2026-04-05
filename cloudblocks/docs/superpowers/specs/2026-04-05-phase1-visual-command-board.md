@@ -153,21 +153,23 @@ export const NODE_TIER: Partial<Record<NodeType, number>> = {
   'alb': 1, 'apigw': 1, 'apigw-route': 1,
 
   // Tier 2 — Compute
-  'lambda': 2, 'ec2': 2,
+  'lambda': 2, 'ec2': 2, 'ecs': 2, 'eks': 2,
 
   // Tier 3 — Data
-  'rds': 3, 'dynamo': 3, 's3': 3, 'opensearch': 3, 'kinesis': 3,
+  'rds': 3, 'dynamo': 3, 's3': 3, 'opensearch': 3, 'kinesis': 3, 'elasticache': 3, 'msk': 3,
 
   // Tier 4 — Messaging
-  'sqs': 4, 'sns': 4, 'eventbridge-bus': 4, 'sfn': 4,
+  'sqs': 4, 'sns': 4, 'eventbridge-bus': 4, 'sfn': 4, 'ses': 4,
 
   // Tier 5 — Config / Identity
   'ssm-param': 5, 'secret': 5, 'cognito': 5, 'ecr-repo': 5,
 }
-const DEFAULT_TIER = 6  // "Other" — catches unknown/unmapped types
+const DEFAULT_TIER = 6  // "Other" — catches unknown and any future unmapped types
 ```
 
 `vpc`, `subnet`, `security-group`, `nat-gateway` are excluded from the swim lanes — they are infrastructure plumbing, not operational services. They are summarized as a context strip at the top of the view ("3 VPCs · 12 subnets · 8 security groups").
+
+**Command tab visibility:** The Command tab only appears in `CloudCanvas.tsx`'s toolbar, not in the Sidebar's view switcher (which intentionally stays as `['topology', 'graph']`). This is by design — the command view is an advanced mode surfaced from the main canvas, not a peer to topology/graph in the sidebar.
 
 ### Layout algorithm
 
@@ -204,17 +206,21 @@ Structure mirrors TopologyView:
 - Existing `ResourceNode` type reused directly (no new node types needed)
 - Edges: integration edges from `node.integrations` — same `buildTopologyEdges` logic adapted
 - `livePositions` state for drag (same pattern as TopologyView)
-- On drag-end: saves to `commandPositions` in `useUIStore` (new field, same pattern as `nodePositions`)
+- On drag-end: saves to `commandPositions` in `useUIStore` via a new `setCommandPosition(nodeId, pos)` setter. CommandView does NOT call `setNodePosition` (which is typed for `'topology' | 'graph'` only). This avoids breaking the existing `nodePositions` type.
+- Drag-to-create is NOT supported in CommandView. The view does not wire up `onDrop`. It is a read-only operational view.
+- Tidy layout is NOT available in CommandView. `CanvasContextMenu` shows tidy layout only for `'topology' | 'graph'` — the spec adds a `view !== 'command'` guard to the tidy layout menu item.
 
 ### TierLabelNode
 
 A minimal read-only node (`type: 'tier-label'`) rendered as a left-margin label:
 ```tsx
-// Minimal inline component, registered in nodeTypes
+// Minimal inline component, registered in nodeTypes prop of ReactFlow
 const TIER_NAMES = ['Internet', 'Edge', 'Compute', 'Data', 'Messaging', 'Config', 'Other']
 ```
 
-No handles, no interaction, no selection. `nodesDraggable={false}` for tier labels, `true` for resource nodes.
+No handles, no interaction, no selection. Each tier-label node object in `flowNodes` has `draggable: false` set directly on the node (per-node field, NOT the global `nodesDraggable` ReactFlow prop). Resource nodes are draggable by default.
+
+`CommandView` passes `nodeTypes={{ 'tier-label': TierLabelNode, resource: ResourceNode }}` to `<ReactFlow>`.
 
 ### Context strip
 
@@ -225,12 +231,22 @@ At the top of CommandView (above React Flow), a small text row:
 
 This gives infrastructure context without cluttering the swim lanes.
 
+### UIStore changes
+
+`src/renderer/store/ui.ts` additions:
+```ts
+commandPositions: Record<string, XYPosition>   // persisted drag positions for command view
+setCommandPosition: (nodeId: string, pos: XYPosition) => void
+```
+
+`nodePositions` type stays unchanged (`{ topology: ...; graph: ... }`). `commandPositions` is a flat record (not nested by view) since there is only one command layout.
+
 ### Constraints
 - CommandView does NOT replace TopologyView — it's an additive mode
-- Flag must be `true` for the Command tab to appear
-- `commandPositions` in UIStore uses the same shape as `nodePositions` (`Record<string, XYPosition>`)
+- Flag must be `true` for the Command tab to appear (CloudCanvas toolbar only, not Sidebar)
 - `fitView` works the same way as other views
 - No new IPC channels, no main process changes
+- `CanvasContextMenu.tsx` gets a `view !== 'command'` guard on tidy layout menu item (added to File Map)
 
 ---
 
@@ -242,10 +258,11 @@ This gives infrastructure context without cluttering the swim lanes.
 | Modify | `src/renderer/components/canvas/nodes/ResourceNode.tsx` | STATUS_LANGUAGE conditionals + ActionRail render |
 | Create | `src/renderer/components/canvas/nodes/ActionRail.tsx` | Copy ARN + Open Console hover actions |
 | Create | `src/renderer/components/canvas/CommandView.tsx` | Command swim-lane layout + React Flow controlled view |
-| Modify | `src/renderer/store/ui.ts` | Add `'command'` to `ViewKey`, add `commandPositions` field |
-| Modify | `src/renderer/components/canvas/CloudCanvas.tsx` | Add Command tab + render CommandView |
-| Create | `tests/renderer/components/canvas/nodes/ActionRail.test.tsx` | Unit: copy ARN, console open, console null hides button |
-| Create | `tests/renderer/components/canvas/CommandView.test.tsx` | Unit: tier mapping, node count, excluded types |
+| Modify | `src/renderer/store/ui.ts` | Add `'command'` to `ViewKey`; add `commandPositions` + `setCommandPosition` |
+| Modify | `src/renderer/components/canvas/CloudCanvas.tsx` | Add Command tab (flag-gated) + render CommandView |
+| Modify | `src/renderer/components/canvas/CanvasContextMenu.tsx` | Add `view !== 'command'` guard on tidy layout menu item |
+| Create | `tests/renderer/components/canvas/nodes/ActionRail.test.tsx` | Unit: copy ARN, console open, console null hides button, flag=false hides rail |
+| Create | `tests/renderer/components/canvas/CommandView.test.tsx` | Unit: tier mapping, excluded types, flag=false hides tab |
 
 ---
 
@@ -283,7 +300,7 @@ This gives infrastructure context without cluttering the swim lanes.
 ## Completion Criteria
 
 - `npm run typecheck` exits 0
-- `npm test` all tests pass (858+ expected after new tests)
+- `npm test` all tests pass (855 baseline + new tests from this feature)
 - `flag('STATUS_LANGUAGE') = false` → ResourceNode renders exactly as today
 - `flag('ACTION_RAIL') = false` → no rail visible, no behavior change
 - `flag('COMMAND_BOARD') = false` → no Command tab in CloudCanvas
