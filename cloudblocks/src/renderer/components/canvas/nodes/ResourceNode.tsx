@@ -1,6 +1,8 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { NodeStatus, NodeType } from '../../../types/cloud'
 import { useUIStore } from '../../../store/ui'
+import { flag } from '../../../utils/flags'
+import { ActionRail } from './ActionRail'
 
 function driftStripeColor(driftStatus: import('../../../types/cloud').DriftStatus): string {
   switch (driftStatus) {
@@ -132,7 +134,7 @@ function getNodeMeta(nodeType: NodeType, m: Record<string, unknown>): string | u
   }
 }
 
-export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
+export function ResourceNode({ id, data, selected, dragging }: NodeProps): React.JSX.Element {
   const d = data as unknown as ResourceNodeData
   const pluginMeta  = useUIStore.getState().pluginNodeTypes[d.nodeType]
   const borderColor = (TYPE_BORDER as Record<string, string>)[d.nodeType] ?? pluginMeta?.borderColor ?? '#555'
@@ -140,6 +142,7 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
   const typeLabel   = (TYPE_LABEL as Record<string, string>)[d.nodeType] ?? pluginMeta?.label ?? d.nodeType.toUpperCase()
   const isImported  = d.status === 'imported'
   const meta        = d.metadata ? getNodeMeta(d.nodeType, d.metadata) : undefined
+  const actionRail  = flag('ACTION_RAIL')
 
   return (
     <div
@@ -159,6 +162,21 @@ export function ResourceNode({ data, selected }: NodeProps): React.JSX.Element {
         transition:  'opacity 0.2s, filter 0.2s',
       }}
     >
+      {/* ACTION_RAIL — hover action strip, shown when flag on and node not being dragged */}
+      {actionRail && !dragging && (
+        <ActionRail
+          node={{
+            id:       id,
+            type:     d.nodeType,
+            label:    d.label,
+            status:   d.status,
+            region:   d.region ?? '',
+            metadata: d.metadata ?? {},
+          }}
+          onToast={(msg, type) => useUIStore.getState().showToast(msg, type)}
+        />
+      )}
+
       <Handle type="target" position={Position.Top}    style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
       <Handle type="target" position={Position.Left}   style={{ opacity: 0 }} />
