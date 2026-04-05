@@ -5,6 +5,8 @@ import { useUIStore } from '../../store/ui'
 import type { StickyNote } from '../../store/ui'
 import { TopologyView } from './TopologyView'
 import { GraphView } from './GraphView'
+import { CommandView } from './CommandView'
+import { flag } from '../../utils/flags'
 import { CanvasContextMenu } from './CanvasContextMenu'
 import { CanvasToast } from '../CanvasToast'
 import { SaveViewModal } from './SaveViewModal'
@@ -25,6 +27,7 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
   const view           = useUIStore((s) => s.view)
   const effectiveView  = (view === 'command' ? 'topology' : view) as 'topology' | 'graph'
   const setView        = useUIStore((s) => s.setView)
+  const showCommandTab = flag('COMMAND_BOARD')
   const profile        = useCloudStore((s) => s.profile)
   const savedViews     = useUIStore((s) => s.savedViews)
   const activeViewSlot = useUIStore((s) => s.activeViewSlot)
@@ -150,6 +153,15 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
             </button>
           ))}
 
+          {showCommandTab && (
+            <button
+              onClick={() => setView('command')}
+              style={{ ...btnBase, background: view === 'command' ? 'var(--cb-bg-elevated)' : 'transparent', border: `1px solid ${view === 'command' ? '#a78bfa' : 'var(--cb-border)'}`, color: view === 'command' ? '#a78bfa' : '#666' }}
+            >
+              ⌘ Command
+            </button>
+          )}
+
           <div className="w-px h-3.5 bg-gray-700" />
 
           {([0, 1, 2, 3] as const).map((slot) => {
@@ -179,7 +191,9 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
 
         {view === 'topology'
           ? <TopologyView onNodeContextMenu={onNodeContextMenu} />
-          : <GraphView onNodeContextMenu={onNodeContextMenu} />
+          : view === 'command'
+            ? <CommandView onNodeContextMenu={onNodeContextMenu} />
+            : <GraphView onNodeContextMenu={onNodeContextMenu} />
         }
 
         {/* Local endpoint badge */}
