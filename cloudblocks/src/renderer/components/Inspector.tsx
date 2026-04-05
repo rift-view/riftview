@@ -44,6 +44,8 @@ function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unk
   )
 }
 
+type RemediateState = 'idle' | 'running' | 'done-ok' | `done-err:${number}`
+
 interface InspectorProps {
   onDelete: (node: CloudNode) => void
   onEdit: (node: CloudNode) => void
@@ -70,7 +72,6 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
   const [invalidatePath, setInvalidatePath] = useState('/*')
   const [acmDeleteError, setAcmDeleteError] = useState<string | null>(null)
 
-  type RemediateState = 'idle' | 'running' | 'done-ok' | `done-err:${number}`
   const [remediateState, setRemediateState] = useState<RemediateState>('idle')
 
   React.useEffect(() => {
