@@ -11,12 +11,13 @@ export function buildRemediateCommands(node: CloudNode): string[][] {
     return buildMatchedCommands(node)
   }
 
+  // 'missing' nodes require re-creation (out of scope for Phase 2)
   return []
 }
 
 function buildMatchedCommands(node: CloudNode): string[][] {
   const live = node.metadata
-  const tf   = node.tfMetadata as Record<string, unknown>
+  const tf   = node.tfMetadata!
 
   function diffed(key: string): string | null {
     const liveVal = String(live[key] ?? '')
