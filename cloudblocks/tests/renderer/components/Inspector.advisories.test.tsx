@@ -1,4 +1,3 @@
-import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { Inspector } from '../../../src/renderer/components/Inspector'
@@ -30,7 +29,7 @@ function baseNode(overrides: Partial<CloudNode> = {}): CloudNode {
   } as CloudNode
 }
 
-function setup(node: CloudNode) {
+function setup(node: CloudNode): ReturnType<typeof render> {
   useUIStore.setState({ selectedNodeId: node.id })
   useCloudStore.setState({ nodes: [node], importedNodes: [] })
   return render(
