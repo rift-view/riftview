@@ -17,8 +17,13 @@ describe('describeInstances', () => {
           VpcId: 'vpc-0abc',
           SubnetId: 'subnet-0abc',
           Tags: [{ Key: 'Name', Value: 'web-server' }],
+          SecurityGroups: [{ GroupId: 'sg-123' }],
         }],
       }],
+    })
+    // SG enrichment call — no open rules
+    mockSend.mockResolvedValueOnce({
+      SecurityGroups: [{ GroupId: 'sg-123', IpPermissions: [] }],
     })
 
     const nodes: CloudNode[] = await describeInstances(mockClient, 'us-east-1')
@@ -28,12 +33,14 @@ describe('describeInstances', () => {
     expect(nodes[0].label).toBe('web-server')
     expect(nodes[0].status).toBe('running')
     expect(nodes[0].parentId).toBe('subnet-0abc')
+    expect(nodes[0].metadata.hasPublicSsh).toBe(false)
   })
 
   it('uses InstanceId as label when no Name tag', async () => {
     mockSend.mockResolvedValueOnce({
       Reservations: [{ Instances: [{ InstanceId: 'i-0xyz', State: { Name: 'stopped' }, Tags: [] }] }],
     })
+    // No SGs on instance → no enrichment call is made
     const nodes = await describeInstances(mockClient, 'us-east-1')
     expect(nodes[0].label).toBe('i-0xyz')
     expect(nodes[0].status).toBe('stopped')
@@ -43,6 +50,60 @@ describe('describeInstances', () => {
     mockSend.mockRejectedValueOnce(new Error('AccessDenied'))
     const nodes = await describeInstances(mockClient, 'us-east-1')
     expect(nodes).toEqual([])
+  })
+
+  it('sets hasPublicSsh=true when SG allows port 22 from 0.0.0.0/0', async () => {
+    mockSend.mockResolvedValueOnce({
+      Reservations: [{
+        Instances: [{
+          InstanceId: 'i-open',
+          State: { Name: 'running' },
+          Tags: [],
+          SecurityGroups: [{ GroupId: 'sg-open' }],
+        }],
+      }],
+    })
+    mockSend.mockResolvedValueOnce({
+      SecurityGroups: [{
+        GroupId: 'sg-open',
+        IpPermissions: [{
+          IpProtocol: 'tcp',
+          FromPort: 22,
+          ToPort: 22,
+          IpRanges: [{ CidrIp: '0.0.0.0/0' }],
+        }],
+      }],
+    })
+
+    const nodes = await describeInstances(mockClient, 'us-east-1')
+    expect(nodes[0].metadata.hasPublicSsh).toBe(true)
+  })
+
+  it('sets hasPublicSsh=false when SG allows port 22 only from restricted CIDR', async () => {
+    mockSend.mockResolvedValueOnce({
+      Reservations: [{
+        Instances: [{
+          InstanceId: 'i-restricted',
+          State: { Name: 'running' },
+          Tags: [],
+          SecurityGroups: [{ GroupId: 'sg-restricted' }],
+        }],
+      }],
+    })
+    mockSend.mockResolvedValueOnce({
+      SecurityGroups: [{
+        GroupId: 'sg-restricted',
+        IpPermissions: [{
+          IpProtocol: 'tcp',
+          FromPort: 22,
+          ToPort: 22,
+          IpRanges: [{ CidrIp: '10.0.0.0/8' }],
+        }],
+      }],
+    })
+
+    const nodes = await describeInstances(mockClient, 'us-east-1')
+    expect(nodes[0].metadata.hasPublicSsh).toBe(false)
   })
 })
 
