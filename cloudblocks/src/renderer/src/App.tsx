@@ -187,7 +187,15 @@ export default function App(): React.JSX.Element | null {
   }
 
   async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{ code: number }> {
-    return window.terminus.runCli(commands)
+    useCloudStore.getState().patchNodeStatus(node.id, 'pending')
+    const result = await window.terminus.runCli(commands)
+    if (result.code === 0) {
+      useUIStore.getState().showToast('Remediation complete')
+      triggerScan()
+    } else {
+      useUIStore.getState().showToast('Remediation failed', 'error')
+    }
+    return result
   }
 
   const handleNodeContextMenu = (node: CloudNode, x: number, y: number): void => {
