@@ -10,7 +10,7 @@ function rdsStatusToNodeStatus(status: string | undefined): NodeStatus {
 
 export async function describeDBInstances(client: RDSClient, region: string): Promise<CloudNode[]> {
   try {
-    const allInstances: { DBInstanceIdentifier?: string; DBInstanceStatus?: string; Engine?: string; DBInstanceClass?: string; Endpoint?: { Address?: string }; DBSubnetGroup?: { VpcId?: string } }[] = []
+    const allInstances: { DBInstanceIdentifier?: string; DBInstanceStatus?: string; Engine?: string; DBInstanceClass?: string; Endpoint?: { Address?: string }; DBSubnetGroup?: { VpcId?: string }; MultiAZ?: boolean }[] = []
     let marker: string | undefined
     do {
       const res = await client.send(new DescribeDBInstancesCommand({ Marker: marker }))
@@ -23,7 +23,7 @@ export async function describeDBInstances(client: RDSClient, region: string): Pr
       label:    db.DBInstanceIdentifier ?? 'RDS',
       status:   rdsStatusToNodeStatus(db.DBInstanceStatus),
       region,
-      metadata: { engine: db.Engine, instanceClass: db.DBInstanceClass, endpoint: db.Endpoint?.Address },
+      metadata: { engine: db.Engine, instanceClass: db.DBInstanceClass, endpoint: db.Endpoint?.Address, multiAZ: db.MultiAZ ?? false },
       parentId: db.DBSubnetGroup?.VpcId,
     }))
   } catch {

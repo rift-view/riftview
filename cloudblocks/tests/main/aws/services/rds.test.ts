@@ -13,6 +13,7 @@ describe('describeDBInstances', () => {
         DBInstanceStatus: 'available',
         Engine: 'mysql',
         DBSubnetGroup: { VpcId: 'vpc-0abc' },
+        MultiAZ: true,
       }],
     })
     const nodes = await describeDBInstances(mockClient, 'us-east-1')
@@ -20,6 +21,7 @@ describe('describeDBInstances', () => {
     expect(nodes[0].type).toBe('rds')
     expect(nodes[0].status).toBe('running')
     expect(nodes[0].parentId).toBe('vpc-0abc')
+    expect(nodes[0].metadata.multiAZ).toBe(true)
   })
 
   it('returns empty array on error', async () => {
