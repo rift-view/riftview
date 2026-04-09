@@ -28,7 +28,7 @@ export async function listQueues(client: SQSClient, lambdaClient: LambdaClient, 
   const enriched = await Promise.all(
     nodes.map(async (node): Promise<CloudNode> => {
       const attrRes = await client
-        .send(new GetQueueAttributesCommand({ QueueUrl: node.id, AttributeNames: ['QueueArn', 'ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible'] }))
+        .send(new GetQueueAttributesCommand({ QueueUrl: node.id, AttributeNames: ['QueueArn', 'ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible', 'RedrivePolicy'] }))
         .catch((): { Attributes: Record<string, string> } => ({ Attributes: {} }))
 
       const queueArn = attrRes.Attributes?.['QueueArn']
@@ -47,12 +47,14 @@ export async function listQueues(client: SQSClient, lambdaClient: LambdaClient, 
 
       const msgs = attrRes.Attributes?.['ApproximateNumberOfMessages']
       const inFlight = attrRes.Attributes?.['ApproximateNumberOfMessagesNotVisible']
+      const hasDlq = !!(attrRes.Attributes?.['RedrivePolicy'])
       const enrichedNode: CloudNode = {
         ...node,
         id: queueArn,
         metadata: {
           ...(msgs != null ? { messages: Number(msgs) } : {}),
           ...(inFlight != null ? { inFlight: Number(inFlight) } : {}),
+          hasDlq,
         },
       }
       return integrations.length > 0 ? { ...enrichedNode, integrations } : enrichedNode

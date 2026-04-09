@@ -3,6 +3,7 @@ import {
   ListBucketsCommand,
   GetBucketNotificationConfigurationCommand,
   GetPublicAccessBlockCommand,
+  GetBucketVersioningCommand,
 } from '@aws-sdk/client-s3'
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
@@ -28,13 +29,22 @@ export async function listBuckets(client: S3Client, region: string): Promise<Clo
           publicAccessEnabled = !(c.BlockPublicAcls && c.BlockPublicPolicy && c.RestrictPublicBuckets && c.IgnorePublicAcls)
         }
 
+        // Versioning status
+        let versioningEnabled = false
+        const versioningRes = await client
+          .send(new GetBucketVersioningCommand({ Bucket: name }))
+          .catch(() => null)
+        if (versioningRes?.Status === 'Enabled') {
+          versioningEnabled = true
+        }
+
         const baseNode: CloudNode = {
           id: name,
           type: 's3',
           label: name,
           status: 'running',
           region,
-          metadata: { creationDate: b.CreationDate, publicAccessEnabled },
+          metadata: { creationDate: b.CreationDate, publicAccessEnabled, versioningEnabled },
         }
 
         const notifRes = await client
