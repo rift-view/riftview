@@ -12,6 +12,7 @@ import { buildRemediateCommands } from '../utils/buildRemediateCommands'
 import { analyzeNode } from '../utils/analyzeNode'
 import type { Advisory } from '../types/cloud'
 import { resolveIntegrationTargetId } from '../utils/resolveIntegrationTargetId'
+import { buildAdvisoryRemediation } from '../utils/buildAdvisoryRemediations'
 
 function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unknown>; tfMetadata: Record<string, unknown> }): React.JSX.Element {
   const allKeys = Array.from(new Set([...Object.keys(metadata), ...Object.keys(tfMetadata)]))
@@ -349,26 +350,53 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                       No issues detected
                     </div>
                   ) : (
-                    <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                      {advisories.map((a) => (
-                        <li key={a.ruleId} style={{ marginBottom: 8 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                            <span style={{
-                              fontSize: 8, fontWeight: 700, color: severityColor(a.severity),
-                              textTransform: 'uppercase', letterSpacing: '0.05em',
-                            }}>
-                              {a.severity}
-                            </span>
-                            <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--cb-text-primary)' }}>
-                              {a.title}
-                            </span>
+                    <div>
+                      {advisories.map((a) => {
+                        const fixCmds = buildAdvisoryRemediation(a, node.id)
+                        return (
+                          <div key={a.ruleId} style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 }}>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                                  <span style={{
+                                    fontSize: 8, fontWeight: 700, color: severityColor(a.severity),
+                                    textTransform: 'uppercase', letterSpacing: '0.05em',
+                                  }}>
+                                    {a.severity}
+                                  </span>
+                                  <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--cb-text-primary)' }}>
+                                    {a.title}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: 8, color: 'var(--cb-text-secondary)', lineHeight: 1.5 }}>
+                                  {a.detail}
+                                </div>
+                              </div>
+                              {fixCmds && onRemediate && (
+                                <button
+                                  onClick={() => void onRemediate(node as CloudNode, fixCmds)}
+                                  style={{
+                                    background:   'rgba(239,68,68,0.1)',
+                                    border:       '1px solid rgba(239,68,68,0.4)',
+                                    borderRadius: 3,
+                                    color:        '#ef4444',
+                                    cursor:       'pointer',
+                                    fontFamily:   'monospace',
+                                    fontSize:     8,
+                                    padding:      '2px 6px',
+                                    flexShrink:   0,
+                                    whiteSpace:   'nowrap',
+                                  }}
+                                  title={`Fix: aws ${fixCmds[0].join(' ')}`}
+                                >
+                                  Fix
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <div style={{ fontSize: 8, color: 'var(--cb-text-secondary)', lineHeight: 1.5 }}>
-                            {a.detail}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                        )
+                      })}
+                    </div>
                   )
                 )}
               </div>
