@@ -9,6 +9,8 @@ import { IamAdvisor } from './IamAdvisor'
 import { buildConsoleUrl } from '../utils/buildConsoleUrl'
 import { flag } from '../utils/flags'
 import { buildRemediateCommands } from '../utils/buildRemediateCommands'
+import { analyzeNode } from '../utils/analyzeNode'
+import type { Advisory } from '../types/cloud'
 import { resolveIntegrationTargetId } from '../utils/resolveIntegrationTargetId'
 
 function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unknown>; tfMetadata: Record<string, unknown> }): React.JSX.Element {
@@ -309,6 +311,65 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                   <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}>
                     Manual remediation required — diff contains unsupported field types.
                   </div>
+                )}
+              </div>
+            )
+          })()}
+
+          {/* ADVISORIES section — flag-gated OP_INTELLIGENCE */}
+          {flag('OP_INTELLIGENCE') && (() => {
+            const rawAdvisories = analyzeNode(node as CloudNode)
+            const severityOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 }
+            const advisories: Advisory[] = [...rawAdvisories].sort(
+              (a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9)
+            )
+            const [expanded, setExpanded] = React.useState(true)
+            const severityColor = (s: string): string =>
+              s === 'critical' ? '#ef4444' : s === 'warning' ? '#f59e0b' : '#60a5fa'
+
+            return (
+              <div style={{
+                padding: '8px 10px',
+                borderRadius: 4,
+                background: 'rgba(239,68,68,0.06)',
+                border: '1px solid rgba(239,68,68,0.2)',
+                fontSize: 10,
+                marginBottom: 8,
+              }}>
+                <div
+                  onClick={() => setExpanded((e) => !e)}
+                  style={{ fontWeight: 700, color: '#ef4444', marginBottom: expanded ? 6 : 0, fontSize: 9, cursor: 'pointer', userSelect: 'none' }}
+                >
+                  ADVISORIES {expanded ? '▾' : '▸'}
+                </div>
+
+                {expanded && (
+                  advisories.length === 0 ? (
+                    <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}>
+                      No issues detected
+                    </div>
+                  ) : (
+                    <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                      {advisories.map((a) => (
+                        <li key={a.ruleId} style={{ marginBottom: 8 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                            <span style={{
+                              fontSize: 8, fontWeight: 700, color: severityColor(a.severity),
+                              textTransform: 'uppercase', letterSpacing: '0.05em',
+                            }}>
+                              {a.severity}
+                            </span>
+                            <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--cb-text-primary)' }}>
+                              {a.title}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 8, color: 'var(--cb-text-secondary)', lineHeight: 1.5 }}>
+                            {a.detail}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )
                 )}
               </div>
             )
