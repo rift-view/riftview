@@ -89,10 +89,12 @@ export async function listFunctions(client: LambdaClient, region: string): Promi
       // Capture timeout/memory from config; also add env var ARN integrations
       let timeout: number | undefined
       let memorySize: number | undefined
+      let hasDlq = false
       try {
         const configRes = await client.send(new GetFunctionConfigurationCommand({ FunctionName: fn.FunctionArn }))
         timeout = configRes.Timeout
         memorySize = configRes.MemorySize
+        hasDlq = !!(configRes.DeadLetterConfig?.TargetArn)
         const envVarIntegrations = extractEnvVarIntegrations(configRes.Environment?.Variables)
         const existingTargets = new Set(allIntegrations.map((i) => i.targetId))
         for (const i of envVarIntegrations) {
@@ -109,7 +111,7 @@ export async function listFunctions(client: LambdaClient, region: string): Promi
         label:    fn.FunctionName ?? 'Lambda',
         status:   lambdaStatusToNodeStatus(fn.State),
         region,
-        metadata: { runtime: fn.Runtime, handler: fn.Handler, timeout, memorySize },
+        metadata: { runtime: fn.Runtime, handler: fn.Handler, timeout, memorySize, hasDlq },
         parentId: fn.VpcConfig?.VpcId,
         integrations,
       }

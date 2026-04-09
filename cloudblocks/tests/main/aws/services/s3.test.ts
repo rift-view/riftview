@@ -18,6 +18,7 @@ describe('listBuckets', () => {
     mockSend
       .mockResolvedValueOnce({ Buckets: [{ Name: 'my-bucket' }] }) // ListBucketsCommand
       .mockResolvedValueOnce({ PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true, IgnorePublicAcls: true } }) // GetPublicAccessBlockCommand
+      .mockResolvedValueOnce({}) // GetBucketVersioningCommand
       .mockResolvedValueOnce({}) // GetBucketNotificationConfigurationCommand — empty
 
     const nodes = await listBuckets(mockClient, 'us-east-1')
@@ -37,6 +38,7 @@ describe('listBuckets', () => {
     mockSend
       .mockResolvedValueOnce({ Buckets: [{ Name: 'my-bucket' }] })
       .mockResolvedValueOnce({ PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true, IgnorePublicAcls: true } }) // GetPublicAccessBlockCommand
+      .mockResolvedValueOnce({}) // GetBucketVersioningCommand
       .mockResolvedValueOnce({
         LambdaFunctionConfigurations: [{ LambdaFunctionArn: LAMBDA_ARN }],
       })
@@ -51,6 +53,7 @@ describe('listBuckets', () => {
     mockSend
       .mockResolvedValueOnce({ Buckets: [{ Name: 'my-bucket' }] })
       .mockResolvedValueOnce({ PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true, IgnorePublicAcls: true } }) // GetPublicAccessBlockCommand
+      .mockResolvedValueOnce({}) // GetBucketVersioningCommand
       .mockResolvedValueOnce({
         QueueConfigurations: [{ QueueArn: SQS_ARN }],
       })
@@ -65,6 +68,7 @@ describe('listBuckets', () => {
     mockSend
       .mockResolvedValueOnce({ Buckets: [{ Name: 'my-bucket' }] })
       .mockResolvedValueOnce({ PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true, IgnorePublicAcls: true } }) // GetPublicAccessBlockCommand
+      .mockResolvedValueOnce({}) // GetBucketVersioningCommand
       .mockResolvedValueOnce({
         TopicConfigurations: [{ TopicArn: SNS_ARN }],
       })
@@ -79,6 +83,7 @@ describe('listBuckets', () => {
     mockSend
       .mockResolvedValueOnce({ Buckets: [{ Name: 'my-bucket' }] })
       .mockResolvedValueOnce({ PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true, IgnorePublicAcls: true } }) // GetPublicAccessBlockCommand
+      .mockResolvedValueOnce({}) // GetBucketVersioningCommand
       .mockResolvedValueOnce({
         LambdaFunctionConfigurations: [{ LambdaFunctionArn: LAMBDA_ARN }],
         QueueConfigurations: [{ QueueArn: SQS_ARN }],
@@ -96,6 +101,7 @@ describe('listBuckets', () => {
     mockSend
       .mockResolvedValueOnce({ Buckets: [{ Name: 'my-bucket' }] })
       .mockResolvedValueOnce({ PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true, IgnorePublicAcls: true } }) // GetPublicAccessBlockCommand
+      .mockResolvedValueOnce({}) // GetBucketVersioningCommand
       .mockRejectedValueOnce(new Error('NoSuchBucketNotificationConfiguration'))
 
     const nodes = await listBuckets(mockClient, 'us-east-1')
@@ -108,6 +114,7 @@ describe('listBuckets', () => {
     mockSend
       .mockResolvedValueOnce({ Buckets: [{ Name: 'my-bucket' }] })
       .mockResolvedValueOnce({ PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true, IgnorePublicAcls: true } }) // GetPublicAccessBlockCommand
+      .mockResolvedValueOnce({}) // GetBucketVersioningCommand
       .mockResolvedValueOnce({})
 
     const nodes = await listBuckets(mockClient, 'us-east-1')
@@ -126,6 +133,7 @@ describe('listBuckets', () => {
           IgnorePublicAcls: true,
         },
       })
+      .mockResolvedValueOnce({}) // GetBucketVersioningCommand
       .mockResolvedValueOnce({}) // GetBucketNotificationConfigurationCommand
 
     const nodes = await listBuckets(mockClient, 'us-east-1')
@@ -137,6 +145,7 @@ describe('listBuckets', () => {
     mockSend
       .mockResolvedValueOnce({ Buckets: [{ Name: 'my-bucket' }] })
       .mockRejectedValueOnce(new Error('NoSuchPublicAccessBlockConfiguration'))
+      .mockResolvedValueOnce({}) // GetBucketVersioningCommand
       .mockResolvedValueOnce({}) // GetBucketNotificationConfigurationCommand
 
     const nodes = await listBuckets(mockClient, 'us-east-1')
