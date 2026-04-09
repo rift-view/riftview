@@ -631,6 +631,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
     return set
   }, [allNodes, importedNodes, showRegionIndicators, selectedRegions])
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const flowNodes: Node[] = useMemo(() => {
     const raw = buildFlowNodes(visibleNodes, selectedId, highlightedIds, collapsedSubnets, collapsedVpcs, collapsedApigws, expandedGroups, selectedRegions, showRegionIndicators, regionColorMap, topologyPositions, zoneSizes)
     const mapped = raw.map((n) => {
