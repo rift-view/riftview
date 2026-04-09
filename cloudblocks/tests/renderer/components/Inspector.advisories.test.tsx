@@ -80,11 +80,13 @@ describe('Inspector ADVISORIES section', () => {
   })
 
   it('critical advisory appears before warning (severity order)', () => {
-    setup(baseNode({ metadata: { timeout: 0, memorySize: 128 } }))
-    const items = screen.getAllByRole('listitem')
-    const titles = items.map((el) => el.textContent ?? '')
-    const criticalIdx = titles.findIndex((t) => t.includes('No timeout'))
-    const warningIdx  = titles.findIndex((t) => t.includes('Memory at default'))
+    const { container } = setup(baseNode({ metadata: { timeout: 0, memorySize: 128 } }))
+    // Severity labels are rendered as span text content "critical" / "warning"
+    const allSpans = Array.from(container.querySelectorAll('span'))
+    const criticalIdx = allSpans.findIndex((s) => s.textContent === 'critical')
+    const warningIdx  = allSpans.findIndex((s) => s.textContent === 'warning')
+    expect(criticalIdx).toBeGreaterThanOrEqual(0)
+    expect(warningIdx).toBeGreaterThanOrEqual(0)
     expect(criticalIdx).toBeLessThan(warningIdx)
   })
 
