@@ -105,6 +105,33 @@ describe('describeInstances', () => {
     const nodes = await describeInstances(mockClient, 'us-east-1')
     expect(nodes[0].metadata.hasPublicSsh).toBe(false)
   })
+
+  it('sets hasPublicSsh=true when SG allows port 22 from ::/0 (IPv6)', async () => {
+    mockSend.mockResolvedValueOnce({
+      Reservations: [{
+        Instances: [{
+          InstanceId: 'i-ipv6-open',
+          State: { Name: 'running' },
+          Tags: [],
+          SecurityGroups: [{ GroupId: 'sg-ipv6-open' }],
+        }],
+      }],
+    })
+    mockSend.mockResolvedValueOnce({
+      SecurityGroups: [{
+        GroupId: 'sg-ipv6-open',
+        IpPermissions: [{
+          IpProtocol: 'tcp',
+          FromPort: 22,
+          ToPort: 22,
+          Ipv6Ranges: [{ CidrIpv6: '::/0' }],
+        }],
+      }],
+    })
+
+    const nodes = await describeInstances(mockClient, 'us-east-1')
+    expect(nodes[0].metadata.hasPublicSsh).toBe(true)
+  })
 })
 
 describe('describeVpcs', () => {
