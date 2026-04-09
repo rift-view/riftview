@@ -110,8 +110,13 @@ export type AdvisoryRuleId =
   | 'ec2-public-ssh'
   | 'lambda-no-timeout'
   | 'lambda-low-memory'
+  | 'lambda-no-dlq'
   | 's3-public-access'
+  | 's3-no-versioning'
   | 'rds-no-multiaz'
+  | 'rds-no-deletion-protection'
+  | 'rds-no-backup'
+  | 'sqs-no-dlq'
 
 export type AdvisorySeverity = 'info' | 'warning' | 'critical'
 
