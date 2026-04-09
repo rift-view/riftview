@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { buildCommandNodes, NODE_TIER } from '../../../../src/renderer/components/canvas/CommandView'
+import { buildCommandNodes, NODE_TIER } from '../../../../src/renderer/utils/commandLayout'
 import type { CloudNode } from '../../../../src/renderer/types/cloud'
 
 function makeNode(type: CloudNode['type'], id = `id-${type}`): CloudNode {

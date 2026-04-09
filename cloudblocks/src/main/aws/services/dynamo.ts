@@ -7,7 +7,7 @@ export async function listTables(
   lambdaClient: LambdaClient,
   region: string,
 ): Promise<CloudNode[]> {
-  let tableNames: string[] = []
+  const tableNames: string[] = []
   try {
     let exclusiveStartTableName: string | undefined
     do {
