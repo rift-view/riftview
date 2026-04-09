@@ -1,4 +1,3 @@
-import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { Inspector } from '../../../src/renderer/components/Inspector'
@@ -36,7 +35,7 @@ function baseNode(overrides: Partial<CloudNode> = {}): CloudNode {
 
 type OnRemediate = (node: CloudNode, commands: string[][]) => Promise<{ code: number }>
 
-function setup(node: CloudNode, onRemediate?: OnRemediate) {
+function setup(node: CloudNode, onRemediate?: OnRemediate): ReturnType<typeof render> {
   useUIStore.setState({ selectedNodeId: node.id })
   useCloudStore.setState({ nodes: [node], importedNodes: [] })
   return render(

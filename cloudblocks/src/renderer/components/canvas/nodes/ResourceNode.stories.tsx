@@ -4,7 +4,7 @@ import { ResourceNode } from './ResourceNode'
 import type { NodeType, NodeStatus } from '../../../types/cloud'
 
 // Minimal NodeProps shape for stories — only fields ResourceNode actually reads
-function makeProps(nodeType: NodeType, status: NodeStatus, label: string) {
+function makeProps(nodeType: NodeType, status: NodeStatus, label: string): Record<string, unknown> {
   return {
     id: `story-${nodeType}-${status}`,
     type: 'resource',
