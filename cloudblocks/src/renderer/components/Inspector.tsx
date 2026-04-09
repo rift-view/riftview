@@ -75,6 +75,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
   const [acmDeleteError, setAcmDeleteError] = useState<string | null>(null)
 
   const [remediateState, setRemediateState] = useState<RemediateState>('idle')
+  const [advisoriesExpanded, setAdvisoriesExpanded] = useState(true)
 
   React.useEffect(() => {
     setRemediateState('idle')
@@ -323,7 +324,6 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
             const advisories: Advisory[] = [...rawAdvisories].sort(
               (a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9)
             )
-            const [expanded, setExpanded] = React.useState(true)
             const severityColor = (s: string): string =>
               s === 'critical' ? '#ef4444' : s === 'warning' ? '#f59e0b' : '#60a5fa'
 
@@ -337,13 +337,13 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                 marginBottom: 8,
               }}>
                 <div
-                  onClick={() => setExpanded((e) => !e)}
-                  style={{ fontWeight: 700, color: '#ef4444', marginBottom: expanded ? 6 : 0, fontSize: 9, cursor: 'pointer', userSelect: 'none' }}
+                  onClick={() => setAdvisoriesExpanded((e) => !e)}
+                  style={{ fontWeight: 700, color: '#ef4444', marginBottom: advisoriesExpanded ? 6 : 0, fontSize: 9, cursor: 'pointer', userSelect: 'none' }}
                 >
-                  ADVISORIES {expanded ? '▾' : '▸'}
+                  ADVISORIES {advisoriesExpanded ? '▾' : '▸'}
                 </div>
 
-                {expanded && (
+                {advisoriesExpanded && (
                   advisories.length === 0 ? (
                     <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}>
                       No issues detected
