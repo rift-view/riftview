@@ -1023,8 +1023,8 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
               (n.integrations ?? []).some((e) => resolveIntegrationTargetId(allNodes, e.targetId) === node.id)
             )
             if (outgoing.length === 0 && incoming.length === 0) return null
-            const edgeColor = (t: string) => t === 'trigger' ? '#a78bfa' : t === 'subscription' ? '#34d399' : '#60a5fa'
-            const ConnRow = ({ src, label, label2, edgeType, onClick }: { src?: CloudNode; label: string; label2?: string; edgeType: string; onClick: () => void }) => (
+            const edgeColor = (t: string): string => t === 'trigger' ? '#a78bfa' : t === 'subscription' ? '#34d399' : '#60a5fa'
+            const ConnRow = ({ src, label, label2, edgeType, onClick }: { src?: CloudNode; label: string; label2?: string; edgeType: string; onClick: () => void }): React.JSX.Element => (
               <div
                 style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 4, cursor: 'pointer' }}
                 onClick={onClick}
