@@ -2,6 +2,7 @@ import {
   S3Client,
   ListBucketsCommand,
   GetBucketNotificationConfigurationCommand,
+  GetPublicAccessBlockCommand,
 } from '@aws-sdk/client-s3'
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
@@ -13,13 +14,27 @@ export async function listBuckets(client: S3Client, region: string): Promise<Clo
     const enriched = await Promise.all(
       buckets.map(async (b): Promise<CloudNode> => {
         const name = b.Name ?? 'unknown'
+
+        // Public access block
+        let publicAccessEnabled = false
+        const pabRes = await client
+          .send(new GetPublicAccessBlockCommand({ Bucket: name }))
+          .catch(() => null)
+        if (!pabRes) {
+          // No block config at all — bucket is publicly accessible
+          publicAccessEnabled = true
+        } else {
+          const c = pabRes.PublicAccessBlockConfiguration ?? {}
+          publicAccessEnabled = !(c.BlockPublicAcls && c.BlockPublicPolicy && c.RestrictPublicBuckets && c.IgnorePublicAcls)
+        }
+
         const baseNode: CloudNode = {
           id: name,
           type: 's3',
           label: name,
           status: 'running',
           region,
-          metadata: { creationDate: b.CreationDate },
+          metadata: { creationDate: b.CreationDate, publicAccessEnabled },
         }
 
         const notifRes = await client
