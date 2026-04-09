@@ -120,4 +120,54 @@ describe('analyzeNode', () => {
     expect(r[0].title.length).toBeGreaterThan(0)
     expect(r[0].detail.length).toBeGreaterThan(0)
   })
+
+  // ── sqs-no-dlq ────────────────────────────────────────────────────────────
+  it('sqs with hasDlq=false → warning sqs-no-dlq', () => {
+    const r = analyzeNode(node({ type: 'sqs', metadata: { hasDlq: false } }))
+    expect(r.some((a) => a.ruleId === 'sqs-no-dlq')).toBe(true)
+  })
+  it('sqs with hasDlq=true → no sqs-no-dlq', () => {
+    const r = analyzeNode(node({ type: 'sqs', metadata: { hasDlq: true } }))
+    expect(r.find((a) => a.ruleId === 'sqs-no-dlq')).toBeUndefined()
+  })
+
+  // ── rds-no-deletion-protection ────────────────────────────────────────────
+  it('rds with deletionProtection=false → warning rds-no-deletion-protection', () => {
+    const r = analyzeNode(node({ type: 'rds', metadata: { multiAZ: true, deletionProtection: false } }))
+    expect(r.some((a) => a.ruleId === 'rds-no-deletion-protection')).toBe(true)
+  })
+  it('rds with deletionProtection=true → no rds-no-deletion-protection', () => {
+    const r = analyzeNode(node({ type: 'rds', metadata: { multiAZ: true, deletionProtection: true } }))
+    expect(r.find((a) => a.ruleId === 'rds-no-deletion-protection')).toBeUndefined()
+  })
+
+  // ── rds-no-backup ─────────────────────────────────────────────────────────
+  it('rds with backupRetentionPeriod=0 → critical rds-no-backup', () => {
+    const r = analyzeNode(node({ type: 'rds', metadata: { multiAZ: true, deletionProtection: true, backupRetentionPeriod: 0 } }))
+    expect(r.some((a) => a.ruleId === 'rds-no-backup')).toBe(true)
+  })
+  it('rds with backupRetentionPeriod=7 → no rds-no-backup', () => {
+    const r = analyzeNode(node({ type: 'rds', metadata: { multiAZ: true, deletionProtection: true, backupRetentionPeriod: 7 } }))
+    expect(r.find((a) => a.ruleId === 'rds-no-backup')).toBeUndefined()
+  })
+
+  // ── s3-no-versioning ──────────────────────────────────────────────────────
+  it('s3 with versioningEnabled=false → warning s3-no-versioning', () => {
+    const r = analyzeNode(node({ type: 's3', metadata: { publicAccessEnabled: false, versioningEnabled: false } }))
+    expect(r.some((a) => a.ruleId === 's3-no-versioning')).toBe(true)
+  })
+  it('s3 with versioningEnabled=true → no s3-no-versioning', () => {
+    const r = analyzeNode(node({ type: 's3', metadata: { publicAccessEnabled: false, versioningEnabled: true } }))
+    expect(r.find((a) => a.ruleId === 's3-no-versioning')).toBeUndefined()
+  })
+
+  // ── lambda-no-dlq ─────────────────────────────────────────────────────────
+  it('lambda with hasDlq=false → warning lambda-no-dlq', () => {
+    const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, hasDlq: false } }))
+    expect(r.some((a) => a.ruleId === 'lambda-no-dlq')).toBe(true)
+  })
+  it('lambda with hasDlq=true → no lambda-no-dlq', () => {
+    const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, hasDlq: true } }))
+    expect(r.find((a) => a.ruleId === 'lambda-no-dlq')).toBeUndefined()
+  })
 })

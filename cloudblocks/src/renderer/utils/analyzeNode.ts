@@ -62,5 +62,56 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     })
   }
 
+  if (node.type === 'sqs' && node.metadata.hasDlq === false) {
+    advisories.push({
+      ruleId:   'sqs-no-dlq',
+      severity: 'warning',
+      title:    'No dead-letter queue configured',
+      detail:   'Messages that fail processing will be discarded. Configure a DLQ to retain failed messages for inspection and replay.',
+      nodeId:   node.id,
+    })
+  }
+
+  if (node.type === 'rds') {
+    if (node.metadata.deletionProtection === false) {
+      advisories.push({
+        ruleId:   'rds-no-deletion-protection',
+        severity: 'warning',
+        title:    'Deletion protection disabled',
+        detail:   'This RDS instance can be deleted with a single API call. Enable deletion protection to prevent accidental or unauthorised deletion.',
+        nodeId:   node.id,
+      })
+    }
+    if (typeof node.metadata.backupRetentionPeriod === 'number' && node.metadata.backupRetentionPeriod === 0) {
+      advisories.push({
+        ruleId:   'rds-no-backup',
+        severity: 'critical',
+        title:    'Automated backups disabled',
+        detail:   'Backup retention period is 0 days — automated backups are disabled. Set a retention period of at least 7 days to enable point-in-time recovery.',
+        nodeId:   node.id,
+      })
+    }
+  }
+
+  if (node.type === 's3' && node.metadata.versioningEnabled === false) {
+    advisories.push({
+      ruleId:   's3-no-versioning',
+      severity: 'warning',
+      title:    'Versioning not enabled',
+      detail:   'Objects deleted or overwritten cannot be recovered. Enable versioning to protect against accidental deletion and enable point-in-time recovery.',
+      nodeId:   node.id,
+    })
+  }
+
+  if (node.type === 'lambda' && node.metadata.hasDlq === false) {
+    advisories.push({
+      ruleId:   'lambda-no-dlq',
+      severity: 'warning',
+      title:    'No dead-letter queue or destination configured',
+      detail:   'Failed asynchronous invocations are silently discarded. Configure a dead-letter queue or an on-failure destination to capture errors.',
+      nodeId:   node.id,
+    })
+  }
+
   return advisories
 }
