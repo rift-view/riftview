@@ -2,7 +2,7 @@
 import type { Story } from '@ladle/react'
 import { VpcNode } from './VpcNode'
 
-function makeVpcProps(label: string, cidr?: string, collapsed?: boolean) {
+function makeVpcProps(label: string, cidr?: string, collapsed?: boolean): Record<string, unknown> {
   return {
     id: `story-vpc`,
     type: 'vpc',
