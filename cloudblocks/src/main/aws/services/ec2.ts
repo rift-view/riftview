@@ -6,6 +6,7 @@ import {
   DescribeSecurityGroupsCommand,
   DescribeKeyPairsCommand,
   type Instance,
+  type IpPermission,
 } from '@aws-sdk/client-ec2'
 import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
 
@@ -32,23 +33,56 @@ export async function describeInstances(client: EC2Client, region: string): Prom
       instances.push(...(res.Reservations?.flatMap((r) => r.Instances ?? []) ?? []))
       nextToken = res.NextToken
     } while (nextToken)
-    return instances.map((i): CloudNode => ({
-      id:       i.InstanceId ?? 'unknown',
-      type:     'ec2',
-      label:    nameTag(i.Tags) ?? i.InstanceId ?? 'EC2',
-      status:   ec2StatusToNodeStatus(i.State?.Name),
-      region,
-      metadata: {
-        instanceType:     i.InstanceType,
-        vpcId:            i.VpcId,
-        subnetId:         i.SubnetId,
-        publicIp:         i.PublicIpAddress,
-        privateIp:        i.PrivateIpAddress,
-        ami:              i.ImageId,
-        securityGroupIds: (i.SecurityGroups ?? []).map(sg => sg.GroupId).filter(Boolean),
-      },
-      parentId: i.SubnetId,
-    }))
+    // Build SG → IpPermissions map (one call for all instance SGs)
+    const allSgIds = [
+      ...new Set(
+        instances.flatMap((i) =>
+          (i.SecurityGroups ?? []).map((sg) => sg.GroupId ?? '').filter(Boolean)
+        )
+      ),
+    ]
+    const sgRulesMap = new Map<string, IpPermission[]>()
+    if (allSgIds.length > 0) {
+      const sgRes = await client
+        .send(new DescribeSecurityGroupsCommand({ GroupIds: allSgIds }))
+        .catch(() => null)
+      for (const sg of sgRes?.SecurityGroups ?? []) {
+        sgRulesMap.set(sg.GroupId ?? '', sg.IpPermissions ?? [])
+      }
+    }
+
+    return instances.map((i): CloudNode => {
+      const sgIds = (i.SecurityGroups ?? []).map((sg) => sg.GroupId ?? '').filter(Boolean)
+      const hasPublicSsh = sgIds.some((sgId) => {
+        const rules = sgRulesMap.get(sgId) ?? []
+        return rules.some(
+          (rule) =>
+            (rule.IpProtocol === '-1' ||
+              (rule.FromPort !== undefined &&
+                rule.FromPort <= 22 &&
+                (rule.ToPort ?? rule.FromPort) >= 22)) &&
+            (rule.IpRanges ?? []).some((r) => r.CidrIp === '0.0.0.0/0')
+        )
+      })
+      return {
+        id:       i.InstanceId ?? 'unknown',
+        type:     'ec2',
+        label:    nameTag(i.Tags) ?? i.InstanceId ?? 'EC2',
+        status:   ec2StatusToNodeStatus(i.State?.Name),
+        region,
+        metadata: {
+          instanceType:     i.InstanceType,
+          vpcId:            i.VpcId,
+          subnetId:         i.SubnetId,
+          publicIp:         i.PublicIpAddress,
+          privateIp:        i.PrivateIpAddress,
+          ami:              i.ImageId,
+          securityGroupIds: (i.SecurityGroups ?? []).map(sg => sg.GroupId).filter(Boolean),
+          hasPublicSsh,
+        },
+        parentId: i.SubnetId,
+      }
+    })
   } catch {
     return []
   }
