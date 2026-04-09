@@ -3,6 +3,7 @@ import type { NodeStatus, NodeType } from '../../../types/cloud'
 import { useUIStore } from '../../../store/ui'
 import { flag } from '../../../utils/flags'
 import { ActionRail } from './ActionRail'
+import { analyzeNode } from '../../../utils/analyzeNode'
 
 function driftStripeColor(driftStatus: import('../../../types/cloud').DriftStatus): string {
   switch (driftStatus) {
@@ -143,6 +144,22 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
   const isImported  = d.status === 'imported'
   const meta        = d.metadata ? getNodeMeta(d.nodeType, d.metadata) : undefined
   const actionRail  = flag('ACTION_RAIL')
+  const opIntelligence = flag('OP_INTELLIGENCE')
+
+  const advisoryBadge = opIntelligence && d.metadata ? (() => {
+    const advisories = analyzeNode({
+      id,
+      type:     d.nodeType,
+      label:    d.label,
+      status:   d.status,
+      region:   d.region ?? '',
+      metadata: d.metadata,
+    })
+    const critical = advisories.filter((a) => a.severity === 'critical').length
+    const warning  = advisories.filter((a) => a.severity === 'warning').length
+    if (critical === 0 && warning === 0) return null
+    return { critical, warning }
+  })() : null
 
   const statusLang = flag('STATUS_LANGUAGE')
 
@@ -394,6 +411,36 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
           {d.driftStatus === 'unmanaged' ? '!' : d.driftStatus === 'missing' ? '✕' : '✓'}
         </div>
       )}
+
+      {/* Advisory badge — shows OP_INTELLIGENCE findings count */}
+      {advisoryBadge && (() => {
+        const parts: string[] = []
+        if (advisoryBadge.critical > 0) parts.push(`${advisoryBadge.critical} critical`)
+        if (advisoryBadge.warning > 0)  parts.push(`${advisoryBadge.warning} warning`)
+        const badgeTitle = parts.join(', ')
+        const rightOffset = (isImported && d.driftStatus) ? 54 : (isImported || d.driftStatus) ? 34 : 14
+        return (
+          <div
+            title={badgeTitle}
+            style={{
+              position:      'absolute',
+              top:           -6,
+              right:         rightOffset,
+              background:    advisoryBadge.critical > 0 ? '#ef4444' : '#f59e0b',
+              color:         advisoryBadge.critical > 0 ? '#fff' : '#000',
+              fontSize:      8,
+              fontWeight:    700,
+              padding:       '1px 4px',
+              borderRadius:  3,
+              zIndex:        3,
+              lineHeight:    1.4,
+              pointerEvents: 'none',
+            }}
+          >
+            {advisoryBadge.critical > 0 ? `⚠ ${advisoryBadge.critical}` : `! ${advisoryBadge.warning}`}
+          </div>
+        )
+      })()}
     </div>
   )
 }
