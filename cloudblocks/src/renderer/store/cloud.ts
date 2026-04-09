@@ -53,6 +53,7 @@ interface CloudState {
   setImportedNodes:  (nodes: CloudNode[]) => void
   clearImportedNodes: () => void
   setPreviousCounts: (c: Record<string, number>) => void
+  patchNodeStatus: (id: string, status: NodeStatus) => void
 }
 
 export const useCloudStore = create<CloudState>((set) => ({
@@ -150,6 +151,10 @@ export const useCloudStore = create<CloudState>((set) => ({
     useUIStore.getState().resetDriftFilter()
   },
   setPreviousCounts: (c) => set({ previousCounts: c }),
+  patchNodeStatus: (id, status) =>
+    set((state) => ({
+      nodes: state.nodes.map((n) => (n.id === id ? { ...n, status } : n)),
+    })),
 }))
 
 // test-only factory — allows isolated store instances in unit tests
@@ -235,5 +240,9 @@ export function createCloudStore(): StoreApi<CloudState> {
       useUIStore.getState().resetDriftFilter()
     },
     setPreviousCounts: (c) => set({ previousCounts: c }),
+    patchNodeStatus: (id, status) =>
+      set((state) => ({
+        nodes: state.nodes.map((n) => (n.id === id ? { ...n, status } : n)),
+      })),
   }))
 }

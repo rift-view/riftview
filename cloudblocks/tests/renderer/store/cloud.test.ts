@@ -42,6 +42,20 @@ describe('useCloudStore', () => {
     useCloudStore.getState().setScanStatus('scanning')
     expect(useCloudStore.getState().scanStatus).toBe('scanning')
   })
+
+  it('patchNodeStatus updates status of the matching node', () => {
+    useCloudStore.setState({ nodes: [makeNode('i-001'), makeNode('i-002')] })
+    useCloudStore.getState().patchNodeStatus('i-001', 'pending')
+    const nodes = useCloudStore.getState().nodes
+    expect(nodes.find((n) => n.id === 'i-001')?.status).toBe('pending')
+    expect(nodes.find((n) => n.id === 'i-002')?.status).toBe('running')
+  })
+
+  it('patchNodeStatus is a no-op for unknown node id', () => {
+    useCloudStore.setState({ nodes: [makeNode('i-001')] })
+    useCloudStore.getState().patchNodeStatus('does-not-exist', 'stopped')
+    expect(useCloudStore.getState().nodes[0].status).toBe('running')
+  })
 })
 
 describe('theme defaults', () => {
