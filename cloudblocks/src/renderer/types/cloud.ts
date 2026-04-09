@@ -103,3 +103,22 @@ export interface CustomEdge {
   color: CustomEdgeColor
   label?: string
 }
+
+// ── Advisory system (Phase 3: OP_INTELLIGENCE) ────────────────────────────────
+
+export type AdvisoryRuleId =
+  | 'ec2-public-ssh'
+  | 'lambda-no-timeout'
+  | 'lambda-low-memory'
+  | 's3-public-access'
+  | 'rds-no-multiaz'
+
+export type AdvisorySeverity = 'info' | 'warning' | 'critical'
+
+export interface Advisory {
+  ruleId: AdvisoryRuleId
+  severity: AdvisorySeverity
+  title: string
+  detail: string
+  nodeId: string
+}
