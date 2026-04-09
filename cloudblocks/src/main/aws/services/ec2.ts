@@ -61,7 +61,8 @@ export async function describeInstances(client: EC2Client, region: string): Prom
               (rule.FromPort !== undefined &&
                 rule.FromPort <= 22 &&
                 (rule.ToPort ?? rule.FromPort) >= 22)) &&
-            (rule.IpRanges ?? []).some((r) => r.CidrIp === '0.0.0.0/0')
+            ((rule.IpRanges ?? []).some((r) => r.CidrIp === '0.0.0.0/0') ||
+              (rule.Ipv6Ranges ?? []).some((r) => r.CidrIpv6 === '::/0'))
         )
       })
       return {
