@@ -183,7 +183,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
       </div>
 
       <span className="text-[11px] font-bold tracking-widest font-mono" style={{ color: 'var(--cb-accent)' }}>
-        CLOUDBLOCKS
+        TERMINUS
       </span>
 
       <div className="flex-1" />
