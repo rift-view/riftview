@@ -149,7 +149,7 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
               onClick={() => setView(v)}
               style={{ ...btnBase, background: view === v ? 'var(--cb-bg-elevated)' : 'transparent', border: `1px solid ${view === v ? '#64b5f6' : 'var(--cb-border)'}`, color: view === v ? '#64b5f6' : '#666' }}
             >
-              {v === 'topology' ? '⊞ Topology' : '◈ Graph'}
+              {v === 'topology' ? '⊞ Map' : '◈ Free'}
             </button>
           ))}
 
