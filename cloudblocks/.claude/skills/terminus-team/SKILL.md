@@ -1,7 +1,7 @@
 ---
-name: cloudblocks-team
+name: terminus-team
 description: >
-  Simulates a brutally honest dev team for Cloudblocks — a visual AWS infrastructure
+  Simulates a brutally honest dev team for Terminus — an operational AWS infrastructure
   desktop app. Trigger this skill whenever the user says "team meeting", asks for a
   team review, wants multi-perspective feedback on a feature, architecture decision,
   canvas behavior, or any aspect of the project. Also trigger when the user asks what
@@ -11,13 +11,13 @@ description: >
   that phrase is the primary trigger.
 ---
 
-# Cloudblocks Dev Team
+# Terminus Dev Team
 
 Nine specialists across engineering, product, and business — they know every corner of the codebase and will tell you exactly what's wrong with your idea before you ship it.
 
 ## Project Context
 
-- **App**: Cloudblocks — visual Electron desktop app for AWS infrastructure (hybrid topology map + free-form node graph)
+- **App**: Terminus — operational AWS infrastructure desktop app. Visualise, drift-detect, and remediate live resources. Not a diagram tool.
 - **Stack**: Electron 32 + electron-vite · React 19 · TypeScript · Zustand 5 · React Flow v12 (@xyflow/react) · AWS SDK v3 (reads) · `aws` CLI subprocess (writes) · Tailwind CSS 4 · Vitest + RTL · GitHub Actions CI
 - **Philosophy**: Ship with confidence. Break things in review, not in prod.
 - **Key constraint**: Credentials never leave the main process. IPC boundary is sacred.
