@@ -183,9 +183,8 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
       className={`resource-node relative rounded${d.status === 'creating' ? ' animate-pulse' : ''}`}
       style={{
         background:   'var(--cb-bg-panel)',
-        border:       `${selected ? '2px' : '1px'} ${isImported ? 'dashed' : 'solid'} ${borderColor}`,
-        borderLeft:   `3px ${isImported ? 'dashed' : 'solid'} ${stripeColor}`,
-        boxShadow:    selected ? `0 0 10px ${borderColor}55` : 'none',
+        border:       `${selected ? '2px' : '1px'} ${isImported ? 'dashed' : 'solid'} ${stripeColor}`,
+        boxShadow:    selected ? `0 0 10px ${stripeColor}55` : 'none',
         fontFamily:   'monospace',
         minWidth:     130,
         padding:      '6px 10px 6px 8px',
@@ -418,7 +417,7 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
         if (advisoryBadge.critical > 0) parts.push(`${advisoryBadge.critical} critical`)
         if (advisoryBadge.warning > 0)  parts.push(`${advisoryBadge.warning} warning`)
         const badgeTitle = parts.join(', ')
-        const rightOffset = (isImported && d.driftStatus) ? 54 : (isImported || d.driftStatus) ? 34 : 14
+        const rightOffset = (isImported && d.driftStatus) ? 54 : (isImported || d.driftStatus) ? 34 : -6
         return (
           <div
             title={badgeTitle}
