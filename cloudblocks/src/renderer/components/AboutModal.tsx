@@ -55,7 +55,7 @@ export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
 
         {/* GitHub */}
         <div style={{ fontSize: 11, color: 'var(--cb-text-secondary)', marginBottom: 18 }}>
-          github.com/juliushamm/cloudblocks
+          github.com/juliushamm/terminus
         </div>
 
         {/* Separator */}
