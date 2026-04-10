@@ -53,7 +53,7 @@ export async function exportCanvasToPng(
       // Use Electron's save dialog via IPC
       const lastScanAt = useCloudStore.getState().lastScannedAt
       const timestamp = lastScanAt ? new Date(lastScanAt).toISOString().slice(0, 16).replace('T', '-').replace(':', '') : 'export'
-      const defaultName = `cloudblocks-${timestamp}.png`
+      const defaultName = `terminus-${timestamp}.png`
       await window.terminus.saveExportImage(dataUrl, defaultName)
       showToast('Diagram saved', 'success')
     }

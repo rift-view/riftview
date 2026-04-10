@@ -39,4 +39,4 @@ npmRebuild: false
 publish:
   provider: github
   owner: juliushamm
-  repo: cloudblocks
+  repo: terminus
