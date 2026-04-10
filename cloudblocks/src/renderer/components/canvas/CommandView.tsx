@@ -11,9 +11,9 @@ import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
 import { ResourceNode } from './nodes/ResourceNode'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode, NodeType } from '../../types/cloud'
 import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
-import { buildCommandNodes } from '../../utils/commandLayout'
+import { buildCommandNodes, getTierForNode } from '../../utils/commandLayout'
 
 // ── Layout constants (local — only needed for TierLabelNode width) ────────────
 
@@ -51,22 +51,47 @@ const nodeTypes = {
 
 // ── Integration edges ─────────────────────────────────────────────────────────
 
+// Pick the source/target handle sides based on relative tier positions so edges
+// route cleanly between swim lanes without cutting through unrelated nodes.
+function edgeHandles(
+  sourceTier: number,
+  targetTier: number,
+): { sourceHandle: string; targetHandle: string } {
+  if (sourceTier < targetTier)  return { sourceHandle: 'bottom', targetHandle: 'top'   }
+  if (sourceTier > targetTier)  return { sourceHandle: 'top',    targetHandle: 'bottom' }
+  // Same tier — route horizontally
+  return { sourceHandle: 'right', targetHandle: 'left' }
+}
+
 function buildCommandEdges(cloudNodes: CloudNode[], showIntegrations: boolean): Edge[] {
   if (!showIntegrations) return []
+  const nodeMap = new Map(cloudNodes.map((n) => [n.id, n]))
   const edges: Edge[] = []
   for (const node of cloudNodes) {
     if (!node.integrations) continue
     for (const { targetId, edgeType } of node.integrations) {
       const resolvedTargetId = resolveIntegrationTargetId(cloudNodes, targetId)
-      const targetExists = cloudNodes.some((n) => n.id === resolvedTargetId)
-      if (!targetExists) continue
+      const target = nodeMap.get(resolvedTargetId)
+      if (!target) continue
+
+      const srcTier = getTierForNode(node.type as NodeType)
+      const tgtTier = getTierForNode(target.type as NodeType)
+      const { sourceHandle, targetHandle } = edgeHandles(srcTier, tgtTier)
+
+      const isTrigger = edgeType === 'trigger'
       edges.push({
-        id:       `cmd-${node.id}-${resolvedTargetId}`,
-        source:   node.id,
-        target:   resolvedTargetId,
-        type:     'default',
-        animated: edgeType === 'trigger',
-        style:    { stroke: edgeType === 'trigger' ? '#64b5f6' : '#555', strokeWidth: 1.2 },
+        id:           `cmd-${node.id}-${resolvedTargetId}`,
+        source:       node.id,
+        target:       resolvedTargetId,
+        sourceHandle,
+        targetHandle,
+        type:         'smoothstep',
+        animated:     isTrigger,
+        style:        {
+          stroke:      isTrigger ? '#64b5f6' : '#4a5568',
+          strokeWidth: 1.5,
+          opacity:     0.75,
+        },
       })
     }
   }
