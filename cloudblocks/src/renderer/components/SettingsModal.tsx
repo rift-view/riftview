@@ -24,14 +24,16 @@ const ALL_REGIONS: string[] = [
 ]
 
 const THEME_META: Record<Theme, { label: string; accent: string }> = {
-  dark:          { label: 'Dark',             accent: '#FF9900' },
-  light:         { label: 'Light',            accent: '#e07800' },
-  solarized:     { label: 'Solarized Dark',   accent: '#2aa198' },
-  'rose-pine':       { label: 'Rosé Pine',          accent: '#eb6f92' },
-  catppuccin:        { label: 'Catppuccin Mocha',   accent: '#fab387' },
-  'solarized-light': { label: 'Solarized Light',    accent: '#2aa198' },
-  'github-light':    { label: 'GitHub Light',       accent: '#0969da' },
-  'nord-light':      { label: 'Nord Light',         accent: '#5e81ac' },
+  dark:              { label: 'Dark',             accent: '#FF9900' },
+  light:             { label: 'Light',            accent: '#e07800' },
+  solarized:         { label: 'Solarized Dark',   accent: '#2aa198' },
+  'rose-pine':       { label: 'Rosé Pine',        accent: '#eb6f92' },
+  catppuccin:        { label: 'Catppuccin Mocha', accent: '#fab387' },
+  'solarized-light': { label: 'Solarized Light',  accent: '#2aa198' },
+  'github-light':    { label: 'GitHub Light',     accent: '#0969da' },
+  'nord-light':      { label: 'Nord Light',       accent: '#5e81ac' },
+  'gruvbox-dark':    { label: 'Gruvbox Dark',     accent: '#fe8019' },
+  'gruvbox-light':   { label: 'Gruvbox Light',    accent: '#d65d0e' },
 }
 
 const TABS: { key: TabKey; label: string }[] = [

@@ -183,7 +183,7 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
       className={`resource-node relative rounded${d.status === 'creating' ? ' animate-pulse' : ''}`}
       style={{
         background:   'var(--cb-bg-panel)',
-        border:       `${selected ? '2px' : '1px'} ${isImported ? 'dashed' : 'solid'} ${stripeColor}`,
+        border:       `${selected ? '3px' : '2px'} ${isImported ? 'dashed' : 'solid'} ${stripeColor}`,
         boxShadow:    selected ? `0 0 10px ${stripeColor}55` : 'none',
         fontFamily:   'monospace',
         minWidth:     130,
