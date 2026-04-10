@@ -259,7 +259,7 @@ export function registerHandlers(win: BrowserWindow): void {
     try {
       const image = await win.webContents.capturePage()
       const { filePath } = await dialog.showSaveDialog(win, {
-        defaultPath: 'cloudblocks-export.png',
+        defaultPath: 'terminus-export.png',
         filters: [{ name: 'PNG Image', extensions: ['png'] }],
       })
       if (!filePath) return { success: false }

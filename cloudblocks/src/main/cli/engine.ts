@@ -55,7 +55,7 @@ export class CliEngine {
     if (this.endpoint && isLocalEndpoint(this.endpoint)) {
       const firstService = commandChain[0]?.[0]
       if (firstService && LOCAL_UNSUPPORTED.has(firstService)) {
-        const msg = `[cloudblocks] "${firstService}" is not supported by LocalStack Community. Use LocalStack Pro or switch to a real AWS profile.`
+        const msg = `[terminus] "${firstService}" is not supported by LocalStack Community. Use LocalStack Pro or switch to a real AWS profile.`
         this.win.webContents.send(IPC.CLI_OUTPUT, { line: msg, stream: 'stderr' })
         this.win.webContents.send(IPC.CLI_DONE, { code: 1 })
         return { code: 1 }
@@ -122,7 +122,7 @@ export class CliEngine {
         settled = true
         proc.kill()
         this.currentProcess = null
-        const timeoutMsg = `[cloudblocks] Command timed out after ${COMMAND_TIMEOUT_MS / 1000}s: aws ${argv.join(' ')}`
+        const timeoutMsg = `[terminus] Command timed out after ${COMMAND_TIMEOUT_MS / 1000}s: aws ${argv.join(' ')}`
         this.win.webContents.send(IPC.CLI_OUTPUT, { line: timeoutMsg, stream: 'stderr' })
         resolve({ code: 1, stdout: stdoutBuffer })
       }, COMMAND_TIMEOUT_MS)

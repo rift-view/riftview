@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Visual AWS infrastructure management desktop app",
   "main": "./out/main/index.js",
-  "author": "cloudblocks",
+  "author": "juliushamm",
   "homepage": "https://electron-vite.org",
   "scripts": {
     "format": "prettier --write .",
