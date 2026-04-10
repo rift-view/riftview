@@ -69,15 +69,42 @@ export function EmptyCanvasState(): React.JSX.Element | null {
   }
 
   if (scanStatus === 'scanning') {
+    const skeletonNode = (w = 150, delay = '0s'): React.JSX.Element => (
+      <div style={{
+        width:         w,
+        height:        66,
+        borderRadius:  6,
+        border:        '1px solid var(--cb-border)',
+        background:    'var(--cb-bg-panel)',
+        flexShrink:    0,
+        position:      'relative',
+        overflow:      'hidden',
+      }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)', animation: `cb-shimmer 1.8s ease-in-out ${delay} infinite` }} />
+      </div>
+    )
     return (
-      <div style={overlayStyle}>
-        <div style={{ ...cardStyle, pointerEvents: 'none' }}>
-          <div style={headingStyle}>Scanning your infrastructure…</div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 5, marginTop: 4 }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cb-accent)', display: 'inline-block', animation: 'ecs-pulse 1.2s ease-in-out 0s infinite' }} />
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cb-accent)', display: 'inline-block', animation: 'ecs-pulse 1.2s ease-in-out 0.4s infinite' }} />
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cb-accent)', display: 'inline-block', animation: 'ecs-pulse 1.2s ease-in-out 0.8s infinite' }} />
+      <div style={{ ...overlayStyle, flexDirection: 'column', gap: 32, opacity: 0.6 }}>
+        <div style={{ fontSize: 10, fontFamily: 'monospace', color: 'var(--cb-text-muted)', letterSpacing: '0.08em' }}>
+          SCANNING INFRASTRUCTURE…
+        </div>
+        {/* Row 1 — suggests a VPC with resources */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12, border: '1px dashed var(--cb-border)', borderRadius: 8 }}>
+          <div style={{ width: 60, height: 8, borderRadius: 3, background: 'var(--cb-border)', marginBottom: 4 }} />
+          <div style={{ display: 'flex', gap: 10 }}>
+            {skeletonNode(150, '0s')}
+            {skeletonNode(150, '0.2s')}
           </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            {skeletonNode(150, '0.4s')}
+            {skeletonNode(150, '0.6s')}
+          </div>
+        </div>
+        {/* Row 2 — global zone strip */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          {skeletonNode(130, '0.3s')}
+          {skeletonNode(130, '0.5s')}
+          {skeletonNode(130, '0.7s')}
         </div>
       </div>
     )

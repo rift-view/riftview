@@ -49,7 +49,7 @@ describe('EmptyCanvasState', () => {
   it('renders "Scanning" message when scanStatus is scanning and no nodes', () => {
     useCloudStore.setState({ scanStatus: 'scanning' })
     render(<EmptyCanvasState />)
-    expect(screen.getByText(/Scanning your infrastructure/i)).toBeInTheDocument()
+    expect(screen.getByText(/SCANNING INFRASTRUCTURE/i)).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
