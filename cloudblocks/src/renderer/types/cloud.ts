@@ -82,7 +82,7 @@ export interface AwsProfile {
   endpoint?: string
 }
 
-export type Theme = 'dark' | 'light' | 'solarized' | 'rose-pine' | 'catppuccin' | 'solarized-light' | 'github-light' | 'nord-light'
+export type Theme = 'dark' | 'light' | 'solarized' | 'rose-pine' | 'catppuccin' | 'solarized-light' | 'github-light' | 'nord-light' | 'gruvbox-dark' | 'gruvbox-light'
 
 export interface Settings {
   deleteConfirmStyle: 'type-to-confirm' | 'command-drawer'
