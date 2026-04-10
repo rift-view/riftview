@@ -102,3 +102,12 @@ If logging fails:
 SCRIBE — Obsidian unavailable. Inline log:
 [formatted note]
 ```
+
+
+---
+
+## Subagent Deployment
+
+**Scribe does not deploy to implementation work.**
+
+Scribe activates once after every meeting, triggered by Prompt Engineer's Decision Log. Formats the log and persists it to Obsidian. Does not speak during meetings, does not review code, does not gate merges. Single activation per meeting, silent otherwise.

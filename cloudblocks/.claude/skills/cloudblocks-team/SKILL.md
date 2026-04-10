@@ -125,3 +125,68 @@ Does not speak during the meeting itself.
 ## Sprites
 
 Each agent has an ASCII sprite defined in their agent file. Display it when they speak.
+
+---
+
+## Deployment
+
+Beyond meetings, the team deploys as real subagents on implementation work. Each agent carries their persona, system prompt, and tool context (defined in their agent file) into the subagent — they implement, review, and block exactly as they would in a meeting.
+
+### Foreman Reads the Assignment First
+
+Before any dispatch, Foreman determines which domains the work touches:
+- `src/renderer/` → Canvas
+- `src/main/` → Backend
+- Types / tests / CI → QA
+- IPC boundary / credentials → Cybersecurity
+- User-facing behavior / copy / flows → Product
+
+Then determines complexity:
+- **Simple**: One domain, low blast radius, clear spec → dispatch one implementer
+- **Complex**: Multiple domains, IPC involved, user-facing, or high regression risk → full team deployment
+
+### Simple Assignment — Single Agent
+
+Dispatch a subagent using the agent's `## Subagent System Prompt` verbatim as the prompt header, followed by the task:
+
+```
+[FULL CONTENTS OF the agent's ## Subagent System Prompt block]
+
+---
+
+## Assignment
+
+[Task spec: what to build, which files to touch, what done looks like]
+
+Implement, test, and commit. Report: what changed, any concerns.
+Status: DONE | DONE_WITH_CONCERNS | BLOCKED
+```
+
+### Complex Assignment — Team Deployment
+
+**Wave 1 — Implementation**
+Dispatch implementers in parallel if their work is independent, sequentially if one feeds the other. Each gets their system prompt + full spec.
+
+**Wave 2 — Review Hooks**
+After each implementer completes, dispatch their designated reviewers:
+
+| Implementer | Review Hooks (in order) |
+|---|---|
+| Canvas | QA → Product |
+| Backend | QA → Cybersecurity |
+| Canvas + Backend | QA → Cybersecurity → Product |
+
+Each reviewer gets their system prompt + the implementer's diff + the original spec + their mandate (from their `## Subagent System Prompt` constraints).
+
+**Review loop:** Reviewer finds issues → implementer re-dispatched with findings → reviewer re-checks → repeat until ✅
+
+**Foreman closes** — reads all sign-offs, issues final verdict.
+
+### Prompt Engineer Packages Every Task
+
+Before Foreman dispatches anything, Prompt Engineer compresses the spec: instruction leads, expected output defined, no unnecessary context. See `agents/prompt-engineer.md` `## Subagent System Prompt` for the packaging checklist.
+
+### Agents That Do Not Deploy to Code
+- **BizDev**: Advisory only — see `agents/bizdev.md`
+- **Scribe**: Documentation only — see `agents/scribe.md`
+- **Prompt Engineer**: Packages tasks, does not implement or review code
