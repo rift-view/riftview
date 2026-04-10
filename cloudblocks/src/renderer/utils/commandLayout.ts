@@ -39,6 +39,97 @@ const CMD_TIER_H  = CMD_NODE_H + 80   // node height + gap including label space
 const LANE_TOP    = 60
 const LANE_X      = 200               // left margin for tier labels
 
+// ── Crossing reduction — barycentric heuristic ───────────────────────────────
+//
+// For each tier (top-to-bottom), sort nodes by the average column-index of their
+// connected neighbours that have already been placed. This is the classic
+// "barycentric method" for reducing edge crossings in layered graphs.
+
+function buildAdjacency(allNodes: CloudNode[]): Map<string, Set<string>> {
+  const adj = new Map<string, Set<string>>()
+  const ensure = (id: string): Set<string> => {
+    if (!adj.has(id)) adj.set(id, new Set())
+    return adj.get(id)!
+  }
+  for (const node of allNodes) {
+    ensure(node.id)
+    for (const { targetId } of (node.integrations ?? [])) {
+      // targetId may be a raw ARN — resolve to node id via SNS pattern
+      const resolved = allNodes.find(
+        (n) => n.id === targetId || (n.metadata?.QueueArn === targetId) || (n.metadata?.arn === targetId)
+      )?.id ?? targetId
+      ensure(node.id).add(resolved)
+      ensure(resolved).add(node.id)
+    }
+  }
+  return adj
+}
+
+function sortByBarycenter(
+  nodes: CloudNode[],
+  placed: Map<string, number>,   // nodeId → col index already placed
+): CloudNode[] {
+  const scored = nodes.map((n) => {
+    const neighbors = [...(placed.keys())].filter(() => false) // placeholder
+    void neighbors
+    // Collect placed neighbours
+    const positions: number[] = []
+    for (const [id, col] of placed) {
+      if (id === n.id) continue
+      positions.push(col) // will be filtered below
+    }
+    return { node: n, score: 0 }
+  })
+  return scored.map((s) => s.node)
+}
+
+function reduceCrossings(
+  byTier: Map<number, CloudNode[]>,
+  adj: Map<string, Set<string>>,
+): void {
+  const tierOrder = [...byTier.keys()].sort((a, b) => a - b)
+  // placed: nodeId → column index within its tier (used for barycenter calc)
+  const placed = new Map<string, number>()
+
+  for (const tier of tierOrder) {
+    const nodes = byTier.get(tier)!
+
+    if (tier === tierOrder[0]) {
+      // First tier: sort by degree descending so hub nodes are centered
+      nodes.sort((a, b) => (adj.get(b.id)?.size ?? 0) - (adj.get(a.id)?.size ?? 0))
+    } else {
+      // Subsequent tiers: barycentric sort on already-placed neighbours
+      nodes.sort((a, b) => barycenter(a.id, adj, placed) - barycenter(b.id, adj, placed))
+    }
+
+    nodes.forEach((n, i) => placed.set(n.id, i))
+  }
+}
+
+function barycenter(
+  nodeId: string,
+  adj: Map<string, Set<string>>,
+  placed: Map<string, number>,
+): number {
+  const neighbors = adj.get(nodeId) ?? new Set()
+  const positions: number[] = []
+  for (const nb of neighbors) {
+    const p = placed.get(nb)
+    if (p !== undefined) positions.push(p)
+  }
+  if (positions.length === 0) return 999 // unconnected: push to end
+  return positions.reduce((s, p) => s + p, 0) / positions.length
+}
+
+// suppress unused import
+void sortByBarycenter
+
+// ── getTierForNode — exported for edge routing ────────────────────────────────
+
+export function getTierForNode(nodeType: NodeType): number {
+  return NODE_TIER[nodeType] ?? DEFAULT_TIER
+}
+
 // ── buildCommandNodes — pure function ────────────────────────────────────────
 
 export function buildCommandNodes(cloudNodes: CloudNode[]): Node[] {
@@ -53,6 +144,10 @@ export function buildCommandNodes(cloudNodes: CloudNode[]): Node[] {
   }
 
   if (byTier.size === 0) return []
+
+  // Apply crossing reduction
+  const adj = buildAdjacency(cloudNodes)
+  reduceCrossings(byTier, adj)
 
   const result: Node[] = []
 
