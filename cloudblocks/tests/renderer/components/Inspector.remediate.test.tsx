@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { Inspector } from '../../../src/renderer/components/Inspector'
 import { useUIStore } from '../../../src/renderer/store/ui'
 import { useCloudStore } from '../../../src/renderer/store/cloud'
@@ -52,19 +52,8 @@ describe('Inspector REMEDIATE section', () => {
   beforeEach(() => {
     saveAnnotationsMock.mockClear()
     analyzeIamMock.mockClear()
-    vi.stubEnv('VITE_FLAG_EXECUTION_ENGINE', 'true')
     useUIStore.setState({ selectedNodeId: null, annotations: {}, selectedEdgeId: null, selectedEdgeInfo: null })
     useCloudStore.setState({ nodes: [], importedNodes: [] })
-  })
-
-  afterEach(() => {
-    vi.unstubAllEnvs()
-  })
-
-  it('hidden when EXECUTION_ENGINE flag is false', () => {
-    vi.stubEnv('VITE_FLAG_EXECUTION_ENGINE', 'false')
-    setup(baseNode({ driftStatus: 'unmanaged' }))
-    expect(screen.queryByText('REMEDIATE')).toBeNull()
   })
 
   it('hidden when driftStatus is undefined', () => {

@@ -143,7 +143,7 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
   const typeLabel   = (TYPE_LABEL as Record<string, string>)[d.nodeType] ?? pluginMeta?.label ?? d.nodeType.toUpperCase()
   const isImported  = d.status === 'imported'
   const meta        = d.metadata ? getNodeMeta(d.nodeType, d.metadata) : undefined
-  const actionRail  = flag('ACTION_RAIL')
+  const actionRail  = true
   const opIntelligence = flag('OP_INTELLIGENCE')
 
   const advisoryBadge = opIntelligence && d.metadata ? (() => {
@@ -161,7 +161,7 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
     return { critical, warning }
   })() : null
 
-  const statusLang = flag('STATUS_LANGUAGE')
+  const statusLang = true
 
   const statusLangStyle: React.CSSProperties = statusLang ? (() => {
     switch (d.status) {
