@@ -7,6 +7,7 @@ describe('flag()', () => {
   })
 
   it('returns false when env var is not set', () => {
+    vi.stubEnv('VITE_FLAG_COMMAND_BOARD', undefined)
     expect(flag('COMMAND_BOARD')).toBe(false)
   })
 

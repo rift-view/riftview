@@ -113,5 +113,43 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     })
   }
 
+  if (node.type === 'ecs') {
+    const desired = node.metadata.desiredCount as number | undefined
+    const running = node.metadata.runningCount as number | undefined
+    if (typeof desired === 'number' && typeof running === 'number' && running < desired) {
+      advisories.push({
+        ruleId:   'ecs-task-count-mismatch',
+        severity: 'warning',
+        title:    `${running}/${desired} tasks running`,
+        detail:   'Fewer tasks are running than desired. Check the ECS service events for placement failures, task exit reasons, or capacity issues.',
+        nodeId:   node.id,
+      })
+    }
+  }
+
+  if (node.type === 'elasticache') {
+    const engine      = node.metadata.engine as string | undefined
+    const clusterMode = node.metadata.clusterMode as string | undefined
+    if (engine === 'redis' && clusterMode === 'standalone') {
+      advisories.push({
+        ruleId:   'elasticache-no-replica',
+        severity: 'warning',
+        title:    'Redis standalone — no replica',
+        detail:   'This Redis cluster has no read replica. A node failure will cause an outage until ElastiCache replaces the primary. Add a replica for production workloads.',
+        nodeId:   node.id,
+      })
+    }
+  }
+
+  if (node.type === 'opensearch' && !node.parentId) {
+    advisories.push({
+      ruleId:   'opensearch-no-vpc',
+      severity: 'warning',
+      title:    'Domain not in a VPC',
+      detail:   'This OpenSearch domain has no VPC configuration and may be reachable from the public internet. Place the domain in a VPC and apply fine-grained access control for production workloads.',
+      nodeId:   node.id,
+    })
+  }
+
   return advisories
 }

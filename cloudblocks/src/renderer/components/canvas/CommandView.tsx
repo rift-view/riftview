@@ -111,20 +111,45 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
   const setCommandPosition = useUIStore((s) => s.setCommandPosition)
   const selectedNodeId     = useUIStore((s) => s.selectedNodeId)
   const selectNode         = useUIStore((s) => s.selectNode)
+  const commandFocusId     = useUIStore((s) => s.commandFocusId)
+  const setCommandFocusId  = useUIStore((s) => s.setCommandFocusId)
 
   const [livePositions, setLivePositions] = useState<Record<string, XYPosition>>({})
 
   const baseNodes = useMemo(() => buildCommandNodes(nodes), [nodes])
 
+  // When focus mode is active, show only the focused node plus its direct neighbours
+  const focusedNodeIds = useMemo((): Set<string> | null => {
+    if (!commandFocusId) return null
+    const focusCloud = nodes.find((n) => n.id === commandFocusId)
+    if (!focusCloud) return null
+    const ids = new Set([commandFocusId])
+    for (const n of nodes) {
+      for (const { targetId } of (n.integrations ?? [])) {
+        if (targetId === commandFocusId || n.id === commandFocusId) {
+          ids.add(n.id)
+          ids.add(targetId)
+        }
+      }
+    }
+    return ids
+  }, [commandFocusId, nodes])
+
   const flowNodes = useMemo(() => {
-    return baseNodes.map((n) => {
-      if (n.type === 'tier-label') return n
-      const stored = commandPositions[n.id]
-      const live   = livePositions[n.id]
-      const pos    = live ?? stored ?? n.position
-      return { ...n, position: pos, selected: n.id === selectedNodeId }
-    })
-  }, [baseNodes, commandPositions, livePositions, selectedNodeId])
+    return baseNodes
+      .filter((n) => {
+        if (!focusedNodeIds) return true
+        if (n.type === 'tier-label') return true  // always show tier labels
+        return focusedNodeIds.has(n.id)
+      })
+      .map((n) => {
+        if (n.type === 'tier-label') return n
+        const stored = commandPositions[n.id]
+        const live   = livePositions[n.id]
+        const pos    = live ?? stored ?? n.position
+        return { ...n, position: pos, selected: n.id === selectedNodeId }
+      })
+  }, [baseNodes, commandPositions, livePositions, selectedNodeId, focusedNodeIds])
 
   const flowEdges = useMemo(() => buildCommandEdges(nodes, showIntegrations), [nodes, showIntegrations])
 
@@ -154,7 +179,7 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
   return (
     <div className="flex flex-col w-full h-full">
       {/* Context strip */}
-      {(vpcCount > 0 || subnetCount > 0 || sgCount > 0) && (
+      {(vpcCount > 0 || subnetCount > 0 || sgCount > 0 || !!commandFocusId) && (
         <div
           style={{
             padding:      '2px 12px',
@@ -170,6 +195,15 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
           {subnetCount > 0 && <span>{subnetCount} subnet{subnetCount !== 1 ? 's' : ''} · </span>}
           {sgCount > 0 && <span>{sgCount} security group{sgCount !== 1 ? 's' : ''}</span>}
           {region && <span style={{ marginLeft: 12 }}>{region}</span>}
+          {commandFocusId && (
+            <span
+              style={{ marginLeft: 12, color: 'var(--cb-accent)', cursor: 'pointer' }}
+              onClick={() => setCommandFocusId(null)}
+              title="Exit focus mode"
+            >
+              FOCUS · {nodes.find((n) => n.id === commandFocusId)?.label ?? commandFocusId} ✕
+            </span>
+          )}
         </div>
       )}
 
@@ -180,7 +214,10 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onNodeClick={(_e, node) => selectNode(node.id)}
-          onPaneClick={() => selectNode(null)}
+          onNodeDoubleClick={(_e, node) => {
+            setCommandFocusId(commandFocusId === node.id ? null : node.id)
+          }}
+          onPaneClick={() => { selectNode(null); setCommandFocusId(null) }}
           onNodeContextMenu={(e, node) => {
             const cloudNode = nodes.find((n) => n.id === node.id)
             if (cloudNode) onNodeContextMenu(cloudNode, e.clientX, e.clientY)

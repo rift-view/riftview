@@ -64,6 +64,7 @@ interface UIState {
   customEdges:            CustomEdge[]
   isExporting:            boolean
   commandPositions:       Record<string, { x: number; y: number }>
+  commandFocusId:         string | null
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -112,6 +113,7 @@ interface UIState {
   addCustomEdge:          (edge: CustomEdge) => void
   setIsExporting:         (v: boolean) => void
   setCommandPosition:     (nodeId: string, pos: { x: number; y: number }) => void
+  setCommandFocusId:      (id: string | null) => void
   removeCustomEdge:       (id: string) => void
   updateCustomEdgeLabel:  (id: string, label: string) => void
   updateCustomEdgeColor:  (id: string, color: CustomEdge['color']) => void
@@ -153,6 +155,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   customEdges:          [],
   isExporting:          false,
   commandPositions:     {},
+  commandFocusId:       null,
 
   setView:             (view) => set({ view }),
   selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -316,4 +319,5 @@ export const useUIStore = create<UIState>((set, get) => ({
   setIsExporting: (v) => set({ isExporting: v }),
   setCommandPosition: (nodeId, pos) =>
     set((s) => ({ commandPositions: { ...s.commandPositions, [nodeId]: pos } })),
+  setCommandFocusId: (id) => set({ commandFocusId: id }),
 }))
