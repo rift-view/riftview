@@ -62,7 +62,7 @@ describe('Inspector REMEDIATE section', () => {
   })
 
   it('hidden when EXECUTION_ENGINE flag is false', () => {
-    vi.unstubAllEnvs()
+    vi.stubEnv('VITE_FLAG_EXECUTION_ENGINE', 'false')
     setup(baseNode({ driftStatus: 'unmanaged' }))
     expect(screen.queryByText('REMEDIATE')).toBeNull()
   })
