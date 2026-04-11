@@ -47,6 +47,109 @@ function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unk
   )
 }
 
+// ── FirstScanSummary ──────────────────────────────────────────────────────────
+
+function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element {
+  const scanStatus    = useCloudStore((s) => s.scanStatus)
+  const lastScannedAt = useCloudStore((s) => s.lastScannedAt)
+  const selectNode    = useUIStore((s) => s.selectNode)
+
+  if (nodes.length === 0 || !lastScannedAt) {
+    return (
+      <div className="text-[9px] text-center mt-8" style={{ color: 'var(--cb-text-muted)' }}>
+        {scanStatus === 'scanning' ? 'Scanning…' : 'Click a resource to inspect'}
+      </div>
+    )
+  }
+
+  // Compute all advisories across all nodes
+  const allAdvisories = nodes.flatMap((n) => analyzeNode(n))
+  const criticals = allAdvisories.filter((a) => a.severity === 'critical')
+  const warnings  = allAdvisories.filter((a) => a.severity === 'warning')
+  const topAdvisory = criticals[0] ?? warnings[0] ?? null
+  const topNode = topAdvisory ? nodes.find((n) => n.id === topAdvisory.nodeId) : null
+
+  return (
+    <div style={{ padding: '12px 10px', fontFamily: 'monospace' }}>
+      <div
+        style={{
+          fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
+          color: 'var(--cb-text-muted)', marginBottom: 10,
+          borderBottom: '1px solid var(--cb-border)', paddingBottom: 6,
+        }}
+      >
+        SCAN SUMMARY
+      </div>
+
+      {/* Resource count */}
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginBottom: 3 }}>RESOURCES</div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--cb-text-primary)' }}>{nodes.length}</div>
+      </div>
+
+      {/* Advisory counts */}
+      {allAdvisories.length > 0 ? (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginBottom: 4 }}>ADVISORIES</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {criticals.length > 0 && (
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#ef4444' }}>
+                {criticals.length} critical
+              </span>
+            )}
+            {warnings.length > 0 && (
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b' }}>
+                {warnings.length} warning{warnings.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div style={{ marginBottom: 12, fontSize: 11, color: '#22c55e', fontWeight: 700 }}>
+          ✓ No advisories
+        </div>
+      )}
+
+      {/* Top advisory with jump-to button */}
+      {topAdvisory && topNode && (
+        <div
+          style={{
+            background: topAdvisory.severity === 'critical' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
+            border: `1px solid ${topAdvisory.severity === 'critical' ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`,
+            borderRadius: 4, padding: '8px 10px',
+          }}
+        >
+          <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', marginBottom: 3 }}>
+            {topAdvisory.severity === 'critical' ? '▲ TOP CRITICAL' : '▲ TOP WARNING'}
+          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--cb-text-primary)', marginBottom: 3 }}>
+            {topAdvisory.title}
+          </div>
+          <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginBottom: 6 }}>
+            {topNode.label}
+          </div>
+          <button
+            onClick={() => selectNode(topNode.id)}
+            style={{
+              fontSize: 9, fontFamily: 'monospace', cursor: 'pointer',
+              background: 'var(--cb-bg-elevated)',
+              border: '1px solid var(--cb-border-strong)',
+              color: 'var(--cb-text-primary)',
+              borderRadius: 3, padding: '3px 10px',
+            }}
+          >
+            Inspect →
+          </button>
+        </div>
+      )}
+
+      <div style={{ marginTop: 16, fontSize: 8, color: 'var(--cb-text-muted)', textAlign: 'center' }}>
+        Click a resource to inspect
+      </div>
+    </div>
+  )
+}
+
 type RemediateState = 'idle' | 'running' | 'done-ok' | `done-err:${number}`
 
 interface InspectorProps {
@@ -200,9 +303,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           )}
         </>
       ) : !node ? (
-        <div className="text-[9px] text-center mt-8" style={{ color: 'var(--cb-text-muted)' }}>
-          Click a resource to inspect
-        </div>
+        <FirstScanSummary nodes={nodes} />
       ) : (
         <>
           {/* drift banners float to top when driftStatus is set */}
