@@ -219,6 +219,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
   const selectedId      = useUIStore((s) => s.selectedNodeId)
   const selectedEdgeInfo = useUIStore((s) => s.selectedEdgeInfo)
   const setActiveCreate = useUIStore((s) => s.setActiveCreate)
+  const selectNode      = useUIStore((s) => s.selectNode)
   const lockedNodes     = useUIStore((s) => s.lockedNodes)
   const toggleLockNode  = useUIStore((s) => s.toggleLockNode)
   const annotations     = useUIStore((s) => s.annotations)
@@ -235,6 +236,20 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
 
   const [remediateState, setRemediateState] = useState<RemediateState>('idle')
   const [advisoriesExpanded, setAdvisoriesExpanded] = useState(true)
+
+  // Navigation between nodes that have advisories (OP_INTELLIGENCE)
+  const advisoryNavigation = useMemo(() => {
+    if (!flag('OP_INTELLIGENCE')) return null
+    const withIssues = nodes.filter((n) => analyzeNode(n).length > 0)
+    // Sort: nodes with any critical advisory first, then rest
+    const sorted = [...withIssues].sort((a, b) => {
+      const aHasCritical = analyzeNode(a).some((x) => x.severity === 'critical') ? 0 : 1
+      const bHasCritical = analyzeNode(b).some((x) => x.severity === 'critical') ? 0 : 1
+      return aHasCritical - bHasCritical
+    })
+    const currentIdx = sorted.findIndex((n) => n.id === selectedId)
+    return { sorted, currentIdx }
+  }, [nodes, selectedId])
 
   React.useEffect(() => {
     setRemediateState('idle')
@@ -474,7 +489,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
             )
           })()}
 
-          {/* ADVISORIES section — flag-gated OP_INTELLIGENCE */}
+          {/* ADVISORIES section + next/prev navigation — flag-gated OP_INTELLIGENCE */}
           {flag('OP_INTELLIGENCE') && (() => {
             const rawAdvisories = analyzeNode(node as CloudNode)
             const severityOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 }
@@ -555,6 +570,56 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                     </div>
                   )
                 )}
+              </div>
+            )
+          })()}
+
+          {/* Advisory next/prev navigation strip — flag-gated OP_INTELLIGENCE */}
+          {flag('OP_INTELLIGENCE') && advisoryNavigation && advisoryNavigation.sorted.length > 1 && advisoryNavigation.currentIdx !== -1 && (() => {
+            const { sorted, currentIdx } = advisoryNavigation
+            const prevNode = currentIdx > 0 ? sorted[currentIdx - 1] : null
+            const nextNode = currentIdx < sorted.length - 1 ? sorted[currentIdx + 1] : null
+            const btnStyle = (disabled: boolean): React.CSSProperties => ({
+              background: 'none',
+              border: 'none',
+              fontFamily: 'monospace',
+              fontSize: 8,
+              cursor: disabled ? 'default' : 'pointer',
+              color: 'var(--cb-text-muted)',
+              opacity: disabled ? 0.35 : 1,
+              padding: '2px 4px',
+            })
+            return (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: 8,
+                fontFamily: 'monospace',
+                color: 'var(--cb-text-muted)',
+                marginBottom: 8,
+                padding: '4px 6px',
+                borderRadius: 3,
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid var(--cb-border)',
+              }}>
+                <button
+                  disabled={!prevNode}
+                  onClick={() => prevNode && selectNode(prevNode.id)}
+                  style={btnStyle(!prevNode)}
+                >
+                  ← Prev
+                </button>
+                <span style={{ fontSize: 8, color: 'var(--cb-text-muted)' }}>
+                  {currentIdx + 1} / {sorted.length} nodes with issues
+                </span>
+                <button
+                  disabled={!nextNode}
+                  onClick={() => nextNode && selectNode(nextNode.id)}
+                  style={btnStyle(!nextNode)}
+                >
+                  Next →
+                </button>
               </div>
             )
           })()}
