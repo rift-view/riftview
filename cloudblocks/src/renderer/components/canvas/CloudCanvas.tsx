@@ -6,7 +6,6 @@ import type { StickyNote } from '../../store/ui'
 import { TopologyView } from './TopologyView'
 import { GraphView } from './GraphView'
 import { CommandView } from './CommandView'
-import { flag } from '../../utils/flags'
 import { CanvasContextMenu } from './CanvasContextMenu'
 import { CanvasToast } from '../CanvasToast'
 import { SaveViewModal } from './SaveViewModal'
@@ -27,7 +26,7 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
   const view           = useUIStore((s) => s.view)
   const effectiveView  = (view === 'command' ? 'topology' : view) as 'topology' | 'graph'
   const setView        = useUIStore((s) => s.setView)
-  const showCommandTab = flag('COMMAND_BOARD')
+  const showCommandTab = true
   const profile        = useCloudStore((s) => s.profile)
   const savedViews     = useUIStore((s) => s.savedViews)
   const activeViewSlot = useUIStore((s) => s.activeViewSlot)
