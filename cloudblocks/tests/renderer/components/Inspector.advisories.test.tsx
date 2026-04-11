@@ -53,7 +53,7 @@ describe('Inspector ADVISORIES section', () => {
   })
 
   it('hidden when OP_INTELLIGENCE flag is false', () => {
-    vi.unstubAllEnvs()
+    vi.stubEnv('VITE_FLAG_OP_INTELLIGENCE', 'false')
     setup(baseNode({ metadata: {} }))
     expect(screen.queryByText('ADVISORIES ▾')).toBeNull()
   })

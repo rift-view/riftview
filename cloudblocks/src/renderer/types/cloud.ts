@@ -117,6 +117,9 @@ export type AdvisoryRuleId =
   | 'rds-no-deletion-protection'
   | 'rds-no-backup'
   | 'sqs-no-dlq'
+  | 'ecs-task-count-mismatch'
+  | 'elasticache-no-replica'
+  | 'opensearch-no-vpc'
 
 export type AdvisorySeverity = 'info' | 'warning' | 'critical'
 

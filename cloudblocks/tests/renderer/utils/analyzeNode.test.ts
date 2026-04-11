@@ -170,4 +170,42 @@ describe('analyzeNode', () => {
     const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, hasDlq: true } }))
     expect(r.find((a) => a.ruleId === 'lambda-no-dlq')).toBeUndefined()
   })
+
+  // ── ecs-task-count-mismatch ───────────────────────────────────────────────
+  it('ecs with runningCount < desiredCount → warning ecs-task-count-mismatch', () => {
+    const r = analyzeNode(node({ type: 'ecs', metadata: { desiredCount: 3, runningCount: 1, launchType: 'FARGATE' } }))
+    expect(r.some((a) => a.ruleId === 'ecs-task-count-mismatch')).toBe(true)
+  })
+  it('ecs with runningCount === desiredCount → no ecs-task-count-mismatch', () => {
+    const r = analyzeNode(node({ type: 'ecs', metadata: { desiredCount: 2, runningCount: 2, launchType: 'FARGATE' } }))
+    expect(r.find((a) => a.ruleId === 'ecs-task-count-mismatch')).toBeUndefined()
+  })
+  it('ecs with runningCount=0 desiredCount=0 → no ecs-task-count-mismatch', () => {
+    const r = analyzeNode(node({ type: 'ecs', metadata: { desiredCount: 0, runningCount: 0 } }))
+    expect(r.find((a) => a.ruleId === 'ecs-task-count-mismatch')).toBeUndefined()
+  })
+
+  // ── elasticache-no-replica ────────────────────────────────────────────────
+  it('redis standalone → warning elasticache-no-replica', () => {
+    const r = analyzeNode(node({ type: 'elasticache', metadata: { engine: 'redis', clusterMode: 'standalone' } }))
+    expect(r.some((a) => a.ruleId === 'elasticache-no-replica')).toBe(true)
+  })
+  it('redis cluster mode → no elasticache-no-replica', () => {
+    const r = analyzeNode(node({ type: 'elasticache', metadata: { engine: 'redis', clusterMode: 'cluster' } }))
+    expect(r.find((a) => a.ruleId === 'elasticache-no-replica')).toBeUndefined()
+  })
+  it('memcached → no elasticache-no-replica', () => {
+    const r = analyzeNode(node({ type: 'elasticache', metadata: { engine: 'memcached' } }))
+    expect(r.find((a) => a.ruleId === 'elasticache-no-replica')).toBeUndefined()
+  })
+
+  // ── opensearch-no-vpc ─────────────────────────────────────────────────────
+  it('opensearch with no parentId → warning opensearch-no-vpc', () => {
+    const r = analyzeNode(node({ type: 'opensearch', metadata: { engineVersion: 'OpenSearch_2.11' } }))
+    expect(r.some((a) => a.ruleId === 'opensearch-no-vpc')).toBe(true)
+  })
+  it('opensearch with parentId (in VPC) → no opensearch-no-vpc', () => {
+    const r = analyzeNode(node({ type: 'opensearch', metadata: {}, parentId: 'vpc-12345' }))
+    expect(r.find((a) => a.ruleId === 'opensearch-no-vpc')).toBeUndefined()
+  })
 })
