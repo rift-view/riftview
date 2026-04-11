@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 import type { CloudNode, NodeType } from '../types/cloud'
@@ -54,6 +54,13 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
   const lastScannedAt = useCloudStore((s) => s.lastScannedAt)
   const selectNode    = useUIStore((s) => s.selectNode)
 
+  // Memoized: only re-runs when the nodes array reference changes.
+  // Must be called before any early return to satisfy Rules of Hooks.
+  const allAdvisories = useMemo(
+    () => nodes.flatMap((n) => analyzeNode(n)),
+    [nodes]
+  )
+
   if (nodes.length === 0 || !lastScannedAt) {
     return (
       <div className="text-[9px] text-center mt-8" style={{ color: 'var(--cb-text-muted)' }}>
@@ -62,88 +69,136 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
     )
   }
 
-  // Compute all advisories across all nodes
-  const allAdvisories = nodes.flatMap((n) => analyzeNode(n))
   const criticals = allAdvisories.filter((a) => a.severity === 'critical')
   const warnings  = allAdvisories.filter((a) => a.severity === 'warning')
-  const topAdvisory = criticals[0] ?? warnings[0] ?? null
-  const topNode = topAdvisory ? nodes.find((n) => n.id === topAdvisory.nodeId) : null
+
+  // Sorted queue: criticals first, then warnings (stable within each group)
+  const sortedAdvisories = [...criticals, ...warnings]
 
   return (
     <div style={{ padding: '12px 10px', fontFamily: 'monospace' }}>
+      {/* Header with total count badge */}
       <div
         style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
-          color: 'var(--cb-text-muted)', marginBottom: 10,
+          color: 'var(--cb-text-muted)', marginBottom: 8,
           borderBottom: '1px solid var(--cb-border)', paddingBottom: 6,
         }}
       >
-        SCAN SUMMARY
-      </div>
-
-      {/* Resource count */}
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginBottom: 3 }}>RESOURCES</div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--cb-text-primary)' }}>{nodes.length}</div>
-      </div>
-
-      {/* Advisory counts */}
-      {allAdvisories.length > 0 ? (
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginBottom: 4 }}>ADVISORIES</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {criticals.length > 0 && (
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#ef4444' }}>
-                {criticals.length} critical
-              </span>
-            )}
-            {warnings.length > 0 && (
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b' }}>
-                {warnings.length} warning{warnings.length !== 1 ? 's' : ''}
-              </span>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div style={{ marginBottom: 12, fontSize: 11, color: '#22c55e', fontWeight: 700 }}>
-          ✓ No advisories
-        </div>
-      )}
-
-      {/* Top advisory with jump-to button */}
-      {topAdvisory && topNode && (
-        <div
-          style={{
-            background: topAdvisory.severity === 'critical' ? 'rgba(239,68,68,0.08)' : 'rgba(245,158,11,0.08)',
-            border: `1px solid ${topAdvisory.severity === 'critical' ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`,
-            borderRadius: 4, padding: '8px 10px',
-          }}
-        >
-          <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', marginBottom: 3 }}>
-            {topAdvisory.severity === 'critical' ? '▲ TOP CRITICAL' : '▲ TOP WARNING'}
-          </div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--cb-text-primary)', marginBottom: 3 }}>
-            {topAdvisory.title}
-          </div>
-          <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginBottom: 6 }}>
-            {topNode.label}
-          </div>
-          <button
-            onClick={() => selectNode(topNode.id)}
+        <span>ADVISORIES</span>
+        {allAdvisories.length > 0 && (
+          <span
             style={{
-              fontSize: 9, fontFamily: 'monospace', cursor: 'pointer',
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-border-strong)',
-              color: 'var(--cb-text-primary)',
-              borderRadius: 3, padding: '3px 10px',
+              fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 8,
+              background: criticals.length > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
+              color: criticals.length > 0 ? '#ef4444' : '#f59e0b',
             }}
           >
-            Inspect →
-          </button>
+            {allAdvisories.length}
+          </span>
+        )}
+      </div>
+
+      {/* Resource count line */}
+      <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginBottom: 10 }}>
+        {nodes.length} resource{nodes.length !== 1 ? 's' : ''} scanned
+      </div>
+
+      {/* All-clear or advisory queue list */}
+      {allAdvisories.length === 0 ? (
+        <div style={{ fontSize: 11, color: '#22c55e', fontWeight: 700, marginBottom: 12 }}>
+          ✓ All clear
+        </div>
+      ) : (
+        <div
+          style={{
+            overflowY: 'auto', maxHeight: 320,
+            border: '1px solid var(--cb-border)', borderRadius: 3,
+            marginBottom: 10,
+          }}
+        >
+          {sortedAdvisories.map((advisory, idx) => {
+            const resourceNode = nodes.find((n) => n.id === advisory.nodeId)
+            const remediation  = buildAdvisoryRemediation(advisory, advisory.nodeId)
+            const isCritical   = advisory.severity === 'critical'
+            const dotColor     = isCritical ? '#ef4444' : '#f59e0b'
+
+            return (
+              <div
+                key={`${advisory.nodeId}-${advisory.ruleId}-${idx}`}
+                onClick={() => selectNode(advisory.nodeId)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  height: 28, padding: '0 8px',
+                  borderBottom: '1px solid var(--cb-border)',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  ;(e.currentTarget as HTMLDivElement).style.background = 'var(--cb-bg-elevated)'
+                }}
+                onMouseLeave={(e) => {
+                  ;(e.currentTarget as HTMLDivElement).style.background = 'transparent'
+                }}
+              >
+                {/* Severity dot */}
+                <span
+                  style={{
+                    flexShrink: 0,
+                    width: 6, height: 6, borderRadius: '50%',
+                    background: dotColor,
+                    display: 'inline-block',
+                  }}
+                />
+
+                {/* Node label */}
+                <span
+                  style={{
+                    fontSize: 8, color: 'var(--cb-text-muted)',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    maxWidth: 60, flexShrink: 0,
+                  }}
+                  title={resourceNode?.label ?? advisory.nodeId}
+                >
+                  {resourceNode?.label ?? advisory.nodeId}
+                </span>
+
+                {/* Advisory title */}
+                <span
+                  style={{
+                    fontSize: 9, fontWeight: 700, color: 'var(--cb-text-primary)',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    flex: 1,
+                  }}
+                  title={advisory.title}
+                >
+                  {advisory.title}
+                </span>
+
+                {/* Fix button — only when automated remediation is available */}
+                {remediation && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      selectNode(advisory.nodeId)
+                    }}
+                    style={{
+                      fontSize: 8, fontFamily: 'monospace', cursor: 'pointer',
+                      background: 'none', border: 'none',
+                      color: 'var(--cb-accent)',
+                      flexShrink: 0, padding: '0 2px',
+                    }}
+                  >
+                    Fix →
+                  </button>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
-      <div style={{ marginTop: 16, fontSize: 8, color: 'var(--cb-text-muted)', textAlign: 'center' }}>
+      <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textAlign: 'center' }}>
         Click a resource to inspect
       </div>
     </div>
@@ -327,8 +382,8 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
             </div>
           )}
 
-          {/* REMEDIATE section — flag-gated, unmanaged + matched only */}
-          {flag('EXECUTION_ENGINE') && (node.driftStatus === 'unmanaged' || node.driftStatus === 'matched') && (() => {
+          {/* REMEDIATE section — unmanaged + matched only */}
+          {(node.driftStatus === 'unmanaged' || node.driftStatus === 'matched') && (() => {
             const safeNode = node as CloudNode
             const commands = buildRemediateCommands(safeNode)
             const hasCommands = commands.length > 0

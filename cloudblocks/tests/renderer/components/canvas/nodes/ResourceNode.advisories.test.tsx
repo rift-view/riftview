@@ -36,7 +36,6 @@ function makeProps(nodeType = 'ec2', metadata: Record<string, unknown> = {}): No
 describe('ResourceNode advisory badge', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_FLAG_OP_INTELLIGENCE', 'true')
-    vi.stubEnv('VITE_FLAG_ACTION_RAIL', 'false')
     useUIStore.setState({ pluginNodeTypes: {} } as Parameters<typeof useUIStore.setState>[0])
   })
 
