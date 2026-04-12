@@ -28,6 +28,7 @@ import { randomUUID } from 'crypto'
 import { buildLocalStackProvider } from '../terraform/provider'
 const execFileAsync = promisify(execFile)
 import { parseTfState, parseTfStateModules } from '../aws/tfstate/parser'
+import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 import { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from '../aws/iam/fetcher'
 import type { IamAnalysisResult } from '../../renderer/types/iam'
 import type { NodeType } from '../../renderer/types/cloud'
@@ -506,6 +507,27 @@ export function registerHandlers(win: BrowserWindow): void {
       return { ok: !stillErrored }
     } catch {
       return { ok: false }
+    }
+  })
+
+  // Validate AWS credentials via STS GetCallerIdentity — called before scan
+  ipcMain.handle(IPC.CREDENTIALS_VALIDATE, async (_event, profile: AwsProfile): Promise<{ ok: true; account: string; arn: string } | { ok: false; error: string }> => {
+    try {
+      const endpointConfig = profile.endpoint ? { endpoint: profile.endpoint } : {}
+      const credentialsConfig = profile.endpoint
+        ? { credentials: { accessKeyId: 'test', secretAccessKey: 'test' } }
+        : {}
+      // Mirror createClients: set AWS_PROFILE so the default credential chain picks up the right profile
+      process.env.AWS_PROFILE = profile.name
+      const stsClient = new STSClient({
+        region: profile.region ?? 'us-east-1',
+        ...endpointConfig,
+        ...credentialsConfig,
+      })
+      const res = await stsClient.send(new GetCallerIdentityCommand({}))
+      return { ok: true, account: res.Account ?? '', arn: res.Arn ?? '' }
+    } catch (err) {
+      return { ok: false, error: (err as Error).message }
     }
   })
 

@@ -36,6 +36,7 @@ export const IPC = {
   TFSTATE_LIST_MODULES:  'tfstate:list-modules',   // invoke → { modules: TfModuleInfo[]; error?: string }
   TFSTATE_SAVE_BASELINE: 'tfstate:save-baseline',  // invoke → { ok: boolean }
   SCAN_RETRY_SERVICE:    'scan:retry-service',      // invoke → { ok: boolean }
+  CREDENTIALS_VALIDATE:  'credentials:validate',    // invoke(AwsProfile) → { ok: boolean; account?: string; arn?: string; error?: string }
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]
