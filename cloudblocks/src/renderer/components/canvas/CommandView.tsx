@@ -113,6 +113,8 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
   const selectNode         = useUIStore((s) => s.selectNode)
   const commandFocusId     = useUIStore((s) => s.commandFocusId)
   const setCommandFocusId  = useUIStore((s) => s.setCommandFocusId)
+  const blastRadiusId      = useUIStore((s) => s.blastRadiusId)
+  const setBlastRadiusId   = useUIStore((s) => s.setBlastRadiusId)
 
   const [livePositions, setLivePositions] = useState<Record<string, XYPosition>>({})
 
@@ -135,6 +137,21 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
     return ids
   }, [commandFocusId, nodes])
 
+  // Blast radius: clicked node + all nodes sharing an integration edge with it
+  const blastRadiusSet = useMemo((): Set<string> | null => {
+    if (!blastRadiusId) return null
+    const ids = new Set([blastRadiusId])
+    for (const n of nodes) {
+      for (const { targetId } of (n.integrations ?? [])) {
+        if (targetId === blastRadiusId || n.id === blastRadiusId) {
+          ids.add(n.id)
+          ids.add(targetId)
+        }
+      }
+    }
+    return ids
+  }, [blastRadiusId, nodes])
+
   const flowNodes = useMemo(() => {
     return baseNodes
       .filter((n) => {
@@ -144,12 +161,19 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
       })
       .map((n) => {
         if (n.type === 'tier-label') return n
-        const stored = commandPositions[n.id]
-        const live   = livePositions[n.id]
-        const pos    = live ?? stored ?? n.position
-        return { ...n, position: pos, selected: n.id === selectedNodeId }
+        const stored  = commandPositions[n.id]
+        const live    = livePositions[n.id]
+        const pos     = live ?? stored ?? n.position
+        // Blast radius dims unrelated nodes; tier-label nodes are always full opacity
+        const opacity = blastRadiusSet ? (blastRadiusSet.has(n.id) ? 1 : 0.2) : 1
+        return {
+          ...n,
+          position: pos,
+          selected: n.id === selectedNodeId,
+          style:    { ...(n.style ?? {}), opacity, transition: 'opacity 0.15s ease' },
+        }
       })
-  }, [baseNodes, commandPositions, livePositions, selectedNodeId, focusedNodeIds])
+  }, [baseNodes, commandPositions, livePositions, selectedNodeId, focusedNodeIds, blastRadiusSet])
 
   const flowEdges = useMemo(() => buildCommandEdges(nodes, showIntegrations), [nodes, showIntegrations])
 
@@ -179,7 +203,7 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
   return (
     <div className="flex flex-col w-full h-full">
       {/* Context strip */}
-      {(vpcCount > 0 || subnetCount > 0 || sgCount > 0 || !!commandFocusId) && (
+      {(vpcCount > 0 || subnetCount > 0 || sgCount > 0 || !!commandFocusId || !!blastRadiusId) && (
         <div
           style={{
             padding:      '2px 12px',
@@ -204,6 +228,15 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
               FOCUS · {nodes.find((n) => n.id === commandFocusId)?.label ?? commandFocusId} ✕
             </span>
           )}
+          {blastRadiusId && (
+            <span
+              style={{ marginLeft: 12, color: '#f59e0b', cursor: 'pointer' }}
+              onClick={() => setBlastRadiusId(null)}
+              title="Clear blast radius"
+            >
+              BLAST RADIUS · {nodes.find((n) => n.id === blastRadiusId)?.label ?? blastRadiusId} ✕
+            </span>
+          )}
         </div>
       )}
 
@@ -213,11 +246,14 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
           edges={flowEdges}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
-          onNodeClick={(_e, node) => selectNode(node.id)}
+          onNodeClick={(_e, node) => {
+            selectNode(node.id)
+            setBlastRadiusId(blastRadiusId === node.id ? null : node.id)
+          }}
           onNodeDoubleClick={(_e, node) => {
             setCommandFocusId(commandFocusId === node.id ? null : node.id)
           }}
-          onPaneClick={() => { selectNode(null); setCommandFocusId(null) }}
+          onPaneClick={() => { selectNode(null); setCommandFocusId(null); setBlastRadiusId(null) }}
           onNodeContextMenu={(e, node) => {
             const cloudNode = nodes.find((n) => n.id === node.id)
             if (cloudNode) onNodeContextMenu(cloudNode, e.clientX, e.clientY)
