@@ -185,6 +185,13 @@ code {
   100% { background: #000;                       opacity: 0; }
 }
 
+/* ── Top Risks reveal animation ──────────────────────────────────────────── */
+
+@keyframes cb-top-risks-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 /* ── Phase 1: STATUS_LANGUAGE animations ─────────────────────────────────── */
 
 @media (prefers-reduced-motion: no-preference) {
