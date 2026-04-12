@@ -1,7 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { NodeStatus, NodeType } from '../../../types/cloud'
 import { useUIStore } from '../../../store/ui'
-import { flag } from '../../../utils/flags'
 import { ActionRail } from './ActionRail'
 import { analyzeNode } from '../../../utils/analyzeNode'
 
@@ -144,7 +143,7 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
   const isImported  = d.status === 'imported'
   const meta        = d.metadata ? getNodeMeta(d.nodeType, d.metadata) : undefined
   const actionRail  = true
-  const opIntelligence = flag('OP_INTELLIGENCE')
+  const opIntelligence = true
 
   const advisoryBadge = opIntelligence && d.metadata ? (() => {
     const advisories = analyzeNode({
