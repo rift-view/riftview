@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react'
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { ResourceNode } from '../../../../../src/renderer/components/canvas/nodes/ResourceNode'
 import { useUIStore } from '../../../../../src/renderer/store/ui'
 import type { NodeProps } from '@xyflow/react'
@@ -35,11 +35,8 @@ function makeProps(nodeType = 'ec2', metadata: Record<string, unknown> = {}): No
 
 describe('ResourceNode advisory badge', () => {
   beforeEach(() => {
-    vi.stubEnv('VITE_FLAG_OP_INTELLIGENCE', 'true')
     useUIStore.setState({ pluginNodeTypes: {} } as Parameters<typeof useUIStore.setState>[0])
   })
-
-  afterEach(() => { vi.unstubAllEnvs() })
 
   it('shows critical badge when ec2 has public SSH', () => {
     render(<ResourceNode {...makeProps('ec2', { hasPublicSsh: true })} />)
@@ -53,9 +50,8 @@ describe('ResourceNode advisory badge', () => {
     expect(document.querySelector('[title*="warning"]')).toBeNull()
   })
 
-  it('hidden when OP_INTELLIGENCE flag is off', () => {
-    vi.stubEnv('VITE_FLAG_OP_INTELLIGENCE', 'false')
+  it('always-on: advisory badge visible without flag (OP_INTELLIGENCE always-on)', () => {
     render(<ResourceNode {...makeProps('ec2', { hasPublicSsh: true })} />)
-    expect(document.querySelector('[title*="critical"]')).toBeNull()
+    expect(document.querySelector('[title*="critical"]')).not.toBeNull()
   })
 })
