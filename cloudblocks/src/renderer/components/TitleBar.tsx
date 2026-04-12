@@ -19,9 +19,10 @@ function relativeTime(date: Date): string {
 
 interface Props {
   onScan: () => void
+  fixCount?: number
 }
 
-export function TitleBar({ onScan }: Props): React.JSX.Element {
+export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
   const [profiles, setProfiles]           = useState<AwsProfile[]>([])
   const [connStatus, setConnStatus]       = useState<'unknown' | 'connected' | 'error'>('unknown')
   const [endpointInput, setEndpointInput] = useState<string>(() => useCloudStore.getState().profile.endpoint ?? '')
@@ -241,6 +242,12 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
       {lastScannedAt && (
         <span style={{ fontSize: 11, color: 'var(--cb-text-muted)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
           {relativeTime(lastScannedAt)}
+        </span>
+      )}
+
+      {fixCount > 0 && (
+        <span style={{ fontSize: 11, color: '#4ade80', marginLeft: 8, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+          ✓ {fixCount} fixed this session
         </span>
       )}
 
