@@ -7,7 +7,6 @@ import { edgeTypeLabel } from '../utils/edgeTypeLabel'
 import { getMonthlyEstimate, formatPrice } from '../utils/pricing'
 import { IamAdvisor } from './IamAdvisor'
 import { buildConsoleUrl } from '../utils/buildConsoleUrl'
-import { flag } from '../utils/flags'
 import { buildRemediateCommands } from '../utils/buildRemediateCommands'
 import { analyzeNode } from '../utils/analyzeNode'
 import type { Advisory } from '../types/cloud'
@@ -53,6 +52,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
   const scanStatus    = useCloudStore((s) => s.scanStatus)
   const lastScannedAt = useCloudStore((s) => s.lastScannedAt)
   const selectNode    = useUIStore((s) => s.selectNode)
+  const [groupByRule, setGroupByRule] = useState(false)
 
   // Memoized: only re-runs when the nodes array reference changes.
   // Must be called before any early return to satisfy Rules of Hooks.
@@ -60,6 +60,25 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
     () => nodes.flatMap((n) => analyzeNode(n)),
     [nodes]
   )
+
+  // Rule-grouped: one entry per unique ruleId, severity-escalated, sorted critical-first.
+  // Called unconditionally to satisfy Rules of Hooks.
+  const ruleGroups = useMemo(() => {
+    const map = new Map<string, { ruleId: string; title: string; severity: Advisory['severity']; count: number }>()
+    const severityRank: Record<Advisory['severity'], number> = { critical: 0, warning: 1, info: 2 }
+    for (const a of allAdvisories) {
+      const existing = map.get(a.ruleId)
+      if (existing) {
+        existing.count++
+        if (severityRank[a.severity] < severityRank[existing.severity]) existing.severity = a.severity
+      } else {
+        map.set(a.ruleId, { ruleId: a.ruleId, title: a.title, severity: a.severity, count: 1 })
+      }
+    }
+    return Array.from(map.values()).sort(
+      (a, b) => severityRank[a.severity] - severityRank[b.severity]
+    )
+  }, [allAdvisories])
 
   if (nodes.length === 0 || !lastScannedAt) {
     return (
@@ -75,9 +94,15 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
   // Sorted queue: criticals first, then warnings (stable within each group)
   const sortedAdvisories = [...criticals, ...warnings]
 
+  const severityDotColor = (severity: Advisory['severity']) => {
+    if (severity === 'critical') return '#ef4444'
+    if (severity === 'warning')  return '#f59e0b'
+    return '#60a5fa'
+  }
+
   return (
     <div style={{ padding: '12px 10px', fontFamily: 'monospace' }}>
-      {/* Header with total count badge */}
+      {/* Header with total count badge + group toggle */}
       <div
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -87,17 +112,31 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
         }}
       >
         <span>ADVISORIES</span>
-        {allAdvisories.length > 0 && (
-          <span
-            style={{
-              fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 8,
-              background: criticals.length > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
-              color: criticals.length > 0 ? '#ef4444' : '#f59e0b',
-            }}
-          >
-            {allAdvisories.length}
-          </span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          {allAdvisories.length > 0 && (
+            <>
+              <span
+                style={{
+                  fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 8,
+                  background: criticals.length > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
+                  color: criticals.length > 0 ? '#ef4444' : '#f59e0b',
+                }}
+              >
+                {allAdvisories.length}
+              </span>
+              <button
+                onClick={() => setGroupByRule((v) => !v)}
+                style={{
+                  fontSize: 10, padding: '1px 6px', borderRadius: 3,
+                  background: '#334155', color: '#94a3b8',
+                  border: 'none', cursor: 'pointer',
+                }}
+              >
+                {groupByRule ? 'By Rule' : 'By Node'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Resource count line */}
@@ -110,7 +149,60 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
         <div style={{ fontSize: 11, color: '#22c55e', fontWeight: 700, marginBottom: 12 }}>
           ✓ All clear
         </div>
+      ) : groupByRule ? (
+        /* ── By-Rule view ── */
+        <div
+          style={{
+            overflowY: 'auto', maxHeight: 320,
+            border: '1px solid var(--cb-border)', borderRadius: 3,
+            marginBottom: 10,
+          }}
+        >
+          {ruleGroups.map((group) => (
+            <div
+              key={group.ruleId}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                height: 28, padding: '0 8px',
+                borderBottom: '1px solid var(--cb-border)',
+              }}
+            >
+              {/* Severity dot */}
+              <span
+                style={{
+                  flexShrink: 0,
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: severityDotColor(group.severity),
+                  display: 'inline-block',
+                }}
+              />
+
+              {/* Rule title */}
+              <span
+                style={{
+                  fontSize: 9, fontWeight: 700, color: 'var(--cb-text-primary)',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  flex: 1,
+                }}
+                title={group.title}
+              >
+                {group.title}
+              </span>
+
+              {/* Affected node count */}
+              <span
+                style={{
+                  fontSize: 8, color: 'var(--cb-text-muted)',
+                  flexShrink: 0, whiteSpace: 'nowrap',
+                }}
+              >
+                {group.count} node{group.count !== 1 ? 's' : ''}
+              </span>
+            </div>
+          ))}
+        </div>
       ) : (
+        /* ── By-Node view (default) ── */
         <div
           style={{
             overflowY: 'auto', maxHeight: 320,
@@ -239,7 +331,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
 
   // Navigation between nodes that have advisories (OP_INTELLIGENCE)
   const advisoryNavigation = useMemo(() => {
-    if (!flag('OP_INTELLIGENCE')) return null
+    if (!true) return null
     const withIssues = nodes.filter((n) => analyzeNode(n).length > 0)
     // Sort: nodes with any critical advisory first, then rest
     const sorted = [...withIssues].sort((a, b) => {
@@ -490,7 +582,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           })()}
 
           {/* ADVISORIES section + next/prev navigation — flag-gated OP_INTELLIGENCE */}
-          {flag('OP_INTELLIGENCE') && (() => {
+          {true && (() => {
             const rawAdvisories = analyzeNode(node as CloudNode)
             const severityOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 }
             const advisories: Advisory[] = [...rawAdvisories].sort(
@@ -575,7 +667,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           })()}
 
           {/* Advisory next/prev navigation strip — flag-gated OP_INTELLIGENCE */}
-          {flag('OP_INTELLIGENCE') && advisoryNavigation && advisoryNavigation.sorted.length > 1 && advisoryNavigation.currentIdx !== -1 && (() => {
+          {true && advisoryNavigation && advisoryNavigation.sorted.length > 1 && advisoryNavigation.currentIdx !== -1 && (() => {
             const { sorted, currentIdx } = advisoryNavigation
             const prevNode = currentIdx > 0 ? sorted[currentIdx - 1] : null
             const nextNode = currentIdx < sorted.length - 1 ? sorted[currentIdx + 1] : null
