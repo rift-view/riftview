@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { Inspector } from '../../../src/renderer/components/Inspector'
 import { useUIStore } from '../../../src/renderer/store/ui'
 import { useCloudStore } from '../../../src/renderer/store/cloud'
@@ -43,19 +43,13 @@ function setup(node: CloudNode): ReturnType<typeof render> {
 
 describe('Inspector ADVISORIES section', () => {
   beforeEach(() => {
-    vi.stubEnv('VITE_FLAG_OP_INTELLIGENCE', 'true')
     useUIStore.setState({ selectedNodeId: null, annotations: {}, selectedEdgeId: null, selectedEdgeInfo: null })
     useCloudStore.setState({ nodes: [], importedNodes: [] })
   })
 
-  afterEach(() => {
-    vi.unstubAllEnvs()
-  })
-
-  it('hidden when OP_INTELLIGENCE flag is false', () => {
-    vi.stubEnv('VITE_FLAG_OP_INTELLIGENCE', 'false')
+  it('always-on: ADVISORIES section visible without flag (OP_INTELLIGENCE always-on)', () => {
     setup(baseNode({ metadata: {} }))
-    expect(screen.queryByText('ADVISORIES ▾')).toBeNull()
+    expect(screen.getByText(/ADVISORIES/)).toBeTruthy()
   })
 
   it('shows ADVISORIES section for lambda with no timeout', () => {
