@@ -46,6 +46,7 @@ beforeEach(() => {
     saveBaseline:         vi.fn().mockResolvedValue({ ok: true }),
     retryScanService:     vi.fn().mockResolvedValue({ ok: true }),
     saveExportImage:      vi.fn().mockResolvedValue({ success: true }),
+    validateCredentials:  vi.fn().mockResolvedValue({ ok: true, account: '123456789012', arn: 'arn:aws:iam::123456789012:user/test' }),
   }
   useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })

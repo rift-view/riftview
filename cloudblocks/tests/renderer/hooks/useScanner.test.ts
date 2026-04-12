@@ -43,6 +43,7 @@ beforeEach(() => {
     saveBaseline:         vi.fn().mockResolvedValue({ ok: true }),
     retryScanService:     vi.fn().mockResolvedValue({ ok: true }),
     saveExportImage:      vi.fn().mockResolvedValue({ success: true }),
+    validateCredentials:  vi.fn().mockResolvedValue({ ok: true, account: '123456789012', arn: 'arn:aws:iam::123456789012:user/test' }),
   }
   useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })
@@ -53,9 +54,9 @@ describe('useScanner', () => {
     await waitFor(() => expect(window.terminus.selectProfile).toHaveBeenCalledWith({ name: 'default' }))
   })
 
-  it('triggerScan calls startScan', () => {
+  it('triggerScan calls startScan', async () => {
     const { result } = renderHook(() => useScanner())
-    result.current.triggerScan()
+    await result.current.triggerScan()
     expect(window.terminus.startScan).toHaveBeenCalled()
   })
 })

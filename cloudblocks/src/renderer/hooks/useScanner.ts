@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useCloudStore } from '../store/cloud'
+import { useUIStore } from '../store/ui'
 
 // On mount: loads profiles, selects first profile + its default region
 // (which starts the scanner in main).
@@ -29,8 +30,13 @@ export function useScanner(): { triggerScan: () => void } {
   }, [setProfile, setRegion, setSelectedRegions])
 
   return {
-    triggerScan: () => {
-      const { selectedRegions, nodes } = useCloudStore.getState()
+    triggerScan: async () => {
+      const { selectedRegions, nodes, profile } = useCloudStore.getState()
+      const result = await window.terminus.validateCredentials(profile)
+      if (!result.ok) {
+        useUIStore.getState().showToast('Credential error: ' + result.error, 'error')
+        return
+      }
       const counts = nodes.reduce<Record<string, number>>(
         (acc, n) => ({ ...acc, [n.type]: (acc[n.type] ?? 0) + 1 }),
         {},

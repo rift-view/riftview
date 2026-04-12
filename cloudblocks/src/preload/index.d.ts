@@ -42,5 +42,9 @@ interface Window {
     notifyDrift(count: number): Promise<void>
     onPluginMetadata(cb: (meta: Record<string, import('../renderer/types/plugin').NodeTypeMetadata>) => void): () => void
     retryScanService(service: string): Promise<{ ok: boolean }>
+    validateCredentials(profile: import('../renderer/types/cloud').AwsProfile): Promise<
+      | { ok: true; account: string; arn: string }
+      | { ok: false; error: string }
+    >
   }
 }
