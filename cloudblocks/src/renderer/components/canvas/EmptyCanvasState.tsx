@@ -1,12 +1,27 @@
+import { useState, useEffect, useRef } from 'react'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
 
 export function EmptyCanvasState(): React.JSX.Element | null {
-  const profile        = useCloudStore((s) => s.profile)
-  const nodes          = useCloudStore((s) => s.nodes)
-  const scanStatus     = useCloudStore((s) => s.scanStatus)
+  const profile         = useCloudStore((s) => s.profile)
+  const nodes           = useCloudStore((s) => s.nodes)
+  const scanStatus      = useCloudStore((s) => s.scanStatus)
+  const region          = useCloudStore((s) => s.region)
   const selectedRegions = useCloudStore((s) => s.selectedRegions)
   const setShowSettings = useUIStore((s) => s.setShowSettings)
+
+  const [hasScanned, setHasScanned] = useState(false)
+  const prevStatusRef = useRef(scanStatus)
+
+  useEffect(() => {
+    const prev = prevStatusRef.current
+    prevStatusRef.current = scanStatus
+    if (scanStatus === 'scanning') {
+      setHasScanned(false)
+    } else if (prev === 'scanning' && scanStatus === 'idle') {
+      setHasScanned(true)
+    }
+  }, [scanStatus])
 
   if (nodes.length > 0) return null
 
@@ -105,6 +120,25 @@ export function EmptyCanvasState(): React.JSX.Element | null {
           {skeletonNode(130, '0.3s')}
           {skeletonNode(130, '0.5s')}
           {skeletonNode(130, '0.7s')}
+        </div>
+      </div>
+    )
+  }
+
+  if (hasScanned && scanStatus === 'idle') {
+    return (
+      <div style={overlayStyle}>
+        <div style={cardStyle}>
+          <div style={headingStyle}>No resources found in {region}</div>
+          <div style={subStyle}>
+            Check that your AWS profile has the required permissions and that resources exist in this region.
+          </div>
+          <button
+            style={btnStyle}
+            onClick={() => window.terminus.startScan(selectedRegions)}
+          >
+            Scan Again
+          </button>
         </div>
       </div>
     )

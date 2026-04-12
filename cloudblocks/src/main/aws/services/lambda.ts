@@ -58,6 +58,10 @@ function extractEnvVarIntegrations(
       const bucketName = value.replace('arn:aws:s3:::', '').split('/')[0]
       if (bucketName) results.push({ targetId: bucketName, edgeType: 'trigger' })
     }
+    // RDS: hostname like mydb.xxxx.us-east-1.rds.amazonaws.com
+    if (/\.[a-z0-9-]+\.rds\.amazonaws\.com$/.test(value)) {
+      results.push({ targetId: value, edgeType: 'trigger' })
+    }
   }
   return results
 }
