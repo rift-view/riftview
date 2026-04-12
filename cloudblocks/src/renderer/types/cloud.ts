@@ -120,6 +120,7 @@ export type AdvisoryRuleId =
   | 'ecs-task-count-mismatch'
   | 'elasticache-no-replica'
   | 'opensearch-no-vpc'
+  | 'apigw-lambda-rds-no-guardrails'
 
 export type AdvisorySeverity = 'info' | 'warning' | 'critical'
 

@@ -1,41 +1,73 @@
-# cloudblocks
+# Terminus
 
-An Electron application with React and TypeScript
+**The incident diagnostic layer AWS doesn't have.**
 
-## Recommended IDE Setup
+The AWS console is organized by service silo. When something breaks, you open 4 tabs to answer one question: *what else is connected to this?* Terminus answers it in 10 seconds.
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+## What it does
 
-## Project Setup
+- **Blast radius** — single-click any resource to see what breaks if it fails. Everything unrelated dims. No tabs, no guessing.
+- **Live cross-service graph** — scans your entire AWS account in one pass, across every service, and holds it as a connected graph. Always current.
+- **Top risks** — immediately after scan, shows your 3 highest-severity chain-of-failure risks. Not 40 warnings — the 3 things that matter.
+- **Drift detection** — compares live infrastructure against your Terraform state. Shows exactly what drifted and generates the fix commands.
+- **Guided remediation** — execute AWS CLI fix commands from inside the app. No copy-pasting.
 
-### Install
+## Why not just use the AWS console?
+
+The console is a service browser. It cannot show you cross-service relationships. It cannot tell you what breaks if an SQS queue goes down. It cannot compare your live infra to your IaC. Terminus does all three — and the graph is always live, so you can trust the answers.
+
+## Quick start
+
+1. Install: download the latest release
+2. Open Terminus and select your AWS profile
+3. Hit Scan — your infrastructure appears as a connected graph in seconds
+4. Click any node to see blast radius. Check the Top Risks panel for chain-of-failure advisories.
+
+## Requirements
+
+- AWS credentials configured (`~/.aws/credentials` or environment variables)
+- Required IAM permissions: see the onboarding screen for the full list
+- macOS 13+ (Windows support planned)
+
+## Stack
+
+Electron 32 · React 19 · TypeScript · React Flow v12 · AWS SDK v3 · Tailwind CSS 4
+
+## Development
 
 ```bash
-$ npm install
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
+
+# Run tests
+npm test
+
+# Typecheck
+npm run typecheck
+
+# Lint
+npm run lint
 ```
 
-### Development
+## Build
 
 ```bash
-$ npm run dev
-```
+# macOS
+npm run build:mac
 
-### Build
+# Windows
+npm run build:win
 
-```bash
-# For windows
-$ npm run build:win
-
-# For macOS
-$ npm run build:mac
-
-# For Linux
-$ npm run build:linux
+# Linux
+npm run build:linux
 ```
 
 ## Legal
 
-Cloudblocks is not affiliated with, endorsed by, or sponsored by Amazon Web
+Terminus is not affiliated with, endorsed by, or sponsored by Amazon Web
 Services, Inc. AWS, Amazon EC2, and all related marks are trademarks of
 Amazon.com, Inc. or its affiliates.
 
