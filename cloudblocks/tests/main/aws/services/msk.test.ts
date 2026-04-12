@@ -1,9 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { KafkaClient } from '@aws-sdk/client-kafka'
+import { LambdaClient } from '@aws-sdk/client-lambda'
 import { listMskClusters } from '../../../../src/main/aws/services/msk'
 
 const mockSend = vi.fn()
 const mockClient = { send: mockSend } as unknown as KafkaClient
+
+// Default lambda mock returns no ESMs
+const mockLambdaSend = vi.fn().mockResolvedValue({ EventSourceMappings: [] })
+const mockLambdaClient = { send: mockLambdaSend } as unknown as LambdaClient
 
 const CLUSTER_ARN = 'arn:aws:kafka:us-east-1:123456789:cluster/my-cluster/abc'
 const SUBNET_ID = 'subnet-abc123'
@@ -11,6 +16,7 @@ const SUBNET_ID = 'subnet-abc123'
 describe('listMskClusters', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockLambdaSend.mockResolvedValue({ EventSourceMappings: [] })
   })
 
   it('maps provisioned MSK clusters to CloudNodes', async () => {
@@ -29,7 +35,7 @@ describe('listMskClusters', () => {
       }],
     })
 
-    const nodes = await listMskClusters(mockClient, 'us-east-1')
+    const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
     expect(nodes[0].type).toBe('msk')
@@ -52,7 +58,7 @@ describe('listMskClusters', () => {
       }],
     })
 
-    const nodes = await listMskClusters(mockClient, 'us-east-1')
+    const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes[0].metadata.clusterType).toBe('PROVISIONED')
     expect(nodes[0].metadata.instanceType).toBe('kafka.m5.large')
@@ -70,7 +76,7 @@ describe('listMskClusters', () => {
       }],
     })
 
-    const nodes = await listMskClusters(mockClient, 'us-east-1')
+    const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes[0].parentId).toBe(SUBNET_ID)
   })
@@ -89,7 +95,7 @@ describe('listMskClusters', () => {
       }],
     })
 
-    const nodes = await listMskClusters(mockClient, 'us-east-1')
+    const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes[0].parentId).toBe(SERVERLESS_SUBNET)
   })
@@ -105,7 +111,7 @@ describe('listMskClusters', () => {
         ClusterInfoList: [{ ClusterArn: CLUSTER_ARN_2, ClusterName: 'cluster-2', State: 'ACTIVE' }],
       })
 
-    const nodes = await listMskClusters(mockClient, 'us-east-1')
+    const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes).toHaveLength(2)
     expect(nodes.map(n => n.label)).toEqual(['cluster-1', 'cluster-2'])
@@ -120,11 +126,12 @@ describe('listMskClusters', () => {
 
     for (const [awsStatus, expected] of statuses) {
       vi.clearAllMocks()
+      mockLambdaSend.mockResolvedValue({ EventSourceMappings: [] })
       mockSend.mockResolvedValueOnce({
         ClusterInfoList: [{ ClusterArn: CLUSTER_ARN, ClusterName: 'my-cluster', State: awsStatus }],
       })
 
-      const nodes = await listMskClusters(mockClient, 'us-east-1')
+      const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
       expect(nodes[0].status).toBe(expected)
     }
   })
@@ -132,8 +139,33 @@ describe('listMskClusters', () => {
   it('returns empty array on error', async () => {
     mockSend.mockRejectedValueOnce(new Error('Access denied'))
 
-    const nodes = await listMskClusters(mockClient, 'us-east-1')
+    const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes).toEqual([])
+  })
+
+  it('emits trigger integrations for Lambda ESMs on a cluster', async () => {
+    const LAMBDA_ARN = 'arn:aws:lambda:us-east-1:123456789012:function:my-fn'
+    mockSend.mockResolvedValueOnce({
+      ClusterInfoList: [{ ClusterArn: CLUSTER_ARN, ClusterName: 'my-cluster', State: 'ACTIVE' }],
+    })
+    mockLambdaSend.mockResolvedValueOnce({
+      EventSourceMappings: [{ FunctionArn: LAMBDA_ARN }],
+    })
+
+    const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
+
+    expect(nodes[0].integrations).toEqual([{ targetId: LAMBDA_ARN, edgeType: 'trigger' }])
+  })
+
+  it('omits integrations when no ESMs exist for a cluster', async () => {
+    mockSend.mockResolvedValueOnce({
+      ClusterInfoList: [{ ClusterArn: CLUSTER_ARN, ClusterName: 'my-cluster', State: 'ACTIVE' }],
+    })
+    mockLambdaSend.mockResolvedValueOnce({ EventSourceMappings: [] })
+
+    const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
+
+    expect(nodes[0].integrations).toBeUndefined()
   })
 })

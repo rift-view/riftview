@@ -66,12 +66,12 @@ const SERVICE_SCANNERS: Record<string, ServiceScanner> = {
   'eventbridge-bus':(c, r) => listEventBuses(c.eventbridge, r),
   'ses':            (c, r) => listIdentities(c.ses, r),
   'cognito':        (c, r) => listUserPools(c.cognito, r),
-  'kinesis':        (c, r) => listStreams(c.kinesis, r),
+  'kinesis':        (c, r) => listStreams(c.kinesis, c.lambda, r),
   'ecs':            (c, r) => listEcsServices(c.ecs, r),
   'elasticache':    (c, r) => listCacheClusters(c.elasticache, r),
   'eks':            (c, r) => listEksClusters(c.eks, r),
   'opensearch':     (c, r) => listOpenSearchDomains(c.opensearch, r),
-  'msk':            (c, r) => listMskClusters(c.msk, r),
+  'msk':            (c, r) => listMskClusters(c.msk, c.lambda, r),
 }
 
 const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
@@ -174,12 +174,12 @@ export const awsPlugin: TerminusPlugin = {
       listEventBuses(clients.eventbridge, region).catch(catch_('eventbridge-bus')),
       listIdentities(clients.ses, region).catch(catch_('ses')),
       listUserPools(clients.cognito, region).catch(catch_('cognito')),
-      listStreams(clients.kinesis, region).catch(catch_('kinesis')),
+      listStreams(clients.kinesis, clients.lambda, region).catch(catch_('kinesis')),
       listEcsServices(clients.ecs, region).catch(catch_('ecs')),
       listCacheClusters(clients.elasticache, region).catch(catch_('elasticache')),
       listEksClusters(clients.eks, region).catch(catch_('eks')),
       listOpenSearchDomains(clients.opensearch, region).catch(catch_('opensearch')),
-      listMskClusters(clients.msk, region).catch(catch_('msk')),
+      listMskClusters(clients.msk, clients.lambda, region).catch(catch_('msk')),
     ])
 
     const nodes = results.flat().map((node) => ({ ...node, region: node.region ?? region }))

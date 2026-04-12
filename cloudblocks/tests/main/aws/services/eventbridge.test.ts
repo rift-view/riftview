@@ -81,7 +81,23 @@ describe('listEventBuses', () => {
     ])
   })
 
-  it('filters out non-matching target ARN prefixes (e.g. ECS)', async () => {
+  it('filters out non-matching target ARN prefixes (e.g. EC2)', async () => {
+    const EC2_ARN = 'arn:aws:ec2:us-east-1:123456789:instance/i-abc123'
+    mockSend
+      .mockResolvedValueOnce({ EventBuses: [{ Arn: BUS_ARN, Name: 'my-bus' }] })
+      .mockResolvedValueOnce({ Rules: [{ Name: 'rule-1', State: 'ENABLED' }] })
+      .mockResolvedValueOnce({ Targets: [
+        { Arn: LAMBDA_ARN },
+        { Arn: EC2_ARN },
+      ] })
+
+    const nodes = await listEventBuses(mockClient, 'us-east-1')
+
+    expect(nodes[0].integrations).toHaveLength(1)
+    expect(nodes[0].integrations?.[0].targetId).toBe(LAMBDA_ARN)
+  })
+
+  it('includes ECS targets as trigger integrations', async () => {
     mockSend
       .mockResolvedValueOnce({ EventBuses: [{ Arn: BUS_ARN, Name: 'my-bus' }] })
       .mockResolvedValueOnce({ Rules: [{ Name: 'rule-1', State: 'ENABLED' }] })
@@ -92,8 +108,8 @@ describe('listEventBuses', () => {
 
     const nodes = await listEventBuses(mockClient, 'us-east-1')
 
-    expect(nodes[0].integrations).toHaveLength(1)
-    expect(nodes[0].integrations?.[0].targetId).toBe(LAMBDA_ARN)
+    expect(nodes[0].integrations).toHaveLength(2)
+    expect(nodes[0].integrations?.map((i) => i.targetId)).toContain(ECS_ARN)
   })
 
   it('skips targets where Arn is undefined', async () => {

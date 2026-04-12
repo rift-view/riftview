@@ -138,6 +138,27 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
     }
   }
 
+  // Reverse ALB → ECS edges (blast radius: ALB → ECS)
+  for (const albNode of nodes) {
+    if (albNode.type !== 'alb') continue
+    const tgArns = albNode.metadata.targetGroupArns as string[] | undefined
+    if (!tgArns || tgArns.length === 0) continue
+    for (const ecsNode of nodes) {
+      if (ecsNode.type !== 'ecs') continue
+      const linked = ecsNode.integrations?.some((i) => tgArns.includes(i.targetId))
+      if (!linked) continue
+      const edgeId = `integration-alb-ecs-${albNode.id}-${ecsNode.id}`
+      if (edges.some((e) => e.id === edgeId)) continue
+      edges.push({
+        id:     edgeId,
+        source: albNode.id,
+        target: ecsNode.id,
+        type:   'integration',
+        data:   { isIntegration: true as const, edgeType: 'trigger' as EdgeType },
+      })
+    }
+  }
+
   return edges
 }
 
