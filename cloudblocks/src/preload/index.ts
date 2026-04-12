@@ -120,4 +120,8 @@ contextBridge.exposeInMainWorld('terminus', {
   // Retry a single scan service
   retryScanService: (service: string): Promise<{ ok: boolean }> =>
     ipcRenderer.invoke(IPC.SCAN_RETRY_SERVICE, { service }),
+
+  // Validate AWS credentials via STS before scanning
+  validateCredentials: (profile: AwsProfile): Promise<{ ok: true; account: string; arn: string } | { ok: false; error: string }> =>
+    ipcRenderer.invoke(IPC.CREDENTIALS_VALIDATE, profile),
 })
