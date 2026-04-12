@@ -1,9 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { KinesisClient } from '@aws-sdk/client-kinesis'
+import { LambdaClient } from '@aws-sdk/client-lambda'
 import { listStreams } from '../../../../src/main/aws/services/kinesis'
 
 const mockSend = vi.fn()
 const mockClient = { send: mockSend } as unknown as KinesisClient
+
+// Default lambda mock returns no ESMs
+const mockLambdaSend = vi.fn().mockResolvedValue({ EventSourceMappings: [] })
+const mockLambdaClient = { send: mockLambdaSend } as unknown as LambdaClient
 
 const STREAM_ARN  = 'arn:aws:kinesis:us-east-1:123456789012:stream/my-stream'
 const STREAM_ARN2 = 'arn:aws:kinesis:us-east-1:123456789012:stream/my-stream-2'
@@ -11,6 +16,7 @@ const STREAM_ARN2 = 'arn:aws:kinesis:us-east-1:123456789012:stream/my-stream-2'
 describe('listStreams', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockLambdaSend.mockResolvedValue({ EventSourceMappings: [] })
   })
 
   it('maps a stream to a CloudNode', async () => {
@@ -23,7 +29,7 @@ describe('listStreams', () => {
       }],
     })
 
-    const nodes = await listStreams(mockClient, 'us-east-1')
+    const nodes = await listStreams(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
     expect(nodes[0].type).toBe('kinesis')
@@ -43,7 +49,7 @@ describe('listStreams', () => {
       }],
     })
 
-    const nodes = await listStreams(mockClient, 'us-east-1')
+    const nodes = await listStreams(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes[0].metadata.streamName).toBe('my-stream')
     expect(nodes[0].metadata.streamArn).toBe(STREAM_ARN)
@@ -60,7 +66,7 @@ describe('listStreams', () => {
       }],
     })
 
-    const nodes = await listStreams(mockClient, 'us-east-1')
+    const nodes = await listStreams(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes[0].metadata.streamMode).toBe('PROVISIONED')
   })
@@ -75,7 +81,7 @@ describe('listStreams', () => {
       StreamSummaries: [{ StreamARN: STREAM_ARN, StreamName: 'my-stream', StreamStatus: streamStatus }],
     })
 
-    const nodes = await listStreams(mockClient, 'us-east-1')
+    const nodes = await listStreams(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes[0].status).toBe(expectedStatus)
   })
@@ -85,7 +91,7 @@ describe('listStreams', () => {
       StreamSummaries: [{ StreamARN: STREAM_ARN, StreamName: undefined, StreamStatus: 'ACTIVE' }],
     })
 
-    const nodes = await listStreams(mockClient, 'us-east-1')
+    const nodes = await listStreams(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes[0].label).toBe(STREAM_ARN)
   })
@@ -98,7 +104,7 @@ describe('listStreams', () => {
       ],
     })
 
-    const nodes = await listStreams(mockClient, 'us-east-1')
+    const nodes = await listStreams(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
     expect(nodes[0].id).toBe(STREAM_ARN)
@@ -115,7 +121,7 @@ describe('listStreams', () => {
         NextToken: undefined,
       })
 
-    const nodes = await listStreams(mockClient, 'us-east-1')
+    const nodes = await listStreams(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes).toHaveLength(2)
     expect(nodes.map(n => n.id).sort()).toEqual([STREAM_ARN, STREAM_ARN2].sort())
@@ -124,8 +130,33 @@ describe('listStreams', () => {
   it('returns empty array on API error', async () => {
     mockSend.mockRejectedValueOnce(new Error('network error'))
 
-    const nodes = await listStreams(mockClient, 'us-east-1')
+    const nodes = await listStreams(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes).toEqual([])
+  })
+
+  it('emits trigger integrations for Lambda ESMs on a stream', async () => {
+    const LAMBDA_ARN = 'arn:aws:lambda:us-east-1:123456789012:function:my-fn'
+    mockSend.mockResolvedValueOnce({
+      StreamSummaries: [{ StreamARN: STREAM_ARN, StreamName: 'my-stream', StreamStatus: 'ACTIVE' }],
+    })
+    mockLambdaSend.mockResolvedValueOnce({
+      EventSourceMappings: [{ FunctionArn: LAMBDA_ARN }],
+    })
+
+    const nodes = await listStreams(mockClient, mockLambdaClient, 'us-east-1')
+
+    expect(nodes[0].integrations).toEqual([{ targetId: LAMBDA_ARN, edgeType: 'trigger' }])
+  })
+
+  it('omits integrations when no ESMs exist for a stream', async () => {
+    mockSend.mockResolvedValueOnce({
+      StreamSummaries: [{ StreamARN: STREAM_ARN, StreamName: 'my-stream', StreamStatus: 'ACTIVE' }],
+    })
+    mockLambdaSend.mockResolvedValueOnce({ EventSourceMappings: [] })
+
+    const nodes = await listStreams(mockClient, mockLambdaClient, 'us-east-1')
+
+    expect(nodes[0].integrations).toBeUndefined()
   })
 })

@@ -11,6 +11,7 @@ const ALLOWED_TARGET_PREFIXES = [
   'arn:aws:sqs:',
   'arn:aws:states:',
   'arn:aws:sns:',
+  'arn:aws:ecs:',
 ]
 
 function isAllowedTarget(arn: string): boolean {
