@@ -95,3 +95,77 @@ describe('Inspector ADVISORIES section', () => {
     expect(screen.getByText('No issues detected')).toBeTruthy()
   })
 })
+
+describe('Inspector Advisory Queue group-by-rule toggle', () => {
+  beforeEach(() => {
+    useUIStore.setState({ selectedNodeId: null, annotations: {}, selectedEdgeId: null, selectedEdgeInfo: null })
+    useCloudStore.setState({ nodes: [], importedNodes: [], lastScannedAt: new Date() })
+  })
+
+  function setupGlobal(nodes: CloudNode[]): ReturnType<typeof render> {
+    // No selectedNodeId → Inspector renders FirstScanSummary (Advisory Queue)
+    useUIStore.setState({ selectedNodeId: null })
+    useCloudStore.setState({ nodes, importedNodes: [], lastScannedAt: new Date() })
+    return render(
+      <Inspector
+        onDelete={vi.fn()}
+        onEdit={vi.fn()}
+        onQuickAction={vi.fn()}
+      />
+    )
+  }
+
+  const lambdaNode = (id: string, label: string): CloudNode => ({
+    id,
+    label,
+    type: 'lambda',
+    status: 'running',
+    region: 'us-east-1',
+    metadata: { timeout: 0 }, // triggers lambda-no-timeout (critical)
+  } as CloudNode)
+
+  it('By Node view (default): node labels are visible in the advisory list', () => {
+    setupGlobal([lambdaNode('fn-a', 'fn-alpha'), lambdaNode('fn-b', 'fn-beta')])
+    expect(screen.getByText('fn-alpha')).toBeTruthy()
+    expect(screen.getByText('fn-beta')).toBeTruthy()
+  })
+
+  it('toggle button shows "By Node" by default (indicating what you switch to from By Rule)', () => {
+    setupGlobal([lambdaNode('fn-a', 'fn-alpha'), lambdaNode('fn-b', 'fn-beta')])
+    // Default is node-grouped, so button label is "By Node" (what you'd switch to would be "By Rule")
+    // Per source: groupByRule=false → button text is "By Node"
+    expect(screen.getByRole('button', { name: 'By Node' })).toBeTruthy()
+  })
+
+  it('clicking By Node toggle switches to rule-grouped view', () => {
+    setupGlobal([lambdaNode('fn-a', 'fn-alpha'), lambdaNode('fn-b', 'fn-beta')])
+    fireEvent.click(screen.getByRole('button', { name: 'By Node' }))
+    // Rule-grouped view shows rule titles
+    expect(screen.getByText('No timeout configured')).toBeTruthy()
+  })
+
+  it('rule-grouped view shows node count for a rule hit by multiple nodes', () => {
+    setupGlobal([lambdaNode('fn-a', 'fn-alpha'), lambdaNode('fn-b', 'fn-beta')])
+    fireEvent.click(screen.getByRole('button', { name: 'By Node' }))
+    // Both nodes trigger lambda-no-timeout → count should be 2
+    expect(screen.getByText('2 nodes')).toBeTruthy()
+  })
+
+  it('toggle button shows "By Rule" when in rule-grouped mode', () => {
+    setupGlobal([lambdaNode('fn-a', 'fn-alpha'), lambdaNode('fn-b', 'fn-beta')])
+    fireEvent.click(screen.getByRole('button', { name: 'By Node' }))
+    // After toggling to rule view, button label becomes "By Rule" (indicating what you'd switch to next)
+    expect(screen.getByRole('button', { name: 'By Rule' })).toBeTruthy()
+  })
+
+  it('clicking toggle again switches back to node-grouped view', () => {
+    setupGlobal([lambdaNode('fn-a', 'fn-alpha'), lambdaNode('fn-b', 'fn-beta')])
+    // Switch to rule view
+    fireEvent.click(screen.getByRole('button', { name: 'By Node' }))
+    // Switch back to node view
+    fireEvent.click(screen.getByRole('button', { name: 'By Rule' }))
+    // Node labels should be visible again
+    expect(screen.getByText('fn-alpha')).toBeTruthy()
+    expect(screen.getByText('fn-beta')).toBeTruthy()
+  })
+})

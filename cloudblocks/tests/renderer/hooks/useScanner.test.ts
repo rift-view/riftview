@@ -59,4 +59,31 @@ describe('useScanner', () => {
     await result.current.triggerScan()
     expect(window.terminus.startScan).toHaveBeenCalled()
   })
+
+  it('aborts scan and shows toast when credentials are invalid', async () => {
+    window.terminus.validateCredentials = vi.fn().mockResolvedValue({
+      ok: false,
+      error: 'ExpiredTokenException: The security token included in the request is expired',
+    })
+    window.terminus.startScan = vi.fn().mockResolvedValue(undefined)
+
+    const showToastSpy = vi.fn()
+    const { useUIStore } = await import('../../../src/renderer/store/ui')
+    const origGetState = useUIStore.getState
+    vi.spyOn(useUIStore, 'getState').mockReturnValue({
+      ...origGetState(),
+      showToast: showToastSpy,
+    })
+
+    const { result } = renderHook(() => useScanner())
+    await result.current.triggerScan()
+
+    expect(window.terminus.startScan).not.toHaveBeenCalled()
+    expect(showToastSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Credential error'),
+      'error',
+    )
+
+    vi.restoreAllMocks()
+  })
 })
