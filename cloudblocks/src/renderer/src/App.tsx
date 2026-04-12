@@ -66,6 +66,7 @@ export default function App(): React.JSX.Element | null {
   const { triggerScan } = useScanner()
   const [profiles, setProfiles] = useState<AwsProfile[] | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [fixCount, setFixCount] = useState(0)
   const errorMessage      = useCloudStore((s) => s.errorMessage)
   const setError          = useCloudStore((s) => s.setError)
   const settings          = useCloudStore((s) => s.settings)
@@ -191,6 +192,7 @@ export default function App(): React.JSX.Element | null {
     useCloudStore.getState().patchNodeStatus(node.id, 'pending')
     const result = await window.terminus.runCli(commands)
     if (result.code === 0) {
+      setFixCount((n) => n + 1)
       useUIStore.getState().showToast('Remediation complete')
       triggerScan()
     } else {
@@ -209,7 +211,7 @@ export default function App(): React.JSX.Element | null {
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden" style={{ background: 'var(--cb-bg-app)' }}>
-      <TitleBar onScan={triggerScan} />
+      <TitleBar onScan={triggerScan} fixCount={fixCount} />
       <RegionBar />
       {errorMessage && <ErrorBanner message={errorMessage} onDismiss={() => setError(null)} />}
       <div className="flex flex-1 overflow-hidden">
