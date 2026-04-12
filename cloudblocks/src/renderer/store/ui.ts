@@ -65,6 +65,7 @@ interface UIState {
   isExporting:            boolean
   commandPositions:       Record<string, { x: number; y: number }>
   commandFocusId:         string | null
+  blastRadiusId:          string | null
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -114,6 +115,7 @@ interface UIState {
   setIsExporting:         (v: boolean) => void
   setCommandPosition:     (nodeId: string, pos: { x: number; y: number }) => void
   setCommandFocusId:      (id: string | null) => void
+  setBlastRadiusId:       (id: string | null) => void
   removeCustomEdge:       (id: string) => void
   updateCustomEdgeLabel:  (id: string, label: string) => void
   updateCustomEdgeColor:  (id: string, color: CustomEdge['color']) => void
@@ -156,6 +158,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   isExporting:          false,
   commandPositions:     {},
   commandFocusId:       null,
+  blastRadiusId:        null,
 
   setView:             (view) => set({ view }),
   selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -320,4 +323,5 @@ export const useUIStore = create<UIState>((set, get) => ({
   setCommandPosition: (nodeId, pos) =>
     set((s) => ({ commandPositions: { ...s.commandPositions, [nodeId]: pos } })),
   setCommandFocusId: (id) => set({ commandFocusId: id }),
+  setBlastRadiusId:  (id) => set({ blastRadiusId: id }),
 }))
