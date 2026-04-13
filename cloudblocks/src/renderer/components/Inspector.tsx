@@ -198,9 +198,10 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                   <span
                     style={{
                       flexShrink: 0,
-                      width: 6, height: 6, borderRadius: '50%',
+                      width: 8, height: 8, borderRadius: 4,
                       background: severityDotColor(group.severity),
                       display: 'inline-block',
+                      ...(group.severity === 'critical' ? { boxShadow: '0 0 5px #ef4444' } : {}),
                     }}
                   />
                   <span
@@ -258,9 +259,10 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                     <span
                       style={{
                         flexShrink: 0,
-                        width: 6, height: 6, borderRadius: '50%',
+                        width: 8, height: 8, borderRadius: 4,
                         background: dotColor,
                         display: 'inline-block',
+                        ...(advisory.severity === 'critical' ? { boxShadow: '0 0 5px #ef4444' } : {}),
                       }}
                     />
                     <span
@@ -381,9 +383,10 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
                             <span
                               style={{
-                                width: 6, height: 6, borderRadius: '50%',
+                                width: 8, height: 8, borderRadius: 4,
                                 background: dotColor,
                                 display: 'inline-block', flexShrink: 0,
+                                ...(advisory.severity === 'critical' ? { boxShadow: '0 0 5px #ef4444' } : {}),
                               }}
                             />
                             <span
@@ -595,7 +598,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
             <>
               {selectedEdgeInfo.data && Object.keys(selectedEdgeInfo.data).filter((k) => k !== 'isIntegration').length > 0 && (
                 <div>
-                  <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                  <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                     METADATA
                   </div>
                   {Object.entries(selectedEdgeInfo.data)
@@ -975,7 +978,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* ACM-specific metadata */}
           {node.type === 'acm' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 METADATA
               </div>
               {[
@@ -1044,7 +1047,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* CloudFront-specific metadata */}
           {node.type === 'cloudfront' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 METADATA
               </div>
               {[
@@ -1104,7 +1107,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* API Gateway specific metadata */}
           {node.type === 'apigw' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 METADATA
               </div>
               <div className="mb-1.5">
@@ -1163,7 +1166,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* API Gateway Route specific metadata */}
           {node.type === 'apigw-route' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 METADATA
               </div>
               {[
@@ -1199,7 +1202,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* Lambda-specific metadata */}
           {node.type === 'lambda' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 METADATA
               </div>
               {[
@@ -1225,7 +1228,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* ECS-specific metadata */}
           {node.type === 'ecs' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 METADATA
               </div>
               {[
@@ -1245,7 +1248,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* RDS-specific metadata */}
           {node.type === 'rds' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 METADATA
               </div>
               {[
@@ -1304,7 +1307,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* SQS-specific metadata */}
           {node.type === 'sqs' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 QUEUE STATS
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
@@ -1333,7 +1336,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* DynamoDB-specific metadata */}
           {node.type === 'dynamo' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 TABLE STATS
               </div>
               {[
@@ -1358,7 +1361,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* EC2-specific metadata */}
           {node.type === 'ec2' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 INSTANCE
               </div>
               {[
@@ -1433,7 +1436,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* SNS-specific metadata */}
           {node.type === 'sns' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 TOPIC
               </div>
               <div className="mb-1.5">
@@ -1454,7 +1457,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* ECR-specific metadata */}
           {node.type === 'ecr-repo' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 REPOSITORY
               </div>
               {typeof node.metadata.uri === 'string' && node.metadata.uri && (
@@ -1482,7 +1485,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* ElastiCache-specific metadata */}
           {node.type === 'elasticache' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 CACHE
               </div>
               {[
@@ -1520,7 +1523,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* EKS-specific metadata */}
           {node.type === 'eks' && (
             <div>
-              <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                 CLUSTER
               </div>
               {[
@@ -1544,7 +1547,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
             <>
               {Object.entries(node.metadata).length > 0 && (
                 <div>
-                  <div className="text-[8px] mb-2 mt-3" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+                  <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
                     METADATA
                   </div>
                   {Object.entries(node.metadata).slice(0, 6).map(([k, v]) => (

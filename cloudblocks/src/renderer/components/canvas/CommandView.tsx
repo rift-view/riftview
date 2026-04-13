@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect, type MouseEvent as ReactMouseEvent } from 'react'
 import {
   ReactFlow,
   Background,
@@ -27,16 +27,17 @@ function TierLabelNode({ data }: { data: Record<string, unknown> }): React.JSX.E
     <div
       style={{
         fontFamily:    'monospace',
-        fontSize:      9,
+        fontSize:      13,
         fontWeight:    700,
         letterSpacing: '0.12em',
         textTransform: 'uppercase',
-        color:         'var(--cb-text-muted)',
+        color:         '#cbd5e1',
         padding:       '0 8px',
         width:         LANE_X - 8,
         textAlign:     'right',
         userSelect:    'none',
         pointerEvents: 'none',
+        borderRight:   '1px solid rgba(203,213,225,0.25)',
       }}
     >
       {name}
@@ -98,6 +99,9 @@ function buildCommandEdges(cloudNodes: CloudNode[], showIntegrations: boolean): 
   return edges
 }
 
+// Internet-facing source node types for path trace
+const INTERNET_SOURCE_TYPES = new Set(['igw', 'cloudfront', 'apigw'])
+
 // ── CommandView ───────────────────────────────────────────────────────────────
 
 interface Props {
@@ -115,8 +119,14 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
   const setCommandFocusId  = useUIStore((s) => s.setCommandFocusId)
   const blastRadiusId      = useUIStore((s) => s.blastRadiusId)
   const setBlastRadiusId   = useUIStore((s) => s.setBlastRadiusId)
+  const pathTraceId        = useUIStore((s) => s.pathTraceId)
+  const setPathTraceId     = useUIStore((s) => s.setPathTraceId)
 
   const [livePositions, setLivePositions] = useState<Record<string, XYPosition>>({})
+
+  // Path trace animation state (local, transient)
+  const [pathTraceNodes, setPathTraceNodes] = useState<string[]>([])
+  const [pathTraceRevealedCount, setPathTraceRevealedCount] = useState(0)
 
   const baseNodes = useMemo(() => buildCommandNodes(nodes), [nodes])
 
@@ -152,6 +162,73 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
     return ids
   }, [blastRadiusId, nodes])
 
+  // ── Path trace ────────────────────────────────────────────────────────────────
+  const inboundMap = useMemo((): Map<string, string[]> => {
+    const map = new Map<string, string[]>()
+    for (const n of nodes) {
+      for (const { targetId } of (n.integrations ?? [])) {
+        const arr = map.get(targetId) ?? []
+        arr.push(n.id)
+        map.set(targetId, arr)
+      }
+    }
+    return map
+  }, [nodes])
+
+  const runPathTrace = useCallback((nodeId: string) => {
+    const visited = new Set<string>()
+    const queue: string[] = [nodeId]
+    while (queue.length > 0) {
+      const curr = queue.shift()!
+      if (visited.has(curr)) continue
+      visited.add(curr)
+      const inbounds = inboundMap.get(curr) ?? []
+      for (const src of inbounds) {
+        if (!visited.has(src)) queue.push(src)
+      }
+    }
+    const sources = [...visited].filter((id) => {
+      const n = nodes.find((x) => x.id === id)
+      return n && INTERNET_SOURCE_TYPES.has(n.type)
+    })
+    const ordered = [...visited].filter((id) => id !== nodeId)
+    ordered.sort((a) => (sources.includes(a) ? -1 : 1))
+    ordered.push(nodeId)
+    setPathTraceNodes(ordered)
+    setPathTraceRevealedCount(0)
+  }, [nodes, inboundMap])
+
+  useEffect(() => {
+    if (pathTraceNodes.length === 0 || !pathTraceId) {
+      setPathTraceRevealedCount(0)
+      return
+    }
+    if (pathTraceRevealedCount >= pathTraceNodes.length) return
+    const timer = setInterval(() => {
+      setPathTraceRevealedCount((c) => {
+        if (c >= pathTraceNodes.length) {
+          clearInterval(timer)
+          return c
+        }
+        return c + 1
+      })
+    }, 150)
+    return () => clearInterval(timer)
+  }, [pathTraceNodes, pathTraceId])
+
+  useEffect(() => {
+    if (!pathTraceId) {
+      setPathTraceNodes([])
+      setPathTraceRevealedCount(0)
+      return
+    }
+    runPathTrace(pathTraceId)
+  }, [pathTraceId, runPathTrace])
+
+  const pathTraceRevealedSet = useMemo((): Set<string> => {
+    return new Set(pathTraceNodes.slice(0, pathTraceRevealedCount))
+  }, [pathTraceNodes, pathTraceRevealedCount])
+
   const flowNodes = useMemo(() => {
     return baseNodes
       .filter((n) => {
@@ -164,16 +241,28 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
         const stored  = commandPositions[n.id]
         const live    = livePositions[n.id]
         const pos     = live ?? stored ?? n.position
-        // Blast radius dims unrelated nodes; tier-label nodes are always full opacity
-        const opacity = blastRadiusSet ? (blastRadiusSet.has(n.id) ? 1 : 0.2) : 1
+
+        let opacity   = 1
+        let boxShadow: string | undefined
+        if (blastRadiusSet) {
+          opacity = blastRadiusSet.has(n.id) ? 1 : 0.2
+        } else if (pathTraceId) {
+          if (pathTraceRevealedSet.has(n.id)) {
+            opacity   = 1
+            boxShadow = '0 0 8px #60a5fa'
+          } else {
+            opacity = 0.15
+          }
+        }
+
         return {
           ...n,
           position: pos,
           selected: n.id === selectedNodeId,
-          style:    { ...(n.style ?? {}), opacity, transition: 'opacity 0.15s ease' },
+          style:    { ...(n.style ?? {}), opacity, transition: 'opacity 0.15s ease', ...(boxShadow ? { boxShadow } : {}) },
         }
       })
-  }, [baseNodes, commandPositions, livePositions, selectedNodeId, focusedNodeIds, blastRadiusSet])
+  }, [baseNodes, commandPositions, livePositions, selectedNodeId, focusedNodeIds, blastRadiusSet, pathTraceId, pathTraceRevealedSet])
 
   const flowEdges = useMemo(() => buildCommandEdges(nodes, showIntegrations), [nodes, showIntegrations])
 
@@ -201,18 +290,22 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
   const region      = nodes[0]?.region ?? ''
 
   return (
-    <div className="flex flex-col w-full h-full">
-      {/* Context strip */}
-      {(vpcCount > 0 || subnetCount > 0 || sgCount > 0 || !!commandFocusId || !!blastRadiusId) && (
+    <div className="relative w-full h-full">
+      {/* Context strip — absolutely positioned, consistent with topology/graph views */}
+      {(vpcCount > 0 || subnetCount > 0 || sgCount > 0 || !!commandFocusId || !!blastRadiusId || !!pathTraceId) && (
         <div
           style={{
-            padding:      '2px 12px',
-            fontFamily:   'monospace',
-            fontSize:     9,
-            color:        'var(--cb-text-muted)',
-            background:   'var(--cb-bg-panel)',
-            borderBottom: '1px solid var(--cb-border)',
-            flexShrink:   0,
+            position:   'absolute',
+            top:        12,
+            left:       12,
+            zIndex:     10,
+            padding:    '2px 10px',
+            fontFamily: 'monospace',
+            fontSize:   9,
+            color:      'var(--cb-text-muted)',
+            background: 'var(--cb-bg-panel)',
+            border:     '1px solid var(--cb-border)',
+            borderRadius: 4,
           }}
         >
           {vpcCount > 0 && <span>{vpcCount} VPC{vpcCount !== 1 ? 's' : ''} · </span>}
@@ -237,23 +330,40 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
               BLAST RADIUS · {nodes.find((n) => n.id === blastRadiusId)?.label ?? blastRadiusId} ✕
             </span>
           )}
+          {pathTraceId && (() => {
+            const src = pathTraceNodes.length > 0 ? nodes.find((n) => n.id === pathTraceNodes[0]) : null
+            const tgt = nodes.find((n) => n.id === pathTraceId)
+            return (
+              <span
+                style={{ marginLeft: 12, color: '#60a5fa', cursor: 'pointer' }}
+                onClick={() => setPathTraceId(null)}
+                title="Clear path trace"
+              >
+                PATH · {src?.label ?? '?'} → {tgt?.label ?? pathTraceId} ✕
+              </span>
+            )
+          })()}
         </div>
       )}
 
-      <div className="flex-1">
+      <div className="w-full h-full">
         <ReactFlow
           nodes={flowNodes}
           edges={flowEdges}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
-          onNodeClick={(_e, node) => {
+          onNodeClick={(e: ReactMouseEvent, node) => {
             selectNode(node.id)
-            setBlastRadiusId(blastRadiusId === node.id ? null : node.id)
+            if (e.shiftKey) {
+              setPathTraceId(pathTraceId === node.id ? null : node.id)
+            } else {
+              setBlastRadiusId(blastRadiusId === node.id ? null : node.id)
+            }
           }}
           onNodeDoubleClick={(_e, node) => {
             setCommandFocusId(commandFocusId === node.id ? null : node.id)
           }}
-          onPaneClick={() => { selectNode(null); setCommandFocusId(null); setBlastRadiusId(null) }}
+          onPaneClick={() => { selectNode(null); setCommandFocusId(null); setBlastRadiusId(null); setPathTraceId(null) }}
           onNodeContextMenu={(e, node) => {
             const cloudNode = nodes.find((n) => n.id === node.id)
             if (cloudNode) onNodeContextMenu(cloudNode, e.clientX, e.clientY)
