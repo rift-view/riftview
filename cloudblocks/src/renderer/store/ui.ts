@@ -66,6 +66,7 @@ interface UIState {
   commandPositions:       Record<string, { x: number; y: number }>
   commandFocusId:         string | null
   blastRadiusId:          string | null
+  pathTraceId:            string | null
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -116,6 +117,7 @@ interface UIState {
   setCommandPosition:     (nodeId: string, pos: { x: number; y: number }) => void
   setCommandFocusId:      (id: string | null) => void
   setBlastRadiusId:       (id: string | null) => void
+  setPathTraceId:         (id: string | null) => void
   removeCustomEdge:       (id: string) => void
   updateCustomEdgeLabel:  (id: string, label: string) => void
   updateCustomEdgeColor:  (id: string, color: CustomEdge['color']) => void
@@ -159,6 +161,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   commandPositions:     {},
   commandFocusId:       null,
   blastRadiusId:        null,
+  pathTraceId:          null,
 
   setView:             (view) => set({ view }),
   selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -323,5 +326,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   setCommandPosition: (nodeId, pos) =>
     set((s) => ({ commandPositions: { ...s.commandPositions, [nodeId]: pos } })),
   setCommandFocusId: (id) => set({ commandFocusId: id }),
-  setBlastRadiusId:  (id) => set({ blastRadiusId: id }),
+  setBlastRadiusId:  (id) => set({ blastRadiusId: id, pathTraceId: null }),
+  setPathTraceId:    (id) => set({ pathTraceId: id, blastRadiusId: null }),
 }))

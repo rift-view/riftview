@@ -343,6 +343,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
   useEffect(() => {
     if (pathTraceNodes.length === 0 || !pathTraceId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPathTraceRevealedCount(0)
       return
     }
@@ -358,7 +359,9 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
   useEffect(() => {
     if (!pathTraceId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPathTraceNodes([])
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPathTraceRevealedCount(0)
       return
     }
