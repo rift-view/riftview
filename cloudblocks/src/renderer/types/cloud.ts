@@ -121,6 +121,9 @@ export type AdvisoryRuleId =
   | 'elasticache-no-replica'
   | 'opensearch-no-vpc'
   | 'apigw-lambda-rds-no-guardrails'
+  | 'apigw-lambda-no-concurrency-limit'
+  | 'lambda-sqs-no-dlq'
+  | 'sns-sqs-lambda-no-dlq'
 
 export type AdvisorySeverity = 'info' | 'warning' | 'critical'
 
