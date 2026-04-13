@@ -200,6 +200,7 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
 
   useEffect(() => {
     if (pathTraceNodes.length === 0 || !pathTraceId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPathTraceRevealedCount(0)
       return
     }
@@ -214,11 +215,13 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
       })
     }, 150)
     return () => clearInterval(timer)
-  }, [pathTraceNodes, pathTraceId])
+  }, [pathTraceNodes, pathTraceId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!pathTraceId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPathTraceNodes([])
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPathTraceRevealedCount(0)
       return
     }
