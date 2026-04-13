@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
@@ -41,6 +41,38 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
 
   const [modalSlot, setModalSlot]     = useState<number | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+
+  // Ghost hint overlay — shown once after the first successful scan with nodes
+  const nodes           = useCloudStore((s) => s.nodes)
+  const lastScannedAt   = useCloudStore((s) => s.lastScannedAt)
+  const [hintVisible, setHintVisible]   = useState(false)
+  const [hintOpacity, setHintOpacity]   = useState(1)
+  const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!lastScannedAt || nodes.length === 0) return
+    if (localStorage.getItem('terminus-hint-seen')) return
+    // Show the hint (mark seen immediately so it never re-shows)
+    localStorage.setItem('terminus-hint-seen', '1')
+    setHintOpacity(1)
+    setHintVisible(true)
+    // Fade out after 4 seconds
+    hintTimerRef.current = setTimeout(() => {
+      setHintOpacity(0)
+      setTimeout(() => setHintVisible(false), 500)
+    }, 4000)
+    return () => {
+      if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+    }
+  }, [lastScannedAt]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function dismissHint(): void {
+    if (!hintVisible) return
+    localStorage.setItem('terminus-hint-seen', '1')
+    if (hintTimerRef.current) clearTimeout(hintTimerRef.current)
+    setHintOpacity(0)
+    setTimeout(() => setHintVisible(false), 500)
+  }
 
   // CRT turn-on animation key — remounts the overlay on profile switch to replay the animation.
   const profileKey = profile.name + '|' + (profile.endpoint ?? '')
@@ -210,6 +242,41 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
         )}
 
         <EmptyCanvasState />
+
+        {/* Ghost hint overlay — one-time discoverability hint after first scan */}
+        {hintVisible && (
+          <div
+            onClick={dismissHint}
+            style={{
+              position: 'absolute',
+              bottom: 48,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(15, 23, 42, 0.92)',
+              border: '1px solid #334155',
+              borderRadius: 8,
+              padding: '10px 16px',
+              color: '#94a3b8',
+              fontSize: 12,
+              textAlign: 'center',
+              pointerEvents: 'none',
+              zIndex: 20,
+              opacity: hintOpacity,
+              transition: 'opacity 0.5s',
+              whiteSpace: 'nowrap',
+              fontFamily: 'monospace',
+            }}
+          >
+            <div>
+              <span style={{ color: '#f59e0b' }}>⬤</span>
+              {' Click any node'}
+            </div>
+            <div>
+              <span style={{ color: '#60a5fa' }}>⇧</span>
+              {' Shift + click to trace path'}
+            </div>
+          </div>
+        )}
 
         {/* CRT turn-on animation overlay — remounts on profile change to replay the animation */}
         <div

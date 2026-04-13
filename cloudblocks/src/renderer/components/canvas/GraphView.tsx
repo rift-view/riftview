@@ -1,5 +1,5 @@
 // @deprecated — no new features; consolidation into TopologyView planned post-1.0
-import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react'
+import React, { useMemo, useCallback, useRef, useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { ReactFlow, Background, BackgroundVariant, MiniMap, useReactFlow, type Node, type Edge, type NodeChange, type OnSelectionChangeParams, type Connection } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
@@ -40,6 +40,9 @@ const NODE_TYPES = {
 
 // Distinct colors per VPC — cycles if more than 6 VPCs
 const VPC_PALETTE = ['#1976D2', '#9c27b0', '#0891b2', '#16a34a', '#ea580c', '#e11d48']
+
+// Container node types that should be excluded from opacity overlays (blast radius / path trace)
+const OPACITY_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'security-group', 'nat-gateway', 'globalZone', 'regionZone', 'apigw'])
 
 // Walk up parentId chain to find the VPC ancestor (type === 'vpc')
 function findVpcAncestor(node: CloudNode, byId: Map<string, CloudNode>): CloudNode | null {
@@ -190,8 +193,16 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const graphPositions  = useUIStore((s) => s.nodePositions.graph)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
   const { onSave: onStickyNotesSave, onDelete: onStickyNoteDelete } = useStickyNoteCallbacks()
-  const customEdges   = useUIStore((s) => s.customEdges)
-  const addCustomEdge = useUIStore((s) => s.addCustomEdge)
+  const customEdges      = useUIStore((s) => s.customEdges)
+  const addCustomEdge    = useUIStore((s) => s.addCustomEdge)
+  const blastRadiusId    = useUIStore((s) => s.blastRadiusId)
+  const setBlastRadiusId = useUIStore((s) => s.setBlastRadiusId)
+  const pathTraceId      = useUIStore((s) => s.pathTraceId)
+  const setPathTraceId   = useUIStore((s) => s.setPathTraceId)
+
+  // Path trace animation state (local, transient)
+  const [pathTraceNodes, setPathTraceNodes] = useState<string[]>([])
+  const [pathTraceRevealedCount, setPathTraceRevealedCount] = useState(0)
 
   // One-time fitView when nodes first appear (or re-appear after dropping to 0)
   const hasFitted = useRef(false)
@@ -277,6 +288,87 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
     const visibleIds = new Set(visibleNodes.map((n) => n.id))
     if (!visibleIds.has(selectedId)) selectNodeFn(null)
   }, [visibleNodes, selectedId, activeFilters.length, selectNodeFn])
+
+  // ── Blast radius ────────────────────────────────────────────────────────────
+  const blastRadiusSet = useMemo((): Set<string> | null => {
+    if (!blastRadiusId) return null
+    const ids = new Set([blastRadiusId])
+    for (const n of allNodes) {
+      for (const { targetId } of (n.integrations ?? [])) {
+        if (targetId === blastRadiusId || n.id === blastRadiusId) {
+          ids.add(n.id)
+          ids.add(targetId)
+        }
+      }
+    }
+    return ids
+  }, [blastRadiusId, allNodes])
+
+  // ── Path trace ──────────────────────────────────────────────────────────────
+  const INTERNET_SOURCE_TYPES_GV = new Set(['igw', 'cloudfront', 'apigw'])
+  const inboundMap = useMemo((): Map<string, string[]> => {
+    const map = new Map<string, string[]>()
+    for (const n of allNodes) {
+      for (const { targetId } of (n.integrations ?? [])) {
+        const arr = map.get(targetId) ?? []
+        arr.push(n.id)
+        map.set(targetId, arr)
+      }
+    }
+    return map
+  }, [allNodes])
+
+  const runPathTrace = useCallback((nodeId: string) => {
+    const visited = new Set<string>()
+    const queue: string[] = [nodeId]
+    while (queue.length > 0) {
+      const curr = queue.shift()!
+      if (visited.has(curr)) continue
+      visited.add(curr)
+      const inbounds = inboundMap.get(curr) ?? []
+      for (const src of inbounds) {
+        if (!visited.has(src)) queue.push(src)
+      }
+    }
+    const sources = [...visited].filter((id) => {
+      const n = allNodes.find((x) => x.id === id)
+      return n && INTERNET_SOURCE_TYPES_GV.has(n.type)
+    })
+    const ordered = [...visited].filter((id) => id !== nodeId)
+    ordered.sort((a) => (sources.includes(a) ? -1 : 1))
+    ordered.push(nodeId)
+    setPathTraceNodes(ordered)
+    setPathTraceRevealedCount(0)
+  }, [allNodes, inboundMap]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (pathTraceNodes.length === 0 || !pathTraceId) {
+      setPathTraceRevealedCount(0)
+      return
+    }
+    if (pathTraceRevealedCount >= pathTraceNodes.length) return
+    const timer = setInterval(() => {
+      setPathTraceRevealedCount((c) => {
+        if (c >= pathTraceNodes.length) { clearInterval(timer); return c }
+        return c + 1
+      })
+    }, 150)
+    return () => clearInterval(timer)
+  }, [pathTraceNodes, pathTraceId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!pathTraceId) {
+      setPathTraceNodes([])
+      setPathTraceRevealedCount(0)
+      return
+    }
+    runPathTrace(pathTraceId)
+  }, [pathTraceId, runPathTrace])
+
+  const pathTraceRevealedSet = useMemo(
+    (): Set<string> => new Set(pathTraceNodes.slice(0, pathTraceRevealedCount)),
+    [pathTraceNodes, pathTraceRevealedCount],
+  )
 
   const byId = useMemo(() => new Map(visibleNodes.map((n) => [n.id, n])), [visibleNodes])
 
@@ -451,43 +543,111 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
     return [...withOpacity, ...userEdges]
   }, [visibleNodes, selectedId, showIntegrations, customEdges])
 
+  // Blast radius / path trace opacity overlay
+  const displayNodes: Node[] = useMemo(() => {
+    if (!blastRadiusSet && !pathTraceId) return flowNodes
+    return flowNodes.map((n) => {
+      if (OPACITY_CONTAINER_TYPES.has(n.type ?? '')) return n
+      let opacity = 1
+      let boxShadow: string | undefined
+      if (blastRadiusSet) {
+        opacity = blastRadiusSet.has(n.id) ? 1 : 0.2
+      } else if (pathTraceId) {
+        if (pathTraceRevealedSet.has(n.id)) {
+          opacity   = 1
+          boxShadow = '0 0 8px #60a5fa'
+        } else {
+          opacity = 0.15
+        }
+      }
+      return { ...n, style: { ...(n.style ?? {}), opacity, transition: 'opacity 0.15s ease', ...(boxShadow ? { boxShadow } : {}) } }
+    })
+  }, [flowNodes, blastRadiusSet, pathTraceId, pathTraceRevealedSet])
+
+  const pathSourceNode = pathTraceNodes.length > 0 ? allNodes.find((n) => n.id === pathTraceNodes[0]) : null
+  const pathTargetNode = pathTraceId ? allNodes.find((n) => n.id === pathTraceId) : null
+  const blastNode      = blastRadiusId ? allNodes.find((n) => n.id === blastRadiusId) : null
+
   return (
     // Wrapper must receive a concrete height from its parent (flex-1) for ReactFlow to fill correctly
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <ReactFlow
-        nodes={flowNodes}
-        edges={flowEdges}
-        nodeTypes={NODE_TYPES}
-        edgeTypes={EDGE_TYPES}
-        onNodeClick={(_e, node) => { if (!lockedNodes.has(node.id)) selectNode(node.id) }}
-        onNodeDoubleClick={(_e, node) => selectNode(node.id)}
-        onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
-        onPaneClick={() => { selectNode(null); selectEdge(null); clearFilters(); clearSelectedNodeIds() }}
-        onSelectionChange={onSelectionChange}
-        onNodeContextMenu={(event, rfNode) => {
-          event.preventDefault()
-          const cloudNode = allNodes.find((n) => n.id === rfNode.id)
-          if (cloudNode) onNodeContextMenu(cloudNode, event.clientX, event.clientY)
-        }}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
-        onConnect={onConnect}
-        onNodesChange={onNodesChange}
-        panOnScroll
-        snapToGrid={snapToGrid}
-        snapGrid={[SNAP_GRID_SIZE, SNAP_GRID_SIZE]}
-        minZoom={0.1}
-        maxZoom={2}
-        style={{ background: 'var(--cb-canvas-bg)' }}
-      >
-        <Background id="minor" variant={BackgroundVariant.Lines} gap={SNAP_GRID_SIZE} color="rgba(255,255,255,0.015)" />
-        <Background id="major" variant={BackgroundVariant.Lines} gap={100} color="rgba(255,255,255,0.035)" />
-        <MiniMap
-          style={{ background: 'var(--cb-minimap-bg)', border: '1px solid var(--cb-minimap-border)' }}
-          nodeColor="#FF9900"
-        />
-      </ReactFlow>
-      <IntegrationLegend />
+    <div className="flex flex-col w-full h-full">
+      {/* Blast radius / path trace context strip */}
+      {(blastRadiusId || pathTraceId) && (
+        <div
+          style={{
+            padding:      '2px 12px',
+            fontFamily:   'monospace',
+            fontSize:     9,
+            color:        'var(--cb-text-muted)',
+            background:   'var(--cb-bg-panel)',
+            borderBottom: '1px solid var(--cb-border)',
+            flexShrink:   0,
+          }}
+        >
+          {blastRadiusId && (
+            <span
+              style={{ color: '#f59e0b', cursor: 'pointer' }}
+              onClick={() => setBlastRadiusId(null)}
+              title="Clear blast radius"
+            >
+              BLAST RADIUS · {blastNode?.label ?? blastRadiusId} ✕
+            </span>
+          )}
+          {pathTraceId && (
+            <span
+              style={{ color: '#60a5fa', cursor: 'pointer' }}
+              onClick={() => setPathTraceId(null)}
+              title="Clear path trace"
+            >
+              PATH · {pathSourceNode?.label ?? '?'} → {pathTargetNode?.label ?? pathTraceId} ✕
+            </span>
+          )}
+        </div>
+      )}
+      <div style={{ position: 'relative', flex: 1 }}>
+        <ReactFlow
+          nodes={displayNodes}
+          edges={flowEdges}
+          nodeTypes={NODE_TYPES}
+          edgeTypes={EDGE_TYPES}
+          onNodeClick={(e: ReactMouseEvent, node) => {
+            if (lockedNodes.has(node.id)) return
+            selectNode(node.id)
+            if (e.shiftKey) {
+              setPathTraceId(pathTraceId === node.id ? null : node.id)
+            } else {
+              setBlastRadiusId(blastRadiusId === node.id ? null : node.id)
+            }
+          }}
+          onNodeDoubleClick={(_e, node) => selectNode(node.id)}
+          onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
+          onPaneClick={() => { selectNode(null); selectEdge(null); clearFilters(); clearSelectedNodeIds(); setBlastRadiusId(null); setPathTraceId(null) }}
+          onSelectionChange={onSelectionChange}
+          onNodeContextMenu={(event, rfNode) => {
+            event.preventDefault()
+            const cloudNode = allNodes.find((n) => n.id === rfNode.id)
+            if (cloudNode) onNodeContextMenu(cloudNode, event.clientX, event.clientY)
+          }}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          onConnect={onConnect}
+          onNodesChange={onNodesChange}
+          panOnScroll
+          snapToGrid={snapToGrid}
+          snapGrid={[SNAP_GRID_SIZE, SNAP_GRID_SIZE]}
+          minZoom={0.1}
+          maxZoom={2}
+          style={{ background: 'var(--cb-canvas-bg)' }}
+        >
+          <Background id="minor" variant={BackgroundVariant.Lines} gap={SNAP_GRID_SIZE} color="rgba(255,255,255,0.015)" />
+          <Background id="major" variant={BackgroundVariant.Lines} gap={100} color="rgba(255,255,255,0.035)" />
+          <MiniMap
+            style={{ background: 'var(--cb-minimap-bg)', border: '1px solid var(--cb-minimap-border)' }}
+            nodeColor="#FF9900"
+          />
+        </ReactFlow>
+        <IntegrationLegend />
+      </div>
     </div>
   )
 }
