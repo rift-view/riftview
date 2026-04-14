@@ -17,13 +17,13 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     }
 
     const memorySize = node.metadata.memorySize as number | undefined
-    if (memorySize === 128) {
+    if (typeof memorySize === 'number' && memorySize <= 512) {
       advisories.push({
         ruleId: 'lambda-low-memory',
-        severity: 'warning',
-        title: 'Memory at default (128 MB)',
+        severity: 'info',
+        title: 'Low memory allocation (≤ 512 MB)',
         detail:
-          'This function uses the default memory allocation and has likely never been tuned. Review execution duration and consider adjusting memory to optimise cost and latency.',
+          'This function uses 512 MB or less of memory. Review execution duration and consider adjusting memory to optimise cost and latency.',
         nodeId: node.id,
       })
     }

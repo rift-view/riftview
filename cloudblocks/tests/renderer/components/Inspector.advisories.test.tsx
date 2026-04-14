@@ -62,26 +62,26 @@ describe('Inspector ADVISORIES section', () => {
     expect(screen.getByText('No timeout configured')).toBeTruthy()
   })
 
-  it('shows "No issues detected" for a lambda with timeout and non-default memory', () => {
-    setup(baseNode({ metadata: { timeout: 30, memorySize: 512 } }))
+  it('shows "No issues detected" for a lambda with timeout and memory above threshold', () => {
+    setup(baseNode({ metadata: { timeout: 30, memorySize: 1024 } }))
     expect(screen.getByText('No issues detected')).toBeTruthy()
   })
 
-  it('shows both critical and warning for lambda with timeout=0 and memory=128', () => {
+  it('shows both critical and info for lambda with timeout=0 and memory=128', () => {
     setup(baseNode({ metadata: { timeout: 0, memorySize: 128 } }))
     expect(screen.getByText('No timeout configured')).toBeTruthy()
-    expect(screen.getByText('Memory at default (128 MB)')).toBeTruthy()
+    expect(screen.getByText('Low memory allocation (≤ 512 MB)')).toBeTruthy()
   })
 
-  it('critical advisory appears before warning (severity order)', () => {
+  it('critical advisory appears before info (severity order)', () => {
     const { container } = setup(baseNode({ metadata: { timeout: 0, memorySize: 128 } }))
-    // Severity labels are rendered as span text content "critical" / "warning"
+    // Severity labels are rendered as span text content "critical" / "info"
     const allSpans = Array.from(container.querySelectorAll('span'))
     const criticalIdx = allSpans.findIndex((s) => s.textContent === 'critical')
-    const warningIdx  = allSpans.findIndex((s) => s.textContent === 'warning')
+    const infoIdx     = allSpans.findIndex((s) => s.textContent === 'info')
     expect(criticalIdx).toBeGreaterThanOrEqual(0)
-    expect(warningIdx).toBeGreaterThanOrEqual(0)
-    expect(criticalIdx).toBeLessThan(warningIdx)
+    expect(infoIdx).toBeGreaterThanOrEqual(0)
+    expect(criticalIdx).toBeLessThan(infoIdx)
   })
 
   it('collapse toggle hides advisory list', () => {
