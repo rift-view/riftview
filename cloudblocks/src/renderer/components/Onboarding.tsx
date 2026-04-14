@@ -9,8 +9,15 @@ export function Onboarding(): React.JSX.Element {
         not during it.
       </p>
       <div className="rounded p-4 text-left max-w-sm" style={{ background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border-strong)' }}>
-        <div className="text-[10px] mb-2" style={{ color: 'var(--cb-text-secondary)' }}>Connect AWS Account — run the following to configure credentials:</div>
-        <code className="text-[11px]" style={{ color: 'var(--cb-accent)' }}>aws configure</code>
+        <div className="text-[10px] mb-3" style={{ color: 'var(--cb-text-secondary)', fontSize: 13 }}>
+          New to AWS CLI? Run this in your terminal first:
+        </div>
+        <code style={{ fontFamily: 'monospace', background: 'var(--cb-bg-elevated)', padding: '4px 8px', borderRadius: 3, fontSize: 12, color: 'var(--cb-accent)', display: 'inline-block', marginBottom: 10 }}>
+          aws configure
+        </code>
+        <div className="text-[10px]" style={{ color: 'var(--cb-text-secondary)', fontSize: 13 }}>
+          Then enter your profile name below (default: &quot;default&quot;).
+        </div>
         <div className="text-[10px] mt-3" style={{ color: 'var(--cb-text-muted)' }}>
           Then restart Terminus.
         </div>
