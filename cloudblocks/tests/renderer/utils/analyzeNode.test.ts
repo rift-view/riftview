@@ -34,15 +34,27 @@ describe('analyzeNode', () => {
   })
 
   // ── lambda-low-memory ──────────────────────────────────────────────────────
-  it('lambda with memorySize=128 → warning lambda-low-memory', () => {
+  it('lambda with memorySize=128 → info lambda-low-memory', () => {
     const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, memorySize: 128 } }))
     expect(r).toEqual(expect.arrayContaining([
-      expect.objectContaining({ ruleId: 'lambda-low-memory', severity: 'warning' }),
+      expect.objectContaining({ ruleId: 'lambda-low-memory', severity: 'info' }),
     ]))
   })
 
-  it('lambda with memorySize=512 → no lambda-low-memory', () => {
+  it('lambda with memorySize=512 → info lambda-low-memory (at threshold)', () => {
     const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, memorySize: 512 } }))
+    expect(r).toEqual(expect.arrayContaining([
+      expect.objectContaining({ ruleId: 'lambda-low-memory', severity: 'info' }),
+    ]))
+  })
+
+  it('lambda with memorySize=511 → info lambda-low-memory (below threshold)', () => {
+    const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, memorySize: 511 } }))
+    expect(r.some((a) => a.ruleId === 'lambda-low-memory')).toBe(true)
+  })
+
+  it('lambda with memorySize=513 → no lambda-low-memory (above threshold)', () => {
+    const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, memorySize: 513 } }))
     expect(r.find((a) => a.ruleId === 'lambda-low-memory')).toBeUndefined()
   })
 
