@@ -1,4 +1,4 @@
-import { LambdaClient, ListFunctionsCommand, ListEventSourceMappingsCommand, GetFunctionConfigurationCommand } from '@aws-sdk/client-lambda'
+import { LambdaClient, ListFunctionsCommand, ListEventSourceMappingsCommand, GetFunctionConfigurationCommand, GetFunctionConcurrencyCommand } from '@aws-sdk/client-lambda'
 import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
 
 function lambdaStatusToNodeStatus(state: string | undefined): NodeStatus {
@@ -108,6 +108,13 @@ export async function listFunctions(client: LambdaClient, region: string): Promi
           }
         }
       } catch { /* ignore */ }
+      let reservedConcurrentExecutions: number | null | undefined = undefined
+      try {
+        const r = await client.send(new GetFunctionConcurrencyCommand({ FunctionName: fn.FunctionName! }))
+        reservedConcurrentExecutions = r.ReservedConcurrentExecutions ?? null
+      } catch {
+        // permission denied or throttled — leave as undefined (advisory will skip)
+      }
       const integrations = allIntegrations.length > 0 ? allIntegrations : undefined
       return {
         id:       fn.FunctionArn ?? fn.FunctionName ?? 'unknown',
@@ -115,7 +122,7 @@ export async function listFunctions(client: LambdaClient, region: string): Promi
         label:    fn.FunctionName ?? 'Lambda',
         status:   lambdaStatusToNodeStatus(fn.State),
         region,
-        metadata: { runtime: fn.Runtime, handler: fn.Handler, timeout, memorySize, hasDlq },
+        metadata: { runtime: fn.Runtime, handler: fn.Handler, timeout, memorySize, hasDlq, reservedConcurrentExecutions },
         parentId: fn.VpcConfig?.VpcId,
         integrations,
       }
