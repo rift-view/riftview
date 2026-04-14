@@ -53,9 +53,12 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
       .filter((n): n is CloudNode => n?.type === 'lambda')
 
     for (const lambda of lambdaTargets) {
+      // Only fire if the scanner actually fetched this field.
+      // undefined = scanner didn't call GetFunctionConcurrency (skip — no false positives)
+      // null = scanner fetched it, function has no reserved concurrency (fire)
+      // number = reserved concurrency is set (skip)
       const reservedConcurrency = lambda.metadata.reservedConcurrentExecutions
-      // undefined/null = uncapped; 0 = explicitly throttled to zero = protected
-      if (reservedConcurrency != null) continue
+      if (reservedConcurrency !== null) continue  // undefined or number → skip
 
       advisories.push({
         ruleId: 'apigw-lambda-no-concurrency-limit',

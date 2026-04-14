@@ -147,7 +147,7 @@ function makeApigwWithThrottling(
 
 function makeLambdaWithConcurrency(
   id = 'lambda-1',
-  reservedConcurrentExecutions: number | undefined,
+  reservedConcurrentExecutions: number | null | undefined,
   integrations: CloudNode['integrations'] = [],
 ): CloudNode {
   return {
@@ -191,8 +191,8 @@ function makeSns(id = 'sns-1', integrations: CloudNode['integrations'] = []): Cl
 // ── Advisory: apigw-lambda-no-concurrency-limit ───────────────────────────────
 
 describe('analyzeGraph — apigw-lambda-no-concurrency-limit', () => {
-  it('fires when APIGW has no throttlingBurstLimit and Lambda has no reservedConcurrentExecutions', () => {
-    const lambda = makeLambdaWithConcurrency('lambda-1', undefined)
+  it('fires when APIGW has no throttlingBurstLimit and Lambda has reservedConcurrentExecutions=null (scanner fetched, no limit)', () => {
+    const lambda = makeLambdaWithConcurrency('lambda-1', null)
     const apigw = makeApigwWithThrottling('apigw-1', undefined, [{ targetId: 'lambda-1', edgeType: 'trigger' }])
 
     const result = analyzeGraph([apigw, lambda])
@@ -202,8 +202,16 @@ describe('analyzeGraph — apigw-lambda-no-concurrency-limit', () => {
     expect(advisory!.nodeId).toBe('apigw-1')
   })
 
-  it('does NOT fire when APIGW has throttlingBurstLimit set', () => {
+  it('does NOT fire when reservedConcurrentExecutions is undefined (scanner did not fetch)', () => {
     const lambda = makeLambdaWithConcurrency('lambda-1', undefined)
+    const apigw = makeApigwWithThrottling('apigw-1', undefined, [{ targetId: 'lambda-1', edgeType: 'trigger' }])
+
+    const result = analyzeGraph([apigw, lambda])
+    expect(result.filter((a) => a.ruleId === 'apigw-lambda-no-concurrency-limit')).toHaveLength(0)
+  })
+
+  it('does NOT fire when APIGW has throttlingBurstLimit set', () => {
+    const lambda = makeLambdaWithConcurrency('lambda-1', null)
     const apigw = makeApigwWithThrottling('apigw-1', 1000, [{ targetId: 'lambda-1', edgeType: 'trigger' }])
 
     const result = analyzeGraph([apigw, lambda])
@@ -211,7 +219,7 @@ describe('analyzeGraph — apigw-lambda-no-concurrency-limit', () => {
   })
 
   it('does NOT fire when Lambda has reservedConcurrentExecutions set to a positive number', () => {
-    const lambda = makeLambdaWithConcurrency('lambda-1', 50)
+    const lambda = makeLambdaWithConcurrency('lambda-1', 100)
     const apigw = makeApigwWithThrottling('apigw-1', undefined, [{ targetId: 'lambda-1', edgeType: 'trigger' }])
 
     const result = analyzeGraph([apigw, lambda])
