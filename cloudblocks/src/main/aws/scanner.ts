@@ -1,9 +1,31 @@
-import { BrowserWindow } from 'electron'
+import { BrowserWindow, app } from 'electron'
+import fsp from 'fs/promises'
+import path from 'path'
 import { IPC } from '../ipc/channels'
 import { createClients } from './client'
 import type { CloudNode, ScanDelta } from '../../renderer/types/cloud'
 import { describeKeyPairs } from './services/ec2'
 import { pluginRegistry } from '../plugin/index'
+
+// --- Per-node change history ---
+interface FieldChange { field: string; before: string; after: string }
+interface HistoryEntry { timestamp: string; changes: FieldChange[] }
+
+export function historyFilePath(nodeId: string): string {
+  return path.join(app.getPath('userData'), 'history', `${nodeId.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`)
+}
+
+async function appendHistory(nodeId: string, entry: HistoryEntry): Promise<void> {
+  const p = historyFilePath(nodeId)
+  await fsp.mkdir(path.dirname(p), { recursive: true })
+  let entries: HistoryEntry[] = []
+  try { entries = JSON.parse(await fsp.readFile(p, 'utf8')) } catch { /* new file */ }
+  entries.unshift(entry)
+  if (entries.length > 50) entries = entries.slice(0, 50)
+  await fsp.writeFile(p, JSON.stringify(entries, null, 2))
+}
+
+const nodeCache = new Map<string, CloudNode>()
 
 // pluginRegistry.activateAll() must be called before starting the scanner.
 // scanner.ts never calls activateAll — it only calls scanAll() per region.
@@ -152,6 +174,28 @@ export class ResourceScanner {
       this.currentNodes      = nextNodes
       this.currentScanErrors = scanErrors
       this.window.webContents.send(IPC.SCAN_DELTA, { ...delta, scanErrors })
+
+      // Record history for changed nodes
+      for (const newNode of delta.changed ?? []) {
+        const prev = nodeCache.get(newNode.id)
+        if (!prev) { nodeCache.set(newNode.id, newNode); continue }
+        const changes: FieldChange[] = []
+        if (prev.status !== newNode.status) changes.push({ field: 'status', before: String(prev.status ?? ''), after: String(newNode.status ?? '') })
+        if (prev.label  !== newNode.label)  changes.push({ field: 'label',  before: prev.label, after: newNode.label })
+        const allKeys = new Set([...Object.keys(prev.metadata ?? {}), ...Object.keys(newNode.metadata ?? {})])
+        for (const key of allKeys) {
+          const b = JSON.stringify((prev.metadata ?? {})[key] ?? null)
+          const a = JSON.stringify((newNode.metadata ?? {})[key] ?? null)
+          if (b !== a) changes.push({ field: key, before: b, after: a })
+        }
+        if (changes.length > 0) {
+          appendHistory(newNode.id, { timestamp: new Date().toISOString(), changes }).catch(() => {})
+        }
+        nodeCache.set(newNode.id, newNode)
+      }
+      // Cache newly added nodes
+      for (const n of delta.added ?? []) nodeCache.set(n.id, n)
+
       this.window.webContents.send(IPC.SCAN_STATUS, 'idle')
 
       // Key pairs are AWS-specific and consumed by the renderer's create-node

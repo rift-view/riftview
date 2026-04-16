@@ -124,4 +124,26 @@ contextBridge.exposeInMainWorld('terminus', {
   // Validate AWS credentials via STS before scanning
   validateCredentials: (profile: AwsProfile): Promise<{ ok: true; account: string; arn: string } | { ok: false; error: string }> =>
     ipcRenderer.invoke(IPC.CREDENTIALS_VALIDATE, profile),
+
+  // CloudWatch metrics
+  fetchMetrics: (params: { nodeId: string; nodeType: string; resourceId: string; region: string; profile: AwsProfile }) =>
+    ipcRenderer.invoke(IPC.METRICS_FETCH, params),
+
+  // Per-node change history
+  getNodeHistory: (nodeId: string) => ipcRenderer.invoke(IPC.HISTORY_GET, nodeId),
+
+  // SSM terminal
+  startTerminal: (params: { instanceId: string; region: string; profile: AwsProfile }) =>
+    ipcRenderer.invoke(IPC.TERMINAL_START, params),
+  sendTerminalInput: (sessionId: string, data: string) =>
+    ipcRenderer.invoke(IPC.TERMINAL_INPUT, sessionId, data),
+  resizeTerminal: (sessionId: string, cols: number, rows: number) =>
+    ipcRenderer.invoke(IPC.TERMINAL_RESIZE, sessionId, cols, rows),
+  closeTerminal: (sessionId: string) =>
+    ipcRenderer.invoke(IPC.TERMINAL_CLOSE, sessionId),
+  onTerminalOutput: (cb: (data: { sessionId: string; data: string }) => void): (() => void) => {
+    const handler = (_: unknown, data: { sessionId: string; data: string }): void => cb(data)
+    ipcRenderer.on(IPC.TERMINAL_OUTPUT, handler as Parameters<typeof ipcRenderer.on>[1])
+    return () => ipcRenderer.off(IPC.TERMINAL_OUTPUT, handler as Parameters<typeof ipcRenderer.off>[1])
+  },
 })

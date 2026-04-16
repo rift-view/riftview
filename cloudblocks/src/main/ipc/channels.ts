@@ -37,6 +37,13 @@ export const IPC = {
   TFSTATE_SAVE_BASELINE: 'tfstate:save-baseline',  // invoke → { ok: boolean }
   SCAN_RETRY_SERVICE:    'scan:retry-service',      // invoke → { ok: boolean }
   CREDENTIALS_VALIDATE:  'credentials:validate',    // invoke(AwsProfile) → { ok: boolean; account?: string; arn?: string; error?: string }
+  METRICS_FETCH:         'metrics:fetch',            // invoke → CloudMetric[]
+  HISTORY_GET:           'history:get',              // invoke(nodeId: string) → HistoryEntry[]
+  TERMINAL_START:        'terminal:start',           // invoke → { ok: true; sessionId: string } | { ok: false; error: string }
+  TERMINAL_INPUT:        'terminal:input',           // invoke(sessionId, data) → void
+  TERMINAL_RESIZE:       'terminal:resize',          // invoke(sessionId, cols, rows) → void
+  TERMINAL_CLOSE:        'terminal:close',           // invoke(sessionId) → void
+  TERMINAL_OUTPUT:       'terminal:output',          // push: main → renderer
 } as const
 
 export type IpcChannel = typeof IPC[keyof typeof IPC]
