@@ -1,8 +1,14 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
+import { useState, useEffect } from 'react'
 import type { NodeStatus, NodeType } from '../../../types/cloud'
 import { useUIStore } from '../../../store/ui'
+import { useCloudStore } from '../../../store/cloud'
 import { ActionRail } from './ActionRail'
 import { analyzeNode } from '../../../utils/analyzeNode'
+
+interface CloudMetric { name: string; value: number; unit: string }
+
+const METRIC_TYPES = new Set<NodeType>(['lambda', 'rds', 'ecs'])
 
 function driftStripeColor(driftStatus: import('../../../types/cloud').DriftStatus): string {
   switch (driftStatus) {
@@ -136,6 +142,38 @@ function getNodeMeta(nodeType: NodeType, m: Record<string, unknown>): string | u
 
 export function ResourceNode({ id, data, selected, dragging }: NodeProps): React.JSX.Element {
   const d = data as unknown as ResourceNodeData
+
+  // CloudWatch metric badges — only for lambda, rds, ecs
+  const [metrics, setMetrics] = useState<CloudMetric[]>([])
+  useEffect(() => {
+    if (!METRIC_TYPES.has(d.nodeType as NodeType)) return
+
+    const resourceId: string = (() => {
+      const m = d.metadata ?? {}
+      if (d.nodeType === 'lambda') return (m.functionName as string | undefined) ?? d.label
+      if (d.nodeType === 'rds')    return (m.dbInstanceId as string | undefined) ?? d.label
+      // ecs
+      return ((m.clusterName as string | undefined) ?? '') + '/' + ((m.serviceName as string | undefined) ?? '')
+    })()
+
+    const profile = useCloudStore.getState().profile
+    const region  = d.region ?? useCloudStore.getState().region
+
+    function doFetch() {
+      if (typeof window !== 'undefined' && window.terminus) {
+        window.terminus
+          .fetchMetrics({ nodeId: id, nodeType: d.nodeType, resourceId, region, profile })
+          .then(setMetrics)
+          .catch(() => {})
+      }
+    }
+
+    doFetch()
+    const timer = setInterval(doFetch, 60_000)
+    return () => clearInterval(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, d.nodeType, d.label, d.region])
+
   const pluginMeta  = useUIStore.getState().pluginNodeTypes[d.nodeType]
   const borderColor = (TYPE_BORDER as Record<string, string>)[d.nodeType] ?? pluginMeta?.borderColor ?? '#555'
   const stripeColor = d.driftStatus ? driftStripeColor(d.driftStatus) : statusStripeColor(d.status)
@@ -362,6 +400,24 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
           >
             ↓ {d.subscribers.length} subscriber{d.subscribers.length !== 1 ? 's' : ''}
           </span>
+        </div>
+      )}
+
+      {/* CloudWatch metric badges — lambda, rds, ecs only */}
+      {metrics.length > 0 && (
+        <div style={{
+          display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap',
+          borderTop: '1px solid var(--cb-border)', paddingTop: 4,
+        }}>
+          {metrics.map((m) => (
+            <span key={m.name} style={{
+              fontSize: 9, color: 'var(--cb-text-muted)',
+              background: 'var(--cb-bg-hover)', borderRadius: 3,
+              padding: '1px 4px', whiteSpace: 'nowrap',
+            }}>
+              {m.name} <span style={{ color: 'var(--cb-text-secondary)', fontWeight: 600 }}>{m.value}{m.unit}</span>
+            </span>
+          ))}
         </div>
       )}
 
