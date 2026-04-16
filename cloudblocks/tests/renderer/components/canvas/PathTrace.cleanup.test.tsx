@@ -63,7 +63,7 @@ describe('CommandView — path trace setInterval cleanup on unmount', () => {
 
     // apigw → lambda → rds
     apigw.integrations  = [{ targetId: 'lambda-1', edgeType: 'trigger' }]
-    lambda.integrations = [{ targetId: 'rds-1',    edgeType: 'invoke'  }]
+    lambda.integrations = [{ targetId: 'rds-1',    edgeType: 'trigger' }]
 
     useCloudStore.setState({ nodes: [apigw, lambda, rds] })
     // Set pathTraceId so the staggered-reveal useEffect fires an interval
