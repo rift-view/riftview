@@ -68,6 +68,8 @@ interface UIState {
   blastRadiusId:          string | null
   pathTraceId:            string | null
   keyboardHelpOpen:       boolean
+  terminalSessionId:      string | null
+  terminalNodeId:         string | null
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -120,6 +122,8 @@ interface UIState {
   setBlastRadiusId:       (id: string | null) => void
   setPathTraceId:         (id: string | null) => void
   setKeyboardHelpOpen:    (open: boolean) => void
+  openTerminal:           (nodeId: string, sessionId: string) => void
+  closeTerminalPane:      () => void
   removeCustomEdge:       (id: string) => void
   updateCustomEdgeLabel:  (id: string, label: string) => void
   updateCustomEdgeColor:  (id: string, color: CustomEdge['color']) => void
@@ -165,6 +169,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   blastRadiusId:        null,
   pathTraceId:          null,
   keyboardHelpOpen:     false,
+  terminalSessionId:    null,
+  terminalNodeId:       null,
 
   setView:             (view) => set({ view }),
   selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -332,4 +338,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   setBlastRadiusId:  (id) => set({ blastRadiusId: id, pathTraceId: null }),
   setPathTraceId:    (id) => set({ pathTraceId: id, blastRadiusId: null }),
   setKeyboardHelpOpen: (open) => set({ keyboardHelpOpen: open }),
+  openTerminal: (nodeId, sessionId) => set({ terminalNodeId: nodeId, terminalSessionId: sessionId }),
+  closeTerminalPane: () => set({ terminalNodeId: null, terminalSessionId: null }),
 }))
