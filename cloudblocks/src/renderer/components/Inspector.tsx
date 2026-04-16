@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 import type { CloudNode, NodeType } from '../types/cloud'
@@ -455,6 +455,29 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
 
 type RemediateState = 'idle' | 'running' | 'done-ok' | `done-err:${number}`
 
+interface HistoryEntry {
+  timestamp: string
+  changes: Array<{ field: string; before: string; after: string }>
+}
+
+function relativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const diffSec = Math.floor(diffMs / 1000)
+  if (diffSec < 60) return 'just now'
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) return `${diffMin} minute${diffMin !== 1 ? 's' : ''} ago`
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24) return `${diffHr} hour${diffHr !== 1 ? 's' : ''} ago`
+  const diffDay = Math.floor(diffHr / 24)
+  if (diffDay === 1) return 'yesterday'
+  if (diffDay < 7) return `${diffDay} days ago`
+  return new Date(iso).toLocaleDateString()
+}
+
+function truncate(s: string, max = 40): string {
+  return s.length > max ? s.slice(0, max) + '…' : s
+}
+
 interface InspectorProps {
   onDelete: (node: CloudNode) => void
   onEdit: (node: CloudNode) => void
@@ -484,6 +507,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
 
   const [remediateState, setRemediateState] = useState<RemediateState>('idle')
   const [advisoriesExpanded, setAdvisoriesExpanded] = useState(true)
+  const [nodeHistory, setNodeHistory] = useState<HistoryEntry[]>([])
 
   // Navigation between nodes that have advisories (OP_INTELLIGENCE)
   const advisoryNavigation = useMemo(() => {
@@ -501,6 +525,11 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
 
   React.useEffect(() => {
     setRemediateState('idle')
+  }, [selectedId])
+
+  useEffect(() => {
+    if (!selectedId) { setNodeHistory([]); return }
+    window.terminus?.getNodeHistory?.(selectedId).then(setNodeHistory).catch(() => { setNodeHistory([]) })
   }, [selectedId])
 
   const IAM_SUPPORTED_TYPES: NodeType[] = ['ec2', 'lambda', 's3']
@@ -1242,6 +1271,27 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                   <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{v || '—'}</div>
                 </div>
               ))}
+              {!isImported && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Quick actions</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    <button
+                      onClick={async () => {
+                        const instanceId = node.metadata?.taskArn as string ?? node.id
+                        const profile = useCloudStore.getState().profile
+                        const result = await window.terminus.startTerminal({ instanceId, region: node.region, profile })
+                        if (result.ok) {
+                          useUIStore.getState().openTerminal(node.id, result.sessionId)
+                        } else {
+                          useUIStore.getState().showToast(`Terminal failed: ${result.error}`, 'error')
+                        }
+                      }}
+                      style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #34d399', borderRadius: 2, padding: '2px 8px', color: '#34d399', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                      Open Terminal
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1425,6 +1475,20 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                       <button onClick={() => onQuickAction(node, 'reboot')}
                         style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #64b5f6', borderRadius: 2, padding: '2px 8px', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
                         Reboot
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const instanceId = node.metadata?.instanceId as string ?? node.id
+                          const profile = useCloudStore.getState().profile
+                          const result = await window.terminus.startTerminal({ instanceId, region: node.region, profile })
+                          if (result.ok) {
+                            useUIStore.getState().openTerminal(node.id, result.sessionId)
+                          } else {
+                            useUIStore.getState().showToast(`Terminal failed: ${result.error}`, 'error')
+                          }
+                        }}
+                        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #34d399', borderRadius: 2, padding: '2px 8px', color: '#34d399', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                        Open Terminal
                       </button>
                     </div>
                   </div>
@@ -1695,6 +1759,34 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                 outline: 'none',
               }}
             />
+          </div>
+
+          {/* HISTORY section — per-node change log */}
+          <div style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}>
+            <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+              History
+            </div>
+            {nodeHistory.length === 0 ? (
+              <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', fontStyle: 'italic' }}>
+                No changes recorded yet
+              </div>
+            ) : (
+              nodeHistory.slice(0, 10).map((entry, i) => (
+                <div key={i} style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', marginBottom: 3 }}>
+                    ↳ {relativeTime(entry.timestamp)}
+                  </div>
+                  {entry.changes.map((c, j) => (
+                    <div key={j} style={{ fontSize: 8, color: 'var(--cb-text-secondary)', paddingLeft: 10, marginBottom: 1 }}>
+                      <span style={{ color: 'var(--cb-text-muted)' }}>{c.field}:</span>{' '}
+                      <span style={{ color: '#fca5a5' }}>{truncate(c.before)}</span>
+                      {' → '}
+                      <span style={{ color: '#86efac' }}>{truncate(c.after)}</span>
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
           </div>
         </>
       )}
