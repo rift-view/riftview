@@ -23,6 +23,8 @@ import { useCliStore } from '../store/cli'
 import type { AwsProfile, CloudNode } from '../types/cloud'
 import { AboutModal } from '../components/AboutModal'
 import { SettingsModal } from '../components/SettingsModal'
+import { KeyboardHelp } from '../components/KeyboardHelp'
+import { useKeyboardNav } from '../hooks/useKeyboardNav'
 
 function ResizeHandle({ onResize }: { onResize: (delta: number) => void }): React.JSX.Element {
   const startX = useRef<number | null>(null)
@@ -63,6 +65,7 @@ function ResizeHandle({ onResize }: { onResize: (delta: number) => void }): Reac
 
 export default function App(): React.JSX.Element | null {
   useIpc()
+  useKeyboardNav()
   const { triggerScan } = useScanner()
   const [profiles, setProfiles] = useState<AwsProfile[] | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -125,6 +128,9 @@ export default function App(): React.JSX.Element | null {
       if (!el.parentElement) document.head.appendChild(el)
     })
 
+    function onOpenSearch(): void {
+      setSearchOpen(true)
+    }
     function onKeyDown(e: KeyboardEvent): void {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
@@ -142,6 +148,7 @@ export default function App(): React.JSX.Element | null {
       useUIStore.getState().setShowSettings(true)
     }
     window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('terminus:open-search', onOpenSearch)
     window.addEventListener('terminus:show-about', onShowAbout)
     window.addEventListener('terminus:show-settings', onShowSettings)
 
@@ -155,6 +162,7 @@ export default function App(): React.JSX.Element | null {
 
     return () => {
       window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('terminus:open-search', onOpenSearch)
       window.removeEventListener('terminus:show-about', onShowAbout)
       window.removeEventListener('terminus:show-settings', onShowSettings)
       removeUpdateListener()
@@ -266,6 +274,7 @@ export default function App(): React.JSX.Element | null {
       <EditModal node={editTarget} onClose={() => setEditTarget(null)} />
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      <KeyboardHelp />
     </div>
   )
 }

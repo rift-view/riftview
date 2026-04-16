@@ -7,7 +7,7 @@ import { IPC } from './channels'
 import { listProfiles, getDefaultRegion } from '../aws/credentials'
 import { createClients } from '../aws/client'
 import type { AwsClients } from '../aws/client'
-import { ResourceScanner } from '../aws/scanner'
+import { ResourceScanner, historyFilePath } from '../aws/scanner'
 import { CliEngine } from '../cli/engine'
 import { pluginRegistry } from '../plugin/index'
 import {
@@ -22,9 +22,13 @@ import type { CloudFrontParams } from '../../renderer/types/create'
 import type { CloudFrontEditParams } from '../../renderer/types/edit'
 import type { AwsProfile, CloudNode } from '../../renderer/types/cloud'
 import { generateTerraformFile } from '../terraform/index'
-import { execFile } from 'child_process'
+import { execFile, spawn } from 'child_process'
+import type { ChildProcess } from 'child_process'
 import { promisify } from 'util'
 import { randomUUID } from 'crypto'
+import { CloudWatchClient } from '@aws-sdk/client-cloudwatch'
+import { fetchMetrics } from '../aws/services/cloudwatch'
+import type { CloudMetric } from '../aws/services/cloudwatch'
 import { buildLocalStackProvider } from '../terraform/provider'
 const execFileAsync = promisify(execFile)
 import { parseTfState, parseTfStateModules } from '../aws/tfstate/parser'
@@ -59,7 +63,15 @@ let activeProfile:  string = 'default'
 let activeEndpoint: string | undefined
 let activeRegions:  string[] = ['us-east-1']
 
+// --- Terminal sessions ---
+const terminalSessions = new Map<string, ChildProcess>()
+
+// Reference to the main window — set in registerHandlers
+let mainWindow: BrowserWindow | null = null
+
 export function registerHandlers(win: BrowserWindow): void {
+  mainWindow = win
+
   // List available AWS profiles
   ipcMain.handle(IPC.PROFILES_LIST, () => listProfiles())
 
@@ -529,6 +541,88 @@ export function registerHandlers(win: BrowserWindow): void {
     } catch (err) {
       return { ok: false, error: (err as Error).message }
     }
+  })
+
+  // CloudWatch metrics fetch
+  ipcMain.handle(IPC.METRICS_FETCH, async (_, params: {
+    nodeId: string
+    nodeType: string
+    resourceId: string
+    region: string
+    profile: AwsProfile
+  }): Promise<CloudMetric[]> => {
+    try {
+      const credentialsConfig = params.profile.endpoint
+        ? { credentials: { accessKeyId: 'test', secretAccessKey: 'test' } }
+        : {}
+      if (!params.profile.endpoint) process.env.AWS_PROFILE = params.profile.name
+      const cw = new CloudWatchClient({ region: params.region, ...credentialsConfig })
+      return await fetchMetrics(cw, { nodeType: params.nodeType, resourceId: params.resourceId })
+    } catch {
+      return []
+    }
+  })
+
+  // Per-node change history — reads from disk
+  ipcMain.handle(IPC.HISTORY_GET, async (_, nodeId: string): Promise<Array<{ timestamp: string; changes: Array<{ field: string; before: string; after: string }> }>> => {
+    try {
+      const data = await fsp.readFile(historyFilePath(nodeId), 'utf8')
+      return JSON.parse(data)
+    } catch {
+      return []
+    }
+  })
+
+  // SSM terminal — start session
+  ipcMain.handle(IPC.TERMINAL_START, async (_, params: { instanceId: string; region: string; profile: AwsProfile }) => {
+    try {
+      const sessionId = randomUUID()
+      let env: NodeJS.ProcessEnv
+      if (params.profile.endpoint) {
+        env = {
+          ...process.env,
+          AWS_ENDPOINT_URL:      params.profile.endpoint,
+          AWS_ACCESS_KEY_ID:     'test',
+          AWS_SECRET_ACCESS_KEY: 'test',
+          AWS_PROFILE:           undefined,
+          AWS_DEFAULT_PROFILE:   undefined,
+        }
+      } else {
+        env = { ...process.env, AWS_PROFILE: params.profile.name }
+      }
+      const proc = spawn('aws', ['ssm', 'start-session', '--target', params.instanceId, '--region', params.region], {
+        env,
+        stdio: 'pipe',
+      })
+      terminalSessions.set(sessionId, proc)
+      proc.stdout?.on('data', (chunk: Buffer) => {
+        mainWindow?.webContents.send(IPC.TERMINAL_OUTPUT, { sessionId, data: chunk.toString() })
+      })
+      proc.stderr?.on('data', (chunk: Buffer) => {
+        mainWindow?.webContents.send(IPC.TERMINAL_OUTPUT, { sessionId, data: chunk.toString() })
+      })
+      proc.on('exit', () => {
+        mainWindow?.webContents.send(IPC.TERMINAL_OUTPUT, { sessionId, data: '\r\n[Session ended]\r\n' })
+        terminalSessions.delete(sessionId)
+      })
+      return { ok: true as const, sessionId }
+    } catch (e) {
+      return { ok: false as const, error: String(e) }
+    }
+  })
+
+  // SSM terminal — send input
+  ipcMain.handle(IPC.TERMINAL_INPUT, async (_, sessionId: string, data: string) => {
+    terminalSessions.get(sessionId)?.stdin?.write(data)
+  })
+
+  // SSM terminal — resize (best-effort no-op)
+  ipcMain.handle(IPC.TERMINAL_RESIZE, async () => { /* best-effort no-op */ })
+
+  // SSM terminal — close
+  ipcMain.handle(IPC.TERMINAL_CLOSE, async (_, sessionId: string) => {
+    const proc = terminalSessions.get(sessionId)
+    if (proc) { proc.kill(); terminalSessions.delete(sessionId) }
   })
 
   // Initialise engine for the default session

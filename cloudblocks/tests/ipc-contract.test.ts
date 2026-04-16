@@ -19,6 +19,7 @@ const PUSH_ONLY_CHANNELS = new Set<string>([
   IPC.CLI_DONE,
   IPC.UPDATE_AVAILABLE,
   IPC.PLUGIN_METADATA,
+  IPC.TERMINAL_OUTPUT,
 ])
 
 // Fire-and-forget channel registered with ipcMain.on, not ipcMain.handle
@@ -47,6 +48,7 @@ vi.mock('../src/main/aws/scanner', () => ({
   ResourceScanner: vi.fn(function () {
     return { start: vi.fn(), stop: vi.fn(), triggerManualScan: vi.fn(), updateRegions: vi.fn(), updateInterval: vi.fn() }
   }),
+  historyFilePath: vi.fn().mockReturnValue('/tmp/history/node.json'),
 }))
 vi.mock('../src/main/cli/engine', () => ({
   CliEngine: vi.fn(function () { return { execute: vi.fn(), cancel: vi.fn() } }),
@@ -64,6 +66,12 @@ vi.mock('../src/main/aws/iam/fetcher', () => ({
   fetchEc2IamData: vi.fn().mockResolvedValue([]),
   fetchLambdaIamData: vi.fn().mockResolvedValue([]),
   fetchS3IamData: vi.fn().mockResolvedValue([]),
+}))
+vi.mock('@aws-sdk/client-cloudwatch', () => ({
+  CloudWatchClient: vi.fn(function () { return {} }),
+}))
+vi.mock('../src/main/aws/services/cloudwatch', () => ({
+  fetchMetrics: vi.fn().mockResolvedValue([]),
 }))
 
 import { ipcMain } from 'electron'

@@ -46,5 +46,18 @@ interface Window {
       | { ok: true; account: string; arn: string }
       | { ok: false; error: string }
     >
+    fetchMetrics(params: {
+      nodeId: string
+      nodeType: string
+      resourceId: string
+      region: string
+      profile: import('../renderer/types/cloud').AwsProfile
+    }): Promise<import('../main/aws/services/cloudwatch').CloudMetric[]>
+    getNodeHistory(nodeId: string): Promise<Array<{ timestamp: string; changes: Array<{ field: string; before: string; after: string }> }>>
+    startTerminal(params: { instanceId: string; region: string; profile: import('../renderer/types/cloud').AwsProfile }): Promise<{ ok: true; sessionId: string } | { ok: false; error: string }>
+    sendTerminalInput(sessionId: string, data: string): Promise<void>
+    resizeTerminal(sessionId: string, cols: number, rows: number): Promise<void>
+    closeTerminal(sessionId: string): Promise<void>
+    onTerminalOutput(cb: (data: { sessionId: string; data: string }) => void): () => void
   }
 }

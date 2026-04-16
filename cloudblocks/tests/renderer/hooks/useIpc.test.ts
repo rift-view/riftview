@@ -47,6 +47,13 @@ beforeEach(() => {
     retryScanService:     vi.fn().mockResolvedValue({ ok: true }),
     saveExportImage:      vi.fn().mockResolvedValue({ success: true }),
     validateCredentials:  vi.fn().mockResolvedValue({ ok: true, account: '123456789012', arn: 'arn:aws:iam::123456789012:user/test' }),
+    fetchMetrics:         vi.fn().mockResolvedValue([]),
+    getNodeHistory:       vi.fn().mockResolvedValue([]),
+    startTerminal:        vi.fn().mockResolvedValue({ ok: true, sessionId: 'test-session' }),
+    sendTerminalInput:    vi.fn().mockResolvedValue(undefined),
+    resizeTerminal:       vi.fn().mockResolvedValue(undefined),
+    closeTerminal:        vi.fn().mockResolvedValue(undefined),
+    onTerminalOutput:     vi.fn().mockReturnValue(vi.fn()),
   }
   useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
 })
