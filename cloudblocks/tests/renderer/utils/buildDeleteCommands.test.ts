@@ -10,7 +10,7 @@ function makeNode(overrides: Partial<CloudNode>): CloudNode {
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    ...overrides,
+    ...overrides
   }
 }
 
@@ -43,18 +43,22 @@ describe('buildDeleteCommands — rds with disableProtectionFirst', () => {
     const node = makeNode({
       id: 'db-myinstance',
       type: 'rds',
-      metadata: { deletionProtection: true },
+      metadata: { deletionProtection: true }
     })
     const cmds = buildDeleteCommands(node, { disableProtectionFirst: true })
     expect(cmds).toHaveLength(2)
     expect(cmds[0]).toEqual([
-      'rds', 'modify-db-instance',
-      '--db-instance-identifier', 'db-myinstance',
-      '--no-deletion-protection',
+      'rds',
+      'modify-db-instance',
+      '--db-instance-identifier',
+      'db-myinstance',
+      '--no-deletion-protection'
     ])
     expect(cmds[1]).toEqual([
-      'rds', 'delete-db-instance',
-      '--db-instance-identifier', 'db-myinstance',
+      'rds',
+      'delete-db-instance',
+      '--db-instance-identifier',
+      'db-myinstance'
     ])
   })
 
@@ -63,8 +67,10 @@ describe('buildDeleteCommands — rds with disableProtectionFirst', () => {
     const cmds = buildDeleteCommands(node)
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).toEqual([
-      'rds', 'delete-db-instance',
-      '--db-instance-identifier', 'db-myinstance',
+      'rds',
+      'delete-db-instance',
+      '--db-instance-identifier',
+      'db-myinstance'
     ])
   })
 })

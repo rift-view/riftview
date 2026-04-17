@@ -30,8 +30,8 @@ describe('listTopics', () => {
         Subscriptions: [
           { Endpoint: 'arn:aws:lambda:us-east-1:123456789:function:my-fn', Protocol: 'lambda' },
           { Endpoint: 'https://example.com/webhook', Protocol: 'https' },
-          { Endpoint: 'arn:aws:sqs:us-east-1:123456789:my-queue', Protocol: 'sqs' },
-        ],
+          { Endpoint: 'arn:aws:sqs:us-east-1:123456789:my-queue', Protocol: 'sqs' }
+        ]
       })
 
     const nodes = await listTopics(mockClient, 'us-east-1')
@@ -40,7 +40,7 @@ describe('listTopics', () => {
     expect(nodes[0].integrations?.every((i) => i.edgeType === 'subscription')).toBe(true)
     expect(nodes[0].integrations?.map((i) => i.targetId)).toEqual([
       'arn:aws:lambda:us-east-1:123456789:function:my-fn',
-      'arn:aws:sqs:us-east-1:123456789:my-queue',
+      'arn:aws:sqs:us-east-1:123456789:my-queue'
     ])
   })
 

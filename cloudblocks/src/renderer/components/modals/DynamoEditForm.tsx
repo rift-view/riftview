@@ -2,17 +2,38 @@ import React, { useState } from 'react'
 import type { CloudNode } from '../../types/cloud'
 import type { DynamoEditParams } from '../../types/edit'
 
-interface Props { node: CloudNode; onChange: (p: DynamoEditParams) => void }
+interface Props {
+  node: CloudNode
+  onChange: (p: DynamoEditParams) => void
+}
 
-const inp: React.CSSProperties = { width: '100%', background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)', borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10, boxSizing: 'border-box' as const }
-const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
+const inp: React.CSSProperties = {
+  width: '100%',
+  background: 'var(--cb-bg-panel)',
+  border: '1px solid var(--cb-border)',
+  borderRadius: 3,
+  padding: '3px 6px',
+  color: 'var(--cb-text-primary)',
+  fontFamily: 'monospace',
+  fontSize: 10,
+  boxSizing: 'border-box' as const
+}
+const lbl: React.CSSProperties = {
+  fontSize: 9,
+  color: 'var(--cb-text-muted)',
+  textTransform: 'uppercase',
+  marginBottom: 2,
+  marginTop: 8
+}
 
 export default function DynamoEditForm({ node, onChange }: Props): React.JSX.Element {
   const tableName = (node.metadata.tableName as string) ?? node.label
 
   const initialBillingMode: 'PAY_PER_REQUEST' | 'PROVISIONED' =
     (node.metadata.billingMode as string) === 'PROVISIONED' ? 'PROVISIONED' : 'PAY_PER_REQUEST'
-  const [billingMode, setBillingMode] = useState<'PAY_PER_REQUEST' | 'PROVISIONED'>(initialBillingMode)
+  const [billingMode, setBillingMode] = useState<'PAY_PER_REQUEST' | 'PROVISIONED'>(
+    initialBillingMode
+  )
   const [readCapacityUnits, setReadCapacityUnits] = useState(
     (node.metadata.readCapacity as number) ?? (node.metadata.readCapacityUnits as number) ?? 5
   )
@@ -20,11 +41,7 @@ export default function DynamoEditForm({ node, onChange }: Props): React.JSX.Ele
     (node.metadata.writeCapacity as number) ?? (node.metadata.writeCapacityUnits as number) ?? 5
   )
 
-  const emit = (
-    mode: 'PAY_PER_REQUEST' | 'PROVISIONED',
-    rcu: number,
-    wcu: number,
-  ): void => {
+  const emit = (mode: 'PAY_PER_REQUEST' | 'PROVISIONED', rcu: number, wcu: number): void => {
     const params: DynamoEditParams = { resource: 'dynamo', tableName, billingMode: mode }
     if (mode === 'PROVISIONED') {
       params.readCapacityUnits = rcu
@@ -42,7 +59,7 @@ export default function DynamoEditForm({ node, onChange }: Props): React.JSX.Ele
       <select
         style={inp}
         value={billingMode}
-        onChange={e => {
+        onChange={(e) => {
           const v = e.target.value as 'PAY_PER_REQUEST' | 'PROVISIONED'
           setBillingMode(v)
           emit(v, readCapacityUnits, writeCapacityUnits)
@@ -60,7 +77,7 @@ export default function DynamoEditForm({ node, onChange }: Props): React.JSX.Ele
             type="number"
             min={1}
             value={readCapacityUnits}
-            onChange={e => {
+            onChange={(e) => {
               const v = Number(e.target.value)
               setReadCapacityUnits(v)
               emit(billingMode, v, writeCapacityUnits)
@@ -72,7 +89,7 @@ export default function DynamoEditForm({ node, onChange }: Props): React.JSX.Ele
             type="number"
             min={1}
             value={writeCapacityUnits}
-            onChange={e => {
+            onChange={(e) => {
               const v = Number(e.target.value)
               setWriteCapacityUnits(v)
               emit(billingMode, readCapacityUnits, v)

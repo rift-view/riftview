@@ -16,24 +16,26 @@ import { useCloudStore } from '../../../../src/renderer/store/cloud'
 // ── Mock @xyflow/react ────────────────────────────────────────────────────────
 
 vi.mock('@xyflow/react', () => ({
-  ReactFlow:   ({ children }: { children?: React.ReactNode }) => <div data-testid="reactflow">{children}</div>,
-  Background:  () => null,
-  MiniMap:     () => null,
-  useReactFlow: () => ({ fitView: vi.fn(), setNodes: vi.fn() }),
+  ReactFlow: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="reactflow">{children}</div>
+  ),
+  Background: () => null,
+  MiniMap: () => null,
+  useReactFlow: () => ({ fitView: vi.fn(), setNodes: vi.fn() })
 }))
 
 // ── Mock commandLayout (avoids heavy computation in test) ────────────────────
 
 vi.mock('../../../../src/renderer/utils/commandLayout', () => ({
   buildCommandNodes: () => [],
-  getTierForNode:    () => 0,
-  NODE_TIER:         {},
+  getTierForNode: () => 0,
+  NODE_TIER: {}
 }))
 
 // ── Mock resolveIntegrationTargetId ───────────────────────────────────────────
 
 vi.mock('../../../../src/renderer/utils/resolveIntegrationTargetId', () => ({
-  resolveIntegrationTargetId: (_nodes: unknown, targetId: string) => targetId,
+  resolveIntegrationTargetId: (_nodes: unknown, targetId: string) => targetId
 }))
 
 // ── Import component after mocks are established ─────────────────────────────
@@ -47,7 +49,9 @@ function makeNode(type: CloudNode['type'], id = `id-${type}`): CloudNode {
   return { id, type, label: type, status: 'running', region: 'us-east-1', metadata: {} }
 }
 
-const noop = (): void => { /* noop */ }
+const noop = (): void => {
+  /* noop */
+}
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -57,13 +61,13 @@ describe('CommandView — path trace setInterval cleanup on unmount', () => {
 
     // Seed the store with nodes that have integration edges so path trace
     // has something to walk.
-    const apigw  = makeNode('apigw',  'apigw-1')
+    const apigw = makeNode('apigw', 'apigw-1')
     const lambda = makeNode('lambda', 'lambda-1')
-    const rds    = makeNode('rds',    'rds-1')
+    const rds = makeNode('rds', 'rds-1')
 
     // apigw → lambda → rds
-    apigw.integrations  = [{ targetId: 'lambda-1', edgeType: 'trigger' }]
-    lambda.integrations = [{ targetId: 'rds-1',    edgeType: 'trigger' }]
+    apigw.integrations = [{ targetId: 'lambda-1', edgeType: 'trigger' }]
+    lambda.integrations = [{ targetId: 'rds-1', edgeType: 'trigger' }]
 
     useCloudStore.setState({ nodes: [apigw, lambda, rds] })
     // Set pathTraceId so the staggered-reveal useEffect fires an interval
@@ -90,12 +94,12 @@ describe('CommandView — path trace setInterval cleanup on unmount', () => {
     vi.advanceTimersByTime(2000)
 
     // No React "setState on unmounted component" or act() warnings should have fired
-    const reactWarnings = consoleError.mock.calls.filter((args) =>
-      typeof args[0] === 'string' && (
-        args[0].includes('unmounted component') ||
-        args[0].includes('act(') ||
-        args[0].includes('memory leak')
-      )
+    const reactWarnings = consoleError.mock.calls.filter(
+      (args) =>
+        typeof args[0] === 'string' &&
+        (args[0].includes('unmounted component') ||
+          args[0].includes('act(') ||
+          args[0].includes('memory leak'))
     )
     expect(reactWarnings).toHaveLength(0)
 

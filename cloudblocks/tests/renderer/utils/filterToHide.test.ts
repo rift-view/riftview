@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../../src/renderer/utils/filterToHide'
+import {
+  applyNodeFilters,
+  filterEdgesByVisibleNodes
+} from '../../../src/renderer/utils/filterToHide'
 import type { CloudNode } from '../../../src/renderer/types/cloud'
 import type { NodeFilter } from '../../../src/renderer/store/ui'
 import type { Edge } from '@xyflow/react'
@@ -13,7 +16,9 @@ function edge(source: string, target: string): Edge {
 }
 
 const typeFilter = (t: CloudNode['type']): NodeFilter => ({
-  id: `type-${t}`, label: t, test: (n) => n.type === t,
+  id: `type-${t}`,
+  label: t,
+  test: (n) => n.type === t
 })
 
 // ── 1. flowNodes exclusion ──────────────────────────────────────────────────
@@ -27,13 +32,13 @@ describe('applyNodeFilters — flowNodes exclusion', () => {
   it('excludes nodes that do not match any active filter', () => {
     const nodes = [node('a', 'ec2'), node('b', 'rds'), node('c', 's3')]
     const result = applyNodeFilters(nodes, [typeFilter('ec2')])
-    expect(result.map(n => n.id)).toEqual(['a'])
+    expect(result.map((n) => n.id)).toEqual(['a'])
   })
 
   it('uses OR composition — includes node matching any filter', () => {
     const nodes = [node('a', 'ec2'), node('b', 'rds'), node('c', 's3')]
     const result = applyNodeFilters(nodes, [typeFilter('ec2'), typeFilter('rds')])
-    expect(result.map(n => n.id)).toEqual(['a', 'b'])
+    expect(result.map((n) => n.id)).toEqual(['a', 'b'])
   })
 
   it('returns empty array when no nodes match any filter', () => {
@@ -95,7 +100,7 @@ describe('applyNodeFilters — selection clear precondition', () => {
     const selectedId = 'rds-1'
     const nodes = [node('ec2-1', 'ec2'), node(selectedId, 'rds')]
     const visible = applyNodeFilters(nodes, [typeFilter('ec2')])
-    const visibleIds = new Set(visible.map(n => n.id))
+    const visibleIds = new Set(visible.map((n) => n.id))
     expect(visibleIds.has(selectedId)).toBe(false)
   })
 
@@ -103,7 +108,7 @@ describe('applyNodeFilters — selection clear precondition', () => {
     const selectedId = 'ec2-1'
     const nodes = [node(selectedId, 'ec2'), node('rds-1', 'rds')]
     const visible = applyNodeFilters(nodes, [typeFilter('ec2')])
-    const visibleIds = new Set(visible.map(n => n.id))
+    const visibleIds = new Set(visible.map((n) => n.id))
     expect(visibleIds.has(selectedId)).toBe(true)
   })
 })

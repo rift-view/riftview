@@ -4,12 +4,12 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   main: {
-    build: { lib: { entry: 'src/main/index.ts' } },
+    build: { lib: { entry: 'src/main/index.ts' } }
   },
   preload: {
-    build: { lib: { entry: 'src/preload/index.ts' } },
+    build: { lib: { entry: 'src/preload/index.ts' } }
   },
   renderer: {
-    plugins: [react(), tailwindcss()],
-  },
+    plugins: [react(), tailwindcss()]
+  }
 })

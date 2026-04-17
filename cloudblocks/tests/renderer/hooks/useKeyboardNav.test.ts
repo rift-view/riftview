@@ -7,12 +7,33 @@ vi.mock('../../../src/renderer/store/cloud', () => ({
   useCloudStore: {
     getState: vi.fn(() => ({
       nodes: [
-        { id: 'a', type: 'lambda', label: 'Alpha', status: undefined, region: 'us-east-1', metadata: {} },
-        { id: 'b', type: 'lambda', label: 'Beta',  status: undefined, region: 'us-east-1', metadata: {} },
-        { id: 'c', type: 'lambda', label: 'Gamma', status: undefined, region: 'us-east-1', metadata: {} },
-      ],
-    })),
-  },
+        {
+          id: 'a',
+          type: 'lambda',
+          label: 'Alpha',
+          status: undefined,
+          region: 'us-east-1',
+          metadata: {}
+        },
+        {
+          id: 'b',
+          type: 'lambda',
+          label: 'Beta',
+          status: undefined,
+          region: 'us-east-1',
+          metadata: {}
+        },
+        {
+          id: 'c',
+          type: 'lambda',
+          label: 'Gamma',
+          status: undefined,
+          region: 'us-east-1',
+          metadata: {}
+        }
+      ]
+    }))
+  }
 }))
 
 const mockSelectNode = vi.fn()
@@ -34,16 +55,16 @@ vi.mock('../../../src/renderer/store/ui', () => ({
         setBlastRadiusId: mockSetBlastRadiusId,
         setPathTraceId: mockSetPathTraceId,
         setKeyboardHelpOpen: mockSetKeyboardHelpOpen,
-        loadView: vi.fn(),
-      })),
-    },
-  ),
+        loadView: vi.fn()
+      }))
+    }
+  )
 }))
 
 // Mock window.terminus
 Object.defineProperty(window, 'terminus', {
   value: { startScan: vi.fn(() => Promise.resolve()) },
-  writable: true,
+  writable: true
 })
 
 function fireKey(key: string, target: EventTarget = document.body): void {
@@ -51,7 +72,10 @@ function fireKey(key: string, target: EventTarget = document.body): void {
 }
 
 describe('useKeyboardNav', () => {
-  beforeEach(() => { vi.clearAllMocks(); keyboardHelpOpen = false })
+  beforeEach(() => {
+    vi.clearAllMocks()
+    keyboardHelpOpen = false
+  })
 
   afterEach(() => {})
 

@@ -1,5 +1,10 @@
 // src/main/plugin/registry.ts
-import type { TerminusPlugin, NodeTypeMetadata, PluginHclGenerator, PluginScanResult } from './types'
+import type {
+  TerminusPlugin,
+  NodeTypeMetadata,
+  PluginHclGenerator,
+  PluginScanResult
+} from './types'
 import type { CloudNode } from '../../renderer/types/cloud'
 
 export class PluginRegistry {
@@ -17,7 +22,7 @@ export class PluginRegistry {
         const owner = this._ownerByType.get(nodeType)!
         throw new Error(
           `NodeType "${nodeType}" is already claimed by plugin "${owner.id}". ` +
-          `Cannot register plugin "${plugin.id}".`
+            `Cannot register plugin "${plugin.id}".`
         )
       }
       this._ownerByType.set(nodeType, plugin)
@@ -85,7 +90,7 @@ export class PluginRegistry {
           allErrors.push({
             service: plugin.id,
             region,
-            message: (err as Error)?.message ?? String(err),
+            message: (err as Error)?.message ?? String(err)
           })
         }
       })

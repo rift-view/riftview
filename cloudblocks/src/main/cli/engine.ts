@@ -36,7 +36,10 @@ function extractGroupId(stdout: string): string | null {
 export class CliEngine {
   private currentProcess: ChildProcess | null = null
 
-  constructor(private win: BrowserWindow, private endpoint?: string) {}
+  constructor(
+    private win: BrowserWindow,
+    private endpoint?: string
+  ) {}
 
   /**
    * Runs commands sequentially. Stops chain on first non-zero exit.
@@ -63,9 +66,7 @@ export class CliEngine {
     }
 
     for (const rawArgv of commandChain) {
-      const argv = groupId
-        ? rawArgv.map((arg) => (arg === '{GroupId}' ? groupId! : arg))
-        : rawArgv
+      const argv = groupId ? rawArgv.map((arg) => (arg === '{GroupId}' ? groupId! : arg)) : rawArgv
 
       const result = await this.runOne(argv)
 
@@ -95,16 +96,16 @@ export class CliEngine {
         if (isLocalEndpoint(this.endpoint)) {
           env = {
             ...process.env,
-            AWS_ENDPOINT_URL:      this.endpoint,
-            AWS_ACCESS_KEY_ID:     'test',
+            AWS_ENDPOINT_URL: this.endpoint,
+            AWS_ACCESS_KEY_ID: 'test',
             AWS_SECRET_ACCESS_KEY: 'test',
-            AWS_PROFILE:           undefined,
-            AWS_DEFAULT_PROFILE:   undefined,
+            AWS_PROFILE: undefined,
+            AWS_DEFAULT_PROFILE: undefined
           }
         } else {
           console.warn(
             `[CliEngine] Non-local endpoint "${this.endpoint}" — skipping dummy credential injection. ` +
-            'Real AWS credentials from process.env will be used.'
+              'Real AWS credentials from process.env will be used.'
           )
           env = { ...process.env, AWS_ENDPOINT_URL: this.endpoint }
         }

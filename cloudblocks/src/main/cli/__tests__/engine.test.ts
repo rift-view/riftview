@@ -8,8 +8,12 @@ vi.mock('electron', () => ({ BrowserWindow: vi.fn() }))
 import { spawn } from 'child_process'
 import { CliEngine } from '../engine'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeProcess(exitCode: number, stdoutLines: string[] = [], stderrLines: string[] = []): any {
+function makeProcess(
+  exitCode: number,
+  stdoutLines: string[] = [],
+  stderrLines: string[] = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const proc = new EventEmitter() as any
   proc.stdout = new EventEmitter()
@@ -41,15 +45,22 @@ describe('CliEngine', () => {
     const engine = new CliEngine(mockWin)
     const result = await engine.execute([['ec2', 'create-vpc', '--cidr-block', '10.0.0.0/16']])
     expect(result.code).toBe(0)
-    expect(mockSpawn).toHaveBeenCalledWith('aws', ['ec2', 'create-vpc', '--cidr-block', '10.0.0.0/16'], expect.any(Object))
+    expect(mockSpawn).toHaveBeenCalledWith(
+      'aws',
+      ['ec2', 'create-vpc', '--cidr-block', '10.0.0.0/16'],
+      expect.any(Object)
+    )
   })
 
   it('sends cli:output IPC events for stdout lines', async () => {
     mockSpawn.mockReturnValue(makeProcess(0, ['line1', 'line2']))
     const engine = new CliEngine(mockWin)
     await engine.execute([['ec2', 'create-vpc']])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const outputCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:output')
+
+    const outputCalls = mockWin.webContents.send.mock.calls.filter(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (c: any) => c[0] === 'cli:output'
+    )
     expect(outputCalls).toHaveLength(2)
     expect(outputCalls[0][1]).toEqual({ line: 'line1', stream: 'stdout' })
     expect(outputCalls[1][1]).toEqual({ line: 'line2', stream: 'stdout' })
@@ -72,7 +83,7 @@ describe('CliEngine', () => {
     const engine = new CliEngine(mockWin)
     await engine.execute([
       ['ec2', 'create-security-group', '--group-name', 'web'],
-      ['ec2', 'authorize-security-group-ingress', '--group-id', '{GroupId}'],
+      ['ec2', 'authorize-security-group-ingress', '--group-id', '{GroupId}']
     ])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const doneCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:done')
@@ -85,7 +96,7 @@ describe('CliEngine', () => {
     const engine = new CliEngine(mockWin)
     const result = await engine.execute([
       ['ec2', 'create-security-group'],
-      ['ec2', 'authorize-security-group-ingress'],
+      ['ec2', 'authorize-security-group-ingress']
     ])
     expect(result.code).toBe(1)
     expect(mockSpawn).toHaveBeenCalledTimes(1)
@@ -98,24 +109,29 @@ describe('CliEngine', () => {
     const engine = new CliEngine(mockWin)
     await engine.execute([
       ['ec2', 'create-security-group'],
-      ['ec2', 'authorize-security-group-ingress', '--group-id', '{GroupId}'],
+      ['ec2', 'authorize-security-group-ingress', '--group-id', '{GroupId}']
     ])
     // Second spawn call should have the real GroupId substituted
     expect(mockSpawn).toHaveBeenNthCalledWith(
       2,
       'aws',
       ['ec2', 'authorize-security-group-ingress', '--group-id', 'sg-abc123'],
-      expect.any(Object),
+      expect.any(Object)
     )
   })
 
   it('rejects unsupported LocalStack services before spawning', async () => {
     const engine = new CliEngine(mockWin, 'http://localhost:4566')
-    const result = await engine.execute([['rds', 'create-db-instance', '--db-instance-identifier', 'mydb']])
+    const result = await engine.execute([
+      ['rds', 'create-db-instance', '--db-instance-identifier', 'mydb']
+    ])
     expect(result.code).toBe(1)
     expect(mockSpawn).not.toHaveBeenCalled()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const outputCalls = mockWin.webContents.send.mock.calls.filter((c: any) => c[0] === 'cli:output')
+
+    const outputCalls = mockWin.webContents.send.mock.calls.filter(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (c: any) => c[0] === 'cli:output'
+    )
     expect(outputCalls).toHaveLength(1)
     expect(outputCalls[0][1].stream).toBe('stderr')
     expect(outputCalls[0][1].line).toContain('rds')

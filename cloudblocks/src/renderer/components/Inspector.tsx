@@ -14,28 +14,81 @@ import { resolveIntegrationTargetId } from '../utils/resolveIntegrationTargetId'
 import { buildAdvisoryRemediation } from '../utils/buildAdvisoryRemediations'
 import { buildBlastRadius, directionSymbol } from '../utils/blastRadius'
 
-function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unknown>; tfMetadata: Record<string, unknown> }): React.JSX.Element {
+function DriftDiffTable({
+  metadata,
+  tfMetadata
+}: {
+  metadata: Record<string, unknown>
+  tfMetadata: Record<string, unknown>
+}): React.JSX.Element {
   const allKeys = Array.from(new Set([...Object.keys(metadata), ...Object.keys(tfMetadata)]))
-  const diffs = allKeys.filter((k) => String(metadata[k] ?? '') !== String(tfMetadata[k] ?? '') && (metadata[k] !== undefined || tfMetadata[k] !== undefined))
+  const diffs = allKeys.filter(
+    (k) =>
+      String(metadata[k] ?? '') !== String(tfMetadata[k] ?? '') &&
+      (metadata[k] !== undefined || tfMetadata[k] !== undefined)
+  )
 
   return (
     <>
       <div style={{ fontWeight: 700, color: '#22c55e', marginBottom: diffs.length > 0 ? 6 : 0 }}>
-        ✓ MATCHED{diffs.length > 0 ? ` — ${diffs.length} difference${diffs.length === 1 ? '' : 's'}` : ''}
+        ✓ MATCHED
+        {diffs.length > 0 ? ` — ${diffs.length} difference${diffs.length === 1 ? '' : 's'}` : ''}
       </div>
       {diffs.length === 0 ? (
         <div style={{ color: '#4ade80', fontSize: 10 }}>No differences detected</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(0,0,0,0.3)', borderRadius: 3, overflow: 'hidden', fontSize: 9 }}>
-          <div style={{ padding: '3px 6px', color: '#6b7280', fontWeight: 700, fontSize: 8, background: 'rgba(0,0,0,0.2)' }}>LIVE</div>
-          <div style={{ padding: '3px 6px', color: '#7c3aed', fontWeight: 700, fontSize: 8, background: 'rgba(0,0,0,0.2)' }}>TERRAFORM</div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 1,
+            background: 'rgba(0,0,0,0.3)',
+            borderRadius: 3,
+            overflow: 'hidden',
+            fontSize: 9
+          }}
+        >
+          <div
+            style={{
+              padding: '3px 6px',
+              color: '#6b7280',
+              fontWeight: 700,
+              fontSize: 8,
+              background: 'rgba(0,0,0,0.2)'
+            }}
+          >
+            LIVE
+          </div>
+          <div
+            style={{
+              padding: '3px 6px',
+              color: '#7c3aed',
+              fontWeight: 700,
+              fontSize: 8,
+              background: 'rgba(0,0,0,0.2)'
+            }}
+          >
+            TERRAFORM
+          </div>
           {diffs.map((k) => (
             <React.Fragment key={k}>
-              <div style={{ padding: '3px 6px', background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div
+                style={{
+                  padding: '3px 6px',
+                  background: 'rgba(0,0,0,0.15)',
+                  borderTop: '1px solid rgba(255,255,255,0.05)'
+                }}
+              >
                 <div style={{ color: '#6b7280', fontSize: 7, marginBottom: 1 }}>{k}</div>
                 <div style={{ color: '#fca5a5' }}>{String(metadata[k] ?? '—')}</div>
               </div>
-              <div style={{ padding: '3px 6px', background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div
+                style={{
+                  padding: '3px 6px',
+                  background: 'rgba(0,0,0,0.15)',
+                  borderTop: '1px solid rgba(255,255,255,0.05)'
+                }}
+              >
                 <div style={{ color: '#6b7280', fontSize: 7, marginBottom: 1 }}>{k}</div>
                 <div style={{ color: '#86efac' }}>{String(tfMetadata[k] ?? '—')}</div>
               </div>
@@ -50,29 +103,30 @@ function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unk
 // ── FirstScanSummary ──────────────────────────────────────────────────────────
 
 function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element {
-  const scanStatus    = useCloudStore((s) => s.scanStatus)
+  const scanStatus = useCloudStore((s) => s.scanStatus)
   const lastScannedAt = useCloudStore((s) => s.lastScannedAt)
-  const selectNode    = useUIStore((s) => s.selectNode)
+  const selectNode = useUIStore((s) => s.selectNode)
   const [groupByRule, setGroupByRule] = useState(false)
   const [showAll, setShowAll] = useState(false)
 
   // Memoized: only re-runs when the nodes array reference changes.
   // Must be called before any early return to satisfy Rules of Hooks.
-  const allAdvisories = useMemo(
-    () => nodes.flatMap((n) => analyzeNode(n)),
-    [nodes]
-  )
+  const allAdvisories = useMemo(() => nodes.flatMap((n) => analyzeNode(n)), [nodes])
 
   // Rule-grouped: one entry per unique ruleId, severity-escalated, sorted critical-first.
   // Called unconditionally to satisfy Rules of Hooks.
   const ruleGroups = useMemo(() => {
-    const map = new Map<string, { ruleId: string; title: string; severity: Advisory['severity']; count: number }>()
+    const map = new Map<
+      string,
+      { ruleId: string; title: string; severity: Advisory['severity']; count: number }
+    >()
     const severityRank: Record<Advisory['severity'], number> = { critical: 0, warning: 1, info: 2 }
     for (const a of allAdvisories) {
       const existing = map.get(a.ruleId)
       if (existing) {
         existing.count++
-        if (severityRank[a.severity] < severityRank[existing.severity]) existing.severity = a.severity
+        if (severityRank[a.severity] < severityRank[existing.severity])
+          existing.severity = a.severity
       } else {
         map.set(a.ruleId, { ruleId: a.ruleId, title: a.title, severity: a.severity, count: 1 })
       }
@@ -91,24 +145,24 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
   }
 
   const criticals = allAdvisories.filter((a) => a.severity === 'critical')
-  const warnings  = allAdvisories.filter((a) => a.severity === 'warning')
+  const warnings = allAdvisories.filter((a) => a.severity === 'warning')
 
   // Sorted queue: criticals first, then warnings, then info (stable within each group)
   const sortedAdvisories = [
     ...criticals,
     ...warnings,
-    ...allAdvisories.filter((a) => a.severity === 'info'),
+    ...allAdvisories.filter((a) => a.severity === 'info')
   ]
 
   const severityDotColor = (severity: Advisory['severity']): string => {
     if (severity === 'critical') return '#ef4444'
-    if (severity === 'warning')  return '#f59e0b'
+    if (severity === 'warning') return '#f59e0b'
     return '#60a5fa'
   }
 
   const severityLabel = (severity: Advisory['severity']): string => {
     if (severity === 'critical') return 'CRITICAL'
-    if (severity === 'warning')  return 'WARNING'
+    if (severity === 'warning') return 'WARNING'
     return 'INFO'
   }
 
@@ -123,19 +177,30 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
           {/* Header with back button + group toggle */}
           <div
             style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
-              color: 'var(--cb-text-muted)', marginBottom: 8,
-              borderBottom: '1px solid var(--cb-border)', paddingBottom: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              color: 'var(--cb-text-muted)',
+              marginBottom: 8,
+              borderBottom: '1px solid var(--cb-border)',
+              paddingBottom: 6
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button
                 onClick={() => setShowAll(false)}
                 style={{
-                  fontSize: 9, padding: '1px 5px', borderRadius: 3,
-                  background: '#334155', color: '#94a3b8',
-                  border: 'none', cursor: 'pointer', fontFamily: 'monospace',
+                  fontSize: 9,
+                  padding: '1px 5px',
+                  borderRadius: 3,
+                  background: '#334155',
+                  color: '#94a3b8',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'monospace'
                 }}
               >
                 ← Top risks
@@ -147,9 +212,13 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                 <>
                   <span
                     style={{
-                      fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 8,
-                      background: criticals.length > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
-                      color: criticals.length > 0 ? '#ef4444' : '#f59e0b',
+                      fontSize: 8,
+                      fontWeight: 700,
+                      padding: '1px 5px',
+                      borderRadius: 8,
+                      background:
+                        criticals.length > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
+                      color: criticals.length > 0 ? '#ef4444' : '#f59e0b'
                     }}
                   >
                     {allAdvisories.length}
@@ -157,9 +226,13 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                   <button
                     onClick={() => setGroupByRule((v) => !v)}
                     style={{
-                      fontSize: 10, padding: '1px 6px', borderRadius: 3,
-                      background: '#334155', color: '#94a3b8',
-                      border: 'none', cursor: 'pointer',
+                      fontSize: 10,
+                      padding: '1px 6px',
+                      borderRadius: 3,
+                      background: '#334155',
+                      color: '#94a3b8',
+                      border: 'none',
+                      cursor: 'pointer'
                     }}
                   >
                     {groupByRule ? 'By Rule' : 'By Node'}
@@ -182,34 +255,45 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
             /* ── By-Rule view ── */
             <div
               style={{
-                overflowY: 'auto', maxHeight: 320,
-                border: '1px solid var(--cb-border)', borderRadius: 3,
-                marginBottom: 10,
+                overflowY: 'auto',
+                maxHeight: 320,
+                border: '1px solid var(--cb-border)',
+                borderRadius: 3,
+                marginBottom: 10
               }}
             >
               {ruleGroups.map((group) => (
                 <div
                   key={group.ruleId}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    height: 28, padding: '0 8px',
-                    borderBottom: '1px solid var(--cb-border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    height: 28,
+                    padding: '0 8px',
+                    borderBottom: '1px solid var(--cb-border)'
                   }}
                 >
                   <span
                     style={{
                       flexShrink: 0,
-                      width: 8, height: 8, borderRadius: 4,
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
                       background: severityDotColor(group.severity),
                       display: 'inline-block',
-                      ...(group.severity === 'critical' ? { boxShadow: '0 0 5px #ef4444' } : {}),
+                      ...(group.severity === 'critical' ? { boxShadow: '0 0 5px #ef4444' } : {})
                     }}
                   />
                   <span
                     style={{
-                      fontSize: 9, fontWeight: 700, color: 'var(--cb-text-primary)',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      flex: 1,
+                      fontSize: 9,
+                      fontWeight: 700,
+                      color: 'var(--cb-text-primary)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      flex: 1
                     }}
                     title={group.title}
                   >
@@ -217,8 +301,10 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                   </span>
                   <span
                     style={{
-                      fontSize: 8, color: 'var(--cb-text-muted)',
-                      flexShrink: 0, whiteSpace: 'nowrap',
+                      fontSize: 8,
+                      color: 'var(--cb-text-muted)',
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap'
                     }}
                   >
                     {group.count} node{group.count !== 1 ? 's' : ''}
@@ -230,28 +316,34 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
             /* ── By-Node view ── */
             <div
               style={{
-                overflowY: 'auto', maxHeight: 320,
-                border: '1px solid var(--cb-border)', borderRadius: 3,
-                marginBottom: 10,
+                overflowY: 'auto',
+                maxHeight: 320,
+                border: '1px solid var(--cb-border)',
+                borderRadius: 3,
+                marginBottom: 10
               }}
             >
               {sortedAdvisories.map((advisory, idx) => {
                 const resourceNode = nodes.find((n) => n.id === advisory.nodeId)
-                const remediation  = buildAdvisoryRemediation(advisory, advisory.nodeId)
-                const dotColor     = severityDotColor(advisory.severity)
+                const remediation = buildAdvisoryRemediation(advisory, advisory.nodeId)
+                const dotColor = severityDotColor(advisory.severity)
 
                 return (
                   <div
                     key={`${advisory.nodeId}-${advisory.ruleId}-${idx}`}
                     onClick={() => selectNode(advisory.nodeId)}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      height: 28, padding: '0 8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      height: 28,
+                      padding: '0 8px',
                       borderBottom: '1px solid var(--cb-border)',
-                      cursor: 'pointer',
+                      cursor: 'pointer'
                     }}
                     onMouseEnter={(e) => {
-                      ;(e.currentTarget as HTMLDivElement).style.background = 'var(--cb-bg-elevated)'
+                      ;(e.currentTarget as HTMLDivElement).style.background =
+                        'var(--cb-bg-elevated)'
                     }}
                     onMouseLeave={(e) => {
                       ;(e.currentTarget as HTMLDivElement).style.background = 'transparent'
@@ -260,17 +352,25 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                     <span
                       style={{
                         flexShrink: 0,
-                        width: 8, height: 8, borderRadius: 4,
+                        width: 8,
+                        height: 8,
+                        borderRadius: 4,
                         background: dotColor,
                         display: 'inline-block',
-                        ...(advisory.severity === 'critical' ? { boxShadow: '0 0 5px #ef4444' } : {}),
+                        ...(advisory.severity === 'critical'
+                          ? { boxShadow: '0 0 5px #ef4444' }
+                          : {})
                       }}
                     />
                     <span
                       style={{
-                        fontSize: 8, color: 'var(--cb-text-muted)',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        maxWidth: 60, flexShrink: 0,
+                        fontSize: 8,
+                        color: 'var(--cb-text-muted)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: 60,
+                        flexShrink: 0
                       }}
                       title={resourceNode?.label ?? advisory.nodeId}
                     >
@@ -278,9 +378,13 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                     </span>
                     <span
                       style={{
-                        fontSize: 9, fontWeight: 700, color: 'var(--cb-text-primary)',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        flex: 1,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        color: 'var(--cb-text-primary)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        flex: 1
                       }}
                       title={advisory.title}
                     >
@@ -293,10 +397,14 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                           selectNode(advisory.nodeId)
                         }}
                         style={{
-                          fontSize: 8, fontFamily: 'monospace', cursor: 'pointer',
-                          background: 'none', border: 'none',
+                          fontSize: 8,
+                          fontFamily: 'monospace',
+                          cursor: 'pointer',
+                          background: 'none',
+                          border: 'none',
                           color: 'var(--cb-accent)',
-                          flexShrink: 0, padding: '0 2px',
+                          flexShrink: 0,
+                          padding: '0 2px'
                         }}
                       >
                         Fix →
@@ -318,10 +426,16 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
           {/* Header */}
           <div
             style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
-              color: 'var(--cb-text-muted)', marginBottom: 8,
-              borderBottom: '1px solid var(--cb-border)', paddingBottom: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              color: 'var(--cb-text-muted)',
+              marginBottom: 8,
+              borderBottom: '1px solid var(--cb-border)',
+              paddingBottom: 6
             }}
           >
             <span>TOP RISKS</span>
@@ -329,10 +443,15 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
               <button
                 onClick={() => setShowAll(true)}
                 style={{
-                  fontSize: 9, padding: '1px 5px', borderRadius: 3,
-                  background: 'none', color: 'var(--cb-accent)',
-                  border: 'none', cursor: 'pointer', fontFamily: 'monospace',
-                  letterSpacing: '0.05em',
+                  fontSize: 9,
+                  padding: '1px 5px',
+                  borderRadius: 3,
+                  background: 'none',
+                  color: 'var(--cb-accent)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.05em'
                 }}
               >
                 View all →
@@ -353,15 +472,17 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
               <>
                 <div
                   style={{
-                    border: '1px solid var(--cb-border)', borderRadius: 3,
-                    marginBottom: 8, overflow: 'hidden',
+                    border: '1px solid var(--cb-border)',
+                    borderRadius: 3,
+                    marginBottom: 8,
+                    overflow: 'hidden'
                   }}
                 >
                   {topRisks.map((advisory, idx) => {
                     const remediation = buildAdvisoryRemediation(advisory, advisory.nodeId)
-                    const dotColor    = severityDotColor(advisory.severity)
-                    const sevLabel    = severityLabel(advisory.severity)
-                    const isLast      = idx === topRisks.length - 1
+                    const dotColor = severityDotColor(advisory.severity)
+                    const sevLabel = severityLabel(advisory.severity)
+                    const isLast = idx === topRisks.length - 1
 
                     return (
                       <div
@@ -370,38 +491,60 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                         style={{
                           padding: '7px 8px',
                           borderBottom: isLast ? 'none' : '1px solid var(--cb-border)',
-                          cursor: 'pointer',
+                          cursor: 'pointer'
                         }}
                         onMouseEnter={(e) => {
-                          ;(e.currentTarget as HTMLDivElement).style.background = 'var(--cb-bg-elevated)'
+                          ;(e.currentTarget as HTMLDivElement).style.background =
+                            'var(--cb-bg-elevated)'
                         }}
                         onMouseLeave={(e) => {
                           ;(e.currentTarget as HTMLDivElement).style.background = 'transparent'
                         }}
                       >
                         {/* Severity + title line */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: 3
+                          }}
+                        >
+                          <div
+                            style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}
+                          >
                             <span
                               style={{
-                                width: 8, height: 8, borderRadius: 4,
+                                width: 8,
+                                height: 8,
+                                borderRadius: 4,
                                 background: dotColor,
-                                display: 'inline-block', flexShrink: 0,
-                                ...(advisory.severity === 'critical' ? { boxShadow: '0 0 5px #ef4444' } : {}),
+                                display: 'inline-block',
+                                flexShrink: 0,
+                                ...(advisory.severity === 'critical'
+                                  ? { boxShadow: '0 0 5px #ef4444' }
+                                  : {})
                               }}
                             />
                             <span
                               style={{
-                                fontSize: 8, fontWeight: 700, letterSpacing: '0.08em',
-                                color: dotColor, flexShrink: 0,
+                                fontSize: 8,
+                                fontWeight: 700,
+                                letterSpacing: '0.08em',
+                                color: dotColor,
+                                flexShrink: 0
                               }}
                             >
                               {sevLabel}
                             </span>
                             <span
                               style={{
-                                fontSize: 9, fontWeight: 700, color: 'var(--cb-text-primary)',
-                                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                                fontSize: 9,
+                                fontWeight: 700,
+                                color: 'var(--cb-text-primary)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
                               }}
                               title={advisory.title}
                             >
@@ -415,10 +558,14 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                                 selectNode(advisory.nodeId)
                               }}
                               style={{
-                                fontSize: 8, fontFamily: 'monospace', cursor: 'pointer',
-                                background: 'none', border: 'none',
+                                fontSize: 8,
+                                fontFamily: 'monospace',
+                                cursor: 'pointer',
+                                background: 'none',
+                                border: 'none',
                                 color: 'var(--cb-accent)',
-                                flexShrink: 0, padding: '0 0 0 4px',
+                                flexShrink: 0,
+                                padding: '0 0 0 4px'
                               }}
                             >
                               Fix →
@@ -428,9 +575,12 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                         {/* Detail line */}
                         <div
                           style={{
-                            fontSize: 8, color: 'var(--cb-text-muted)',
-                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                            paddingLeft: 11,
+                            fontSize: 8,
+                            color: 'var(--cb-text-muted)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            paddingLeft: 11
                           }}
                           title={advisory.detail}
                         >
@@ -443,7 +593,9 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
 
                 {/* Footer */}
                 <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textAlign: 'center' }}>
-                  {topRisks.length} of {allAdvisories.length} advisor{allAdvisories.length !== 1 ? 'ies' : 'y'} shown · {nodes.length} resource{nodes.length !== 1 ? 's' : ''} scanned
+                  {topRisks.length} of {allAdvisories.length} advisor
+                  {allAdvisories.length !== 1 ? 'ies' : 'y'} shown · {nodes.length} resource
+                  {nodes.length !== 1 ? 's' : ''} scanned
                 </div>
               </>
             )}
@@ -482,26 +634,37 @@ function truncate(s: string, max = 40): string {
 interface InspectorProps {
   onDelete: (node: CloudNode) => void
   onEdit: (node: CloudNode) => void
-  onQuickAction: (node: CloudNode, action: 'stop' | 'start' | 'reboot' | 'invalidate', meta?: { path?: string }) => void
+  onQuickAction: (
+    node: CloudNode,
+    action: 'stop' | 'start' | 'reboot' | 'invalidate',
+    meta?: { path?: string }
+  ) => void
   onAddRoute?: (apiId: string) => void
   onRemediate?: (node: CloudNode, commands: string[][]) => Promise<{ code: number }>
 }
 
-export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemediate }: InspectorProps): React.JSX.Element {
-  const selectedId      = useUIStore((s) => s.selectedNodeId)
+export function Inspector({
+  onDelete,
+  onEdit,
+  onQuickAction,
+  onAddRoute,
+  onRemediate
+}: InspectorProps): React.JSX.Element {
+  const selectedId = useUIStore((s) => s.selectedNodeId)
   const selectedEdgeInfo = useUIStore((s) => s.selectedEdgeInfo)
   const setActiveCreate = useUIStore((s) => s.setActiveCreate)
-  const selectNode      = useUIStore((s) => s.selectNode)
-  const blastRadiusId   = useUIStore((s) => s.blastRadiusId)
+  const selectNode = useUIStore((s) => s.selectNode)
+  const blastRadiusId = useUIStore((s) => s.blastRadiusId)
   const setBlastRadiusId = useUIStore((s) => s.setBlastRadiusId)
-  const lockedNodes     = useUIStore((s) => s.lockedNodes)
-  const toggleLockNode  = useUIStore((s) => s.toggleLockNode)
-  const annotations     = useUIStore((s) => s.annotations)
-  const setAnnotation   = useUIStore((s) => s.setAnnotation)
+  const lockedNodes = useUIStore((s) => s.lockedNodes)
+  const toggleLockNode = useUIStore((s) => s.toggleLockNode)
+  const annotations = useUIStore((s) => s.annotations)
+  const setAnnotation = useUIStore((s) => s.setAnnotation)
   const clearAnnotation = useUIStore((s) => s.clearAnnotation)
-  const nodes           = useCloudStore((s) => s.nodes)
-  const importedNodes   = useCloudStore((s) => s.importedNodes)
-  const node          = nodes.find((n) => n.id === selectedId) ?? importedNodes.find((n) => n.id === selectedId)
+  const nodes = useCloudStore((s) => s.nodes)
+  const importedNodes = useCloudStore((s) => s.importedNodes)
+  const node =
+    nodes.find((n) => n.id === selectedId) ?? importedNodes.find((n) => n.id === selectedId)
 
   const isImported = node?.status === 'imported'
 
@@ -535,57 +698,92 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
       setNodeHistory([])
       return
     }
-    window.terminus?.getNodeHistory?.(selectedId).then(setNodeHistory).catch(() => { setNodeHistory([]) })
+    window.terminus
+      ?.getNodeHistory?.(selectedId)
+      .then(setNodeHistory)
+      .catch(() => {
+        setNodeHistory([])
+      })
   }, [selectedId])
 
   const IAM_SUPPORTED_TYPES: NodeType[] = ['ec2', 'lambda', 's3']
 
   const STATUS_COLORS: Record<string, string> = {
-    running: '#28c840', stopped: '#ff5f57', pending: '#febc2e', error: '#ff5f57', unknown: '#666',
+    running: '#28c840',
+    stopped: '#ff5f57',
+    pending: '#febc2e',
+    error: '#ff5f57',
+    unknown: '#666'
   }
 
   const btnBase: React.CSSProperties = {
-    flex: 1, background: 'var(--cb-bg-elevated)', borderRadius: 2,
-    padding: '3px 0', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer',
+    flex: 1,
+    background: 'var(--cb-bg-elevated)',
+    borderRadius: 2,
+    padding: '3px 0',
+    fontFamily: 'monospace',
+    fontSize: 9,
+    cursor: 'pointer'
   }
 
   return (
     <div
       className="p-3 overflow-y-auto h-full"
-      style={{ background: 'var(--cb-bg-panel)', borderLeft: '1px solid var(--cb-border-strong)', fontFamily: 'monospace' }}
+      style={{
+        background: 'var(--cb-bg-panel)',
+        borderLeft: '1px solid var(--cb-border-strong)',
+        fontFamily: 'monospace'
+      }}
     >
       {!node && selectedEdgeInfo ? (
         <>
-          <div className="text-[9px] font-bold mb-2 pb-1" style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}>
-            EDGE  ·  Selected
+          <div
+            className="text-[9px] font-bold mb-2 pb-1"
+            style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}
+          >
+            EDGE · Selected
           </div>
           <div className="mb-3">
-            <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>TYPE</div>
+            <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+              TYPE
+            </div>
             <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
               {edgeTypeLabel(selectedEdgeInfo.id, selectedEdgeInfo.data)}
             </div>
           </div>
           {(() => {
-            const srcNode = nodes.find((n) => n.id === selectedEdgeInfo.source) ?? importedNodes.find((n) => n.id === selectedEdgeInfo.source)
-            const tgtNode = nodes.find((n) => n.id === selectedEdgeInfo.target) ?? importedNodes.find((n) => n.id === selectedEdgeInfo.target)
+            const srcNode =
+              nodes.find((n) => n.id === selectedEdgeInfo.source) ??
+              importedNodes.find((n) => n.id === selectedEdgeInfo.source)
+            const tgtNode =
+              nodes.find((n) => n.id === selectedEdgeInfo.target) ??
+              importedNodes.find((n) => n.id === selectedEdgeInfo.target)
             return (
               <>
                 <div className="mb-3">
-                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>SOURCE</div>
+                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+                    SOURCE
+                  </div>
                   <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
                     {srcNode ? srcNode.label : selectedEdgeInfo.source}
                   </div>
                   {srcNode && (
-                    <div className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>{srcNode.type.toUpperCase()}</div>
+                    <div className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>
+                      {srcNode.type.toUpperCase()}
+                    </div>
                   )}
                 </div>
                 <div className="mb-3">
-                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>TARGET</div>
+                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+                    TARGET
+                  </div>
                   <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
                     {tgtNode ? tgtNode.label : selectedEdgeInfo.target}
                   </div>
                   {tgtNode && (
-                    <div className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>{tgtNode.type.toUpperCase()}</div>
+                    <div className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>
+                      {tgtNode.type.toUpperCase()}
+                    </div>
                   )}
                 </div>
               </>
@@ -593,11 +791,20 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           })()}
           {(selectedEdgeInfo.data as { isCustom?: boolean } | undefined)?.isCustom ? (
             <div className="mt-3">
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px' }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px'
+                }}
+              >
                 CUSTOM EDGE
               </div>
               <div className="mb-2">
-                <div className="text-[7px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>LABEL</div>
+                <div className="text-[7px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+                  LABEL
+                </div>
                 <input
                   value={(selectedEdgeInfo.data as { label?: string } | undefined)?.label ?? ''}
                   onChange={(e) => {
@@ -606,11 +813,15 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                   }}
                   placeholder="add label…"
                   style={{
-                    fontSize: 9, fontFamily: 'monospace', width: '100%',
+                    fontSize: 9,
+                    fontFamily: 'monospace',
+                    width: '100%',
                     background: 'var(--cb-bg-elevated)',
                     border: '1px solid var(--cb-border)',
                     color: 'var(--cb-text-primary)',
-                    borderRadius: 3, padding: '2px 5px', outline: 'none',
+                    borderRadius: 3,
+                    padding: '2px 5px',
+                    outline: 'none'
                   }}
                 />
               </div>
@@ -621,9 +832,15 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                   useUIStore.getState().selectEdge(null)
                 }}
                 style={{
-                  fontSize: 9, fontFamily: 'monospace', cursor: 'pointer',
-                  background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)',
-                  color: '#ef4444', borderRadius: 3, padding: '2px 8px', width: '100%',
+                  fontSize: 9,
+                  fontFamily: 'monospace',
+                  cursor: 'pointer',
+                  background: 'rgba(239,68,68,0.1)',
+                  border: '1px solid rgba(239,68,68,0.4)',
+                  color: '#ef4444',
+                  borderRadius: 3,
+                  padding: '2px 8px',
+                  width: '100%'
                 }}
               >
                 Delete edge
@@ -631,25 +848,47 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
             </div>
           ) : (
             <>
-              {selectedEdgeInfo.data && Object.keys(selectedEdgeInfo.data).filter((k) => k !== 'isIntegration').length > 0 && (
-                <div>
-                  <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
-                    METADATA
+              {selectedEdgeInfo.data &&
+                Object.keys(selectedEdgeInfo.data).filter((k) => k !== 'isIntegration').length >
+                  0 && (
+                  <div>
+                    <div
+                      className="text-[8px] mb-2"
+                      style={{
+                        color: 'var(--cb-text-muted)',
+                        borderTop: '1px solid var(--cb-border-strong)',
+                        paddingTop: '6px',
+                        marginTop: 16,
+                        marginBottom: 6
+                      }}
+                    >
+                      METADATA
+                    </div>
+                    {Object.entries(selectedEdgeInfo.data)
+                      .filter(([k]) => k !== 'isIntegration')
+                      .map(([k, v]) => (
+                        <div key={k} className="mb-1.5">
+                          <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                            {fieldLabel(k)}
+                          </div>
+                          <div
+                            className="text-[8px] break-all"
+                            style={{ color: 'var(--cb-text-secondary)' }}
+                          >
+                            {String(v ?? '—')}
+                          </div>
+                        </div>
+                      ))}
                   </div>
-                  {Object.entries(selectedEdgeInfo.data)
-                    .filter(([k]) => k !== 'isIntegration')
-                    .map(([k, v]) => (
-                      <div key={k} className="mb-1.5">
-                        <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{fieldLabel(k)}</div>
-                        <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{String(v ?? '—')}</div>
-                      </div>
-                    ))}
-                </div>
-              )}
+                )}
               {selectedEdgeInfo.label && (
                 <div className="mb-3">
-                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>LABEL</div>
-                  <div className="text-[9px]" style={{ color: 'var(--cb-text-primary)' }}>{selectedEdgeInfo.label}</div>
+                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+                    LABEL
+                  </div>
+                  <div className="text-[9px]" style={{ color: 'var(--cb-text-primary)' }}>
+                    {selectedEdgeInfo.label}
+                  </div>
                 </div>
               )}
             </>
@@ -661,262 +900,388 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
         <>
           {/* drift banners float to top when driftStatus is set */}
           {node.driftStatus === 'unmanaged' && (
-            <div style={{ padding: '8px 10px', borderRadius: 4, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.4)', fontSize: 11, marginBottom: 8 }}>
+            <div
+              style={{
+                padding: '8px 10px',
+                borderRadius: 4,
+                background: 'rgba(245,158,11,0.1)',
+                border: '1px solid rgba(245,158,11,0.4)',
+                fontSize: 11,
+                marginBottom: 8
+              }}
+            >
               <div style={{ fontWeight: 700, color: '#f59e0b', marginBottom: 3 }}>! UNMANAGED</div>
-              <div style={{ color: '#d97706', lineHeight: 1.5 }}>Not tracked in Terraform. Consider adding to your tfstate.</div>
+              <div style={{ color: '#d97706', lineHeight: 1.5 }}>
+                Not tracked in Terraform. Consider adding to your tfstate.
+              </div>
             </div>
           )}
 
           {node.driftStatus === 'missing' && (
-            <div style={{ padding: '8px 10px', borderRadius: 4, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)', fontSize: 11, marginBottom: 8 }}>
-              <div style={{ fontWeight: 700, color: '#ef4444', marginBottom: 3 }}>✕ MISSING — read-only</div>
-              <div style={{ color: '#dc2626', lineHeight: 1.5 }}>Declared in Terraform but not found in live AWS.</div>
+            <div
+              style={{
+                padding: '8px 10px',
+                borderRadius: 4,
+                background: 'rgba(239,68,68,0.1)',
+                border: '1px solid rgba(239,68,68,0.4)',
+                fontSize: 11,
+                marginBottom: 8
+              }}
+            >
+              <div style={{ fontWeight: 700, color: '#ef4444', marginBottom: 3 }}>
+                ✕ MISSING — read-only
+              </div>
+              <div style={{ color: '#dc2626', lineHeight: 1.5 }}>
+                Declared in Terraform but not found in live AWS.
+              </div>
             </div>
           )}
 
           {node.driftStatus === 'matched' && (
-            <div style={{ padding: '8px 10px', borderRadius: 4, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.3)', fontSize: 11, marginBottom: 8 }}>
+            <div
+              style={{
+                padding: '8px 10px',
+                borderRadius: 4,
+                background: 'rgba(34,197,94,0.08)',
+                border: '1px solid rgba(34,197,94,0.3)',
+                fontSize: 11,
+                marginBottom: 8
+              }}
+            >
               <DriftDiffTable metadata={node.metadata} tfMetadata={node.tfMetadata ?? {}} />
             </div>
           )}
 
           {/* BLAST RADIUS section — active when this node is the blast source */}
-          {blastRadiusId === node.id && (() => {
-            const result = buildBlastRadius(nodes, node.id)
-            const grouped: Record<'upstream' | 'downstream' | 'both', { id: string; hop: number; edgeTypes: string[] }[]> = {
-              upstream: [], downstream: [], both: [],
-            }
-            for (const [id, m] of result.members.entries()) {
-              if (m.direction === 'source') continue
-              grouped[m.direction].push({ id, hop: m.hopDistance, edgeTypes: m.edgeTypes })
-            }
-            for (const k of Object.keys(grouped) as (keyof typeof grouped)[]) {
-              grouped[k].sort((a, b) => a.hop - b.hop)
-            }
-
-            const copyMarkdown = (): void => {
-              const lines: string[] = [`# Blast Radius — ${node.label}`, '']
-              lines.push(`- Source: \`${node.label}\` (${node.type})`)
-              lines.push(`- Reach: ${result.upstreamCount} upstream · ${result.downstreamCount} downstream · max ${result.maxHops} hop${result.maxHops === 1 ? '' : 's'}`)
-              lines.push('')
-              for (const dir of ['upstream', 'both', 'downstream'] as const) {
-                if (grouped[dir].length === 0) continue
-                lines.push(`## ${dir.toUpperCase()}`)
-                for (const m of grouped[dir]) {
-                  const n = nodes.find((x) => x.id === m.id)
-                  const edges = m.edgeTypes.length > 0 ? ` — ${m.edgeTypes.join(', ')}` : ''
-                  lines.push(`- \`${n?.label ?? m.id}\` (${n?.type ?? '?'}) · hop ${m.hop}${edges}`)
-                }
-                lines.push('')
+          {blastRadiusId === node.id &&
+            (() => {
+              const result = buildBlastRadius(nodes, node.id)
+              const grouped: Record<
+                'upstream' | 'downstream' | 'both',
+                { id: string; hop: number; edgeTypes: string[] }[]
+              > = {
+                upstream: [],
+                downstream: [],
+                both: []
               }
-              void navigator.clipboard.writeText(lines.join('\n'))
-            }
+              for (const [id, m] of result.members.entries()) {
+                if (m.direction === 'source') continue
+                grouped[m.direction].push({ id, hop: m.hopDistance, edgeTypes: m.edgeTypes })
+              }
+              for (const k of Object.keys(grouped) as (keyof typeof grouped)[]) {
+                grouped[k].sort((a, b) => a.hop - b.hop)
+              }
 
-            const dirRow = (dir: 'upstream' | 'both' | 'downstream', label: string, color: string): React.JSX.Element | null => {
-              if (grouped[dir].length === 0) return null
-              return (
-                <div key={dir} style={{ marginBottom: 6 }}>
-                  <div style={{ fontSize: 8, color, letterSpacing: '0.08em', marginBottom: 3, fontWeight: 700 }}>
-                    {directionSymbol(dir === 'both' ? 'both' : dir)} {label} ({grouped[dir].length})
-                  </div>
-                  {grouped[dir].map((m) => {
+              const copyMarkdown = (): void => {
+                const lines: string[] = [`# Blast Radius — ${node.label}`, '']
+                lines.push(`- Source: \`${node.label}\` (${node.type})`)
+                lines.push(
+                  `- Reach: ${result.upstreamCount} upstream · ${result.downstreamCount} downstream · max ${result.maxHops} hop${result.maxHops === 1 ? '' : 's'}`
+                )
+                lines.push('')
+                for (const dir of ['upstream', 'both', 'downstream'] as const) {
+                  if (grouped[dir].length === 0) continue
+                  lines.push(`## ${dir.toUpperCase()}`)
+                  for (const m of grouped[dir]) {
                     const n = nodes.find((x) => x.id === m.id)
-                    return (
-                      <div
-                        key={m.id}
-                        onClick={() => selectNode(m.id)}
+                    const edges = m.edgeTypes.length > 0 ? ` — ${m.edgeTypes.join(', ')}` : ''
+                    lines.push(
+                      `- \`${n?.label ?? m.id}\` (${n?.type ?? '?'}) · hop ${m.hop}${edges}`
+                    )
+                  }
+                  lines.push('')
+                }
+                void navigator.clipboard.writeText(lines.join('\n'))
+              }
+
+              const dirRow = (
+                dir: 'upstream' | 'both' | 'downstream',
+                label: string,
+                color: string
+              ): React.JSX.Element | null => {
+                if (grouped[dir].length === 0) return null
+                return (
+                  <div key={dir} style={{ marginBottom: 6 }}>
+                    <div
+                      style={{
+                        fontSize: 8,
+                        color,
+                        letterSpacing: '0.08em',
+                        marginBottom: 3,
+                        fontWeight: 700
+                      }}
+                    >
+                      {directionSymbol(dir === 'both' ? 'both' : dir)} {label} (
+                      {grouped[dir].length})
+                    </div>
+                    {grouped[dir].map((m) => {
+                      const n = nodes.find((x) => x.id === m.id)
+                      return (
+                        <div
+                          key={m.id}
+                          onClick={() => selectNode(m.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'baseline',
+                            gap: 6,
+                            padding: '2px 6px',
+                            borderRadius: 3,
+                            cursor: 'pointer',
+                            fontSize: 9,
+                            background: m.id === selectedId ? 'var(--cb-bg-hover)' : undefined
+                          }}
+                        >
+                          <span
+                            style={{ color: 'var(--cb-text-muted)', fontSize: 8, minWidth: 20 }}
+                          >
+                            h{m.hop}
+                          </span>
+                          <span
+                            style={{
+                              color: 'var(--cb-text-primary)',
+                              flex: 1,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}
+                          >
+                            {n?.label ?? m.id}
+                          </span>
+                          <span style={{ color: 'var(--cb-text-muted)', fontSize: 8 }}>
+                            {n?.type ?? ''}
+                          </span>
+                          {m.edgeTypes.length > 0 && (
+                            <span
+                              style={{
+                                color: 'var(--cb-text-muted)',
+                                fontSize: 8,
+                                fontStyle: 'italic'
+                              }}
+                            >
+                              {m.edgeTypes.join(',')}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              }
+
+              return (
+                <div
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: 4,
+                    background: 'rgba(245,158,11,0.08)',
+                    border: '1px solid rgba(245,158,11,0.4)',
+                    fontSize: 10,
+                    marginBottom: 8
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: 6
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        color: '#f59e0b',
+                        fontSize: 9,
+                        letterSpacing: '0.08em'
+                      }}
+                    >
+                      BLAST RADIUS
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        onClick={copyMarkdown}
                         style={{
-                          display:       'flex',
-                          alignItems:    'baseline',
-                          gap:           6,
-                          padding:       '2px 6px',
-                          borderRadius:  3,
-                          cursor:        'pointer',
-                          fontSize:      9,
-                          background:    m.id === selectedId ? 'var(--cb-bg-hover)' : undefined,
+                          background: 'none',
+                          border: '1px solid rgba(245,158,11,0.4)',
+                          color: '#f59e0b',
+                          fontFamily: 'monospace',
+                          fontSize: 8,
+                          padding: '1px 6px',
+                          borderRadius: 3,
+                          cursor: 'pointer'
+                        }}
+                        title="Copy as Markdown (Slack-ready)"
+                      >
+                        COPY
+                      </button>
+                      <button
+                        onClick={() => setBlastRadiusId(null)}
+                        style={{
+                          background: 'none',
+                          border: '1px solid rgba(245,158,11,0.4)',
+                          color: '#f59e0b',
+                          fontFamily: 'monospace',
+                          fontSize: 8,
+                          padding: '1px 6px',
+                          borderRadius: 3,
+                          cursor: 'pointer'
+                        }}
+                        title="Clear blast radius"
+                      >
+                        CLEAR
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 9, color: 'var(--cb-text-secondary)', marginBottom: 6 }}>
+                    ↑{result.upstreamCount} upstream · ↓{result.downstreamCount} downstream · max{' '}
+                    {result.maxHops} hop{result.maxHops === 1 ? '' : 's'}
+                  </div>
+                  {result.members.size === 1 ? (
+                    <div
+                      style={{ fontSize: 9, color: 'var(--cb-text-muted)', fontStyle: 'italic' }}
+                    >
+                      No known dependencies. This node has no integration edges.
+                    </div>
+                  ) : (
+                    <>
+                      {dirRow('upstream', 'UPSTREAM', '#60a5fa')}
+                      {dirRow('both', 'BIDIRECTIONAL', '#a78bfa')}
+                      {dirRow('downstream', 'DOWNSTREAM', '#f59e0b')}
+                      <div
+                        style={{
+                          fontSize: 8,
+                          color: 'var(--cb-text-muted)',
+                          marginTop: 4,
+                          fontStyle: 'italic'
                         }}
                       >
-                        <span style={{ color: 'var(--cb-text-muted)', fontSize: 8, minWidth: 20 }}>
-                          h{m.hop}
-                        </span>
-                        <span style={{ color: 'var(--cb-text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {n?.label ?? m.id}
-                        </span>
-                        <span style={{ color: 'var(--cb-text-muted)', fontSize: 8 }}>
-                          {n?.type ?? ''}
-                        </span>
-                        {m.edgeTypes.length > 0 && (
-                          <span style={{ color: 'var(--cb-text-muted)', fontSize: 8, fontStyle: 'italic' }}>
-                            {m.edgeTypes.join(',')}
+                        Shift-click a node to re-root from there.
+                      </div>
+                    </>
+                  )}
+                </div>
+              )
+            })()}
+
+          {/* REMEDIATE section — unmanaged + matched only */}
+          {(node.driftStatus === 'unmanaged' || node.driftStatus === 'matched') &&
+            (() => {
+              const safeNode = node as CloudNode
+              const commands = buildRemediateCommands(safeNode)
+              const hasCommands = commands.length > 0
+
+              async function handleRemediate(): Promise<void> {
+                if (!onRemediate) return
+                setRemediateState('running')
+                try {
+                  const result = await onRemediate(safeNode, commands)
+                  setRemediateState(result.code === 0 ? 'done-ok' : `done-err:${result.code}`)
+                } catch {
+                  setRemediateState('done-err:1')
+                }
+              }
+
+              return (
+                <div
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: 4,
+                    background: 'rgba(167,139,250,0.07)',
+                    border: '1px solid rgba(167,139,250,0.3)',
+                    fontSize: 10,
+                    marginBottom: 8
+                  }}
+                >
+                  <div style={{ fontWeight: 700, color: '#a78bfa', marginBottom: 6, fontSize: 9 }}>
+                    REMEDIATE
+                  </div>
+
+                  {safeNode.driftStatus === 'unmanaged' && (
+                    <div style={{ color: '#f59e0b', marginBottom: 6, fontSize: 9 }}>
+                      ⚠ Unmanaged — not in baseline.
+                    </div>
+                  )}
+                  {safeNode.driftStatus === 'matched' && hasCommands && (
+                    <div style={{ color: '#86efac', marginBottom: 6, fontSize: 9 }}>
+                      ↺ Apply baseline values.
+                    </div>
+                  )}
+
+                  {hasCommands ? (
+                    <>
+                      <div style={{ marginBottom: 6 }}>
+                        {commands.map((argv, i) => {
+                          const full = 'aws ' + argv.join(' ')
+                          const display = full.length > 200 ? full.slice(0, 200) + '…' : full
+                          return (
+                            <div
+                              key={i}
+                              title={full}
+                              style={{
+                                fontFamily: 'monospace',
+                                fontSize: 8,
+                                color: 'var(--cb-text-secondary)',
+                                background: 'rgba(0,0,0,0.3)',
+                                borderRadius: 2,
+                                padding: '2px 5px',
+                                marginBottom: 2,
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}
+                            >
+                              {display}
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      <div style={{ color: '#f59e0b', fontSize: 8, marginBottom: 6 }}>
+                        ⚠ This will modify live AWS infrastructure.
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button
+                          onClick={() => void handleRemediate()}
+                          disabled={remediateState === 'running' || !onRemediate}
+                          style={{
+                            background:
+                              remediateState === 'running'
+                                ? 'rgba(107,114,128,0.3)'
+                                : 'rgba(167,139,250,0.15)',
+                            border: '1px solid rgba(167,139,250,0.5)',
+                            borderRadius: 3,
+                            padding: '3px 10px',
+                            color: remediateState === 'running' ? '#6b7280' : '#a78bfa',
+                            fontFamily: 'monospace',
+                            fontSize: 9,
+                            cursor:
+                              remediateState === 'running' || !onRemediate
+                                ? 'not-allowed'
+                                : 'pointer'
+                          }}
+                        >
+                          {remediateState === 'running' ? 'Executing…' : 'Execute'}
+                        </button>
+                        {remediateState === 'done-ok' && (
+                          <span style={{ color: '#4ade80', fontSize: 9 }}>✓ Done</span>
+                        )}
+                        {(remediateState as string).startsWith('done-err') && (
+                          <span style={{ color: '#f87171', fontSize: 9 }}>
+                            ✗ Failed (exit {remediateState.split(':')[1]})
                           </span>
                         )}
                       </div>
-                    )
-                  })}
+                    </>
+                  ) : (
+                    <div
+                      style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}
+                    >
+                      Manual remediation required — diff contains unsupported field types.
+                    </div>
+                  )}
                 </div>
               )
-            }
-
-            return (
-              <div style={{
-                padding:      '8px 10px',
-                borderRadius: 4,
-                background:   'rgba(245,158,11,0.08)',
-                border:       '1px solid rgba(245,158,11,0.4)',
-                fontSize:     10,
-                marginBottom: 8,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <div style={{ fontWeight: 700, color: '#f59e0b', fontSize: 9, letterSpacing: '0.08em' }}>
-                    BLAST RADIUS
-                  </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button
-                      onClick={copyMarkdown}
-                      style={{
-                        background: 'none',
-                        border:     '1px solid rgba(245,158,11,0.4)',
-                        color:      '#f59e0b',
-                        fontFamily: 'monospace',
-                        fontSize:   8,
-                        padding:    '1px 6px',
-                        borderRadius: 3,
-                        cursor:     'pointer',
-                      }}
-                      title="Copy as Markdown (Slack-ready)"
-                    >
-                      COPY
-                    </button>
-                    <button
-                      onClick={() => setBlastRadiusId(null)}
-                      style={{
-                        background: 'none',
-                        border:     '1px solid rgba(245,158,11,0.4)',
-                        color:      '#f59e0b',
-                        fontFamily: 'monospace',
-                        fontSize:   8,
-                        padding:    '1px 6px',
-                        borderRadius: 3,
-                        cursor:     'pointer',
-                      }}
-                      title="Clear blast radius"
-                    >
-                      CLEAR
-                    </button>
-                  </div>
-                </div>
-                <div style={{ fontSize: 9, color: 'var(--cb-text-secondary)', marginBottom: 6 }}>
-                  ↑{result.upstreamCount} upstream · ↓{result.downstreamCount} downstream · max {result.maxHops} hop{result.maxHops === 1 ? '' : 's'}
-                </div>
-                {result.members.size === 1 ? (
-                  <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', fontStyle: 'italic' }}>
-                    No known dependencies. This node has no integration edges.
-                  </div>
-                ) : (
-                  <>
-                    {dirRow('upstream',   'UPSTREAM',   '#60a5fa')}
-                    {dirRow('both',       'BIDIRECTIONAL', '#a78bfa')}
-                    {dirRow('downstream', 'DOWNSTREAM', '#f59e0b')}
-                    <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', marginTop: 4, fontStyle: 'italic' }}>
-                      Shift-click a node to re-root from there.
-                    </div>
-                  </>
-                )}
-              </div>
-            )
-          })()}
-
-          {/* REMEDIATE section — unmanaged + matched only */}
-          {(node.driftStatus === 'unmanaged' || node.driftStatus === 'matched') && (() => {
-            const safeNode = node as CloudNode
-            const commands = buildRemediateCommands(safeNode)
-            const hasCommands = commands.length > 0
-
-            async function handleRemediate(): Promise<void> {
-              if (!onRemediate) return
-              setRemediateState('running')
-              try {
-                const result = await onRemediate(safeNode, commands)
-                setRemediateState(result.code === 0 ? 'done-ok' : `done-err:${result.code}`)
-              } catch {
-                setRemediateState('done-err:1')
-              }
-            }
-
-            return (
-              <div style={{
-                padding: '8px 10px',
-                borderRadius: 4,
-                background: 'rgba(167,139,250,0.07)',
-                border: '1px solid rgba(167,139,250,0.3)',
-                fontSize: 10,
-                marginBottom: 8,
-              }}>
-                <div style={{ fontWeight: 700, color: '#a78bfa', marginBottom: 6, fontSize: 9 }}>REMEDIATE</div>
-
-                {safeNode.driftStatus === 'unmanaged' && (
-                  <div style={{ color: '#f59e0b', marginBottom: 6, fontSize: 9 }}>⚠ Unmanaged — not in baseline.</div>
-                )}
-                {safeNode.driftStatus === 'matched' && hasCommands && (
-                  <div style={{ color: '#86efac', marginBottom: 6, fontSize: 9 }}>↺ Apply baseline values.</div>
-                )}
-
-                {hasCommands ? (
-                  <>
-                    <div style={{ marginBottom: 6 }}>
-                      {commands.map((argv, i) => {
-                        const full = 'aws ' + argv.join(' ')
-                        const display = full.length > 200 ? full.slice(0, 200) + '…' : full
-                        return (
-                          <div key={i} title={full} style={{
-                            fontFamily: 'monospace', fontSize: 8,
-                            color: 'var(--cb-text-secondary)',
-                            background: 'rgba(0,0,0,0.3)',
-                            borderRadius: 2, padding: '2px 5px', marginBottom: 2,
-                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                          }}>
-                            {display}
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    <div style={{ color: '#f59e0b', fontSize: 8, marginBottom: 6 }}>
-                      ⚠ This will modify live AWS infrastructure.
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <button
-                        onClick={() => void handleRemediate()}
-                        disabled={remediateState === 'running' || !onRemediate}
-                        style={{
-                          background: remediateState === 'running' ? 'rgba(107,114,128,0.3)' : 'rgba(167,139,250,0.15)',
-                          border: '1px solid rgba(167,139,250,0.5)',
-                          borderRadius: 3, padding: '3px 10px',
-                          color: remediateState === 'running' ? '#6b7280' : '#a78bfa',
-                          fontFamily: 'monospace', fontSize: 9, cursor: remediateState === 'running' || !onRemediate ? 'not-allowed' : 'pointer',
-                        }}
-                      >
-                        {remediateState === 'running' ? 'Executing…' : 'Execute'}
-                      </button>
-                      {remediateState === 'done-ok' && (
-                        <span style={{ color: '#4ade80', fontSize: 9 }}>✓ Done</span>
-                      )}
-                      {(remediateState as string).startsWith('done-err') && (
-                        <span style={{ color: '#f87171', fontSize: 9 }}>
-                          ✗ Failed (exit {remediateState.split(':')[1]})
-                        </span>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}>
-                    Manual remediation required — diff contains unsupported field types.
-                  </div>
-                )}
-              </div>
-            )
-          })()}
+            })()}
 
           {/* ADVISORIES section + next/prev navigation (always-on since OP_INTELLIGENCE launch) */}
           {(() => {
@@ -929,24 +1294,35 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
               s === 'critical' ? '#ef4444' : s === 'warning' ? '#f59e0b' : '#60a5fa'
 
             return (
-              <div style={{
-                padding: '8px 10px',
-                borderRadius: 4,
-                background: 'rgba(239,68,68,0.06)',
-                border: '1px solid rgba(239,68,68,0.2)',
-                fontSize: 10,
-                marginBottom: 8,
-              }}>
+              <div
+                style={{
+                  padding: '8px 10px',
+                  borderRadius: 4,
+                  background: 'rgba(239,68,68,0.06)',
+                  border: '1px solid rgba(239,68,68,0.2)',
+                  fontSize: 10,
+                  marginBottom: 8
+                }}
+              >
                 <div
                   onClick={() => setAdvisoriesExpanded((e) => !e)}
-                  style={{ fontWeight: 700, color: '#ef4444', marginBottom: advisoriesExpanded ? 6 : 0, fontSize: 9, cursor: 'pointer', userSelect: 'none' }}
+                  style={{
+                    fontWeight: 700,
+                    color: '#ef4444',
+                    marginBottom: advisoriesExpanded ? 6 : 0,
+                    fontSize: 9,
+                    cursor: 'pointer',
+                    userSelect: 'none'
+                  }}
                 >
                   ADVISORIES {advisoriesExpanded ? '▾' : '▸'}
                 </div>
 
-                {advisoriesExpanded && (
-                  advisories.length === 0 ? (
-                    <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}>
+                {advisoriesExpanded &&
+                  (advisories.length === 0 ? (
+                    <div
+                      style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}
+                    >
                       No issues detected
                     </div>
                   ) : (
@@ -954,21 +1330,59 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                       {advisories.map((a) => {
                         const fixCmds = buildAdvisoryRemediation(a, node.id)
                         return (
-                          <div key={a.ruleId} style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 }}>
+                          <div
+                            key={a.ruleId}
+                            style={{
+                              marginBottom: 8,
+                              paddingBottom: 8,
+                              borderBottom: '1px solid rgba(255,255,255,0.05)'
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                justifyContent: 'space-between',
+                                gap: 6
+                              }}
+                            >
                               <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                                  <span style={{
-                                    fontSize: 8, fontWeight: 700, color: severityColor(a.severity),
-                                    textTransform: 'uppercase', letterSpacing: '0.05em',
-                                  }}>
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                    marginBottom: 2
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontSize: 8,
+                                      fontWeight: 700,
+                                      color: severityColor(a.severity),
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.05em'
+                                    }}
+                                  >
                                     {a.severity}
                                   </span>
-                                  <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--cb-text-primary)' }}>
+                                  <span
+                                    style={{
+                                      fontSize: 9,
+                                      fontWeight: 600,
+                                      color: 'var(--cb-text-primary)'
+                                    }}
+                                  >
                                     {a.title}
                                   </span>
                                 </div>
-                                <div style={{ fontSize: 8, color: 'var(--cb-text-secondary)', lineHeight: 1.5 }}>
+                                <div
+                                  style={{
+                                    fontSize: 8,
+                                    color: 'var(--cb-text-secondary)',
+                                    lineHeight: 1.5
+                                  }}
+                                >
                                   {a.detail}
                                 </div>
                               </div>
@@ -976,16 +1390,16 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                                 <button
                                   onClick={() => void onRemediate(node as CloudNode, fixCmds)}
                                   style={{
-                                    background:   'rgba(239,68,68,0.1)',
-                                    border:       '1px solid rgba(239,68,68,0.4)',
+                                    background: 'rgba(239,68,68,0.1)',
+                                    border: '1px solid rgba(239,68,68,0.4)',
                                     borderRadius: 3,
-                                    color:        '#ef4444',
-                                    cursor:       'pointer',
-                                    fontFamily:   'monospace',
-                                    fontSize:     8,
-                                    padding:      '2px 6px',
-                                    flexShrink:   0,
-                                    whiteSpace:   'nowrap',
+                                    color: '#ef4444',
+                                    cursor: 'pointer',
+                                    fontFamily: 'monospace',
+                                    fontSize: 8,
+                                    padding: '2px 6px',
+                                    flexShrink: 0,
+                                    whiteSpace: 'nowrap'
                                   }}
                                   title={`Fix: aws ${fixCmds[0].join(' ')}`}
                                 >
@@ -997,77 +1411,95 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                         )
                       })}
                     </div>
-                  )
-                )}
+                  ))}
               </div>
             )
           })()}
 
           {/* Advisory next/prev navigation strip (always-on since OP_INTELLIGENCE launch) */}
-          {advisoryNavigation && advisoryNavigation.sorted.length > 1 && advisoryNavigation.currentIdx !== -1 && (() => {
-            const { sorted, currentIdx } = advisoryNavigation
-            const prevNode = currentIdx > 0 ? sorted[currentIdx - 1] : null
-            const nextNode = currentIdx < sorted.length - 1 ? sorted[currentIdx + 1] : null
-            const btnStyle = (disabled: boolean): React.CSSProperties => ({
-              background: 'none',
-              border: 'none',
-              fontFamily: 'monospace',
-              fontSize: 8,
-              cursor: disabled ? 'default' : 'pointer',
-              color: 'var(--cb-text-muted)',
-              opacity: disabled ? 0.35 : 1,
-              padding: '2px 4px',
-            })
-            return (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: 8,
+          {advisoryNavigation &&
+            advisoryNavigation.sorted.length > 1 &&
+            advisoryNavigation.currentIdx !== -1 &&
+            (() => {
+              const { sorted, currentIdx } = advisoryNavigation
+              const prevNode = currentIdx > 0 ? sorted[currentIdx - 1] : null
+              const nextNode = currentIdx < sorted.length - 1 ? sorted[currentIdx + 1] : null
+              const btnStyle = (disabled: boolean): React.CSSProperties => ({
+                background: 'none',
+                border: 'none',
                 fontFamily: 'monospace',
+                fontSize: 8,
+                cursor: disabled ? 'default' : 'pointer',
                 color: 'var(--cb-text-muted)',
-                marginBottom: 8,
-                padding: '4px 6px',
-                borderRadius: 3,
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--cb-border)',
-              }}>
-                <button
-                  disabled={!prevNode}
-                  onClick={() => prevNode && selectNode(prevNode.id)}
-                  style={btnStyle(!prevNode)}
+                opacity: disabled ? 0.35 : 1,
+                padding: '2px 4px'
+              })
+              return (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: 8,
+                    fontFamily: 'monospace',
+                    color: 'var(--cb-text-muted)',
+                    marginBottom: 8,
+                    padding: '4px 6px',
+                    borderRadius: 3,
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid var(--cb-border)'
+                  }}
                 >
-                  ← Prev
-                </button>
-                <span style={{ fontSize: 8, color: 'var(--cb-text-muted)' }}>
-                  {currentIdx + 1} / {sorted.length} nodes with issues
-                </span>
-                <button
-                  disabled={!nextNode}
-                  onClick={() => nextNode && selectNode(nextNode.id)}
-                  style={btnStyle(!nextNode)}
-                >
-                  Next →
-                </button>
-              </div>
-            )
-          })()}
+                  <button
+                    disabled={!prevNode}
+                    onClick={() => prevNode && selectNode(prevNode.id)}
+                    style={btnStyle(!prevNode)}
+                  >
+                    ← Prev
+                  </button>
+                  <span style={{ fontSize: 8, color: 'var(--cb-text-muted)' }}>
+                    {currentIdx + 1} / {sorted.length} nodes with issues
+                  </span>
+                  <button
+                    disabled={!nextNode}
+                    onClick={() => nextNode && selectNode(nextNode.id)}
+                    style={btnStyle(!nextNode)}
+                  >
+                    Next →
+                  </button>
+                </div>
+              )
+            })()}
 
           {/* node type header */}
-          <div className="text-[9px] font-bold mb-2 pb-1" style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}>
-            {node.type.toUpperCase()}  ·  Selected
+          <div
+            className="text-[9px] font-bold mb-2 pb-1"
+            style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}
+          >
+            {node.type.toUpperCase()} · Selected
           </div>
 
           {/* fallback imported banner (only when no driftStatus) */}
           {!node.driftStatus && isImported && (
-            <div style={{ padding: '6px 10px', borderRadius: 4, background: 'var(--cb-bg-secondary)', border: '1px solid var(--cb-border)', fontSize: 11, color: 'var(--cb-text-muted)', marginBottom: 8 }}>
+            <div
+              style={{
+                padding: '6px 10px',
+                borderRadius: 4,
+                background: 'var(--cb-bg-secondary)',
+                border: '1px solid var(--cb-border)',
+                fontSize: 11,
+                color: 'var(--cb-text-muted)',
+                marginBottom: 8
+              }}
+            >
               Imported from Terraform — read-only
             </div>
           )}
 
           {isImported && node.type === 'unknown' && (
             <div style={{ fontSize: 11, color: '#f59e0b', marginBottom: 8 }}>
-              Unsupported Terraform resource type: {String(node.metadata?.unsupportedTfType ?? 'unknown')}
+              Unsupported Terraform resource type:{' '}
+              {String(node.metadata?.unsupportedTfType ?? 'unknown')}
             </div>
           )}
 
@@ -1083,7 +1515,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
               color: lockedNodes.has(node.id) ? '#febc2e' : 'var(--cb-text-muted)',
               fontFamily: 'monospace',
               fontSize: 9,
-              cursor: 'pointer',
+              cursor: 'pointer'
             }}
           >
             {lockedNodes.has(node.id) ? '⊠ Locked' : '◈ Lock'}
@@ -1108,7 +1540,7 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                   padding: '4px 8px',
                   textAlign: 'left',
                   marginBottom: 8,
-                  letterSpacing: '0.03em',
+                  letterSpacing: '0.03em'
                 }}
               >
                 ⎋ Open in AWS Console ↗
@@ -1117,40 +1549,58 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           })()}
 
           {[
-            { key: 'ID',     val: node.id },
-            { key: 'NAME',   val: node.label },
-            { key: 'REGION', val: node.region },
+            { key: 'ID', val: node.id },
+            { key: 'NAME', val: node.label },
+            { key: 'REGION', val: node.region }
           ].map(({ key, val }) => (
             <div key={key} className="mb-3">
               <div className="flex items-center gap-1 mb-0.5">
-                <span className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>{key}</span>
+                <span className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>
+                  {key}
+                </span>
                 {key === 'ID' && (
                   <button
                     onClick={() => void navigator.clipboard.writeText(val)}
                     title="Copy to clipboard"
                     style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      color: 'var(--cb-text-muted)', fontSize: 8, padding: '0 1px', lineHeight: 1,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: 'var(--cb-text-muted)',
+                      fontSize: 8,
+                      padding: '0 1px',
+                      lineHeight: 1
                     }}
                   >
                     ⧉
                   </button>
                 )}
               </div>
-              <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>{val}</div>
+              <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
+                {val}
+              </div>
             </div>
           ))}
 
           <div className="mb-3">
-            <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>STATE</div>
+            <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+              STATE
+            </div>
             <div className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_COLORS[node.status] ?? '#666' }} />
-              <span className="text-[9px]" style={{ color: STATUS_COLORS[node.status] ?? '#666' }}>{node.status}</span>
+              <div
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: STATUS_COLORS[node.status] ?? '#666' }}
+              />
+              <span className="text-[9px]" style={{ color: STATUS_COLORS[node.status] ?? '#666' }}>
+                {node.status}
+              </span>
             </div>
           </div>
 
           <div className="mb-3">
-            <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>EST. COST</div>
+            <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+              EST. COST
+            </div>
             <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginTop: 2 }}>
               {formatPrice(getMonthlyEstimate(node.type, node.region ?? 'us-east-1'))}
             </div>
@@ -1159,46 +1609,109 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* ACM-specific metadata */}
           {node.type === 'acm' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 METADATA
               </div>
               {[
-                { k: 'domainName',        v: node.metadata.domainName as string },
-                { k: 'validationMethod',  v: node.metadata.validationMethod as string },
-                { k: 'inUseBy',           v: `${(node.metadata.inUseBy as string[]).length} resource(s)` },
+                { k: 'domainName', v: node.metadata.domainName as string },
+                { k: 'validationMethod', v: node.metadata.validationMethod as string },
+                { k: 'inUseBy', v: `${(node.metadata.inUseBy as string[]).length} resource(s)` }
               ].map(({ k, v }) => (
                 <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" title={k} style={{ color: 'var(--cb-text-muted)' }}>{fieldLabel(k)}</div>
-                  <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{v ?? '—'}</div>
+                  <div className="text-[7px]" title={k} style={{ color: 'var(--cb-text-muted)' }}>
+                    {fieldLabel(k)}
+                  </div>
+                  <div
+                    className="text-[8px] break-all"
+                    style={{ color: 'var(--cb-text-secondary)' }}
+                  >
+                    {v ?? '—'}
+                  </div>
                 </div>
               ))}
 
               {/* CNAME records for pending DNS validation */}
-              {node.status === 'pending' && (node.metadata.cnameRecords as Array<{ name: string; value: string }>).length > 0 && (
-                <div style={{ marginTop: 8 }}>
-                  <div className="text-[8px] mb-1" style={{ color: 'var(--cb-text-muted)', textTransform: 'uppercase' }}>DNS Validation CNAMEs</div>
-                  {(node.metadata.cnameRecords as Array<{ name: string; value: string }>).map((rec, i) => (
-                    <div key={i} style={{ marginBottom: 6, fontSize: 8 }}>
-                      <div style={{ color: 'var(--cb-text-muted)', marginBottom: 1 }}>Name</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ color: 'var(--cb-text-secondary)', wordBreak: 'break-all', flex: 1 }}>{rec.name}</span>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(rec.name)}
-                          style={{ ...btnBase, flex: 'none', padding: '1px 4px', border: '1px solid var(--cb-border)', color: 'var(--cb-text-muted)', fontSize: 8 }}
-                        >⎘</button>
-                      </div>
-                      <div style={{ color: 'var(--cb-text-muted)', marginBottom: 1, marginTop: 3 }}>Value</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ color: 'var(--cb-text-secondary)', wordBreak: 'break-all', flex: 1 }}>{rec.value}</span>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(rec.value)}
-                          style={{ ...btnBase, flex: 'none', padding: '1px 4px', border: '1px solid var(--cb-border)', color: 'var(--cb-text-muted)', fontSize: 8 }}
-                        >⎘</button>
-                      </div>
+              {node.status === 'pending' &&
+                (node.metadata.cnameRecords as Array<{ name: string; value: string }>).length >
+                  0 && (
+                  <div style={{ marginTop: 8 }}>
+                    <div
+                      className="text-[8px] mb-1"
+                      style={{ color: 'var(--cb-text-muted)', textTransform: 'uppercase' }}
+                    >
+                      DNS Validation CNAMEs
                     </div>
-                  ))}
-                </div>
-              )}
+                    {(node.metadata.cnameRecords as Array<{ name: string; value: string }>).map(
+                      (rec, i) => (
+                        <div key={i} style={{ marginBottom: 6, fontSize: 8 }}>
+                          <div style={{ color: 'var(--cb-text-muted)', marginBottom: 1 }}>Name</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span
+                              style={{
+                                color: 'var(--cb-text-secondary)',
+                                wordBreak: 'break-all',
+                                flex: 1
+                              }}
+                            >
+                              {rec.name}
+                            </span>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(rec.name)}
+                              style={{
+                                ...btnBase,
+                                flex: 'none',
+                                padding: '1px 4px',
+                                border: '1px solid var(--cb-border)',
+                                color: 'var(--cb-text-muted)',
+                                fontSize: 8
+                              }}
+                            >
+                              ⎘
+                            </button>
+                          </div>
+                          <div
+                            style={{ color: 'var(--cb-text-muted)', marginBottom: 1, marginTop: 3 }}
+                          >
+                            Value
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span
+                              style={{
+                                color: 'var(--cb-text-secondary)',
+                                wordBreak: 'break-all',
+                                flex: 1
+                              }}
+                            >
+                              {rec.value}
+                            </span>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(rec.value)}
+                              style={{
+                                ...btnBase,
+                                flex: 'none',
+                                padding: '1px 4px',
+                                border: '1px solid var(--cb-border)',
+                                color: 'var(--cb-text-muted)',
+                                fontSize: 8
+                              }}
+                            >
+                              ⎘
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
 
               {acmDeleteError && (
                 <div style={{ marginTop: 6, fontSize: 8, color: '#ff5f57' }}>{acmDeleteError}</div>
@@ -1228,19 +1741,35 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* CloudFront-specific metadata */}
           {node.type === 'cloudfront' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 METADATA
               </div>
               {[
-                { k: 'domainName',        v: node.metadata.domainName as string },
-                { k: 'origins',           v: `${(node.metadata.origins as unknown[]).length} origin(s)` },
-                { k: 'priceClass',        v: node.metadata.priceClass as string },
-                { k: 'certArn',           v: (node.metadata.certArn as string | undefined) ?? 'default' },
-                { k: 'defaultRootObject', v: (node.metadata.defaultRootObject as string) || '—' },
+                { k: 'domainName', v: node.metadata.domainName as string },
+                { k: 'origins', v: `${(node.metadata.origins as unknown[]).length} origin(s)` },
+                { k: 'priceClass', v: node.metadata.priceClass as string },
+                { k: 'certArn', v: (node.metadata.certArn as string | undefined) ?? 'default' },
+                { k: 'defaultRootObject', v: (node.metadata.defaultRootObject as string) || '—' }
               ].map(({ k, v }) => (
                 <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" title={k} style={{ color: 'var(--cb-text-muted)' }}>{fieldLabel(k)}</div>
-                  <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{v}</div>
+                  <div className="text-[7px]" title={k} style={{ color: 'var(--cb-text-muted)' }}>
+                    {fieldLabel(k)}
+                  </div>
+                  <div
+                    className="text-[8px] break-all"
+                    style={{ color: 'var(--cb-text-secondary)' }}
+                  >
+                    {v}
+                  </div>
                 </div>
               ))}
 
@@ -1263,19 +1792,40 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
 
                   {/* Invalidate cache quick action */}
                   <div style={{ marginTop: 10 }}>
-                    <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Invalidate Cache</div>
+                    <div
+                      style={{
+                        fontSize: 8,
+                        color: 'var(--cb-text-muted)',
+                        textTransform: 'uppercase',
+                        marginBottom: 4
+                      }}
+                    >
+                      Invalidate Cache
+                    </div>
                     <input
                       value={invalidatePath}
                       onChange={(e) => setInvalidatePath(e.target.value)}
                       style={{
-                        width: '100%', background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)',
-                        borderRadius: 2, padding: '2px 5px', color: 'var(--cb-text-primary)',
-                        fontFamily: 'monospace', fontSize: 9, boxSizing: 'border-box',
+                        width: '100%',
+                        background: 'var(--cb-bg-panel)',
+                        border: '1px solid var(--cb-border)',
+                        borderRadius: 2,
+                        padding: '2px 5px',
+                        color: 'var(--cb-text-primary)',
+                        fontFamily: 'monospace',
+                        fontSize: 9,
+                        boxSizing: 'border-box'
                       }}
                     />
                     <button
                       onClick={() => onQuickAction(node, 'invalidate', { path: invalidatePath })}
-                      style={{ ...btnBase, border: '1px solid #a78bfa', color: '#a78bfa', width: '100%', marginTop: 4 }}
+                      style={{
+                        ...btnBase,
+                        border: '1px solid #a78bfa',
+                        color: '#a78bfa',
+                        width: '100%',
+                        marginTop: 4
+                      }}
                     >
                       Invalidate
                     </button>
@@ -1288,33 +1838,71 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* API Gateway specific metadata */}
           {node.type === 'apigw' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 METADATA
               </div>
               <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>ENDPOINT</div>
+                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                  ENDPOINT
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)', flex: 1 }}>{node.metadata.endpoint as string || '—'}</span>
+                  <span
+                    className="text-[8px] break-all"
+                    style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
+                  >
+                    {(node.metadata.endpoint as string) || '—'}
+                  </span>
                   {!!node.metadata.endpoint && (
                     <button
-                      onClick={() => navigator.clipboard.writeText(node.metadata.endpoint as string)}
-                      style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 2, padding: '1px 4px', color: 'var(--cb-text-muted)', fontFamily: 'monospace', fontSize: 8, cursor: 'pointer', flexShrink: 0 }}
-                    >⎘</button>
+                      onClick={() =>
+                        navigator.clipboard.writeText(node.metadata.endpoint as string)
+                      }
+                      style={{
+                        background: 'var(--cb-bg-elevated)',
+                        border: '1px solid var(--cb-border)',
+                        borderRadius: 2,
+                        padding: '1px 4px',
+                        color: 'var(--cb-text-muted)',
+                        fontFamily: 'monospace',
+                        fontSize: 8,
+                        cursor: 'pointer',
+                        flexShrink: 0
+                      }}
+                    >
+                      ⎘
+                    </button>
                   )}
                 </div>
               </div>
               <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>PROTOCOL</div>
-                <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>HTTP</div>
+                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                  PROTOCOL
+                </div>
+                <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>
+                  HTTP
+                </div>
               </div>
               <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>CORS ORIGINS</div>
+                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                  CORS ORIGINS
+                </div>
                 <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>
                   {((node.metadata.corsOrigins as string[]) ?? []).join(', ') || '(none)'}
                 </div>
               </div>
               <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>ROUTES</div>
+                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                  ROUTES
+                </div>
                 <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>
                   {nodes.filter((n) => n.type === 'apigw-route' && n.parentId === node.id).length}
                 </div>
@@ -1324,21 +1912,60 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                   <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
                     <button
                       onClick={() => onEdit(node)}
-                      style={{ flex: 1, background: 'var(--cb-bg-elevated)', border: '1px solid #64b5f6', borderRadius: 2, padding: '3px 0', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
-                    >✎ Edit</button>
+                      style={{
+                        flex: 1,
+                        background: 'var(--cb-bg-elevated)',
+                        border: '1px solid #64b5f6',
+                        borderRadius: 2,
+                        padding: '3px 0',
+                        color: '#64b5f6',
+                        fontFamily: 'monospace',
+                        fontSize: 9,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✎ Edit
+                    </button>
                     <button
                       onClick={() => onDelete(node)}
-                      style={{ flex: 1, background: 'var(--cb-bg-elevated)', border: '1px solid #ff5f57', borderRadius: 2, padding: '3px 0', color: '#ff5f57', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
-                    >✕ Delete</button>
+                      style={{
+                        flex: 1,
+                        background: 'var(--cb-bg-elevated)',
+                        border: '1px solid #ff5f57',
+                        borderRadius: 2,
+                        padding: '3px 0',
+                        color: '#ff5f57',
+                        fontFamily: 'monospace',
+                        fontSize: 9,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✕ Delete
+                    </button>
                   </div>
-                  <div style={{ marginTop: 4, fontSize: 8, color: 'var(--cb-text-muted)' }}>Deletes all routes in this API.</div>
+                  <div style={{ marginTop: 4, fontSize: 8, color: 'var(--cb-text-muted)' }}>
+                    Deletes all routes in this API.
+                  </div>
                   <button
                     onClick={() => {
                       setActiveCreate({ resource: 'apigw-route', view: 'topology' })
                       if (onAddRoute) onAddRoute(node.id)
                     }}
-                    style={{ width: '100%', marginTop: 8, background: 'var(--cb-bg-elevated)', border: '1px solid #8b5cf6', borderRadius: 2, padding: '3px 0', color: '#8b5cf6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
-                  >+ Add Route</button>
+                    style={{
+                      width: '100%',
+                      marginTop: 8,
+                      background: 'var(--cb-bg-elevated)',
+                      border: '1px solid #8b5cf6',
+                      borderRadius: 2,
+                      padding: '3px 0',
+                      color: '#8b5cf6',
+                      fontFamily: 'monospace',
+                      fontSize: 9,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    + Add Route
+                  </button>
                 </>
               )}
             </div>
@@ -1347,24 +1974,63 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* API Gateway Route specific metadata */}
           {node.type === 'apigw-route' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 METADATA
               </div>
               {[
                 { k: 'METHOD', v: node.metadata.method as string },
-                { k: 'PATH',   v: node.metadata.path   as string },
-                { k: 'API',    v: (() => { const api = nodes.find((n) => n.id === node.metadata.apiId); return api ? api.label : node.metadata.apiId as string })() },
-                { k: 'TARGET', v: (node.metadata.lambdaArn as string | undefined) ?? '(no integration)' },
+                { k: 'PATH', v: node.metadata.path as string },
+                {
+                  k: 'API',
+                  v: (() => {
+                    const api = nodes.find((n) => n.id === node.metadata.apiId)
+                    return api ? api.label : (node.metadata.apiId as string)
+                  })()
+                },
+                {
+                  k: 'TARGET',
+                  v: (node.metadata.lambdaArn as string | undefined) ?? '(no integration)'
+                }
               ].map(({ k, v }) => (
                 <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    {k}
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)', flex: 1 }}>{v || '—'}</span>
+                    <span
+                      className="text-[8px] break-all"
+                      style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
+                    >
+                      {v || '—'}
+                    </span>
                     {k === 'TARGET' && !!node.metadata.lambdaArn && (
                       <button
-                        onClick={() => navigator.clipboard.writeText(node.metadata.lambdaArn as string)}
-                        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 2, padding: '1px 4px', color: 'var(--cb-text-muted)', fontFamily: 'monospace', fontSize: 8, cursor: 'pointer', flexShrink: 0 }}
-                      >⎘</button>
+                        onClick={() =>
+                          navigator.clipboard.writeText(node.metadata.lambdaArn as string)
+                        }
+                        style={{
+                          background: 'var(--cb-bg-elevated)',
+                          border: '1px solid var(--cb-border)',
+                          borderRadius: 2,
+                          padding: '1px 4px',
+                          color: 'var(--cb-text-muted)',
+                          fontFamily: 'monospace',
+                          fontSize: 8,
+                          cursor: 'pointer',
+                          flexShrink: 0
+                        }}
+                      >
+                        ⎘
+                      </button>
                     )}
                   </div>
                 </div>
@@ -1373,8 +2039,20 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                 <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
                   <button
                     onClick={() => onDelete(node)}
-                    style={{ flex: 1, background: 'var(--cb-bg-elevated)', border: '1px solid #ff5f57', borderRadius: 2, padding: '3px 0', color: '#ff5f57', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}
-                  >✕ Delete</button>
+                    style={{
+                      flex: 1,
+                      background: 'var(--cb-bg-elevated)',
+                      border: '1px solid #ff5f57',
+                      borderRadius: 2,
+                      padding: '3px 0',
+                      color: '#ff5f57',
+                      fontFamily: 'monospace',
+                      fontSize: 9,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ✕ Delete
+                  </button>
                 </div>
               )}
             </div>
@@ -1383,24 +2061,61 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* Lambda-specific metadata */}
           {node.type === 'lambda' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 METADATA
               </div>
               {[
-                { k: 'RUNTIME',  v: node.metadata.runtime    as string | undefined },
-                { k: 'HANDLER',  v: node.metadata.handler    as string | undefined },
-                { k: 'TIMEOUT',  v: node.metadata.timeout    != null ? `${String(node.metadata.timeout)}s` : undefined },
-                { k: 'MEMORY',   v: node.metadata.memorySize != null ? `${String(node.metadata.memorySize)} MB` : undefined },
-              ].filter(({ v }) => v).map(({ k, v }) => (
-                <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
-                  <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{v}</div>
-                </div>
-              ))}
+                { k: 'RUNTIME', v: node.metadata.runtime as string | undefined },
+                { k: 'HANDLER', v: node.metadata.handler as string | undefined },
+                {
+                  k: 'TIMEOUT',
+                  v: node.metadata.timeout != null ? `${String(node.metadata.timeout)}s` : undefined
+                },
+                {
+                  k: 'MEMORY',
+                  v:
+                    node.metadata.memorySize != null
+                      ? `${String(node.metadata.memorySize)} MB`
+                      : undefined
+                }
+              ]
+                .filter(({ v }) => v)
+                .map(({ k, v }) => (
+                  <div key={k} className="mb-1.5">
+                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                      {k}
+                    </div>
+                    <div
+                      className="text-[8px] break-all"
+                      style={{ color: 'var(--cb-text-secondary)' }}
+                    >
+                      {v}
+                    </div>
+                  </div>
+                ))}
               {!isImported && (
                 <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
-                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                  <button
+                    onClick={() => onEdit(node)}
+                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                  >
+                    ✎ Edit
+                  </button>
+                  <button
+                    onClick={() => onDelete(node)}
+                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                  >
+                    ✕ Delete
+                  </button>
                 </div>
               )}
             </div>
@@ -1409,36 +2124,77 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* ECS-specific metadata */}
           {node.type === 'ecs' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 METADATA
               </div>
               {[
-                { k: 'CLUSTER',      v: node.metadata.clusterName as string | undefined },
-                { k: 'LAUNCH TYPE',  v: node.metadata.launchType  as string | undefined },
-                { k: 'DESIRED',      v: String(node.metadata.desiredCount ?? '—') },
-                { k: 'RUNNING',      v: String(node.metadata.runningCount  ?? '—') },
+                { k: 'CLUSTER', v: node.metadata.clusterName as string | undefined },
+                { k: 'LAUNCH TYPE', v: node.metadata.launchType as string | undefined },
+                { k: 'DESIRED', v: String(node.metadata.desiredCount ?? '—') },
+                { k: 'RUNNING', v: String(node.metadata.runningCount ?? '—') }
               ].map(({ k, v }) => (
                 <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
-                  <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{v || '—'}</div>
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    {k}
+                  </div>
+                  <div
+                    className="text-[8px] break-all"
+                    style={{ color: 'var(--cb-text-secondary)' }}
+                  >
+                    {v || '—'}
+                  </div>
                 </div>
               ))}
               {!isImported && (
                 <div style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Quick actions</div>
+                  <div
+                    style={{
+                      fontSize: 8,
+                      color: 'var(--cb-text-muted)',
+                      textTransform: 'uppercase',
+                      marginBottom: 4
+                    }}
+                  >
+                    Quick actions
+                  </div>
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                     <button
                       onClick={async () => {
-                        const instanceId = node.metadata?.taskArn as string ?? node.id
+                        const instanceId = (node.metadata?.taskArn as string) ?? node.id
                         const profile = useCloudStore.getState().profile
-                        const result = await window.terminus.startTerminal({ instanceId, region: node.region, profile })
+                        const result = await window.terminus.startTerminal({
+                          instanceId,
+                          region: node.region,
+                          profile
+                        })
                         if (result.ok) {
                           useUIStore.getState().openTerminal(node.id, result.sessionId)
                         } else {
-                          useUIStore.getState().showToast(`Terminal failed: ${result.error}`, 'error')
+                          useUIStore
+                            .getState()
+                            .showToast(`Terminal failed: ${result.error}`, 'error')
                         }
                       }}
-                      style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #34d399', borderRadius: 2, padding: '2px 8px', color: '#34d399', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                      style={{
+                        background: 'var(--cb-bg-elevated)',
+                        border: '1px solid #34d399',
+                        borderRadius: 2,
+                        padding: '2px 8px',
+                        color: '#34d399',
+                        fontFamily: 'monospace',
+                        fontSize: 9,
+                        cursor: 'pointer'
+                      }}
+                    >
                       Open Terminal
                     </button>
                   </div>
@@ -1450,53 +2206,144 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* RDS-specific metadata */}
           {node.type === 'rds' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 METADATA
               </div>
               {[
-                { k: 'ENGINE',    v: node.metadata.engine        as string | undefined },
-                { k: 'INSTANCE',  v: node.metadata.instanceClass as string | undefined },
-              ].filter(({ v }) => v).map(({ k, v }) => (
-                <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
-                  <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{v}</div>
-                </div>
-              ))}
+                { k: 'ENGINE', v: node.metadata.engine as string | undefined },
+                { k: 'INSTANCE', v: node.metadata.instanceClass as string | undefined }
+              ]
+                .filter(({ v }) => v)
+                .map(({ k, v }) => (
+                  <div key={k} className="mb-1.5">
+                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                      {k}
+                    </div>
+                    <div
+                      className="text-[8px] break-all"
+                      style={{ color: 'var(--cb-text-secondary)' }}
+                    >
+                      {v}
+                    </div>
+                  </div>
+                ))}
               {typeof node.metadata.endpoint === 'string' && node.metadata.endpoint && (
                 <div className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>ENDPOINT</div>
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    ENDPOINT
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)', flex: 1 }}>{node.metadata.endpoint}</span>
+                    <span
+                      className="text-[8px] break-all"
+                      style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
+                    >
+                      {node.metadata.endpoint}
+                    </span>
                     <button
-                      onClick={() => navigator.clipboard.writeText(node.metadata.endpoint as string)}
-                      style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 2, padding: '1px 4px', color: 'var(--cb-text-muted)', fontFamily: 'monospace', fontSize: 8, cursor: 'pointer', flexShrink: 0 }}
-                    >⎘</button>
+                      onClick={() =>
+                        navigator.clipboard.writeText(node.metadata.endpoint as string)
+                      }
+                      style={{
+                        background: 'var(--cb-bg-elevated)',
+                        border: '1px solid var(--cb-border)',
+                        borderRadius: 2,
+                        padding: '1px 4px',
+                        color: 'var(--cb-text-muted)',
+                        fontFamily: 'monospace',
+                        fontSize: 8,
+                        cursor: 'pointer',
+                        flexShrink: 0
+                      }}
+                    >
+                      ⎘
+                    </button>
                   </div>
                 </div>
               )}
               {!isImported && (
                 <>
                   <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                    <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
-                    <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                    <button
+                      onClick={() => onEdit(node)}
+                      style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                    >
+                      ✎ Edit
+                    </button>
+                    <button
+                      onClick={() => onDelete(node)}
+                      style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                    >
+                      ✕ Delete
+                    </button>
                   </div>
                   <div style={{ marginTop: 8 }}>
-                    <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Quick actions</div>
+                    <div
+                      style={{
+                        fontSize: 8,
+                        color: 'var(--cb-text-muted)',
+                        textTransform: 'uppercase',
+                        marginBottom: 4
+                      }}
+                    >
+                      Quick actions
+                    </div>
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                       {node.status !== 'stopped' && (
-                        <button onClick={() => onQuickAction(node, 'stop')}
-                          style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #febc2e', borderRadius: 2, padding: '2px 8px', color: '#febc2e', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                        <button
+                          onClick={() => onQuickAction(node, 'stop')}
+                          style={{
+                            background: 'var(--cb-bg-elevated)',
+                            border: '1px solid #febc2e',
+                            borderRadius: 2,
+                            padding: '2px 8px',
+                            color: '#febc2e',
+                            fontFamily: 'monospace',
+                            fontSize: 9,
+                            cursor: 'pointer'
+                          }}
+                        >
                           Stop
                         </button>
                       )}
                       {node.status === 'stopped' && (
-                        <button onClick={() => onQuickAction(node, 'start')}
-                          style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #28c840', borderRadius: 2, padding: '2px 8px', color: '#28c840', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                        <button
+                          onClick={() => onQuickAction(node, 'start')}
+                          style={{
+                            background: 'var(--cb-bg-elevated)',
+                            border: '1px solid #28c840',
+                            borderRadius: 2,
+                            padding: '2px 8px',
+                            color: '#28c840',
+                            fontFamily: 'monospace',
+                            fontSize: 9,
+                            cursor: 'pointer'
+                          }}
+                        >
                           Start
                         </button>
                       )}
-                      <button onClick={() => onQuickAction(node, 'reboot')}
-                        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #64b5f6', borderRadius: 2, padding: '2px 8px', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                      <button
+                        onClick={() => onQuickAction(node, 'reboot')}
+                        style={{
+                          background: 'var(--cb-bg-elevated)',
+                          border: '1px solid #64b5f6',
+                          borderRadius: 2,
+                          padding: '2px 8px',
+                          color: '#64b5f6',
+                          fontFamily: 'monospace',
+                          fontSize: 9,
+                          cursor: 'pointer'
+                        }}
+                      >
                         Reboot
                       </button>
                     </div>
@@ -1509,17 +2356,53 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* SQS-specific metadata */}
           {node.type === 'sqs' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 QUEUE STATS
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
+              <div
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}
+              >
                 {[
-                  { k: 'MESSAGES',  v: node.metadata.messages  != null ? String(node.metadata.messages)  : '—' },
-                  { k: 'IN FLIGHT', v: node.metadata.inFlight   != null ? String(node.metadata.inFlight)  : '—' },
+                  {
+                    k: 'MESSAGES',
+                    v: node.metadata.messages != null ? String(node.metadata.messages) : '—'
+                  },
+                  {
+                    k: 'IN FLIGHT',
+                    v: node.metadata.inFlight != null ? String(node.metadata.inFlight) : '—'
+                  }
                 ].map(({ k, v }) => (
-                  <div key={k} style={{ background: 'var(--cb-bg-elevated)', borderRadius: 3, padding: '4px 6px', border: '1px solid var(--cb-border)' }}>
-                    <div style={{ fontSize: 7, color: 'var(--cb-text-muted)', marginBottom: 2 }}>{k}</div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--cb-text-primary)', fontFamily: 'monospace' }}>{v}</div>
+                  <div
+                    key={k}
+                    style={{
+                      background: 'var(--cb-bg-elevated)',
+                      borderRadius: 3,
+                      padding: '4px 6px',
+                      border: '1px solid var(--cb-border)'
+                    }}
+                  >
+                    <div style={{ fontSize: 7, color: 'var(--cb-text-muted)', marginBottom: 2 }}>
+                      {k}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: 'var(--cb-text-primary)',
+                        fontFamily: 'monospace'
+                      }}
+                    >
+                      {v}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1528,8 +2411,18 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
               )}
               {!isImported && (
                 <div style={{ display: 'flex', gap: 4 }}>
-                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
-                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                  <button
+                    onClick={() => onEdit(node)}
+                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                  >
+                    ✎ Edit
+                  </button>
+                  <button
+                    onClick={() => onDelete(node)}
+                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                  >
+                    ✕ Delete
+                  </button>
                 </div>
               )}
             </div>
@@ -1538,23 +2431,60 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* DynamoDB-specific metadata */}
           {node.type === 'dynamo' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 TABLE STATS
               </div>
               {[
-                { k: 'BILLING',    v: node.metadata.billingMode as string | undefined },
-                { k: 'ITEMS',      v: node.metadata.itemCount != null ? Number(node.metadata.itemCount).toLocaleString() : undefined },
-                { k: 'SIZE',       v: node.metadata.sizeBytes  != null ? `${(Number(node.metadata.sizeBytes) / 1024 / 1024).toFixed(1)} MB` : undefined },
-              ].filter(({ v }) => v).map(({ k, v }) => (
-                <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
-                  <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>{v}</div>
-                </div>
-              ))}
+                { k: 'BILLING', v: node.metadata.billingMode as string | undefined },
+                {
+                  k: 'ITEMS',
+                  v:
+                    node.metadata.itemCount != null
+                      ? Number(node.metadata.itemCount).toLocaleString()
+                      : undefined
+                },
+                {
+                  k: 'SIZE',
+                  v:
+                    node.metadata.sizeBytes != null
+                      ? `${(Number(node.metadata.sizeBytes) / 1024 / 1024).toFixed(1)} MB`
+                      : undefined
+                }
+              ]
+                .filter(({ v }) => v)
+                .map(({ k, v }) => (
+                  <div key={k} className="mb-1.5">
+                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                      {k}
+                    </div>
+                    <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>
+                      {v}
+                    </div>
+                  </div>
+                ))}
               {!isImported && (
                 <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
-                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                  <button
+                    onClick={() => onEdit(node)}
+                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                  >
+                    ✎ Edit
+                  </button>
+                  <button
+                    onClick={() => onDelete(node)}
+                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                  >
+                    ✕ Delete
+                  </button>
                 </div>
               )}
             </div>
@@ -1563,83 +2493,198 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* EC2-specific metadata */}
           {node.type === 'ec2' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 INSTANCE
               </div>
               {[
-                { k: 'TYPE',       v: node.metadata.instanceType as string | undefined },
-                { k: 'AMI',        v: node.metadata.ami          as string | undefined },
-                { k: 'PRIVATE IP', v: node.metadata.privateIp    as string | undefined },
-                { k: 'PUBLIC IP',  v: node.metadata.publicIp     as string | undefined },
-              ].filter(({ v }) => v).map(({ k, v }) => (
-                <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span className="text-[8px]" style={{ color: 'var(--cb-text-secondary)', flex: 1 }}>{v}</span>
-                    {(k === 'PRIVATE IP' || k === 'PUBLIC IP') && (
-                      <button onClick={() => navigator.clipboard.writeText(v!)}
-                        title="Copy" style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 2, padding: '1px 4px', color: 'var(--cb-text-muted)', fontFamily: 'monospace', fontSize: 8, cursor: 'pointer', flexShrink: 0 }}>⎘</button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {Array.isArray(node.metadata.securityGroupIds) && (node.metadata.securityGroupIds as string[]).length > 0 && (
-                <div className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)', marginBottom: 3 }}>SECURITY GROUPS</div>
-                  {(node.metadata.securityGroupIds as string[]).map((sgId) => {
-                    const sgNode = [...nodes, ...importedNodes].find(n => n.id === sgId)
-                    return (
-                      <div key={sgId}
-                        style={{ fontSize: 8, color: '#c084fc', cursor: 'pointer', marginBottom: 2 }}
-                        onClick={() => {
-                          useUIStore.getState().selectNode(sgId)
-                          window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId: sgId } }))
-                        }}
-                        title={`Go to ${sgNode?.label ?? sgId}`}
+                { k: 'TYPE', v: node.metadata.instanceType as string | undefined },
+                { k: 'AMI', v: node.metadata.ami as string | undefined },
+                { k: 'PRIVATE IP', v: node.metadata.privateIp as string | undefined },
+                { k: 'PUBLIC IP', v: node.metadata.publicIp as string | undefined }
+              ]
+                .filter(({ v }) => v)
+                .map(({ k, v }) => (
+                  <div key={k} className="mb-1.5">
+                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                      {k}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span
+                        className="text-[8px]"
+                        style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
                       >
-                        ↗ {sgNode?.label ?? sgId}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+                        {v}
+                      </span>
+                      {(k === 'PRIVATE IP' || k === 'PUBLIC IP') && (
+                        <button
+                          onClick={() => navigator.clipboard.writeText(v!)}
+                          title="Copy"
+                          style={{
+                            background: 'var(--cb-bg-elevated)',
+                            border: '1px solid var(--cb-border)',
+                            borderRadius: 2,
+                            padding: '1px 4px',
+                            color: 'var(--cb-text-muted)',
+                            fontFamily: 'monospace',
+                            fontSize: 8,
+                            cursor: 'pointer',
+                            flexShrink: 0
+                          }}
+                        >
+                          ⎘
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              {Array.isArray(node.metadata.securityGroupIds) &&
+                (node.metadata.securityGroupIds as string[]).length > 0 && (
+                  <div className="mb-1.5">
+                    <div
+                      className="text-[7px]"
+                      style={{ color: 'var(--cb-text-muted)', marginBottom: 3 }}
+                    >
+                      SECURITY GROUPS
+                    </div>
+                    {(node.metadata.securityGroupIds as string[]).map((sgId) => {
+                      const sgNode = [...nodes, ...importedNodes].find((n) => n.id === sgId)
+                      return (
+                        <div
+                          key={sgId}
+                          style={{
+                            fontSize: 8,
+                            color: '#c084fc',
+                            cursor: 'pointer',
+                            marginBottom: 2
+                          }}
+                          onClick={() => {
+                            useUIStore.getState().selectNode(sgId)
+                            window.dispatchEvent(
+                              new CustomEvent('terminus:fitnode', { detail: { nodeId: sgId } })
+                            )
+                          }}
+                          title={`Go to ${sgNode?.label ?? sgId}`}
+                        >
+                          ↗ {sgNode?.label ?? sgId}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               {!isImported && (
                 <>
                   <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                    <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
-                    <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                    <button
+                      onClick={() => onEdit(node)}
+                      style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                    >
+                      ✎ Edit
+                    </button>
+                    <button
+                      onClick={() => onDelete(node)}
+                      style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                    >
+                      ✕ Delete
+                    </button>
                   </div>
                   <div style={{ marginTop: 8 }}>
-                    <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Quick actions</div>
+                    <div
+                      style={{
+                        fontSize: 8,
+                        color: 'var(--cb-text-muted)',
+                        textTransform: 'uppercase',
+                        marginBottom: 4
+                      }}
+                    >
+                      Quick actions
+                    </div>
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                       {node.status !== 'stopped' && (
-                        <button onClick={() => onQuickAction(node, 'stop')}
-                          style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #febc2e', borderRadius: 2, padding: '2px 8px', color: '#febc2e', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                        <button
+                          onClick={() => onQuickAction(node, 'stop')}
+                          style={{
+                            background: 'var(--cb-bg-elevated)',
+                            border: '1px solid #febc2e',
+                            borderRadius: 2,
+                            padding: '2px 8px',
+                            color: '#febc2e',
+                            fontFamily: 'monospace',
+                            fontSize: 9,
+                            cursor: 'pointer'
+                          }}
+                        >
                           Stop
                         </button>
                       )}
                       {node.status === 'stopped' && (
-                        <button onClick={() => onQuickAction(node, 'start')}
-                          style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #28c840', borderRadius: 2, padding: '2px 8px', color: '#28c840', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                        <button
+                          onClick={() => onQuickAction(node, 'start')}
+                          style={{
+                            background: 'var(--cb-bg-elevated)',
+                            border: '1px solid #28c840',
+                            borderRadius: 2,
+                            padding: '2px 8px',
+                            color: '#28c840',
+                            fontFamily: 'monospace',
+                            fontSize: 9,
+                            cursor: 'pointer'
+                          }}
+                        >
                           Start
                         </button>
                       )}
-                      <button onClick={() => onQuickAction(node, 'reboot')}
-                        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #64b5f6', borderRadius: 2, padding: '2px 8px', color: '#64b5f6', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                      <button
+                        onClick={() => onQuickAction(node, 'reboot')}
+                        style={{
+                          background: 'var(--cb-bg-elevated)',
+                          border: '1px solid #64b5f6',
+                          borderRadius: 2,
+                          padding: '2px 8px',
+                          color: '#64b5f6',
+                          fontFamily: 'monospace',
+                          fontSize: 9,
+                          cursor: 'pointer'
+                        }}
+                      >
                         Reboot
                       </button>
                       <button
                         onClick={async () => {
-                          const instanceId = node.metadata?.instanceId as string ?? node.id
+                          const instanceId = (node.metadata?.instanceId as string) ?? node.id
                           const profile = useCloudStore.getState().profile
-                          const result = await window.terminus.startTerminal({ instanceId, region: node.region, profile })
+                          const result = await window.terminus.startTerminal({
+                            instanceId,
+                            region: node.region,
+                            profile
+                          })
                           if (result.ok) {
                             useUIStore.getState().openTerminal(node.id, result.sessionId)
                           } else {
-                            useUIStore.getState().showToast(`Terminal failed: ${result.error}`, 'error')
+                            useUIStore
+                              .getState()
+                              .showToast(`Terminal failed: ${result.error}`, 'error')
                           }
                         }}
-                        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid #34d399', borderRadius: 2, padding: '2px 8px', color: '#34d399', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }}>
+                        style={{
+                          background: 'var(--cb-bg-elevated)',
+                          border: '1px solid #34d399',
+                          borderRadius: 2,
+                          padding: '2px 8px',
+                          color: '#34d399',
+                          fontFamily: 'monospace',
+                          fontSize: 9,
+                          cursor: 'pointer'
+                        }}
+                      >
                         Open Terminal
                       </button>
                     </div>
@@ -1652,19 +2697,42 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* SNS-specific metadata */}
           {node.type === 'sns' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 TOPIC
               </div>
               <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>SUBSCRIBERS</div>
+                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                  SUBSCRIBERS
+                </div>
                 <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>
-                  {node.metadata.subscriptionCount != null ? String(node.metadata.subscriptionCount) : '—'}
+                  {node.metadata.subscriptionCount != null
+                    ? String(node.metadata.subscriptionCount)
+                    : '—'}
                 </div>
               </div>
               {!isImported && (
                 <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
-                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                  <button
+                    onClick={() => onEdit(node)}
+                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                  >
+                    ✎ Edit
+                  </button>
+                  <button
+                    onClick={() => onDelete(node)}
+                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                  >
+                    ✕ Delete
+                  </button>
                 </div>
               )}
             </div>
@@ -1673,26 +2741,64 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* ECR-specific metadata */}
           {node.type === 'ecr-repo' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 REPOSITORY
               </div>
               {typeof node.metadata.uri === 'string' && node.metadata.uri && (
                 <div className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>URI</div>
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    URI
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)', flex: 1 }}>{node.metadata.uri as string}</span>
+                    <span
+                      className="text-[8px] break-all"
+                      style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
+                    >
+                      {node.metadata.uri as string}
+                    </span>
                     <button
                       onClick={() => navigator.clipboard.writeText(node.metadata.uri as string)}
                       title="Copy URI"
-                      style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 2, padding: '1px 4px', color: 'var(--cb-text-muted)', fontFamily: 'monospace', fontSize: 8, cursor: 'pointer', flexShrink: 0 }}
-                    >⎘</button>
+                      style={{
+                        background: 'var(--cb-bg-elevated)',
+                        border: '1px solid var(--cb-border)',
+                        borderRadius: 2,
+                        padding: '1px 4px',
+                        color: 'var(--cb-text-muted)',
+                        fontFamily: 'monospace',
+                        fontSize: 8,
+                        cursor: 'pointer',
+                        flexShrink: 0
+                      }}
+                    >
+                      ⎘
+                    </button>
                   </div>
                 </div>
               )}
               {!isImported && (
                 <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
-                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                  <button
+                    onClick={() => onEdit(node)}
+                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                  >
+                    ✎ Edit
+                  </button>
+                  <button
+                    onClick={() => onDelete(node)}
+                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                  >
+                    ✕ Delete
+                  </button>
                 </div>
               )}
             </div>
@@ -1701,36 +2807,85 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* ElastiCache-specific metadata */}
           {node.type === 'elasticache' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 CACHE
               </div>
               {[
-                { k: 'ENGINE',    v: node.metadata.engine    as string | undefined },
-                { k: 'NODE TYPE', v: node.metadata.nodeType  as string | undefined },
-                { k: 'CLUSTERS',  v: node.metadata.numCaches != null ? String(node.metadata.numCaches) : undefined },
-              ].filter(({ v }) => v).map(({ k, v }) => (
-                <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
-                  <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>{v}</div>
-                </div>
-              ))}
+                { k: 'ENGINE', v: node.metadata.engine as string | undefined },
+                { k: 'NODE TYPE', v: node.metadata.nodeType as string | undefined },
+                {
+                  k: 'CLUSTERS',
+                  v: node.metadata.numCaches != null ? String(node.metadata.numCaches) : undefined
+                }
+              ]
+                .filter(({ v }) => v)
+                .map(({ k, v }) => (
+                  <div key={k} className="mb-1.5">
+                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                      {k}
+                    </div>
+                    <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>
+                      {v}
+                    </div>
+                  </div>
+                ))}
               {typeof node.metadata.endpoint === 'string' && node.metadata.endpoint && (
                 <div className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>ENDPOINT</div>
+                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    ENDPOINT
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)', flex: 1 }}>{node.metadata.endpoint as string}</span>
+                    <span
+                      className="text-[8px] break-all"
+                      style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
+                    >
+                      {node.metadata.endpoint as string}
+                    </span>
                     <button
-                      onClick={() => navigator.clipboard.writeText(node.metadata.endpoint as string)}
+                      onClick={() =>
+                        navigator.clipboard.writeText(node.metadata.endpoint as string)
+                      }
                       title="Copy endpoint"
-                      style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 2, padding: '1px 4px', color: 'var(--cb-text-muted)', fontFamily: 'monospace', fontSize: 8, cursor: 'pointer', flexShrink: 0 }}
-                    >⎘</button>
+                      style={{
+                        background: 'var(--cb-bg-elevated)',
+                        border: '1px solid var(--cb-border)',
+                        borderRadius: 2,
+                        padding: '1px 4px',
+                        color: 'var(--cb-text-muted)',
+                        fontFamily: 'monospace',
+                        fontSize: 8,
+                        cursor: 'pointer',
+                        flexShrink: 0
+                      }}
+                    >
+                      ⎘
+                    </button>
                   </div>
                 </div>
               )}
               {!isImported && (
                 <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
-                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
+                  <button
+                    onClick={() => onEdit(node)}
+                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                  >
+                    ✎ Edit
+                  </button>
+                  <button
+                    onClick={() => onDelete(node)}
+                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                  >
+                    ✕ Delete
+                  </button>
                 </div>
               )}
             </div>
@@ -1739,50 +2894,109 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           {/* EKS-specific metadata */}
           {node.type === 'eks' && (
             <div>
-              <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
+              <div
+                className="text-[8px] mb-2"
+                style={{
+                  color: 'var(--cb-text-muted)',
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: '6px',
+                  marginTop: 16,
+                  marginBottom: 6
+                }}
+              >
                 CLUSTER
               </div>
               {[
-                { k: 'VERSION',  v: node.metadata.version as string | undefined },
-                { k: 'ENDPOINT', v: node.metadata.endpoint as string | undefined },
-              ].filter(({ v }) => v).map(({ k, v }) => (
-                <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>{k}</div>
-                  <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{v}</div>
-                </div>
-              ))}
+                { k: 'VERSION', v: node.metadata.version as string | undefined },
+                { k: 'ENDPOINT', v: node.metadata.endpoint as string | undefined }
+              ]
+                .filter(({ v }) => v)
+                .map(({ k, v }) => (
+                  <div key={k} className="mb-1.5">
+                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                      {k}
+                    </div>
+                    <div
+                      className="text-[8px] break-all"
+                      style={{ color: 'var(--cb-text-secondary)' }}
+                    >
+                      {v}
+                    </div>
+                  </div>
+                ))}
             </div>
           )}
 
           {/* Default metadata + buttons for all other node types */}
-          {node.type !== 'acm' && node.type !== 'cloudfront' && node.type !== 'apigw' && node.type !== 'apigw-route'
-            && node.type !== 'lambda' && node.type !== 'ecs' && node.type !== 'rds'
-            && node.type !== 'sqs' && node.type !== 'dynamo' && node.type !== 'sns'
-            && node.type !== 'ecr-repo' && node.type !== 'elasticache' && node.type !== 'eks'
-            && node.type !== 'ec2' && (
-            <>
-              {Object.entries(node.metadata).length > 0 && (
-                <div>
-                  <div className="text-[8px] mb-2" style={{ color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border-strong)', paddingTop: '6px', marginTop: 16, marginBottom: 6 }}>
-                    METADATA
-                  </div>
-                  {Object.entries(node.metadata).slice(0, 6).map(([k, v]) => (
-                    <div key={k} className="mb-1.5">
-                      <div className="text-[7px]" title={k} style={{ color: 'var(--cb-text-muted)' }}>{fieldLabel(k)}</div>
-                      <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>{String(v ?? '—')}</div>
+          {node.type !== 'acm' &&
+            node.type !== 'cloudfront' &&
+            node.type !== 'apigw' &&
+            node.type !== 'apigw-route' &&
+            node.type !== 'lambda' &&
+            node.type !== 'ecs' &&
+            node.type !== 'rds' &&
+            node.type !== 'sqs' &&
+            node.type !== 'dynamo' &&
+            node.type !== 'sns' &&
+            node.type !== 'ecr-repo' &&
+            node.type !== 'elasticache' &&
+            node.type !== 'eks' &&
+            node.type !== 'ec2' && (
+              <>
+                {Object.entries(node.metadata).length > 0 && (
+                  <div>
+                    <div
+                      className="text-[8px] mb-2"
+                      style={{
+                        color: 'var(--cb-text-muted)',
+                        borderTop: '1px solid var(--cb-border-strong)',
+                        paddingTop: '6px',
+                        marginTop: 16,
+                        marginBottom: 6
+                      }}
+                    >
+                      METADATA
                     </div>
-                  ))}
-                </div>
-              )}
+                    {Object.entries(node.metadata)
+                      .slice(0, 6)
+                      .map(([k, v]) => (
+                        <div key={k} className="mb-1.5">
+                          <div
+                            className="text-[7px]"
+                            title={k}
+                            style={{ color: 'var(--cb-text-muted)' }}
+                          >
+                            {fieldLabel(k)}
+                          </div>
+                          <div
+                            className="text-[8px] break-all"
+                            style={{ color: 'var(--cb-text-secondary)' }}
+                          >
+                            {String(v ?? '—')}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
 
-              {!isImported && (
-                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button onClick={() => onEdit(node)} style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}>✎ Edit</button>
-                  <button onClick={() => onDelete(node)} style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}>✕ Delete</button>
-                </div>
-              )}
-            </>
-          )}
+                {!isImported && (
+                  <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                    <button
+                      onClick={() => onEdit(node)}
+                      style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                    >
+                      ✎ Edit
+                    </button>
+                    <button
+                      onClick={() => onDelete(node)}
+                      style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
+                    >
+                      ✕ Delete
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
 
           {/* Connections panel — outgoing + incoming integration edges */}
           {(() => {
@@ -1792,59 +3006,128 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
               const target = allNodes.find((n) => n.id === resolvedId)
               return { integ, target }
             })
-            const incoming = allNodes.filter((n) =>
-              n.id !== node.id &&
-              (n.integrations ?? []).some((e) => resolveIntegrationTargetId(allNodes, e.targetId) === node.id)
+            const incoming = allNodes.filter(
+              (n) =>
+                n.id !== node.id &&
+                (n.integrations ?? []).some(
+                  (e) => resolveIntegrationTargetId(allNodes, e.targetId) === node.id
+                )
             )
             if (outgoing.length === 0 && incoming.length === 0) return null
-            const edgeColor = (t: string): string => t === 'trigger' ? '#a78bfa' : t === 'subscription' ? '#34d399' : '#60a5fa'
-            const ConnRow = ({ src, label, label2, edgeType, onClick }: { src?: CloudNode; label: string; label2?: string; edgeType: string; onClick: () => void }): React.JSX.Element => (
+            const edgeColor = (t: string): string =>
+              t === 'trigger' ? '#a78bfa' : t === 'subscription' ? '#34d399' : '#60a5fa'
+            const ConnRow = ({
+              src,
+              label,
+              label2,
+              edgeType,
+              onClick
+            }: {
+              src?: CloudNode
+              label: string
+              label2?: string
+              edgeType: string
+              onClick: () => void
+            }): React.JSX.Element => (
               <div
-                style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 4, cursor: 'pointer' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: 5,
+                  marginBottom: 4,
+                  cursor: 'pointer'
+                }}
                 onClick={onClick}
                 title={`Select ${label}`}
               >
-                <span style={{ fontSize: 6, color: edgeColor(edgeType), fontWeight: 700, minWidth: 40, textTransform: 'uppercase', flexShrink: 0 }}>
+                <span
+                  style={{
+                    fontSize: 6,
+                    color: edgeColor(edgeType),
+                    fontWeight: 700,
+                    minWidth: 40,
+                    textTransform: 'uppercase',
+                    flexShrink: 0
+                  }}
+                >
                   {edgeType}
                 </span>
-                <span style={{ fontSize: 9, color: src ? 'var(--cb-text-primary)' : 'var(--cb-text-muted)', wordBreak: 'break-all', flex: 1 }}>
+                <span
+                  style={{
+                    fontSize: 9,
+                    color: src ? 'var(--cb-text-primary)' : 'var(--cb-text-muted)',
+                    wordBreak: 'break-all',
+                    flex: 1
+                  }}
+                >
                   {label}
                 </span>
                 {label2 && (
-                  <span style={{ fontSize: 7, color: 'var(--cb-text-muted)', flexShrink: 0 }}>{label2}</span>
+                  <span style={{ fontSize: 7, color: 'var(--cb-text-muted)', flexShrink: 0 }}>
+                    {label2}
+                  </span>
                 )}
               </div>
             )
             return (
-              <div style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}>
+              <div
+                style={{
+                  marginTop: 12,
+                  borderTop: '1px solid var(--cb-border-strong)',
+                  paddingTop: 8
+                }}
+              >
                 {outgoing.length > 0 && (
                   <>
-                    <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+                    <div
+                      style={{
+                        fontSize: 8,
+                        color: 'var(--cb-text-muted)',
+                        textTransform: 'uppercase',
+                        marginBottom: 6
+                      }}
+                    >
                       Outgoing ({outgoing.length})
                     </div>
                     {outgoing.map(({ integ, target }, i) => (
                       <ConnRow
                         key={i}
                         src={target}
-                        label={target ? target.label : (integ.targetId.split('/').pop() ?? integ.targetId)}
+                        label={
+                          target
+                            ? target.label
+                            : (integ.targetId.split('/').pop() ?? integ.targetId)
+                        }
                         label2={target?.type}
                         edgeType={integ.edgeType}
                         onClick={() => {
-                        if (!target) return
-                        useUIStore.getState().selectNode(target.id)
-                        window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId: target.id } }))
-                      }}
+                          if (!target) return
+                          useUIStore.getState().selectNode(target.id)
+                          window.dispatchEvent(
+                            new CustomEvent('terminus:fitnode', { detail: { nodeId: target.id } })
+                          )
+                        }}
                       />
                     ))}
                   </>
                 )}
                 {incoming.length > 0 && (
                   <>
-                    <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 6, marginTop: outgoing.length > 0 ? 8 : 0 }}>
+                    <div
+                      style={{
+                        fontSize: 8,
+                        color: 'var(--cb-text-muted)',
+                        textTransform: 'uppercase',
+                        marginBottom: 6,
+                        marginTop: outgoing.length > 0 ? 8 : 0
+                      }}
+                    >
                       Incoming ({incoming.length})
                     </div>
                     {incoming.map((src, i) => {
-                      const e = (src.integrations ?? []).find((edge) => resolveIntegrationTargetId(allNodes, edge.targetId) === node.id)!
+                      const e = (src.integrations ?? []).find(
+                        (edge) => resolveIntegrationTargetId(allNodes, edge.targetId) === node.id
+                      )!
                       return (
                         <ConnRow
                           key={i}
@@ -1854,7 +3137,9 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                           edgeType={e.edgeType}
                           onClick={() => {
                             useUIStore.getState().selectNode(src.id)
-                            window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId: src.id } }))
+                            window.dispatchEvent(
+                              new CustomEvent('terminus:fitnode', { detail: { nodeId: src.id } })
+                            )
                           }}
                         />
                       )
@@ -1871,9 +3156,23 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
           )}
 
           {/* Notes section — always shown for any selected node */}
-          <div style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <div className="text-[8px]" style={{ color: 'var(--cb-text-muted)', textTransform: 'uppercase' }}>Notes</div>
+          <div
+            style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 4
+              }}
+            >
+              <div
+                className="text-[8px]"
+                style={{ color: 'var(--cb-text-muted)', textTransform: 'uppercase' }}
+              >
+                Notes
+              </div>
               {annotations[node.id] && (
                 <button
                   onClick={() => {
@@ -1882,9 +3181,19 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                     delete next[node.id]
                     void window.terminus.saveAnnotations(next)
                   }}
-                  style={{ background: 'none', border: 'none', color: 'var(--cb-text-muted)', cursor: 'pointer', fontSize: 9, padding: 0, lineHeight: 1 }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--cb-text-muted)',
+                    cursor: 'pointer',
+                    fontSize: 9,
+                    padding: 0,
+                    lineHeight: 1
+                  }}
                   title="Clear note"
-                >✕</button>
+                >
+                  ✕
+                </button>
               )}
             </div>
             <textarea
@@ -1908,14 +3217,25 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                 fontSize: 9,
                 resize: 'vertical',
                 boxSizing: 'border-box',
-                outline: 'none',
+                outline: 'none'
               }}
             />
           </div>
 
           {/* HISTORY section — per-node change log */}
-          <div style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}>
-            <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
+          <div
+            style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}
+          >
+            <div
+              style={{
+                fontSize: 8,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                color: 'var(--cb-text-muted)',
+                textTransform: 'uppercase',
+                marginBottom: 6
+              }}
+            >
               History
             </div>
             {nodeHistory.length === 0 ? (
@@ -1929,7 +3249,15 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
                     ↳ {relativeTime(entry.timestamp)}
                   </div>
                   {entry.changes.map((c, j) => (
-                    <div key={j} style={{ fontSize: 8, color: 'var(--cb-text-secondary)', paddingLeft: 10, marginBottom: 1 }}>
+                    <div
+                      key={j}
+                      style={{
+                        fontSize: 8,
+                        color: 'var(--cb-text-secondary)',
+                        paddingLeft: 10,
+                        marginBottom: 1
+                      }}
+                    >
                       <span style={{ color: 'var(--cb-text-muted)' }}>{c.field}:</span>{' '}
                       <span style={{ color: '#fca5a5' }}>{truncate(c.before)}</span>
                       {' → '}

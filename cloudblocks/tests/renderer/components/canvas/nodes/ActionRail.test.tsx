@@ -5,11 +5,11 @@ import type { CloudNode } from '../../../../../src/renderer/types/cloud'
 
 // Mock buildConsoleUrl
 vi.mock('../../../../../src/renderer/utils/buildConsoleUrl', () => ({
-  buildConsoleUrl: vi.fn(),
+  buildConsoleUrl: vi.fn()
 }))
 // Mock useUIStore.getState().showToast
 vi.mock('../../../../../src/renderer/store/ui', () => ({
-  useUIStore: { getState: () => ({ showToast: vi.fn() }) },
+  useUIStore: { getState: () => ({ showToast: vi.fn() }) }
 }))
 
 import { buildConsoleUrl } from '../../../../../src/renderer/utils/buildConsoleUrl'
@@ -17,12 +17,12 @@ import { buildConsoleUrl } from '../../../../../src/renderer/utils/buildConsoleU
 const mockBuildConsoleUrl = vi.mocked(buildConsoleUrl)
 
 const baseNode: CloudNode = {
-  id:     'arn:aws:lambda:us-east-1:123:function:my-fn',
-  type:   'lambda',
-  label:  'my-fn',
+  id: 'arn:aws:lambda:us-east-1:123:function:my-fn',
+  type: 'lambda',
+  label: 'my-fn',
   status: 'running',
   region: 'us-east-1',
-  metadata: {},
+  metadata: {}
 }
 
 describe('ActionRail', () => {
@@ -32,7 +32,7 @@ describe('ActionRail', () => {
     Object.defineProperty(navigator, 'clipboard', {
       value: { writeText: vi.fn().mockResolvedValue(undefined) },
       writable: true,
-      configurable: true,
+      configurable: true
     })
   })
 

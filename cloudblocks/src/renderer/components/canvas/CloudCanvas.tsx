@@ -23,30 +23,30 @@ interface Props {
 /** Inner component — must live inside ReactFlowProvider to access useReactFlow hooks. */
 function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
   const { fitView, zoomIn, zoomOut } = useReactFlow()
-  const view           = useUIStore((s) => s.view)
-  const effectiveView  = (view === 'command' ? 'topology' : view) as 'topology' | 'graph'
-  const setView        = useUIStore((s) => s.setView)
+  const view = useUIStore((s) => s.view)
+  const effectiveView = (view === 'command' ? 'topology' : view) as 'topology' | 'graph'
+  const setView = useUIStore((s) => s.setView)
   const showCommandTab = true
-  const profile        = useCloudStore((s) => s.profile)
-  const savedViews     = useUIStore((s) => s.savedViews)
+  const profile = useCloudStore((s) => s.profile)
+  const savedViews = useUIStore((s) => s.savedViews)
   const activeViewSlot = useUIStore((s) => s.activeViewSlot)
-  const saveView       = useUIStore((s) => s.saveView)
-  const loadView       = useUIStore((s) => s.loadView)
-  const showIntegrations   = useUIStore((s) => s.showIntegrations)
+  const saveView = useUIStore((s) => s.saveView)
+  const loadView = useUIStore((s) => s.loadView)
+  const showIntegrations = useUIStore((s) => s.showIntegrations)
   const toggleIntegrations = useUIStore((s) => s.toggleIntegrations)
-  const snapToGrid         = useUIStore((s) => s.snapToGrid)
-  const toggleSnapToGrid   = useUIStore((s) => s.toggleSnapToGrid)
-  const addStickyNote  = useUIStore((s) => s.addStickyNote)
-  const setAnnotation  = useUIStore((s) => s.setAnnotation)
+  const snapToGrid = useUIStore((s) => s.snapToGrid)
+  const toggleSnapToGrid = useUIStore((s) => s.toggleSnapToGrid)
+  const addStickyNote = useUIStore((s) => s.addStickyNote)
+  const setAnnotation = useUIStore((s) => s.setAnnotation)
 
-  const [modalSlot, setModalSlot]     = useState<number | null>(null)
+  const [modalSlot, setModalSlot] = useState<number | null>(null)
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
 
   // Ghost hint overlay — shown once after the first successful scan with nodes
-  const nodes           = useCloudStore((s) => s.nodes)
-  const lastScannedAt   = useCloudStore((s) => s.lastScannedAt)
-  const [hintVisible, setHintVisible]   = useState(false)
-  const [hintOpacity, setHintOpacity]   = useState(1)
+  const nodes = useCloudStore((s) => s.nodes)
+  const lastScannedAt = useCloudStore((s) => s.lastScannedAt)
+  const [hintVisible, setHintVisible] = useState(false)
+  const [hintOpacity, setHintOpacity] = useState(1)
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -90,16 +90,21 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
 
   // Listen for tidy layout — fit the whole view after positions are applied
   useEffect(() => {
-    const handler = (): void => { void fitView({ duration: 300 }) }
+    const handler = (): void => {
+      void fitView({ duration: 300 })
+    }
     window.addEventListener('terminus:fitview', handler)
     return () => window.removeEventListener('terminus:fitview', handler)
   }, [fitView])
 
   // Listen for canvas export requests from TitleBar
-  const handleExport = useCallback((e: Event) => {
-    const format = (e as CustomEvent<{ format: 'clipboard' | 'file' }>).detail?.format ?? 'file'
-    void exportCanvasToPng(fitView, format)
-  }, [fitView])
+  const handleExport = useCallback(
+    (e: Event) => {
+      const format = (e as CustomEvent<{ format: 'clipboard' | 'file' }>).detail?.format ?? 'file'
+      void exportCanvasToPng(fitView, format)
+    },
+    [fitView]
+  )
   useEffect(() => {
     window.addEventListener('terminus:export-canvas', handleExport)
     return () => window.removeEventListener('terminus:export-canvas', handleExport)
@@ -108,17 +113,26 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
   // Listen for "Add Note" shortcut / button
   useEffect(() => {
     function onAddStickyNote(): void {
-      const id   = `sn-${Date.now()}`
+      const id = `sn-${Date.now()}`
       const note: StickyNote = { id, content: '', position: { x: 120, y: 120 } }
       addStickyNote(note)
       setAnnotation(`sticky:${id}`, '')
-      void window.terminus.saveAnnotations({ ...useUIStore.getState().annotations, [`sticky:${id}`]: '' })
+      void window.terminus.saveAnnotations({
+        ...useUIStore.getState().annotations,
+        [`sticky:${id}`]: ''
+      })
     }
     window.addEventListener('terminus:add-sticky-note', onAddStickyNote)
     return () => window.removeEventListener('terminus:add-sticky-note', onAddStickyNote)
   }, [addStickyNote, setAnnotation])
 
-  const btnBase = { fontFamily: 'monospace', fontSize: '9px', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }
+  const btnBase = {
+    fontFamily: 'monospace',
+    fontSize: '9px',
+    borderRadius: '4px',
+    padding: '2px 8px',
+    cursor: 'pointer'
+  }
 
   function handleContextMenu(e: React.MouseEvent): void {
     e.preventDefault()
@@ -142,9 +156,7 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
     setModalSlot(null)
   }
 
-  const activeViewName = activeViewSlot !== null
-    ? (savedViews[activeViewSlot]?.name ?? null)
-    : null
+  const activeViewName = activeViewSlot !== null ? (savedViews[activeViewSlot]?.name ?? null) : null
 
   return (
     <div className="flex flex-col flex-1 h-full">
@@ -152,26 +164,74 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
 
       <div className="relative flex-1" onContextMenu={handleContextMenu}>
         {/* Viewport toolbar */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-md"
-             style={{ background: 'var(--cb-minimap-bg)', border: '1px solid var(--cb-border-strong)' }}>
-
-          <button onClick={() => fitView({ duration: 300 })} style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}>⊞ Fit</button>
-          <button onClick={() => zoomIn()}  style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}>+</button>
-          <button onClick={() => zoomOut()} style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}>−</button>
+        <div
+          className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-md"
+          style={{
+            background: 'var(--cb-minimap-bg)',
+            border: '1px solid var(--cb-border-strong)'
+          }}
+        >
+          <button
+            onClick={() => fitView({ duration: 300 })}
+            style={{
+              ...btnBase,
+              background: 'var(--cb-bg-elevated)',
+              border: '1px solid var(--cb-border)',
+              color: 'var(--cb-text-secondary)'
+            }}
+          >
+            ⊞ Fit
+          </button>
+          <button
+            onClick={() => zoomIn()}
+            style={{
+              ...btnBase,
+              background: 'var(--cb-bg-elevated)',
+              border: '1px solid var(--cb-border)',
+              color: 'var(--cb-text-secondary)'
+            }}
+          >
+            +
+          </button>
+          <button
+            onClick={() => zoomOut()}
+            style={{
+              ...btnBase,
+              background: 'var(--cb-bg-elevated)',
+              border: '1px solid var(--cb-border)',
+              color: 'var(--cb-text-secondary)'
+            }}
+          >
+            −
+          </button>
 
           <div className="w-px h-3.5 bg-gray-700" />
 
           <button
             onClick={toggleIntegrations}
             title={showIntegrations ? 'Hide integration edges' : 'Show integration edges'}
-            style={{ ...btnBase, background: showIntegrations ? 'var(--cb-bg-elevated)' : 'transparent', border: `1px solid ${showIntegrations ? '#64b5f6' : 'var(--cb-border)'}`, color: showIntegrations ? '#64b5f6' : '#666' }}
-          >⇢ Integrations</button>
+            style={{
+              ...btnBase,
+              background: showIntegrations ? 'var(--cb-bg-elevated)' : 'transparent',
+              border: `1px solid ${showIntegrations ? '#64b5f6' : 'var(--cb-border)'}`,
+              color: showIntegrations ? '#64b5f6' : '#666'
+            }}
+          >
+            ⇢ Integrations
+          </button>
 
           <button
             onClick={toggleSnapToGrid}
             title={snapToGrid ? 'Disable snap to grid' : 'Enable snap to grid'}
-            style={{ ...btnBase, background: snapToGrid ? 'var(--cb-bg-elevated)' : 'transparent', border: `1px solid ${snapToGrid ? '#64b5f6' : 'var(--cb-border)'}`, color: snapToGrid ? '#64b5f6' : '#666' }}
-          >▦ Grid</button>
+            style={{
+              ...btnBase,
+              background: snapToGrid ? 'var(--cb-bg-elevated)' : 'transparent',
+              border: `1px solid ${snapToGrid ? '#64b5f6' : 'var(--cb-border)'}`,
+              color: snapToGrid ? '#64b5f6' : '#666'
+            }}
+          >
+            ▦ Grid
+          </button>
 
           <div className="w-px h-3.5 bg-gray-700" />
 
@@ -179,7 +239,12 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
             <button
               key={v}
               onClick={() => setView(v)}
-              style={{ ...btnBase, background: view === v ? 'var(--cb-bg-elevated)' : 'transparent', border: `1px solid ${view === v ? '#64b5f6' : 'var(--cb-border)'}`, color: view === v ? '#64b5f6' : '#666' }}
+              style={{
+                ...btnBase,
+                background: view === v ? 'var(--cb-bg-elevated)' : 'transparent',
+                border: `1px solid ${view === v ? '#64b5f6' : 'var(--cb-border)'}`,
+                color: view === v ? '#64b5f6' : '#666'
+              }}
             >
               {v === 'topology' ? '⊞ Map' : '◈ Free'}
             </button>
@@ -188,7 +253,12 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
           {showCommandTab && (
             <button
               onClick={() => setView('command')}
-              style={{ ...btnBase, background: view === 'command' ? 'var(--cb-bg-elevated)' : 'transparent', border: `1px solid ${view === 'command' ? '#a78bfa' : 'var(--cb-border)'}`, color: view === 'command' ? '#a78bfa' : '#666' }}
+              style={{
+                ...btnBase,
+                background: view === 'command' ? 'var(--cb-bg-elevated)' : 'transparent',
+                border: `1px solid ${view === 'command' ? '#a78bfa' : 'var(--cb-border)'}`,
+                color: view === 'command' ? '#a78bfa' : '#666'
+              }}
             >
               ⌘ Command
             </button>
@@ -197,14 +267,24 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
           <div className="w-px h-3.5 bg-gray-700" />
 
           {([0, 1, 2, 3] as const).map((slot) => {
-            const saved    = savedViews[slot]
+            const saved = savedViews[slot]
             const isActive = slot === activeViewSlot
             return (
               <button
                 key={slot}
                 onClick={() => handleSlotClick(slot)}
                 title={saved?.name ?? `Empty slot ${slot + 1}`}
-                style={{ ...btnBase, background: isActive ? 'var(--cb-bg-elevated)' : 'transparent', border: `1px solid ${saved ? (isActive ? 'var(--cb-accent)' : 'var(--cb-border-strong)') : 'var(--cb-border)'}`, color: saved ? (isActive ? 'var(--cb-accent)' : 'var(--cb-text-secondary)') : '#444', minWidth: '20px' }}
+                style={{
+                  ...btnBase,
+                  background: isActive ? 'var(--cb-bg-elevated)' : 'transparent',
+                  border: `1px solid ${saved ? (isActive ? 'var(--cb-accent)' : 'var(--cb-border-strong)') : 'var(--cb-border)'}`,
+                  color: saved
+                    ? isActive
+                      ? 'var(--cb-accent)'
+                      : 'var(--cb-text-secondary)'
+                    : '#444',
+                  minWidth: '20px'
+                }}
               >
                 {slot + 1}
               </button>
@@ -212,7 +292,17 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
           })}
 
           {activeViewName && (
-            <span style={{ fontSize: 10, color: 'var(--cb-text-muted)', fontFamily: 'monospace', whiteSpace: 'nowrap', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span
+              style={{
+                fontSize: 10,
+                color: 'var(--cb-text-muted)',
+                fontFamily: 'monospace',
+                whiteSpace: 'nowrap',
+                maxWidth: 80,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
               {activeViewName}
             </span>
           )}
@@ -221,21 +311,30 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
         <ScanErrorStrip />
         <BulkActionToolbar />
 
-        {view === 'topology'
-          ? <TopologyView onNodeContextMenu={onNodeContextMenu} />
-          : view === 'command'
-            ? <CommandView onNodeContextMenu={onNodeContextMenu} />
-            : <GraphView onNodeContextMenu={onNodeContextMenu} />
-        }
+        {view === 'topology' ? (
+          <TopologyView onNodeContextMenu={onNodeContextMenu} />
+        ) : view === 'command' ? (
+          <CommandView onNodeContextMenu={onNodeContextMenu} />
+        ) : (
+          <GraphView onNodeContextMenu={onNodeContextMenu} />
+        )}
 
         {/* Local endpoint badge */}
         {profile.endpoint && (
           <div
             style={{
-              position: 'absolute', top: '52px', left: '8px', zIndex: 10,
-              background: 'rgba(251, 191, 36, 0.15)', border: '1px solid rgba(251, 191, 36, 0.4)',
-              color: '#f59e0b', fontSize: '11px', padding: '2px 8px',
-              borderRadius: '4px', fontFamily: 'monospace', whiteSpace: 'nowrap',
+              position: 'absolute',
+              top: '52px',
+              left: '8px',
+              zIndex: 10,
+              background: 'rgba(251, 191, 36, 0.15)',
+              border: '1px solid rgba(251, 191, 36, 0.4)',
+              color: '#f59e0b',
+              fontSize: '11px',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              fontFamily: 'monospace',
+              whiteSpace: 'nowrap'
             }}
           >
             LOCAL · {profile.endpoint}
@@ -265,7 +364,7 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
               opacity: hintOpacity,
               transition: 'opacity 0.5s',
               whiteSpace: 'nowrap',
-              fontFamily: 'monospace',
+              fontFamily: 'monospace'
             }}
           >
             <div>
@@ -282,7 +381,14 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
         {/* CRT turn-on animation overlay — remounts on profile change to replay the animation */}
         <div
           key={profileKey}
-          style={{ position: 'absolute', inset: 0, background: '#000', pointerEvents: 'none', zIndex: 200, animation: 'crt-on 0.7s ease-out forwards' }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: '#000',
+            pointerEvents: 'none',
+            zIndex: 200,
+            animation: 'crt-on 0.7s ease-out forwards'
+          }}
         />
 
         {contextMenu && (

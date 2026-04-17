@@ -1,12 +1,24 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { buildCommands } from '../buildCommand'
-import type { VpcParams, Ec2Params, SgParams, S3Params, RdsParams, LambdaParams, AlbParams, R53ZoneParams } from '../../types/create'
+import type {
+  VpcParams,
+  Ec2Params,
+  SgParams,
+  S3Params,
+  RdsParams,
+  LambdaParams,
+  AlbParams,
+  R53ZoneParams
+} from '../../types/create'
 
 describe('buildCommands: vpc', () => {
   it('returns one command with correct args', () => {
     const params: VpcParams = {
-      resource: 'vpc', name: 'my-vpc', cidr: '10.0.0.0/16', tenancy: 'default',
+      resource: 'vpc',
+      name: 'my-vpc',
+      cidr: '10.0.0.0/16',
+      tenancy: 'default'
     }
     const cmds = buildCommands(params)
     expect(cmds).toHaveLength(1)
@@ -19,7 +31,10 @@ describe('buildCommands: vpc', () => {
 
   it('includes name tag', () => {
     const params: VpcParams = {
-      resource: 'vpc', name: 'my-vpc', cidr: '10.0.0.0/16', tenancy: 'default',
+      resource: 'vpc',
+      name: 'my-vpc',
+      cidr: '10.0.0.0/16',
+      tenancy: 'default'
     }
     const cmd = buildCommands(params)[0].join(' ')
     expect(cmd).toContain('my-vpc')
@@ -29,8 +44,13 @@ describe('buildCommands: vpc', () => {
 describe('buildCommands: ec2', () => {
   it('returns one command with run-instances', () => {
     const params: Ec2Params = {
-      resource: 'ec2', name: 'web', amiId: 'ami-123', instanceType: 't3.micro',
-      keyName: 'mykey', subnetId: 'subnet-abc', securityGroupIds: ['sg-1', 'sg-2'],
+      resource: 'ec2',
+      name: 'web',
+      amiId: 'ami-123',
+      instanceType: 't3.micro',
+      keyName: 'mykey',
+      subnetId: 'subnet-abc',
+      securityGroupIds: ['sg-1', 'sg-2']
     }
     const cmds = buildCommands(params)
     expect(cmds).toHaveLength(1)
@@ -45,11 +65,14 @@ describe('buildCommands: ec2', () => {
 describe('buildCommands: sg', () => {
   it('returns create + one authorize per rule, using --group-id placeholder', () => {
     const params: SgParams = {
-      resource: 'sg', name: 'web-sg', description: 'web', vpcId: 'vpc-123',
+      resource: 'sg',
+      name: 'web-sg',
+      description: 'web',
+      vpcId: 'vpc-123',
       inboundRules: [
         { protocol: 'tcp', fromPort: 443, toPort: 443, cidr: '0.0.0.0/0' },
-        { protocol: 'tcp', fromPort: 80,  toPort: 80,  cidr: '0.0.0.0/0' },
-      ],
+        { protocol: 'tcp', fromPort: 80, toPort: 80, cidr: '0.0.0.0/0' }
+      ]
     }
     const cmds = buildCommands(params)
     expect(cmds).toHaveLength(3)
@@ -62,8 +85,11 @@ describe('buildCommands: sg', () => {
 
   it('returns just create-security-group when no rules', () => {
     const params: SgParams = {
-      resource: 'sg', name: 'empty-sg', description: 'd', vpcId: 'vpc-123',
-      inboundRules: [],
+      resource: 'sg',
+      name: 'empty-sg',
+      description: 'd',
+      vpcId: 'vpc-123',
+      inboundRules: []
     }
     const cmds = buildCommands(params)
     expect(cmds).toHaveLength(1)
@@ -74,7 +100,10 @@ describe('buildCommands: sg', () => {
 describe('buildCommands: s3', () => {
   it('returns create-bucket + put-public-access-block for non-us-east-1 with blockPublicAccess', () => {
     const params: S3Params = {
-      resource: 's3', bucketName: 'my-bucket', region: 'eu-west-1', blockPublicAccess: true,
+      resource: 's3',
+      bucketName: 'my-bucket',
+      region: 'eu-west-1',
+      blockPublicAccess: true
     }
     const cmds = buildCommands(params)
     expect(cmds).toHaveLength(2)
@@ -85,7 +114,10 @@ describe('buildCommands: s3', () => {
 
   it('returns one create-bucket for us-east-1 with no blockPublicAccess', () => {
     const params: S3Params = {
-      resource: 's3', bucketName: 'my-bucket', region: 'us-east-1', blockPublicAccess: false,
+      resource: 's3',
+      bucketName: 'my-bucket',
+      region: 'us-east-1',
+      blockPublicAccess: false
     }
     const cmds = buildCommands(params)
     expect(cmds).toHaveLength(1)
@@ -105,7 +137,7 @@ describe('buildCommands — RDS', () => {
     allocatedStorage: 20,
     multiAZ: false,
     publiclyAccessible: false,
-    vpcId: 'vpc-123',
+    vpcId: 'vpc-123'
   }
 
   it('generates create-db-instance command', () => {
@@ -132,7 +164,7 @@ describe('buildCommands — Lambda', () => {
     handler: 'index.handler',
     roleArn: 'arn:aws:iam::123:role/my-role',
     memorySize: 128,
-    timeout: 3,
+    timeout: 3
   }
 
   it('generates create-function command without VPC', () => {
@@ -148,7 +180,7 @@ describe('buildCommands — Lambda', () => {
       ...baseLambda,
       vpcId: 'vpc-123',
       subnetIds: ['subnet-1', 'subnet-2'],
-      securityGroupIds: ['sg-1'],
+      securityGroupIds: ['sg-1']
     })
     expect(cmds[0]).toContain('--vpc-config')
     expect(cmds[0].join(' ')).toContain('subnet-1,subnet-2')
@@ -162,7 +194,7 @@ describe('buildCommands — ALB', () => {
     scheme: 'internet-facing',
     subnetIds: ['subnet-1', 'subnet-2'],
     securityGroupIds: ['sg-1'],
-    vpcId: 'vpc-123',
+    vpcId: 'vpc-123'
   }
 
   it('generates create-load-balancer command', () => {
@@ -179,7 +211,11 @@ describe('buildCommands — ALB', () => {
 
 describe('buildCommands — R53 Hosted Zone', () => {
   it('generates create-hosted-zone command for public zone', () => {
-    const params: R53ZoneParams = { resource: 'r53-zone', domainName: 'example.com', isPrivate: false }
+    const params: R53ZoneParams = {
+      resource: 'r53-zone',
+      domainName: 'example.com',
+      isPrivate: false
+    }
     const cmds = buildCommands(params)
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).toContain('route53')
@@ -193,7 +229,11 @@ describe('buildCommands — R53 Hosted Zone', () => {
   })
 
   it('generates create-hosted-zone command for private zone', () => {
-    const params: R53ZoneParams = { resource: 'r53-zone', domainName: 'internal.example.com', isPrivate: true }
+    const params: R53ZoneParams = {
+      resource: 'r53-zone',
+      domainName: 'internal.example.com',
+      isPrivate: true
+    }
     const cmds = buildCommands(params)
     expect(cmds).toHaveLength(1)
     const config = cmds[0][cmds[0].indexOf('--hosted-zone-config') + 1]
@@ -209,16 +249,21 @@ describe('buildCommands: ssm-param', () => {
       name: '/my/app/config',
       value: 'hello',
       paramType: 'String',
-      description: 'A config param',
+      description: 'A config param'
     })
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).toEqual([
-      'ssm', 'put-parameter',
-      '--name', '/my/app/config',
-      '--value', 'hello',
-      '--type', 'String',
+      'ssm',
+      'put-parameter',
+      '--name',
+      '/my/app/config',
+      '--value',
+      'hello',
+      '--type',
+      'String',
       '--overwrite',
-      '--description', 'A config param',
+      '--description',
+      'A config param'
     ])
   })
 
@@ -227,7 +272,7 @@ describe('buildCommands: ssm-param', () => {
       resource: 'ssm-param',
       name: '/my/key',
       value: 'val',
-      paramType: 'StringList',
+      paramType: 'StringList'
     })
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).not.toContain('--description')

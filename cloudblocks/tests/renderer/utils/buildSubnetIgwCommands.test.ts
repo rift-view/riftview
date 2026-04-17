@@ -11,14 +11,17 @@ describe('buildCommands — subnet', () => {
     const params: CreateSubnetParams = {
       resource: 'subnet',
       vpcId: 'vpc-0abc1234',
-      cidrBlock: '10.0.1.0/24',
+      cidrBlock: '10.0.1.0/24'
     }
     const cmds = buildCommands(params)
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).toEqual([
-      'ec2', 'create-subnet',
-      '--vpc-id', 'vpc-0abc1234',
-      '--cidr-block', '10.0.1.0/24',
+      'ec2',
+      'create-subnet',
+      '--vpc-id',
+      'vpc-0abc1234',
+      '--cidr-block',
+      '10.0.1.0/24'
     ])
   })
 
@@ -27,7 +30,7 @@ describe('buildCommands — subnet', () => {
       resource: 'subnet',
       vpcId: 'vpc-0abc1234',
       cidrBlock: '10.0.2.0/24',
-      availabilityZone: 'us-east-1a',
+      availabilityZone: 'us-east-1a'
     }
     const cmds = buildCommands(params)
     expect(cmds[0]).toContain('--availability-zone')
@@ -38,7 +41,7 @@ describe('buildCommands — subnet', () => {
     const params: CreateSubnetParams = {
       resource: 'subnet',
       vpcId: 'vpc-0abc1234',
-      cidrBlock: '10.0.1.0/24',
+      cidrBlock: '10.0.1.0/24'
     }
     const cmds = buildCommands(params)
     expect(cmds[0]).not.toContain('--availability-zone')
@@ -73,7 +76,7 @@ describe('buildDeleteCommands — subnet', () => {
     label: 'public-1',
     status: 'running',
     region: 'us-east-1',
-    metadata: {},
+    metadata: {}
   }
 
   it('builds delete-subnet command', () => {
@@ -94,18 +97,23 @@ describe('buildDeleteCommands — igw', () => {
       status: 'running',
       region: 'us-east-1',
       metadata: {},
-      parentId: 'vpc-0abc1234',
+      parentId: 'vpc-0abc1234'
     }
     const cmds = buildDeleteCommands(igwNode)
     expect(cmds).toHaveLength(2)
     expect(cmds[0]).toEqual([
-      'ec2', 'detach-internet-gateway',
-      '--internet-gateway-id', 'igw-0abc1234',
-      '--vpc-id', 'vpc-0abc1234',
+      'ec2',
+      'detach-internet-gateway',
+      '--internet-gateway-id',
+      'igw-0abc1234',
+      '--vpc-id',
+      'vpc-0abc1234'
     ])
     expect(cmds[1]).toEqual([
-      'ec2', 'delete-internet-gateway',
-      '--internet-gateway-id', 'igw-0abc1234',
+      'ec2',
+      'delete-internet-gateway',
+      '--internet-gateway-id',
+      'igw-0abc1234'
     ])
   })
 
@@ -116,13 +124,15 @@ describe('buildDeleteCommands — igw', () => {
       label: 'unattached-igw',
       status: 'unknown',
       region: 'us-east-1',
-      metadata: {},
+      metadata: {}
     }
     const cmds = buildDeleteCommands(igwNode)
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).toEqual([
-      'ec2', 'delete-internet-gateway',
-      '--internet-gateway-id', 'igw-detached',
+      'ec2',
+      'delete-internet-gateway',
+      '--internet-gateway-id',
+      'igw-detached'
     ])
   })
 
@@ -133,7 +143,7 @@ describe('buildDeleteCommands — igw', () => {
       label: 'meta-igw',
       status: 'running',
       region: 'us-east-1',
-      metadata: { vpcId: 'vpc-from-meta' },
+      metadata: { vpcId: 'vpc-from-meta' }
     }
     const cmds = buildDeleteCommands(igwNode)
     expect(cmds).toHaveLength(2)

@@ -14,8 +14,7 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
 
     for (const lambda of lambdaTargets) {
       const hasTimeout =
-        typeof lambda.metadata.timeout === 'number' &&
-        (lambda.metadata.timeout as number) > 0
+        typeof lambda.metadata.timeout === 'number' && (lambda.metadata.timeout as number) > 0
       if (hasTimeout) continue
 
       // Find RDS targets from this Lambda's integrations
@@ -25,8 +24,7 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
 
       for (const rds of rdsTargets) {
         const hasReplica =
-          rds.metadata.multiAZ === true ||
-          (rds.metadata.readReplicaCount as number) > 0
+          rds.metadata.multiAZ === true || (rds.metadata.readReplicaCount as number) > 0
         if (hasReplica) continue
 
         advisories.push({
@@ -34,7 +32,7 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
           severity: 'critical',
           title: 'Unguarded API→Lambda→RDS chain',
           detail: `API Gateway "${node.label}" routes to Lambda "${lambda.label}" (no timeout) → RDS "${rds.label}" (no read replica). A traffic spike exhausts RDS connections with no circuit breaker.`,
-          nodeId: node.id,
+          nodeId: node.id
         })
       }
     }
@@ -43,8 +41,7 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
   // ── Advisory: apigw-lambda-no-concurrency-limit ────────────────────────────
   for (const node of nodes) {
     if (node.type !== 'apigw') continue
-    const hasThrottling =
-      node.metadata.throttlingBurstLimit != null
+    const hasThrottling = node.metadata.throttlingBurstLimit != null
 
     if (hasThrottling) continue
 
@@ -58,14 +55,14 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
       // null = scanner fetched it, function has no reserved concurrency (fire)
       // number = reserved concurrency is set (skip)
       const reservedConcurrency = lambda.metadata.reservedConcurrentExecutions
-      if (reservedConcurrency !== null) continue  // undefined or number → skip
+      if (reservedConcurrency !== null) continue // undefined or number → skip
 
       advisories.push({
         ruleId: 'apigw-lambda-no-concurrency-limit',
         severity: 'critical',
         title: 'Unthrottled API with uncapped Lambda concurrency',
         detail: `API Gateway "${node.label}" has no throttling and Lambda "${lambda.label}" has no reserved concurrency limit. A traffic spike can exhaust your entire account's Lambda capacity, taking down all other Lambdas.`,
-        nodeId: node.id,
+        nodeId: node.id
       })
     }
   }
@@ -86,7 +83,7 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
         severity: 'warning',
         title: 'Lambda writes to SQS queue with no dead-letter queue',
         detail: `Lambda "${node.label}" sends to SQS queue "${sqs.label}" which has no DLQ. Failed messages will be silently dropped after maxReceiveCount retries.`,
-        nodeId: node.id,
+        nodeId: node.id
       })
     }
   }
@@ -112,7 +109,7 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
           severity: 'warning',
           title: 'SNS fanout chain has no dead-letter protection',
           detail: `SNS topic "${node.label}" → SQS "${sqs.label}" → Lambda "${lambda.label}": no DLQ on the queue. A Lambda processing failure silently loses messages after retries.`,
-          nodeId: node.id,
+          nodeId: node.id
         })
       }
     }

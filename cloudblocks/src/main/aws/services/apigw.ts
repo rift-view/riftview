@@ -3,7 +3,7 @@ import {
   GetApisCommand,
   GetRoutesCommand,
   GetIntegrationsCommand,
-  GetAuthorizersCommand,
+  GetAuthorizersCommand
 } from '@aws-sdk/client-apigatewayv2'
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
@@ -21,10 +21,15 @@ export async function listApis(client: ApiGatewayV2Client, region: string): Prom
         if (!api.ApiId) continue
 
         // Detect Cognito authorizers
-        let apigwIntegrations: { targetId: string; edgeType: import('../../../renderer/types/cloud').EdgeType }[] | undefined
+        let apigwIntegrations:
+          | { targetId: string; edgeType: import('../../../renderer/types/cloud').EdgeType }[]
+          | undefined
         try {
           const authRes = await client.send(new GetAuthorizersCommand({ ApiId: api.ApiId }))
-          const cognitoIntegrations: { targetId: string; edgeType: import('../../../renderer/types/cloud').EdgeType }[] = []
+          const cognitoIntegrations: {
+            targetId: string
+            edgeType: import('../../../renderer/types/cloud').EdgeType
+          }[] = []
           for (const auth of authRes.Items ?? []) {
             if (auth.AuthorizerType === 'JWT' && auth.JwtConfiguration?.Issuer) {
               // Extract userPoolId from Cognito issuer URL
@@ -35,20 +40,22 @@ export async function listApis(client: ApiGatewayV2Client, region: string): Prom
             }
           }
           if (cognitoIntegrations.length > 0) apigwIntegrations = cognitoIntegrations
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
 
         apiNodes.push({
-          id:     api.ApiId,
-          type:   'apigw',
-          label:  api.Name || api.ApiId,
+          id: api.ApiId,
+          type: 'apigw',
+          label: api.Name || api.ApiId,
           status: 'running',
           region,
           metadata: {
-            endpoint:     api.ApiEndpoint ?? '',
+            endpoint: api.ApiEndpoint ?? '',
             protocolType: 'HTTP',
-            corsOrigins:  api.CorsConfiguration?.AllowOrigins ?? [],
+            corsOrigins: api.CorsConfiguration?.AllowOrigins ?? []
           },
-          ...(apigwIntegrations ? { integrations: apigwIntegrations } : {}),
+          ...(apigwIntegrations ? { integrations: apigwIntegrations } : {})
         })
       }
 
@@ -56,18 +63,17 @@ export async function listApis(client: ApiGatewayV2Client, region: string): Prom
     } while (nextToken)
 
     // Fetch routes for each API in parallel
-    const routeGroups = await Promise.all(
-      apiNodes.map((api) => listRoutes(client, api.id, region))
-    )
+    const routeGroups = await Promise.all(apiNodes.map((api) => listRoutes(client, api.id, region)))
 
     // Aggregate Lambda ARNs from routes back onto the parent API node
     const enrichedApiNodes = apiNodes.map((api, i) => {
-      const lambdaArns = [...new Set(
-        routeGroups[i]!
-          .flatMap((r) => r.integrations ?? [])
-          .filter((e) => e.targetId.startsWith('arn:aws:lambda:'))
-          .map((e) => e.targetId)
-      )]
+      const lambdaArns = [
+        ...new Set(
+          routeGroups[i]!.flatMap((r) => r.integrations ?? [])
+            .filter((e) => e.targetId.startsWith('arn:aws:lambda:'))
+            .map((e) => e.targetId)
+        )
+      ]
       if (lambdaArns.length === 0) return api
       const existingTargets = new Set((api.integrations ?? []).map((e) => e.targetId))
       const newEdges = lambdaArns
@@ -83,13 +89,19 @@ export async function listApis(client: ApiGatewayV2Client, region: string): Prom
   }
 }
 
-async function listRoutes(client: ApiGatewayV2Client, apiId: string, region: string): Promise<CloudNode[]> {
+async function listRoutes(
+  client: ApiGatewayV2Client,
+  apiId: string,
+  region: string
+): Promise<CloudNode[]> {
   try {
     // Build integration map: integrationId -> lambdaArn
     const integrationMap = new Map<string, string>()
     let intNextToken: string | undefined
     do {
-      const intRes = await client.send(new GetIntegrationsCommand({ ApiId: apiId, NextToken: intNextToken }))
+      const intRes = await client.send(
+        new GetIntegrationsCommand({ ApiId: apiId, NextToken: intNextToken })
+      )
       for (const integration of intRes.Items ?? []) {
         if (
           integration.IntegrationId &&
@@ -114,7 +126,7 @@ async function listRoutes(client: ApiGatewayV2Client, apiId: string, region: str
         // Parse "METHOD /path" from RouteKey
         const spaceIdx = routeKey.indexOf(' ')
         const method = spaceIdx >= 0 ? routeKey.slice(0, spaceIdx) : routeKey
-        const path   = spaceIdx >= 0 ? routeKey.slice(spaceIdx + 1) : '/'
+        const path = spaceIdx >= 0 ? routeKey.slice(spaceIdx + 1) : '/'
 
         // Resolve lambda ARN from integration target
         const target = route.Target
@@ -129,21 +141,21 @@ async function listRoutes(client: ApiGatewayV2Client, apiId: string, region: str
           : []
 
         routeNodes.push({
-          id:     `${apiId}/routes/${route.RouteId}`,
-          type:   'apigw-route',
-          label:  routeKey,
+          id: `${apiId}/routes/${route.RouteId}`,
+          type: 'apigw-route',
+          label: routeKey,
           status: 'running',
           region,
           metadata: {
             apiId,
-            routeId:   route.RouteId,
+            routeId: route.RouteId,
             method,
             path,
-            target:    target ?? undefined,
-            lambdaArn: lambdaArn ?? undefined,
+            target: target ?? undefined,
+            lambdaArn: lambdaArn ?? undefined
           },
           parentId: apiId,
-          ...(integrations.length > 0 ? { integrations } : {}),
+          ...(integrations.length > 0 ? { integrations } : {})
         })
       }
       nextToken = res.NextToken

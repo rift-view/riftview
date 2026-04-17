@@ -10,7 +10,7 @@ function makeRdsNode(deletionProtection: boolean): CloudNode {
     label: 'My RDS',
     status: 'running',
     region: 'us-east-1',
-    metadata: { deletionProtection },
+    metadata: { deletionProtection }
   }
 }
 
@@ -21,68 +21,38 @@ function makeEc2Node(): CloudNode {
     label: 'My EC2',
     status: 'running',
     region: 'us-east-1',
-    metadata: {},
+    metadata: {}
   }
 }
 
 describe('DeleteDialog — RDS deletion protection', () => {
   it('shows deletion protection checkbox when RDS node has deletionProtection true', () => {
-    render(
-      <DeleteDialog
-        node={makeRdsNode(true)}
-        onClose={vi.fn()}
-        onConfirm={vi.fn()}
-      />
-    )
+    render(<DeleteDialog node={makeRdsNode(true)} onClose={vi.fn()} onConfirm={vi.fn()} />)
 
-    expect(
-      screen.getByText(/disable deletion protection first/i)
-    ).toBeInTheDocument()
+    expect(screen.getByText(/disable deletion protection first/i)).toBeInTheDocument()
   })
 
   it('does not show deletion protection checkbox when deletionProtection is false', () => {
-    render(
-      <DeleteDialog
-        node={makeRdsNode(false)}
-        onClose={vi.fn()}
-        onConfirm={vi.fn()}
-      />
-    )
+    render(<DeleteDialog node={makeRdsNode(false)} onClose={vi.fn()} onConfirm={vi.fn()} />)
 
-    expect(
-      screen.queryByText(/disable deletion protection first/i)
-    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/disable deletion protection first/i)).not.toBeInTheDocument()
   })
 
   it('does not show deletion protection checkbox for non-RDS node', () => {
-    render(
-      <DeleteDialog
-        node={makeEc2Node()}
-        onClose={vi.fn()}
-        onConfirm={vi.fn()}
-      />
-    )
+    render(<DeleteDialog node={makeEc2Node()} onClose={vi.fn()} onConfirm={vi.fn()} />)
 
-    expect(
-      screen.queryByText(/disable deletion protection first/i)
-    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/disable deletion protection first/i)).not.toBeInTheDocument()
   })
 
   it('onConfirm receives disableProtectionFirst: true when checkbox is checked', () => {
     const onConfirm = vi.fn()
     const node = makeRdsNode(true)
 
-    render(
-      <DeleteDialog
-        node={node}
-        onClose={vi.fn()}
-        onConfirm={onConfirm}
-      />
-    )
+    render(<DeleteDialog node={node} onClose={vi.fn()} onConfirm={onConfirm} />)
 
     // Check the "Disable deletion protection first" checkbox
     const protectionCheckbox = screen.getByRole('checkbox', {
-      name: /disable deletion protection first/i,
+      name: /disable deletion protection first/i
     })
     fireEvent.click(protectionCheckbox)
 

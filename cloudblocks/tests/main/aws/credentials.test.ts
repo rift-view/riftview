@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('node:fs', () => ({
   existsSync: vi.fn(),
-  readFileSync: vi.fn(),
+  readFileSync: vi.fn()
 }))
 
 vi.mock('node:os', () => ({
-  homedir: vi.fn(),
+  homedir: vi.fn()
 }))
 
 import * as fs from 'node:fs'

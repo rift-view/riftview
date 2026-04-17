@@ -18,7 +18,7 @@ describe('listQueues', () => {
 
   it('maps queue URLs to CloudNodes', async () => {
     mockSqsSend
-      .mockResolvedValueOnce({ QueueUrls: [QUEUE_URL] })         // ListQueuesCommand
+      .mockResolvedValueOnce({ QueueUrls: [QUEUE_URL] }) // ListQueuesCommand
       .mockResolvedValueOnce({ Attributes: { QueueArn: QUEUE_ARN } }) // GetQueueAttributesCommand
     mockLambdaSend.mockResolvedValueOnce({ EventSourceMappings: [] }) // ListEventSourceMappingsCommand
 
@@ -38,14 +38,12 @@ describe('listQueues', () => {
       .mockResolvedValueOnce({ QueueUrls: [QUEUE_URL] })
       .mockResolvedValueOnce({ Attributes: { QueueArn: QUEUE_ARN } })
     mockLambdaSend.mockResolvedValueOnce({
-      EventSourceMappings: [{ FunctionArn: functionArn }],
+      EventSourceMappings: [{ FunctionArn: functionArn }]
     })
 
     const nodes = await listQueues(mockSqsClient, mockLambdaClient, 'us-east-1')
 
-    expect(nodes[0].integrations).toEqual([
-      { targetId: functionArn, edgeType: 'trigger' },
-    ])
+    expect(nodes[0].integrations).toEqual([{ targetId: functionArn, edgeType: 'trigger' }])
   })
 
   it('returns empty array on SQS list error', async () => {

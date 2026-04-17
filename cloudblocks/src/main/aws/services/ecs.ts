@@ -3,12 +3,12 @@ import {
   ListClustersCommand,
   ListServicesCommand,
   DescribeServicesCommand,
-  DescribeTaskDefinitionCommand,
+  DescribeTaskDefinitionCommand
 } from '@aws-sdk/client-ecs'
 import type { CloudNode, NodeStatus, EdgeType } from '../../../renderer/types/cloud'
 
 function ecsStatusToNodeStatus(status: string | undefined): NodeStatus {
-  if (status === 'ACTIVE')   return 'running'
+  if (status === 'ACTIVE') return 'running'
   if (status === 'DRAINING') return 'pending'
   if (status === 'INACTIVE') return 'stopped'
   return 'unknown'
@@ -43,18 +43,23 @@ export async function listEcsServices(client: ECSClient, region: string): Promis
         // Describe services in batches of 10 (API limit)
         for (let i = 0; i < serviceArns.length; i += 10) {
           const batch = serviceArns.slice(i, i + 10)
-          const descRes = await client.send(new DescribeServicesCommand({ cluster: clusterArn, services: batch }))
+          const descRes = await client.send(
+            new DescribeServicesCommand({ cluster: clusterArn, services: batch })
+          )
           for (const svc of descRes.services ?? []) {
             if (!svc.serviceArn) continue
 
             const integrations: { targetId: string; edgeType: EdgeType }[] = []
             // ALB associations via target group ARNs
             for (const lb of svc.loadBalancers ?? []) {
-              if (lb.targetGroupArn) integrations.push({ targetId: lb.targetGroupArn, edgeType: 'origin' })
+              if (lb.targetGroupArn)
+                integrations.push({ targetId: lb.targetGroupArn, edgeType: 'origin' })
             }
             if (svc.taskDefinition) {
               try {
-                const tdRes = await client.send(new DescribeTaskDefinitionCommand({ taskDefinition: svc.taskDefinition }))
+                const tdRes = await client.send(
+                  new DescribeTaskDefinitionCommand({ taskDefinition: svc.taskDefinition })
+                )
                 for (const container of tdRes.taskDefinition?.containerDefinitions ?? []) {
                   const image = container.image
                   // ECR images: account.dkr.ecr.region.amazonaws.com/repo:tag
@@ -64,29 +69,33 @@ export async function listEcsServices(client: ECSClient, region: string): Promis
                     integrations.push({ targetId: repoUri, edgeType: 'origin' })
                   }
                 }
-              } catch { /* ignore */ }
+              } catch {
+                /* ignore */
+              }
             }
 
             const firstSubnet = svc.networkConfiguration?.awsvpcConfiguration?.subnets?.[0]
             nodes.push({
-              id:     svc.serviceArn,
-              type:   'ecs',
-              label:  svc.serviceName ?? svc.serviceArn,
+              id: svc.serviceArn,
+              type: 'ecs',
+              label: svc.serviceName ?? svc.serviceArn,
               status: ecsStatusToNodeStatus(svc.status),
               region,
               metadata: {
-                clusterArn:   clusterArn,
-                clusterName:  clusterArn.split('/').pop() ?? clusterArn,
+                clusterArn: clusterArn,
+                clusterName: clusterArn.split('/').pop() ?? clusterArn,
                 desiredCount: svc.desiredCount,
                 runningCount: svc.runningCount,
-                launchType:   svc.launchType,
+                launchType: svc.launchType
               },
               ...(firstSubnet ? { parentId: firstSubnet } : {}),
-              ...(integrations.length > 0 ? { integrations } : {}),
+              ...(integrations.length > 0 ? { integrations } : {})
             })
           }
         }
-      } catch { /* skip failed cluster */ }
+      } catch {
+        /* skip failed cluster */
+      }
     }
 
     return nodes

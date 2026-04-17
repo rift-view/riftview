@@ -1,7 +1,7 @@
 import { useUIStore } from '../store/ui'
 
 export function KeyboardHelp(): React.JSX.Element | null {
-  const open  = useUIStore((s) => s.keyboardHelpOpen)
+  const open = useUIStore((s) => s.keyboardHelpOpen)
   const close = useUIStore((s) => s.setKeyboardHelpOpen)
 
   if (!open) return null
@@ -9,29 +9,36 @@ export function KeyboardHelp(): React.JSX.Element | null {
   return (
     <div
       style={{
-        position:        'fixed',
-        inset:           0,
-        zIndex:          1000,
-        background:      'rgba(0,0,0,0.6)',
-        display:         'flex',
-        alignItems:      'center',
-        justifyContent:  'center',
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}
       onClick={() => close(false)}
     >
       <div
         style={{
-          background:   'var(--cb-bg-elevated)',
-          border:       '1px solid var(--cb-border)',
+          background: 'var(--cb-bg-elevated)',
+          border: '1px solid var(--cb-border)',
           borderRadius: 8,
-          padding:      '24px 32px',
-          minWidth:     320,
-          color:        'var(--cb-text-primary)',
-          fontFamily:   'monospace',
+          padding: '24px 32px',
+          minWidth: 320,
+          color: 'var(--cb-text-primary)',
+          fontFamily: 'monospace'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--cb-text-secondary)' }}>
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            marginBottom: 16,
+            color: 'var(--cb-text-secondary)'
+          }}
+        >
           Keyboard Shortcuts
         </div>
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>
@@ -48,17 +55,33 @@ export function KeyboardHelp(): React.JSX.Element | null {
               ['r', 'Re-scan AWS'],
               ['', ''],
               ['Other', ''],
-              ['?', 'Toggle this help'],
+              ['?', 'Toggle this help']
             ].map(([key, desc], i) =>
               !key && !desc ? (
-                <tr key={i}><td colSpan={2} style={{ paddingTop: 8 }} /></tr>
+                <tr key={i}>
+                  <td colSpan={2} style={{ paddingTop: 8 }} />
+                </tr>
               ) : !desc ? (
                 <tr key={i}>
-                  <td colSpan={2} style={{ color: 'var(--cb-text-muted)', fontSize: 11, paddingBottom: 4 }}>{key}</td>
+                  <td
+                    colSpan={2}
+                    style={{ color: 'var(--cb-text-muted)', fontSize: 11, paddingBottom: 4 }}
+                  >
+                    {key}
+                  </td>
                 </tr>
               ) : (
                 <tr key={i}>
-                  <td style={{ paddingRight: 24, paddingBottom: 4, color: 'var(--cb-accent)', whiteSpace: 'nowrap' }}>{key}</td>
+                  <td
+                    style={{
+                      paddingRight: 24,
+                      paddingBottom: 4,
+                      color: 'var(--cb-accent)',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {key}
+                  </td>
                   <td style={{ color: 'var(--cb-text-secondary)', paddingBottom: 4 }}>{desc}</td>
                 </tr>
               )

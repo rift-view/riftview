@@ -13,12 +13,14 @@ describe('listFunctions', () => {
   it('maps Lambda functions to CloudNodes', async () => {
     mockSend
       .mockResolvedValueOnce({
-        Functions: [{
-          FunctionName: 'my-fn',
-          FunctionArn: 'arn:aws:lambda:us-east-1:123:function:my-fn',
-          State: 'Active',
-          VpcConfig: { VpcId: 'vpc-0abc' },
-        }],
+        Functions: [
+          {
+            FunctionName: 'my-fn',
+            FunctionArn: 'arn:aws:lambda:us-east-1:123:function:my-fn',
+            State: 'Active',
+            VpcConfig: { VpcId: 'vpc-0abc' }
+          }
+        ]
       })
       .mockResolvedValueOnce({ EventSourceMappings: [] })
       .mockResolvedValueOnce({ Environment: { Variables: {} } })
@@ -37,35 +39,39 @@ describe('listFunctions', () => {
   it('populates integrations when event source mappings return SQS ARNs', async () => {
     mockSend
       .mockResolvedValueOnce({
-        Functions: [{
-          FunctionName: 'worker-fn',
-          FunctionArn: 'arn:aws:lambda:us-east-1:123:function:worker-fn',
-          State: 'Active',
-        }],
+        Functions: [
+          {
+            FunctionName: 'worker-fn',
+            FunctionArn: 'arn:aws:lambda:us-east-1:123:function:worker-fn',
+            State: 'Active'
+          }
+        ]
       })
       .mockResolvedValueOnce({
         EventSourceMappings: [
           { EventSourceArn: 'arn:aws:sqs:us-east-1:123:my-queue' },
-          { EventSourceArn: 'arn:aws:dynamodb:us-east-1:123:table/my-table/stream/2024-01-01' },
-        ],
+          { EventSourceArn: 'arn:aws:dynamodb:us-east-1:123:table/my-table/stream/2024-01-01' }
+        ]
       })
       .mockResolvedValueOnce({ Environment: { Variables: {} } })
     const nodes = await listFunctions(mockClient, 'us-east-1')
     expect(nodes[0].integrations).toHaveLength(1)
     expect(nodes[0].integrations?.[0]).toEqual({
       targetId: 'arn:aws:sqs:us-east-1:123:my-queue',
-      edgeType: 'trigger',
+      edgeType: 'trigger'
     })
   })
 
   it('leaves integrations undefined when event source mappings fetch fails', async () => {
     mockSend
       .mockResolvedValueOnce({
-        Functions: [{
-          FunctionName: 'my-fn',
-          FunctionArn: 'arn:aws:lambda:us-east-1:123:function:my-fn',
-          State: 'Active',
-        }],
+        Functions: [
+          {
+            FunctionName: 'my-fn',
+            FunctionArn: 'arn:aws:lambda:us-east-1:123:function:my-fn',
+            State: 'Active'
+          }
+        ]
       })
       .mockRejectedValueOnce(new Error('permissions denied'))
       .mockResolvedValueOnce({ Environment: { Variables: {} } })
@@ -77,20 +83,22 @@ describe('listFunctions', () => {
   it('adds integration with extracted table name from DynamoDB ARN in env vars', async () => {
     mockSend
       .mockResolvedValueOnce({
-        Functions: [{
-          FunctionName: 'ddb-fn',
-          FunctionArn: 'arn:aws:lambda:us-east-1:123:function:ddb-fn',
-          State: 'Active',
-        }],
+        Functions: [
+          {
+            FunctionName: 'ddb-fn',
+            FunctionArn: 'arn:aws:lambda:us-east-1:123:function:ddb-fn',
+            State: 'Active'
+          }
+        ]
       })
       .mockResolvedValueOnce({ EventSourceMappings: [] })
       .mockResolvedValueOnce({
         Environment: {
           Variables: {
             TABLE_ARN: 'arn:aws:dynamodb:us-east-1:123456789:table/MyTable',
-            UNRELATED: 'not-an-arn',
-          },
-        },
+            UNRELATED: 'not-an-arn'
+          }
+        }
       })
     const nodes = await listFunctions(mockClient, 'us-east-1')
     expect(nodes[0].integrations).toHaveLength(1)
@@ -100,50 +108,54 @@ describe('listFunctions', () => {
   it('adds integration from SNS topic ARN in env vars', async () => {
     mockSend
       .mockResolvedValueOnce({
-        Functions: [{
-          FunctionName: 'sns-fn',
-          FunctionArn: 'arn:aws:lambda:us-east-1:123:function:sns-fn',
-          State: 'Active',
-        }],
+        Functions: [
+          {
+            FunctionName: 'sns-fn',
+            FunctionArn: 'arn:aws:lambda:us-east-1:123:function:sns-fn',
+            State: 'Active'
+          }
+        ]
       })
       .mockResolvedValueOnce({ EventSourceMappings: [] })
       .mockResolvedValueOnce({
         Environment: {
           Variables: {
-            TOPIC_ARN: 'arn:aws:sns:us-east-1:123456789:my-topic',
-          },
-        },
+            TOPIC_ARN: 'arn:aws:sns:us-east-1:123456789:my-topic'
+          }
+        }
       })
     const nodes = await listFunctions(mockClient, 'us-east-1')
     expect(nodes[0].integrations).toHaveLength(1)
     expect(nodes[0].integrations?.[0]).toEqual({
       targetId: 'arn:aws:sns:us-east-1:123456789:my-topic',
-      edgeType: 'trigger',
+      edgeType: 'trigger'
     })
   })
 
   it('adds integration from Secrets Manager ARN in env vars', async () => {
     mockSend
       .mockResolvedValueOnce({
-        Functions: [{
-          FunctionName: 'secret-fn',
-          FunctionArn: 'arn:aws:lambda:us-east-1:123:function:secret-fn',
-          State: 'Active',
-        }],
+        Functions: [
+          {
+            FunctionName: 'secret-fn',
+            FunctionArn: 'arn:aws:lambda:us-east-1:123:function:secret-fn',
+            State: 'Active'
+          }
+        ]
       })
       .mockResolvedValueOnce({ EventSourceMappings: [] })
       .mockResolvedValueOnce({
         Environment: {
           Variables: {
-            SECRET_ARN: 'arn:aws:secretsmanager:us-east-1:123456789:secret:my-secret-AbCd',
-          },
-        },
+            SECRET_ARN: 'arn:aws:secretsmanager:us-east-1:123456789:secret:my-secret-AbCd'
+          }
+        }
       })
     const nodes = await listFunctions(mockClient, 'us-east-1')
     expect(nodes[0].integrations).toHaveLength(1)
     expect(nodes[0].integrations?.[0]).toEqual({
       targetId: 'arn:aws:secretsmanager:us-east-1:123456789:secret:my-secret-AbCd',
-      edgeType: 'trigger',
+      edgeType: 'trigger'
     })
   })
 
@@ -151,21 +163,23 @@ describe('listFunctions', () => {
     const sqsArn = 'arn:aws:sqs:us-east-1:123:my-queue'
     mockSend
       .mockResolvedValueOnce({
-        Functions: [{
-          FunctionName: 'dedup-fn',
-          FunctionArn: 'arn:aws:lambda:us-east-1:123:function:dedup-fn',
-          State: 'Active',
-        }],
+        Functions: [
+          {
+            FunctionName: 'dedup-fn',
+            FunctionArn: 'arn:aws:lambda:us-east-1:123:function:dedup-fn',
+            State: 'Active'
+          }
+        ]
       })
       .mockResolvedValueOnce({
-        EventSourceMappings: [{ EventSourceArn: sqsArn }],
+        EventSourceMappings: [{ EventSourceArn: sqsArn }]
       })
       .mockResolvedValueOnce({
         Environment: {
           Variables: {
-            QUEUE_URL: sqsArn,
-          },
-        },
+            QUEUE_URL: sqsArn
+          }
+        }
       })
     const nodes = await listFunctions(mockClient, 'us-east-1')
     expect(nodes[0].integrations).toHaveLength(1)
@@ -175,11 +189,13 @@ describe('listFunctions', () => {
   it('ignores env vars that are plain strings with no recognisable pattern', async () => {
     mockSend
       .mockResolvedValueOnce({
-        Functions: [{
-          FunctionName: 'plain-fn',
-          FunctionArn: 'arn:aws:lambda:us-east-1:123:function:plain-fn',
-          State: 'Active',
-        }],
+        Functions: [
+          {
+            FunctionName: 'plain-fn',
+            FunctionArn: 'arn:aws:lambda:us-east-1:123:function:plain-fn',
+            State: 'Active'
+          }
+        ]
       })
       .mockResolvedValueOnce({ EventSourceMappings: [] })
       .mockResolvedValueOnce({
@@ -187,9 +203,9 @@ describe('listFunctions', () => {
           Variables: {
             STAGE: 'production',
             LOG_LEVEL: 'info',
-            PORT: '8080',
-          },
-        },
+            PORT: '8080'
+          }
+        }
       })
     const nodes = await listFunctions(mockClient, 'us-east-1')
     expect(nodes[0].integrations).toBeUndefined()
@@ -198,23 +214,25 @@ describe('listFunctions', () => {
   it('adds integration from RDS hostname in env vars', async () => {
     mockSend
       .mockResolvedValueOnce({
-        Functions: [{
-          FunctionName: 'db-fn',
-          FunctionArn: 'arn:aws:lambda:us-east-1:123:function:db-fn',
-          State: 'Active',
-        }],
+        Functions: [
+          {
+            FunctionName: 'db-fn',
+            FunctionArn: 'arn:aws:lambda:us-east-1:123:function:db-fn',
+            State: 'Active'
+          }
+        ]
       })
       .mockResolvedValueOnce({ EventSourceMappings: [] })
       .mockResolvedValueOnce({
         Environment: {
           Variables: {
-            DB_HOST: 'my-db.cluster.us-east-1.rds.amazonaws.com',
-          },
-        },
+            DB_HOST: 'my-db.cluster.us-east-1.rds.amazonaws.com'
+          }
+        }
       })
     const nodes = await listFunctions(mockClient, 'us-east-1')
     expect(nodes[0].integrations).toEqual([
-      { targetId: 'my-db.cluster.us-east-1.rds.amazonaws.com', edgeType: 'trigger' },
+      { targetId: 'my-db.cluster.us-east-1.rds.amazonaws.com', edgeType: 'trigger' }
     ])
   })
 })

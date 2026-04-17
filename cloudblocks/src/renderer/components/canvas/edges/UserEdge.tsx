@@ -1,4 +1,10 @@
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, useReactFlow, type EdgeProps } from '@xyflow/react'
+import {
+  BaseEdge,
+  EdgeLabelRenderer,
+  getBezierPath,
+  useReactFlow,
+  type EdgeProps
+} from '@xyflow/react'
 import { useState } from 'react'
 import { useUIStore } from '../../../store/ui'
 import type { CustomEdgeColor } from '../../../types/cloud'
@@ -12,20 +18,33 @@ export interface UserEdgeData extends Record<string, unknown> {
 }
 
 export default function UserEdge({
-  id, sourceX, sourceY, targetX, targetY,
-  sourcePosition, targetPosition,
-  selected, data,
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  selected,
+  data
 }: EdgeProps): React.JSX.Element {
-  const [edgePath, labelX, labelY] = getBezierPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition })
+  const [edgePath, labelX, labelY] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition
+  })
   const edgeData = data as UserEdgeData | undefined
-  const color    = edgeData?.color ?? '#8b5cf6'
-  const label    = edgeData?.label
+  const color = edgeData?.color ?? '#8b5cf6'
+  const label = edgeData?.label
 
   const updateLabel = useUIStore((s) => s.updateCustomEdgeLabel)
   const updateColor = useUIStore((s) => s.updateCustomEdgeColor)
-  const removeEdge  = useUIStore((s) => s.removeCustomEdge)
+  const removeEdge = useUIStore((s) => s.removeCustomEdge)
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft]     = useState(label ?? '')
+  const [draft, setDraft] = useState(label ?? '')
   const { setEdges } = useReactFlow()
 
   const persist = (): void => {
@@ -34,14 +53,18 @@ export default function UserEdge({
 
   const handleColorChange = (newColor: CustomEdgeColor): void => {
     updateColor(id, newColor)
-    setEdges((eds) => eds.map((e) => e.id === id ? { ...e, data: { ...(e.data ?? {}), color: newColor } } : e))
+    setEdges((eds) =>
+      eds.map((e) => (e.id === id ? { ...e, data: { ...(e.data ?? {}), color: newColor } } : e))
+    )
     persist()
   }
 
   const handleLabelCommit = (): void => {
     setEditing(false)
     updateLabel(id, draft)
-    setEdges((eds) => eds.map((e) => e.id === id ? { ...e, data: { ...(e.data ?? {}), label: draft } } : e))
+    setEdges((eds) =>
+      eds.map((e) => (e.id === id ? { ...e, data: { ...(e.data ?? {}), label: draft } } : e))
+    )
     persist()
   }
 
@@ -64,11 +87,14 @@ export default function UserEdge({
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-              fontSize: 9, fontFamily: 'monospace',
+              fontSize: 9,
+              fontFamily: 'monospace',
               background: 'var(--cb-bg-panel)',
               border: `1px solid ${color}`,
-              borderRadius: 3, padding: '1px 5px',
-              color, pointerEvents: 'none',
+              borderRadius: 3,
+              padding: '1px 5px',
+              color,
+              pointerEvents: 'none'
             }}
             className="nodrag nopan"
           >
@@ -84,9 +110,13 @@ export default function UserEdge({
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
               background: 'var(--cb-bg-panel)',
               border: `1px solid ${color}`,
-              borderRadius: 5, padding: '4px 6px',
-              display: 'flex', flexDirection: 'column', gap: 4,
-              pointerEvents: 'all', zIndex: 100,
+              borderRadius: 5,
+              padding: '4px 6px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+              pointerEvents: 'all',
+              zIndex: 100
             }}
             className="nodrag nopan"
           >
@@ -96,9 +126,12 @@ export default function UserEdge({
                   key={c}
                   onClick={() => handleColorChange(c)}
                   style={{
-                    width: 12, height: 12, borderRadius: '50%',
-                    background: c, cursor: 'pointer',
-                    border: c === color ? '2px solid white' : '1px solid transparent',
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: c,
+                    cursor: 'pointer',
+                    border: c === color ? '2px solid white' : '1px solid transparent'
                   }}
                 />
               ))}
@@ -109,22 +142,33 @@ export default function UserEdge({
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onBlur={handleLabelCommit}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleLabelCommit() }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleLabelCommit()
+                }}
                 style={{
-                  fontSize: 9, fontFamily: 'monospace',
+                  fontSize: 9,
+                  fontFamily: 'monospace',
                   background: 'var(--cb-bg-elevated)',
                   border: `1px solid ${color}`,
                   color: 'var(--cb-text-primary)',
-                  borderRadius: 3, padding: '1px 4px', outline: 'none', width: 80,
+                  borderRadius: 3,
+                  padding: '1px 4px',
+                  outline: 'none',
+                  width: 80
                 }}
               />
             ) : (
               <div
-                onClick={() => { setDraft(label ?? ''); setEditing(true) }}
+                onClick={() => {
+                  setDraft(label ?? '')
+                  setEditing(true)
+                }}
                 style={{
-                  fontSize: 9, fontFamily: 'monospace',
+                  fontSize: 9,
+                  fontFamily: 'monospace',
                   color: label ? color : 'var(--cb-text-muted)',
-                  cursor: 'text', minWidth: 60,
+                  cursor: 'text',
+                  minWidth: 60
                 }}
               >
                 {label || 'add label\u2026'}

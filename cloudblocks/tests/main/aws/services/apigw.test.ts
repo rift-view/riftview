@@ -15,17 +15,24 @@ describe('listApis', () => {
 
     // GetApisCommand
     mockSend.mockResolvedValueOnce({
-      Items: [{ ApiId: 'api-123', Name: 'my-api', ProtocolType: 'HTTP', ApiEndpoint: 'https://api.example.com' }],
+      Items: [
+        {
+          ApiId: 'api-123',
+          Name: 'my-api',
+          ProtocolType: 'HTTP',
+          ApiEndpoint: 'https://api.example.com'
+        }
+      ]
     })
     // GetAuthorizersCommand — no Cognito authorizers
     mockSend.mockResolvedValueOnce({ Items: [] })
     // GetIntegrationsCommand
     mockSend.mockResolvedValueOnce({
-      Items: [{ IntegrationId: 'integ-1', IntegrationType: 'AWS_PROXY', IntegrationUri: lambdaArn }],
+      Items: [{ IntegrationId: 'integ-1', IntegrationType: 'AWS_PROXY', IntegrationUri: lambdaArn }]
     })
     // GetRoutesCommand
     mockSend.mockResolvedValueOnce({
-      Items: [{ RouteId: 'route-1', RouteKey: 'GET /hello', Target: 'integrations/integ-1' }],
+      Items: [{ RouteId: 'route-1', RouteKey: 'GET /hello', Target: 'integrations/integ-1' }]
     })
 
     const nodes = await listApis(mockClient, 'us-east-1')
@@ -40,7 +47,14 @@ describe('listApis', () => {
   it('does not emit integrations when route has no integration target', async () => {
     // GetApisCommand
     mockSend.mockResolvedValueOnce({
-      Items: [{ ApiId: 'api-123', Name: 'my-api', ProtocolType: 'HTTP', ApiEndpoint: 'https://api.example.com' }],
+      Items: [
+        {
+          ApiId: 'api-123',
+          Name: 'my-api',
+          ProtocolType: 'HTTP',
+          ApiEndpoint: 'https://api.example.com'
+        }
+      ]
     })
     // GetAuthorizersCommand — no Cognito authorizers
     mockSend.mockResolvedValueOnce({ Items: [] })
@@ -48,7 +62,7 @@ describe('listApis', () => {
     mockSend.mockResolvedValueOnce({ Items: [] })
     // GetRoutesCommand — route with no Target
     mockSend.mockResolvedValueOnce({
-      Items: [{ RouteId: 'route-1', RouteKey: 'GET /hello', Target: undefined }],
+      Items: [{ RouteId: 'route-1', RouteKey: 'GET /hello', Target: undefined }]
     })
 
     const nodes = await listApis(mockClient, 'us-east-1')
@@ -63,17 +77,26 @@ describe('listApis', () => {
 
     // GetApisCommand
     mockSend.mockResolvedValueOnce({
-      Items: [{ ApiId: 'api-123', Name: 'my-api', ProtocolType: 'HTTP', ApiEndpoint: 'https://api.example.com' }],
+      Items: [
+        {
+          ApiId: 'api-123',
+          Name: 'my-api',
+          ProtocolType: 'HTTP',
+          ApiEndpoint: 'https://api.example.com'
+        }
+      ]
     })
     // GetAuthorizersCommand — no Cognito authorizers
     mockSend.mockResolvedValueOnce({ Items: [] })
     // GetIntegrationsCommand
     mockSend.mockResolvedValueOnce({
-      Items: [{ IntegrationId: 'integ-1', IntegrationType: 'AWS_PROXY', IntegrationUri: nonLambdaUri }],
+      Items: [
+        { IntegrationId: 'integ-1', IntegrationType: 'AWS_PROXY', IntegrationUri: nonLambdaUri }
+      ]
     })
     // GetRoutesCommand
     mockSend.mockResolvedValueOnce({
-      Items: [{ RouteId: 'route-1', RouteKey: 'POST /submit', Target: 'integrations/integ-1' }],
+      Items: [{ RouteId: 'route-1', RouteKey: 'POST /submit', Target: 'integrations/integ-1' }]
     })
 
     const nodes = await listApis(mockClient, 'us-east-1')
@@ -86,7 +109,14 @@ describe('listApis', () => {
   it('returns just the API node when API has no routes', async () => {
     // GetApisCommand
     mockSend.mockResolvedValueOnce({
-      Items: [{ ApiId: 'api-123', Name: 'my-api', ProtocolType: 'HTTP', ApiEndpoint: 'https://api.example.com' }],
+      Items: [
+        {
+          ApiId: 'api-123',
+          Name: 'my-api',
+          ProtocolType: 'HTTP',
+          ApiEndpoint: 'https://api.example.com'
+        }
+      ]
     })
     // GetAuthorizersCommand — no Cognito authorizers
     mockSend.mockResolvedValueOnce({ Items: [] })

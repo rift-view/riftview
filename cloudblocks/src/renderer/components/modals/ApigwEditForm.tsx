@@ -9,17 +9,40 @@ interface Props {
 }
 
 const inp = (err: boolean): React.CSSProperties => ({
-  width: '100%', background: 'var(--cb-bg-panel)', border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`,
-  borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10,
-  boxSizing: 'border-box' as const,
+  width: '100%',
+  background: 'var(--cb-bg-panel)',
+  border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`,
+  borderRadius: 3,
+  padding: '3px 6px',
+  color: 'var(--cb-text-primary)',
+  fontFamily: 'monospace',
+  fontSize: 10,
+  boxSizing: 'border-box' as const
 })
-const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
-const btnSm: React.CSSProperties = { background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 2, padding: '2px 6px', color: 'var(--cb-text-muted)', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }
+const lbl: React.CSSProperties = {
+  fontSize: 9,
+  color: 'var(--cb-text-muted)',
+  textTransform: 'uppercase',
+  marginBottom: 2,
+  marginTop: 8
+}
+const btnSm: React.CSSProperties = {
+  background: 'var(--cb-bg-elevated)',
+  border: '1px solid var(--cb-border)',
+  borderRadius: 2,
+  padding: '2px 6px',
+  color: 'var(--cb-text-muted)',
+  fontFamily: 'monospace',
+  fontSize: 9,
+  cursor: 'pointer'
+}
 
 export default function ApigwEditForm({ node, onChange, showErrors }: Props): React.JSX.Element {
   const initialCors = (node.metadata.corsOrigins as string[]) ?? []
   const [name, setName] = useState(node.label)
-  const [corsInputs, setCorsInputs] = useState<string[]>(initialCors.length > 0 ? initialCors : [''])
+  const [corsInputs, setCorsInputs] = useState<string[]>(
+    initialCors.length > 0 ? initialCors : ['']
+  )
 
   const err = showErrors ?? false
 
@@ -39,7 +62,10 @@ export default function ApigwEditForm({ node, onChange, showErrors }: Props): Re
       <input
         style={inp(err && !name.trim())}
         value={name}
-        onChange={(e) => { setName(e.target.value); emit(e.target.value, corsInputs) }}
+        onChange={(e) => {
+          setName(e.target.value)
+          emit(e.target.value, corsInputs)
+        }}
       />
 
       <div style={lbl}>CORS Origins</div>
@@ -61,13 +87,14 @@ export default function ApigwEditForm({ node, onChange, showErrors }: Props): Re
               const next = corsInputs.filter((_, j) => j !== i)
               updateCors(next.length > 0 ? next : [''])
             }}
-          >✕</button>
+          >
+            ✕
+          </button>
         </div>
       ))}
-      <button
-        style={{ ...btnSm, marginTop: 6 }}
-        onClick={() => updateCors([...corsInputs, ''])}
-      >+ Add Origin</button>
+      <button style={{ ...btnSm, marginTop: 6 }} onClick={() => updateCors([...corsInputs, ''])}>
+        + Add Origin
+      </button>
     </div>
   )
 }

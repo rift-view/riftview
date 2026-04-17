@@ -1,6 +1,24 @@
 // @deprecated — no new features; consolidation into TopologyView planned post-1.0
-import React, { useMemo, useCallback, useRef, useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react'
-import { ReactFlow, Background, BackgroundVariant, MiniMap, useReactFlow, type Node, type Edge, type NodeChange, type OnSelectionChangeParams, type Connection } from '@xyflow/react'
+import React, {
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+  useState,
+  type MouseEvent as ReactMouseEvent
+} from 'react'
+import {
+  ReactFlow,
+  Background,
+  BackgroundVariant,
+  MiniMap,
+  useReactFlow,
+  type Node,
+  type Edge,
+  type NodeChange,
+  type OnSelectionChangeParams,
+  type Connection
+} from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
@@ -25,25 +43,33 @@ const SNAP_GRID_SIZE = 20
 
 const EDGE_TYPES = {
   integration: IntegrationEdge,
-  user:        UserEdge,
+  user: UserEdge
 }
 
 const NODE_TYPES = {
-  resource:      ResourceNode,
-  acm:           AcmNode,
-  cloudfront:    CloudFrontNode,
-  apigw:         ApigwNode,
+  resource: ResourceNode,
+  acm: AcmNode,
+  cloudfront: CloudFrontNode,
+  apigw: ApigwNode,
   'apigw-route': ApigwRouteNode,
   'sticky-note': StickyNoteNode,
   // Plugin-registered custom node renderers (populated at startup before first render)
-  ...getPluginNodeComponents(),
+  ...getPluginNodeComponents()
 }
 
 // Distinct colors per VPC — cycles if more than 6 VPCs
 const VPC_PALETTE = ['#1976D2', '#9c27b0', '#0891b2', '#16a34a', '#ea580c', '#e11d48']
 
 // Container node types that should be excluded from opacity overlays (blast radius / path trace)
-const OPACITY_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'security-group', 'nat-gateway', 'globalZone', 'regionZone', 'apigw'])
+const OPACITY_CONTAINER_TYPES = new Set([
+  'vpc',
+  'subnet',
+  'security-group',
+  'nat-gateway',
+  'globalZone',
+  'regionZone',
+  'apigw'
+])
 
 // Walk up parentId chain to find the VPC ancestor (type === 'vpc')
 function findVpcAncestor(node: CloudNode, byId: Map<string, CloudNode>): CloudNode | null {
@@ -64,17 +90,17 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
     .filter((n) => n.parentId && n.type !== 'apigw-route')
     .forEach((n) => {
       edges.push({
-        id:     `${n.parentId}-${n.id}`,
+        id: `${n.parentId}-${n.id}`,
         source: n.parentId!,
         target: n.id,
-        type:   'step',
-        style:  { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 },
+        type: 'step',
+        style: { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 }
       })
     })
 
   // CloudFront → ACM cert edges
-  const acmNodes    = nodes.filter((n) => n.type === 'acm')
-  const cfNodes     = nodes.filter((n) => n.type === 'cloudfront')
+  const acmNodes = nodes.filter((n) => n.type === 'acm')
+  const cfNodes = nodes.filter((n) => n.type === 'cloudfront')
   const lambdaNodes = nodes.filter((n) => n.type === 'lambda')
 
   cfNodes.forEach((cf) => {
@@ -84,60 +110,64 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
       const certNode = acmNodes.find((a) => a.id === certArn)
       if (certNode) {
         edges.push({
-          id:     `cf-cert-${cf.id}`,
+          id: `cf-cert-${cf.id}`,
           source: cf.id,
           target: certNode.id,
-          type:   'step',
-          style:  { stroke: 'var(--cb-border)', strokeDasharray: '4 2', strokeWidth: 1 },
-          label:  'cert',
+          type: 'step',
+          style: { stroke: 'var(--cb-border)', strokeDasharray: '4 2', strokeWidth: 1 },
+          label: 'cert'
         })
       }
     }
   })
 
   // API Gateway route edges
-  nodes.filter((n) => n.type === 'apigw-route').forEach((route) => {
-    // route → parent apigw
-    if (route.parentId) {
-      edges.push({
-        id:     `apigw-route-${route.id}`,
-        source: route.parentId,
-        target: route.id,
-        type:   'step',
-        style:  { stroke: 'var(--cb-border)', strokeWidth: 1 },
-      })
-    }
-
-    // route → lambda integration (dotted)
-    const lambdaArn = route.metadata.lambdaArn as string | undefined
-    if (lambdaArn) {
-      const lambdaNode = lambdaNodes.find((n) => n.id === lambdaArn || n.metadata.arn === lambdaArn)
-      if (lambdaNode) {
+  nodes
+    .filter((n) => n.type === 'apigw-route')
+    .forEach((route) => {
+      // route → parent apigw
+      if (route.parentId) {
         edges.push({
-          id:     `route-lambda-${route.id}`,
-          source: route.id,
-          target: lambdaNode.id,
-          type:   'step',
-          label:  'integration',
-          style:  { stroke: 'var(--cb-border)', strokeDasharray: '4 2', strokeWidth: 1 },
+          id: `apigw-route-${route.id}`,
+          source: route.parentId,
+          target: route.id,
+          type: 'step',
+          style: { stroke: 'var(--cb-border)', strokeWidth: 1 }
         })
       }
-    }
-  })
+
+      // route → lambda integration (dotted)
+      const lambdaArn = route.metadata.lambdaArn as string | undefined
+      if (lambdaArn) {
+        const lambdaNode = lambdaNodes.find(
+          (n) => n.id === lambdaArn || n.metadata.arn === lambdaArn
+        )
+        if (lambdaNode) {
+          edges.push({
+            id: `route-lambda-${route.id}`,
+            source: route.id,
+            target: lambdaNode.id,
+            type: 'step',
+            label: 'integration',
+            style: { stroke: 'var(--cb-border)', strokeDasharray: '4 2', strokeWidth: 1 }
+          })
+        }
+      }
+    })
 
   // Integration edges
   for (const node of nodes) {
     if (!node.integrations) continue
     for (const integration of node.integrations) {
       const resolvedTargetId = resolveIntegrationTargetId(nodes, integration.targetId)
-      const targetExists = nodes.some(n => n.id === resolvedTargetId)
+      const targetExists = nodes.some((n) => n.id === resolvedTargetId)
       if (!targetExists) continue
       edges.push({
-        id:     `integration-${node.id}-${resolvedTargetId}`,
+        id: `integration-${node.id}-${resolvedTargetId}`,
         source: node.id,
         target: resolvedTargetId,
-        type:   'integration',
-        data:   { isIntegration: true as const, edgeType: integration.edgeType as EdgeType },
+        type: 'integration',
+        data: { isIntegration: true as const, edgeType: integration.edgeType as EdgeType }
       })
     }
   }
@@ -154,11 +184,11 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
       const edgeId = `integration-alb-ecs-${albNode.id}-${ecsNode.id}`
       if (edges.some((e) => e.id === edgeId)) continue
       edges.push({
-        id:     edgeId,
+        id: edgeId,
         source: albNode.id,
         target: ecsNode.id,
-        type:   'integration',
-        data:   { isIntegration: true as const, edgeType: 'trigger' as EdgeType },
+        type: 'integration',
+        data: { isIntegration: true as const, edgeType: 'trigger' as EdgeType }
       })
     }
   }
@@ -171,36 +201,36 @@ interface GraphViewProps {
 }
 
 export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Element {
-  const cloudNodes         = useCloudStore((s) => s.nodes)
-  const pendingNodes       = useCloudStore((s) => s.pendingNodes)
-  const importedNodes      = useCloudStore((s) => s.importedNodes)
-  const selectNode           = useUIStore((s) => s.selectNode)
-  const selectEdge           = useUIStore((s) => s.selectEdge)
-  const selectedId           = useUIStore((s) => s.selectedNodeId)
-  const selectedNodeIds      = useUIStore((s) => s.selectedNodeIds)
-  const setSelectedNodeIds   = useUIStore((s) => s.setSelectedNodeIds)
+  const cloudNodes = useCloudStore((s) => s.nodes)
+  const pendingNodes = useCloudStore((s) => s.pendingNodes)
+  const importedNodes = useCloudStore((s) => s.importedNodes)
+  const selectNode = useUIStore((s) => s.selectNode)
+  const selectEdge = useUIStore((s) => s.selectEdge)
+  const selectedId = useUIStore((s) => s.selectedNodeId)
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
+  const setSelectedNodeIds = useUIStore((s) => s.setSelectedNodeIds)
   const clearSelectedNodeIds = useUIStore((s) => s.clearSelectedNodeIds)
-  const setActiveCreate    = useUIStore((s) => s.setActiveCreate)
-  const view               = useUIStore((s) => s.view)
-  const showIntegrations   = useUIStore((s) => s.showIntegrations)
-  const snapToGrid         = useUIStore((s) => s.snapToGrid)
-  const lockedNodes        = useUIStore((s) => s.lockedNodes)
-  const annotations        = useUIStore((s) => s.annotations)
-  const stickyNotes        = useUIStore((s) => s.stickyNotes)
-  const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
-  const activeFilters      = useUIStore((s) => s.activeFilters)
-  const clearFilters       = useUIStore((s) => s.clearFilters)
+  const setActiveCreate = useUIStore((s) => s.setActiveCreate)
+  const view = useUIStore((s) => s.view)
+  const showIntegrations = useUIStore((s) => s.showIntegrations)
+  const snapToGrid = useUIStore((s) => s.snapToGrid)
+  const lockedNodes = useUIStore((s) => s.lockedNodes)
+  const annotations = useUIStore((s) => s.annotations)
+  const stickyNotes = useUIStore((s) => s.stickyNotes)
+  const driftFilterActive = useUIStore((s) => s.driftFilterActive)
+  const activeFilters = useUIStore((s) => s.activeFilters)
+  const clearFilters = useUIStore((s) => s.clearFilters)
   const { screenToFlowPosition, fitView, getViewport, setViewport } = useReactFlow()
-  const graphPositions  = useUIStore((s) => s.nodePositions.graph)
+  const graphPositions = useUIStore((s) => s.nodePositions.graph)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
   const { onSave: onStickyNotesSave, onDelete: onStickyNoteDelete } = useStickyNoteCallbacks()
-  const customEdges      = useUIStore((s) => s.customEdges)
-  const addCustomEdge    = useUIStore((s) => s.addCustomEdge)
-  const blastRadiusId    = useUIStore((s) => s.blastRadiusId)
+  const customEdges = useUIStore((s) => s.customEdges)
+  const addCustomEdge = useUIStore((s) => s.addCustomEdge)
+  const blastRadiusId = useUIStore((s) => s.blastRadiusId)
   const setBlastRadiusId = useUIStore((s) => s.setBlastRadiusId)
-  const pathTraceId      = useUIStore((s) => s.pathTraceId)
-  const setPathTraceId   = useUIStore((s) => s.setPathTraceId)
-  const savedViewport    = useUIStore((s) => s.savedViewport)
+  const pathTraceId = useUIStore((s) => s.pathTraceId)
+  const setPathTraceId = useUIStore((s) => s.setPathTraceId)
+  const savedViewport = useUIStore((s) => s.savedViewport)
   const setSavedViewport = useUIStore((s) => s.setSavedViewport)
 
   // Path trace animation state (local, transient)
@@ -225,63 +255,78 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
     e.dataTransfer.dropEffect = 'move'
   }, [])
 
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    const type = e.dataTransfer.getData('text/plain') as NodeType
-    if (!type) return
-    const dropPosition = screenToFlowPosition({ x: e.clientX, y: e.clientY })
-    setActiveCreate({ resource: type, view, dropPosition })
-  }, [screenToFlowPosition, view, setActiveCreate])
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      const type = e.dataTransfer.getData('text/plain') as NodeType
+      if (!type) return
+      const dropPosition = screenToFlowPosition({ x: e.clientX, y: e.clientY })
+      setActiveCreate({ resource: type, view, dropPosition })
+    },
+    [screenToFlowPosition, view, setActiveCreate]
+  )
 
-  const onConnect = useCallback((connection: Connection) => {
-    if (!connection.source || !connection.target) return
-    const edge: CustomEdge = {
-      id:     `user-${connection.source}-${connection.target}-${Date.now()}`,
-      source: connection.source,
-      target: connection.target,
-      color:  '#8b5cf6',
-    }
-    addCustomEdge(edge)
-    void window.terminus.saveCustomEdges(useUIStore.getState().customEdges)
-  }, [addCustomEdge])
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      if (!connection.source || !connection.target) return
+      const edge: CustomEdge = {
+        id: `user-${connection.source}-${connection.target}-${Date.now()}`,
+        source: connection.source,
+        target: connection.target,
+        color: '#8b5cf6'
+      }
+      addCustomEdge(edge)
+      void window.terminus.saveCustomEdges(useUIStore.getState().customEdges)
+    },
+    [addCustomEdge]
+  )
 
-  const onSelectionChange = useCallback(({ nodes: selected }: OnSelectionChangeParams) => {
-    setSelectedNodeIds(new Set(selected.map((n) => n.id)))
-    if (selected.length === 1) selectNode(selected[0].id)
-    else if (selected.length === 0) { selectNode(null); clearSelectedNodeIds() }
-  }, [setSelectedNodeIds, selectNode, clearSelectedNodeIds])
+  const onSelectionChange = useCallback(
+    ({ nodes: selected }: OnSelectionChangeParams) => {
+      setSelectedNodeIds(new Set(selected.map((n) => n.id)))
+      if (selected.length === 1) selectNode(selected[0].id)
+      else if (selected.length === 0) {
+        selectNode(null)
+        clearSelectedNodeIds()
+      }
+    },
+    [setSelectedNodeIds, selectNode, clearSelectedNodeIds]
+  )
 
   // Track drag positions in local state so controlled nodes follow the mouse,
   // and persist to the store only on drag-end.
-  const onNodesChange = useCallback((changes: NodeChange[]) => {
-    const nextLive: Record<string, { x: number; y: number }> = {}
-    const toClear: string[] = []
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      const nextLive: Record<string, { x: number; y: number }> = {}
+      const toClear: string[] = []
 
-    for (const change of changes) {
-      if (change.type !== 'position' || !change.position) continue
-      if (change.dragging) {
-        nextLive[change.id] = change.position
-      } else {
-        toClear.push(change.id)
-        setNodePosition('graph', change.id, change.position)
+      for (const change of changes) {
+        if (change.type !== 'position' || !change.position) continue
+        if (change.dragging) {
+          nextLive[change.id] = change.position
+        } else {
+          toClear.push(change.id)
+          setNodePosition('graph', change.id, change.position)
+        }
       }
-    }
 
-    if (Object.keys(nextLive).length > 0 || toClear.length > 0) {
-      setLivePositions((prev) => {
-        const next = { ...prev, ...nextLive }
-        toClear.forEach((id) => delete next[id])
-        return next
-      })
-    }
-  }, [setNodePosition])
+      if (Object.keys(nextLive).length > 0 || toClear.length > 0) {
+        setLivePositions((prev) => {
+          const next = { ...prev, ...nextLive }
+          toClear.forEach((id) => delete next[id])
+          return next
+        })
+      }
+    },
+    [setNodePosition]
+  )
 
   const allNodes = useMemo(() => [...cloudNodes, ...pendingNodes], [cloudNodes, pendingNodes])
 
   // Filter-to-hide: nodes not matching any active filter are excluded from the canvas entirely
   const visibleNodes = useMemo(
     () => applyNodeFilters(allNodes, activeFilters),
-    [allNodes, activeFilters],
+    [allNodes, activeFilters]
   )
 
   // Clear selection when the selected node is hidden by an active filter
@@ -294,8 +339,8 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
   // ── Blast radius ────────────────────────────────────────────────────────────
   const blastRadius = useMemo(
-    () => blastRadiusId ? buildBlastRadius(allNodes, blastRadiusId) : null,
-    [blastRadiusId, allNodes],
+    () => (blastRadiusId ? buildBlastRadius(allNodes, blastRadiusId) : null),
+    [blastRadiusId, allNodes]
   )
 
   // ── Blast radius fit-view on activation / restore on deactivation ──────────
@@ -315,7 +360,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const inboundMap = useMemo((): Map<string, string[]> => {
     const map = new Map<string, string[]>()
     for (const n of allNodes) {
-      for (const { targetId } of (n.integrations ?? [])) {
+      for (const { targetId } of n.integrations ?? []) {
         const arr = map.get(targetId) ?? []
         arr.push(n.id)
         map.set(targetId, arr)
@@ -324,39 +369,44 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
     return map
   }, [allNodes])
 
-  const runPathTrace = useCallback((nodeId: string) => {
-    const visited = new Set<string>()
-    const queue: string[] = [nodeId]
-    while (queue.length > 0) {
-      const curr = queue.shift()!
-      if (visited.has(curr)) continue
-      visited.add(curr)
-      const inbounds = inboundMap.get(curr) ?? []
-      for (const src of inbounds) {
-        if (!visited.has(src)) queue.push(src)
+  const runPathTrace = useCallback(
+    (nodeId: string) => {
+      const visited = new Set<string>()
+      const queue: string[] = [nodeId]
+      while (queue.length > 0) {
+        const curr = queue.shift()!
+        if (visited.has(curr)) continue
+        visited.add(curr)
+        const inbounds = inboundMap.get(curr) ?? []
+        for (const src of inbounds) {
+          if (!visited.has(src)) queue.push(src)
+        }
       }
-    }
-    const sources = [...visited].filter((id) => {
-      const n = allNodes.find((x) => x.id === id)
-      return n && INTERNET_SOURCE_TYPES_GV.has(n.type)
-    })
-    const ordered = [...visited].filter((id) => id !== nodeId)
-    ordered.sort((a) => (sources.includes(a) ? -1 : 1))
-    ordered.push(nodeId)
-    setPathTraceNodes(ordered)
-    setPathTraceRevealedCount(0)
-  }, [allNodes, inboundMap]) // eslint-disable-line react-hooks/exhaustive-deps
+      const sources = [...visited].filter((id) => {
+        const n = allNodes.find((x) => x.id === id)
+        return n && INTERNET_SOURCE_TYPES_GV.has(n.type)
+      })
+      const ordered = [...visited].filter((id) => id !== nodeId)
+      ordered.sort((a) => (sources.includes(a) ? -1 : 1))
+      ordered.push(nodeId)
+      setPathTraceNodes(ordered)
+      setPathTraceRevealedCount(0)
+    },
+    [allNodes, inboundMap]
+  )
 
   useEffect(() => {
     if (pathTraceNodes.length === 0 || !pathTraceId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPathTraceRevealedCount(0)
       return
     }
     if (pathTraceRevealedCount >= pathTraceNodes.length) return
     const timer = setInterval(() => {
       setPathTraceRevealedCount((c) => {
-        if (c >= pathTraceNodes.length) { clearInterval(timer); return c }
+        if (c >= pathTraceNodes.length) {
+          clearInterval(timer)
+          return c
+        }
         return c + 1
       })
     }, 150)
@@ -365,9 +415,8 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
   useEffect(() => {
     if (!pathTraceId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPathTraceNodes([])
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+
       setPathTraceRevealedCount(0)
       return
     }
@@ -376,7 +425,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
   const pathTraceRevealedSet = useMemo(
     (): Set<string> => new Set(pathTraceNodes.slice(0, pathTraceRevealedCount)),
-    [pathTraceNodes, pathTraceRevealedCount],
+    [pathTraceNodes, pathTraceRevealedCount]
   )
 
   const byId = useMemo(() => new Map(visibleNodes.map((n) => [n.id, n])), [visibleNodes])
@@ -408,108 +457,134 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   // Track in-flight drag positions so controlled nodes follow the mouse.
   const [livePositions, setLivePositions] = useState<Record<string, { x: number; y: number }>>({})
 
-  const flowNodes: Node[] = useMemo(
-    () => {
-      const mapped = visibleNodes.map((n, i) => {
-        const vpc      = findVpcAncestor(n, byId)
-        const vpcColor = vpc ? (vpcColorMap.get(vpc.id) ?? undefined) : undefined
-        const vpcLabel = vpc ? vpc.label : undefined
+  const flowNodes: Node[] = useMemo(() => {
+    const mapped = visibleNodes.map((n, i) => {
+      const vpc = findVpcAncestor(n, byId)
+      const vpcColor = vpc ? (vpcColorMap.get(vpc.id) ?? undefined) : undefined
+      const vpcLabel = vpc ? vpc.label : undefined
 
-        // Use dedicated node types for ACM, CloudFront, and API Gateway
-        const rfType =
-          n.type === 'acm'          ? 'acm' :
-          n.type === 'cloudfront'   ? 'cloudfront' :
-          n.type === 'apigw'        ? 'apigw' :
-          n.type === 'apigw-route'  ? 'apigw-route' :
-          'resource'
+      // Use dedicated node types for ACM, CloudFront, and API Gateway
+      const rfType =
+        n.type === 'acm'
+          ? 'acm'
+          : n.type === 'cloudfront'
+            ? 'cloudfront'
+            : n.type === 'apigw'
+              ? 'apigw'
+              : n.type === 'apigw-route'
+                ? 'apigw-route'
+                : 'resource'
 
-        const isLocked = lockedNodes.has(n.id)
-        const isMultiSelected = selectedNodeIds.size > 1 && selectedNodeIds.has(n.id)
-        const multiSelectStyle: React.CSSProperties | undefined = isMultiSelected
-          ? { outline: '2px solid var(--cb-accent)', outlineOffset: '2px' }
-          : undefined
-        return {
-          id:         n.id,
-          type:       rfType,
-          position:   livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: Math.floor(i / 5) * 110 + 60 },
-          draggable:  !isLocked,
-          selectable: !isLocked,
-          zIndex:     isLocked ? -1 : 0,
-          style:      multiSelectStyle,
-          data:     {
-            label:     n.label,
-            nodeType:  n.type,
-            status:    n.status,
-            driftStatus: n.driftStatus,
-            vpcLabel:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcLabel : undefined,
-            vpcColor:  n.type !== 'vpc' && n.type !== 'subnet' ? vpcColor : undefined,
-            region:    n.region,
-            metadata:  n.metadata,
-            // API Gateway route extra fields
-            method:    n.type === 'apigw-route' ? n.metadata.method as string | undefined : undefined,
-            path:      n.type === 'apigw-route' ? n.metadata.path   as string | undefined : undefined,
-            hasLambda: n.type === 'apigw-route' ? !!(n.metadata.lambdaArn) : undefined,
-            // API Gateway container extra fields
-            endpoint:  n.type === 'apigw' ? n.metadata.endpoint as string | undefined : undefined,
-            // Focus mode
-            dimmed:      highlightedIds !== null && !highlightedIds.has(n.id),
-            // Lock mode
-            locked:      isLocked,
-            // User annotation
-            annotation:  annotations[n.id],
-            // SNS subscriber labels
-            subscribers: n.type === 'sns' && n.integrations && n.integrations.length > 0
+      const isLocked = lockedNodes.has(n.id)
+      const isMultiSelected = selectedNodeIds.size > 1 && selectedNodeIds.has(n.id)
+      const multiSelectStyle: React.CSSProperties | undefined = isMultiSelected
+        ? { outline: '2px solid var(--cb-accent)', outlineOffset: '2px' }
+        : undefined
+      return {
+        id: n.id,
+        type: rfType,
+        position: livePositions[n.id] ??
+          graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: Math.floor(i / 5) * 110 + 60 },
+        draggable: !isLocked,
+        selectable: !isLocked,
+        zIndex: isLocked ? -1 : 0,
+        style: multiSelectStyle,
+        data: {
+          label: n.label,
+          nodeType: n.type,
+          status: n.status,
+          driftStatus: n.driftStatus,
+          vpcLabel: n.type !== 'vpc' && n.type !== 'subnet' ? vpcLabel : undefined,
+          vpcColor: n.type !== 'vpc' && n.type !== 'subnet' ? vpcColor : undefined,
+          region: n.region,
+          metadata: n.metadata,
+          // API Gateway route extra fields
+          method: n.type === 'apigw-route' ? (n.metadata.method as string | undefined) : undefined,
+          path: n.type === 'apigw-route' ? (n.metadata.path as string | undefined) : undefined,
+          hasLambda: n.type === 'apigw-route' ? !!n.metadata.lambdaArn : undefined,
+          // API Gateway container extra fields
+          endpoint: n.type === 'apigw' ? (n.metadata.endpoint as string | undefined) : undefined,
+          // Focus mode
+          dimmed: highlightedIds !== null && !highlightedIds.has(n.id),
+          // Lock mode
+          locked: isLocked,
+          // User annotation
+          annotation: annotations[n.id],
+          // SNS subscriber labels
+          subscribers:
+            n.type === 'sns' && n.integrations && n.integrations.length > 0
               ? n.integrations
                   .filter((i) => i.edgeType === 'subscription')
                   .map((i) => {
                     const resolved = resolveIntegrationTargetId(visibleNodes, i.targetId)
                     return byId.get(resolved)?.label ?? resolved
                   })
-              : undefined,
-          },
-          selected: n.id === selectedId,
-        }
-      })
-
-      // Append imported nodes (from Terraform state import) as resource nodes
-      const existingIds = new Set(mapped.map((n) => n.id))
-      const importedFlowNodes: Node[] = importedNodes
-        .filter((n) => !existingIds.has(n.id))
-        .map((n, i) => ({
-          id:       n.id,
-          type:     'resource' as const,
-          position: livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: 50 },
-          data:     { label: n.label, nodeType: n.type, status: n.status, region: n.region, driftStatus: n.driftStatus, metadata: n.metadata },
-          selected: n.id === selectedId,
-        }))
-
-      const stickyFlowNodes: Node[] = stickyNotes.map((sn) => ({
-        id:        sn.id,
-        type:      'sticky-note' as const,
-        position:  livePositions[sn.id] ?? graphPositions[sn.id] ?? sn.position,
-        draggable: true,
-        selectable: false,
-        data:      {
-          noteId:   sn.id,
-          content:  sn.content,
-          onSave:   onStickyNotesSave,
-          onDelete: onStickyNoteDelete,
+              : undefined
         },
-        zIndex: 10,
+        selected: n.id === selectedId
+      }
+    })
+
+    // Append imported nodes (from Terraform state import) as resource nodes
+    const existingIds = new Set(mapped.map((n) => n.id))
+    const importedFlowNodes: Node[] = importedNodes
+      .filter((n) => !existingIds.has(n.id))
+      .map((n, i) => ({
+        id: n.id,
+        type: 'resource' as const,
+        position: livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: 50 },
+        data: {
+          label: n.label,
+          nodeType: n.type,
+          status: n.status,
+          region: n.region,
+          driftStatus: n.driftStatus,
+          metadata: n.metadata
+        },
+        selected: n.id === selectedId
       }))
 
-      const all = [...mapped, ...importedFlowNodes, ...stickyFlowNodes]
-      if (!driftFilterActive) return all
-      const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw', 'globalZone', 'apigw-route'])
-      return all.filter((fn) => {
-        if (fn.type === 'sticky-note') return false
-        const d = fn.data as { nodeType?: string; driftStatus?: string }
-        if (DRIFT_CONTAINER_TYPES.has(d.nodeType ?? '')) return true
-        return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
-      })
-    },
-    [visibleNodes, selectedId, selectedNodeIds, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes, driftFilterActive, stickyNotes, onStickyNotesSave, onStickyNoteDelete],
-  )
+    const stickyFlowNodes: Node[] = stickyNotes.map((sn) => ({
+      id: sn.id,
+      type: 'sticky-note' as const,
+      position: livePositions[sn.id] ?? graphPositions[sn.id] ?? sn.position,
+      draggable: true,
+      selectable: false,
+      data: {
+        noteId: sn.id,
+        content: sn.content,
+        onSave: onStickyNotesSave,
+        onDelete: onStickyNoteDelete
+      },
+      zIndex: 10
+    }))
+
+    const all = [...mapped, ...importedFlowNodes, ...stickyFlowNodes]
+    if (!driftFilterActive) return all
+    const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw', 'globalZone', 'apigw-route'])
+    return all.filter((fn) => {
+      if (fn.type === 'sticky-note') return false
+      const d = fn.data as { nodeType?: string; driftStatus?: string }
+      if (DRIFT_CONTAINER_TYPES.has(d.nodeType ?? '')) return true
+      return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
+    })
+  }, [
+    visibleNodes,
+    selectedId,
+    selectedNodeIds,
+    byId,
+    vpcColorMap,
+    highlightedIds,
+    graphPositions,
+    livePositions,
+    lockedNodes,
+    annotations,
+    importedNodes,
+    driftFilterActive,
+    stickyNotes,
+    onStickyNotesSave,
+    onStickyNoteDelete
+  ])
 
   const flowEdges: Edge[] = useMemo(() => {
     const visibleIds = new Set(visibleNodes.map((n) => n.id))
@@ -521,7 +596,11 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
     // Hide subscription edges for SNS nodes with 2+ subscriptions when unselected
     const snsWithManySubscriptions = new Set(
       visibleNodes
-        .filter((n) => n.type === 'sns' && (n.integrations?.filter((i) => i.edgeType === 'subscription').length ?? 0) >= 2)
+        .filter(
+          (n) =>
+            n.type === 'sns' &&
+            (n.integrations?.filter((i) => i.edgeType === 'subscription').length ?? 0) >= 2
+        )
         .map((n) => n.id)
     )
 
@@ -543,11 +622,11 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
     // Custom user-drawn edges — always visible, never filtered by showIntegrations
     const userEdges: Edge[] = customEdges.map((ce) => ({
-      id:     ce.id,
+      id: ce.id,
       source: ce.source,
       target: ce.target,
-      type:   'user',
-      data:   { isCustom: true as const, color: ce.color, label: ce.label },
+      type: 'user',
+      data: { isCustom: true as const, color: ce.color, label: ce.label }
     }))
     return [...withOpacity, ...userEdges]
   }, [visibleNodes, selectedId, showIntegrations, customEdges])
@@ -565,16 +644,20 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       if (blastRadius) {
         const member = blastRadius.members.get(n.id)
         if (member) {
-          opacity   = 1
+          opacity = 1
           boxShadow = hopRingStyle(member.hopDistance)
-          blastInfo = { hop: member.hopDistance, direction: member.direction, edgeTypes: member.edgeTypes }
+          blastInfo = {
+            hop: member.hopDistance,
+            direction: member.direction,
+            edgeTypes: member.edgeTypes
+          }
         } else {
-          opacity       = 0
+          opacity = 0
           pointerEvents = 'none'
         }
       } else if (pathTraceId) {
         if (pathTraceRevealedSet.has(n.id)) {
-          opacity   = 1
+          opacity = 1
           boxShadow = '0 0 8px #60a5fa'
         } else {
           opacity = 0.15
@@ -586,18 +669,19 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
         style: {
           ...(n.style ?? {}),
           opacity,
-          transition:  'opacity 0.15s ease',
-          ...(boxShadow    ? { boxShadow }    : {}),
-          ...(pointerEvents ? { pointerEvents } : {}),
+          transition: 'opacity 0.15s ease',
+          ...(boxShadow ? { boxShadow } : {}),
+          ...(pointerEvents ? { pointerEvents } : {})
         },
-        data: blastInfo ? { ...(n.data as object), blastInfo } : n.data,
+        data: blastInfo ? { ...(n.data as object), blastInfo } : n.data
       }
     })
   }, [flowNodes, blastRadius, pathTraceId, pathTraceRevealedSet])
 
-  const pathSourceNode = pathTraceNodes.length > 0  ? allNodes.find((n) => n.id === pathTraceNodes[0]) : null
-  const pathTargetNode = pathTraceId   ? allNodes.find((n) => n.id === pathTraceId)   : null
-  const blastNode      = blastRadiusId ? allNodes.find((n) => n.id === blastRadiusId) : null
+  const pathSourceNode =
+    pathTraceNodes.length > 0 ? allNodes.find((n) => n.id === pathTraceNodes[0]) : null
+  const pathTargetNode = pathTraceId ? allNodes.find((n) => n.id === pathTraceId) : null
+  const blastNode = blastRadiusId ? allNodes.find((n) => n.id === blastRadiusId) : null
 
   return (
     // Wrapper must receive a concrete height from its parent (flex-1) for ReactFlow to fill correctly
@@ -606,17 +690,19 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       {(blastRadiusId || pathTraceId) && (
         <div
           style={{
-            padding:      '2px 12px',
-            fontFamily:   'monospace',
-            fontSize:     9,
-            color:        'var(--cb-text-muted)',
-            background:   'var(--cb-bg-panel)',
+            padding: '2px 12px',
+            fontFamily: 'monospace',
+            fontSize: 9,
+            color: 'var(--cb-text-muted)',
+            background: 'var(--cb-bg-panel)',
             borderBottom: '1px solid var(--cb-border)',
-            flexShrink:   0,
+            flexShrink: 0
           }}
         >
           {blastRadiusId && blastRadius && (
-            <span style={{ color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span
+              style={{ color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
               <span
                 style={{ cursor: 'pointer' }}
                 onClick={() => setBlastRadiusId(null)}
@@ -642,7 +728,9 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
                       const node = allNodes.find((n) => n.id === id)
                       return `${directionSymbol(info.direction)} [${info.hopDistance}] ${node?.label ?? id} (${node?.type ?? ''})`
                     })
-                  void navigator.clipboard.writeText(`Blast radius: ${blastRadiusId}\n\n${lines.join('\n')}`)
+                  void navigator.clipboard.writeText(
+                    `Blast radius: ${blastRadiusId}\n\n${lines.join('\n')}`
+                  )
                 }}
               >
                 📋
@@ -676,8 +764,23 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
             }
           }}
           onNodeDoubleClick={(_e, node) => selectNode(node.id)}
-          onEdgeClick={(_e, edge) => selectEdge({ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === 'string' ? edge.label : undefined, data: edge.data as Record<string, unknown> | undefined })}
-          onPaneClick={() => { selectNode(null); selectEdge(null); clearFilters(); clearSelectedNodeIds(); setBlastRadiusId(null); setPathTraceId(null) }}
+          onEdgeClick={(_e, edge) =>
+            selectEdge({
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              label: typeof edge.label === 'string' ? edge.label : undefined,
+              data: edge.data as Record<string, unknown> | undefined
+            })
+          }
+          onPaneClick={() => {
+            selectNode(null)
+            selectEdge(null)
+            clearFilters()
+            clearSelectedNodeIds()
+            setBlastRadiusId(null)
+            setPathTraceId(null)
+          }}
           onSelectionChange={onSelectionChange}
           onNodeContextMenu={(event, rfNode) => {
             event.preventDefault()
@@ -695,10 +798,23 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           maxZoom={2}
           style={{ background: 'var(--cb-canvas-bg)' }}
         >
-          <Background id="minor" variant={BackgroundVariant.Lines} gap={SNAP_GRID_SIZE} color="rgba(255,255,255,0.015)" />
-          <Background id="major" variant={BackgroundVariant.Lines} gap={100} color="rgba(255,255,255,0.035)" />
+          <Background
+            id="minor"
+            variant={BackgroundVariant.Lines}
+            gap={SNAP_GRID_SIZE}
+            color="rgba(255,255,255,0.015)"
+          />
+          <Background
+            id="major"
+            variant={BackgroundVariant.Lines}
+            gap={100}
+            color="rgba(255,255,255,0.035)"
+          />
           <MiniMap
-            style={{ background: 'var(--cb-minimap-bg)', border: '1px solid var(--cb-minimap-border)' }}
+            style={{
+              background: 'var(--cb-minimap-bg)',
+              border: '1px solid var(--cb-minimap-border)'
+            }}
             nodeColor="#FF9900"
           />
         </ReactFlow>

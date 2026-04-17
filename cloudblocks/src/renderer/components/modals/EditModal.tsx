@@ -27,13 +27,23 @@ interface EditModalProps {
 }
 
 const RESOURCE_LABELS: Record<string, string> = {
-  vpc: 'VPC', ec2: 'EC2 Instance', 'security-group': 'Security Group',
-  rds: 'RDS Instance', s3: 'S3 Bucket', lambda: 'Lambda Function', alb: 'Load Balancer',
-  cloudfront: 'CloudFront Distribution', apigw: 'API Gateway',
-  'eventbridge-bus': 'EventBridge Bus', sqs: 'SQS Queue', sns: 'SNS Topic', 'ecr-repo': 'ECR Repository', secret: 'Secret',
+  vpc: 'VPC',
+  ec2: 'EC2 Instance',
+  'security-group': 'Security Group',
+  rds: 'RDS Instance',
+  s3: 'S3 Bucket',
+  lambda: 'Lambda Function',
+  alb: 'Load Balancer',
+  cloudfront: 'CloudFront Distribution',
+  apigw: 'API Gateway',
+  'eventbridge-bus': 'EventBridge Bus',
+  sqs: 'SQS Queue',
+  sns: 'SNS Topic',
+  'ecr-repo': 'ECR Repository',
+  secret: 'Secret',
   dynamo: 'DynamoDB Table',
   'ssm-param': 'SSM Parameter',
-  sfn: 'Step Functions State Machine',
+  sfn: 'Step Functions State Machine'
 }
 
 export default function EditModal({ node, onClose }: EditModalProps): React.JSX.Element | null {
@@ -60,17 +70,23 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
       return
     }
     const cmds = resolveEditCommands(node, params as unknown as Record<string, unknown>)
-    setCommandPreview(cmds.map(argv => 'aws ' + argv.join(' ')))
+    setCommandPreview(cmds.map((argv) => 'aws ' + argv.join(' ')))
   }
 
   const handleRun = async (): Promise<void> => {
-    if (!paramsRef.current) { setShowErrors(true); return }
+    if (!paramsRef.current) {
+      setShowErrors(true)
+      return
+    }
     setIsRunning(true)
     clearCliOutput()
 
     if (paramsRef.current.resource === 'cloudfront') {
       try {
-        const result = await window.terminus.updateCloudFront(node.id, paramsRef.current as CloudFrontEditParams)
+        const result = await window.terminus.updateCloudFront(
+          node.id,
+          paramsRef.current as CloudFrontEditParams
+        )
         if (result.code === 0) {
           setCommandPreview([])
           onClose()
@@ -83,8 +99,12 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
     }
 
     const cmds = resolveEditCommands(node, paramsRef.current as unknown as Record<string, unknown>)
-    if (cmds.length === 0) { setIsRunning(false); onClose(); return }
-    const unsubOutput = window.terminus.onCliOutput(d => appendCliOutput(d))
+    if (cmds.length === 0) {
+      setIsRunning(false)
+      onClose()
+      return
+    }
+    const unsubOutput = window.terminus.onCliOutput((d) => appendCliOutput(d))
     try {
       const result = await window.terminus.runCli(cmds)
       if (result.code === 0) {
@@ -101,52 +121,103 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
   handleRunRef.current = handleRun
 
   const overlay: React.CSSProperties = {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200,
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 200
   }
   const modal: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)', border: `1px solid var(--cb-accent)`, borderRadius: 8,
-    padding: 20, width: 360, maxHeight: '80vh', overflowY: 'auto',
-    fontFamily: 'monospace',
+    background: 'var(--cb-bg-panel)',
+    border: `1px solid var(--cb-accent)`,
+    borderRadius: 8,
+    padding: 20,
+    width: 360,
+    maxHeight: '80vh',
+    overflowY: 'auto',
+    fontFamily: 'monospace'
   }
 
   return (
-    <div style={overlay} onClick={e => e.target === e.currentTarget && !isRunning && onClose()} onKeyDown={(e) => { if (e.key === 'Escape' && !isRunning) onClose() }} tabIndex={-1}>
+    <div
+      style={overlay}
+      onClick={(e) => e.target === e.currentTarget && !isRunning && onClose()}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && !isRunning) onClose()
+      }}
+      tabIndex={-1}
+    >
       <div style={modal}>
-        <div style={{ color: 'var(--cb-accent)', fontWeight: 'bold', fontSize: 13, marginBottom: 12, borderBottom: '1px solid var(--cb-border-strong)', paddingBottom: 8 }}>
+        <div
+          style={{
+            color: 'var(--cb-accent)',
+            fontWeight: 'bold',
+            fontSize: 13,
+            marginBottom: 12,
+            borderBottom: '1px solid var(--cb-border-strong)',
+            paddingBottom: 8
+          }}
+        >
           Edit {RESOURCE_LABELS[node.type] ?? node.type}
         </div>
 
-        {node.type === 'vpc'             && <VpcEditForm        node={node} onChange={handleChange} showErrors={showErrors} />}
-        {node.type === 'ec2'             && <Ec2EditForm        node={node} onChange={handleChange} />}
-        {node.type === 'security-group'  && <SgEditForm         node={node} onChange={handleChange} />}
-        {node.type === 'rds'             && <RdsEditForm        node={node} onChange={handleChange} />}
-        {node.type === 's3'              && <S3EditForm         node={node} onChange={handleChange} />}
-        {node.type === 'lambda'          && <LambdaEditForm     node={node} onChange={handleChange} />}
-        {node.type === 'alb'             && <AlbEditForm        node={node} onChange={handleChange} showErrors={showErrors} />}
-        {node.type === 'cloudfront'      && <CloudFrontEditForm node={node} onChange={handleChange} />}
-        {node.type === 'apigw'           && <ApigwEditForm      node={node} onChange={handleChange} />}
-        {node.type === 'eventbridge-bus' && <EventBridgeEditForm node={node} onChange={handleChange} />}
-        {node.type === 'sqs'             && <SqsEditForm         node={node} onChange={handleChange} />}
-        {node.type === 'sns'             && <SnsEditForm         node={node} onChange={handleChange} />}
-        {node.type === 'ecr-repo'        && <EcrEditForm         node={node} onChange={handleChange} />}
-        {node.type === 'secret'          && <SecretEditForm      node={node} onChange={handleChange} />}
-        {node.type === 'dynamo'          && <DynamoEditForm      node={node} onChange={handleChange} />}
-        {node.type === 'ssm-param'       && <SsmEditForm         node={node} onChange={handleChange} />}
-        {node.type === 'sfn'             && <SfnEditForm         node={node} onChange={handleChange} />}
+        {node.type === 'vpc' && (
+          <VpcEditForm node={node} onChange={handleChange} showErrors={showErrors} />
+        )}
+        {node.type === 'ec2' && <Ec2EditForm node={node} onChange={handleChange} />}
+        {node.type === 'security-group' && <SgEditForm node={node} onChange={handleChange} />}
+        {node.type === 'rds' && <RdsEditForm node={node} onChange={handleChange} />}
+        {node.type === 's3' && <S3EditForm node={node} onChange={handleChange} />}
+        {node.type === 'lambda' && <LambdaEditForm node={node} onChange={handleChange} />}
+        {node.type === 'alb' && (
+          <AlbEditForm node={node} onChange={handleChange} showErrors={showErrors} />
+        )}
+        {node.type === 'cloudfront' && <CloudFrontEditForm node={node} onChange={handleChange} />}
+        {node.type === 'apigw' && <ApigwEditForm node={node} onChange={handleChange} />}
+        {node.type === 'eventbridge-bus' && (
+          <EventBridgeEditForm node={node} onChange={handleChange} />
+        )}
+        {node.type === 'sqs' && <SqsEditForm node={node} onChange={handleChange} />}
+        {node.type === 'sns' && <SnsEditForm node={node} onChange={handleChange} />}
+        {node.type === 'ecr-repo' && <EcrEditForm node={node} onChange={handleChange} />}
+        {node.type === 'secret' && <SecretEditForm node={node} onChange={handleChange} />}
+        {node.type === 'dynamo' && <DynamoEditForm node={node} onChange={handleChange} />}
+        {node.type === 'ssm-param' && <SsmEditForm node={node} onChange={handleChange} />}
+        {node.type === 'sfn' && <SfnEditForm node={node} onChange={handleChange} />}
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
           <button
             disabled={isRunning}
             onClick={onClose}
-            style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 3, padding: '4px 16px', color: 'var(--cb-text-secondary)', fontFamily: 'monospace', fontSize: 11, cursor: 'pointer' }}
+            style={{
+              background: 'var(--cb-bg-elevated)',
+              border: '1px solid var(--cb-border)',
+              borderRadius: 3,
+              padding: '4px 16px',
+              color: 'var(--cb-text-secondary)',
+              fontFamily: 'monospace',
+              fontSize: 11,
+              cursor: 'pointer'
+            }}
           >
             Cancel
           </button>
           <button
             disabled={isRunning}
             onClick={handleRun}
-            style={{ background: '#22c55e', border: 'none', borderRadius: 3, padding: '4px 16px', color: '#000', fontFamily: 'monospace', fontSize: 11, fontWeight: 'bold', cursor: 'pointer' }}
+            style={{
+              background: '#22c55e',
+              border: 'none',
+              borderRadius: 3,
+              padding: '4px 16px',
+              color: '#000',
+              fontFamily: 'monospace',
+              fontSize: 11,
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
           >
             {isRunning ? 'Saving\u2026' : 'Save'}
           </button>

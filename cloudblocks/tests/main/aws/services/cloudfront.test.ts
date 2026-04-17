@@ -12,7 +12,7 @@ const DIST = {
   Comment: 'My CDN',
   PriceClass: 'PriceClass_100',
   ViewerCertificate: {},
-  Origins: { Items: [] },
+  Origins: { Items: [] }
 }
 
 describe('listDistributions', () => {
@@ -40,9 +40,9 @@ describe('listDistributions', () => {
           { Id: 'my-bucket', DomainName: 'my-bucket.s3.amazonaws.com' },
           { Id: 'regional', DomainName: 'my-bucket.s3.us-east-1.amazonaws.com' },
           { Id: 'website', DomainName: 'my-bucket.s3-website-us-east-1.amazonaws.com' },
-          { Id: 'api', DomainName: 'api.example.com' }, // custom — should be excluded
-        ],
-      },
+          { Id: 'api', DomainName: 'api.example.com' } // custom — should be excluded
+        ]
+      }
     }
     mockSend.mockResolvedValueOnce({ DistributionList: { Items: [dist] } })
 
@@ -56,7 +56,7 @@ describe('listDistributions', () => {
   it('does not attach integrations when no S3 origins', async () => {
     const dist = {
       ...DIST,
-      Origins: { Items: [{ Id: 'api', DomainName: 'api.example.com' }] },
+      Origins: { Items: [{ Id: 'api', DomainName: 'api.example.com' }] }
     }
     mockSend.mockResolvedValueOnce({ DistributionList: { Items: [dist] } })
 
@@ -74,10 +74,8 @@ describe('listDistributions', () => {
     const dist = {
       ...DIST,
       Origins: {
-        Items: [
-          { Id: 'alb-origin', DomainName: 'my-alb-1234567890.us-east-1.elb.amazonaws.com' },
-        ],
-      },
+        Items: [{ Id: 'alb-origin', DomainName: 'my-alb-1234567890.us-east-1.elb.amazonaws.com' }]
+      }
     }
     mockSend.mockResolvedValueOnce({ DistributionList: { Items: [dist] } })
 
@@ -85,17 +83,17 @@ describe('listDistributions', () => {
 
     expect(nodes[0].integrations).toHaveLength(1)
     expect(nodes[0].integrations?.[0].edgeType).toBe('origin')
-    expect(nodes[0].integrations?.[0].targetId).toBe('my-alb-1234567890.us-east-1.elb.amazonaws.com')
+    expect(nodes[0].integrations?.[0].targetId).toBe(
+      'my-alb-1234567890.us-east-1.elb.amazonaws.com'
+    )
   })
 
   it('emits origin integration for APIGW origins with raw domain as targetId', async () => {
     const dist = {
       ...DIST,
       Origins: {
-        Items: [
-          { Id: 'apigw-origin', DomainName: 'abc123def.execute-api.us-east-1.amazonaws.com' },
-        ],
-      },
+        Items: [{ Id: 'apigw-origin', DomainName: 'abc123def.execute-api.us-east-1.amazonaws.com' }]
+      }
     }
     mockSend.mockResolvedValueOnce({ DistributionList: { Items: [dist] } })
 
@@ -103,7 +101,9 @@ describe('listDistributions', () => {
 
     expect(nodes[0].integrations).toHaveLength(1)
     expect(nodes[0].integrations?.[0].edgeType).toBe('origin')
-    expect(nodes[0].integrations?.[0].targetId).toBe('abc123def.execute-api.us-east-1.amazonaws.com')
+    expect(nodes[0].integrations?.[0].targetId).toBe(
+      'abc123def.execute-api.us-east-1.amazonaws.com'
+    )
   })
 
   it('handles mixed origins: S3 gets bucket name, ALB gets domain, custom excluded', async () => {
@@ -113,9 +113,9 @@ describe('listDistributions', () => {
         Items: [
           { Id: 's3-origin', DomainName: 'my-bucket.s3.amazonaws.com' },
           { Id: 'alb-origin', DomainName: 'my-alb.us-east-1.elb.amazonaws.com' },
-          { Id: 'custom-origin', DomainName: 'api.example.com' },
-        ],
-      },
+          { Id: 'custom-origin', DomainName: 'api.example.com' }
+        ]
+      }
     }
     mockSend.mockResolvedValueOnce({ DistributionList: { Items: [dist] } })
 

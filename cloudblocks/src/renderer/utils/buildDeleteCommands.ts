@@ -17,7 +17,13 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
     case 'rds': {
       const cmds: string[][] = []
       if (opts.disableProtectionFirst) {
-        cmds.push(['rds', 'modify-db-instance', '--db-instance-identifier', node.id, '--no-deletion-protection'])
+        cmds.push([
+          'rds',
+          'modify-db-instance',
+          '--db-instance-identifier',
+          node.id,
+          '--no-deletion-protection'
+        ])
       }
       const deleteArgs = ['rds', 'delete-db-instance', '--db-instance-identifier', node.id]
       if (opts.skipFinalSnapshot) deleteArgs.push('--skip-final-snapshot')
@@ -42,7 +48,9 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
       return [['apigatewayv2', 'delete-route', '--api-id', meta.apiId, '--route-id', meta.routeId]]
     }
     case 'sqs':
-      return [['sqs', 'delete-queue', '--queue-url', (node.metadata.url as string | undefined) ?? node.id]]
+      return [
+        ['sqs', 'delete-queue', '--queue-url', (node.metadata.url as string | undefined) ?? node.id]
+      ]
     case 'sns':
       return [['sns', 'delete-topic', '--topic-arn', node.id]]
     case 'dynamo':
@@ -70,7 +78,7 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
       if (vpcId) {
         return [
           ['ec2', 'detach-internet-gateway', '--internet-gateway-id', node.id, '--vpc-id', vpcId],
-          ['ec2', 'delete-internet-gateway', '--internet-gateway-id', node.id],
+          ['ec2', 'delete-internet-gateway', '--internet-gateway-id', node.id]
         ]
       }
       return [['ec2', 'delete-internet-gateway', '--internet-gateway-id', node.id]]
@@ -83,16 +91,21 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
   }
 }
 
-export function buildQuickActionCommand(node: CloudNode, action: 'stop' | 'start' | 'reboot'): string[][] {
+export function buildQuickActionCommand(
+  node: CloudNode,
+  action: 'stop' | 'start' | 'reboot'
+): string[][] {
   if (node.type === 'ec2') {
-    if (action === 'stop')   return [['ec2', 'stop-instances',   '--instance-ids', node.id]]
-    if (action === 'start')  return [['ec2', 'start-instances',  '--instance-ids', node.id]]
+    if (action === 'stop') return [['ec2', 'stop-instances', '--instance-ids', node.id]]
+    if (action === 'start') return [['ec2', 'start-instances', '--instance-ids', node.id]]
     if (action === 'reboot') return [['ec2', 'reboot-instances', '--instance-ids', node.id]]
   }
   if (node.type === 'rds') {
-    if (action === 'stop')   return [['rds', 'stop-db-instance',   '--db-instance-identifier', node.id]]
-    if (action === 'start')  return [['rds', 'start-db-instance',  '--db-instance-identifier', node.id]]
-    if (action === 'reboot') return [['rds', 'reboot-db-instance', '--db-instance-identifier', node.id]]
+    if (action === 'stop') return [['rds', 'stop-db-instance', '--db-instance-identifier', node.id]]
+    if (action === 'start')
+      return [['rds', 'start-db-instance', '--db-instance-identifier', node.id]]
+    if (action === 'reboot')
+      return [['rds', 'reboot-db-instance', '--db-instance-identifier', node.id]]
   }
   return []
 }

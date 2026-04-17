@@ -14,19 +14,25 @@ const DEFAULT_SETTINGS = {
   theme: 'dark' as const,
   showRegionIndicators: true,
   regionColors: {},
-  showScanErrorBadges: true,
+  showScanErrorBadges: true
 }
 
 beforeEach(() => {
   useCloudStore.setState({ nodes: [], scanErrors: [], settings: DEFAULT_SETTINGS })
-  useUIStore.setState({ view: 'topology', activeFilterTypes: new Set(), activeSidebarType: null, expandedSsmGroups: new Set(), pluginNodeTypes: {} })
+  useUIStore.setState({
+    view: 'topology',
+    activeFilterTypes: new Set(),
+    activeSidebarType: null,
+    expandedSsmGroups: new Set(),
+    pluginNodeTypes: {}
+  })
   useCliStore.setState({ commandPreview: [], pendingCommand: null })
 })
 
 describe('Sidebar scan error badges', () => {
   it('shows ⚠ on a service row when that service has a scan error', () => {
     useCloudStore.setState({
-      scanErrors: [{ service: 'ecr', region: 'us-east-1', message: 'AccessDenied' }],
+      scanErrors: [{ service: 'ecr', region: 'us-east-1', message: 'AccessDenied' }]
     })
     render(<Sidebar />)
     const badge = screen.getByTitle('[ecr] us-east-1 — AccessDenied')
@@ -43,7 +49,7 @@ describe('Sidebar scan error badges', () => {
   it('does not show ⚠ when showScanErrorBadges is false', () => {
     useCloudStore.setState({
       scanErrors: [{ service: 'rds', region: 'us-east-1', message: 'Forbidden' }],
-      settings: { ...DEFAULT_SETTINGS, showScanErrorBadges: false },
+      settings: { ...DEFAULT_SETTINGS, showScanErrorBadges: false }
     })
     render(<Sidebar />)
     expect(screen.queryByText('⚠')).not.toBeInTheDocument()
@@ -52,9 +58,9 @@ describe('Sidebar scan error badges', () => {
   it('shows ⚠ on multiple service rows when multiple services failed', () => {
     useCloudStore.setState({
       scanErrors: [
-        { service: 's3',    region: 'us-east-1', message: 'err1' },
-        { service: 'lambda', region: 'us-east-1', message: 'err2' },
-      ],
+        { service: 's3', region: 'us-east-1', message: 'err1' },
+        { service: 'lambda', region: 'us-east-1', message: 'err2' }
+      ]
     })
     render(<Sidebar />)
     const badges = screen.getAllByText('⚠')
@@ -63,8 +69,8 @@ describe('Sidebar scan error badges', () => {
 
   it('shows ⚠ SSM error inside Management category even when no SSM params exist', () => {
     useCloudStore.setState({
-      nodes: [],  // no ssm-param nodes → ssmGroups will be empty
-      scanErrors: [{ service: 'ssm', region: 'us-east-1', message: 'AccessDenied' }],
+      nodes: [], // no ssm-param nodes → ssmGroups will be empty
+      scanErrors: [{ service: 'ssm', region: 'us-east-1', message: 'AccessDenied' }]
     })
     render(<Sidebar />)
     // SSM is now grouped under the Management category header
@@ -76,7 +82,7 @@ describe('Sidebar scan error badges', () => {
 
   it('tooltip contains the full error detail', () => {
     useCloudStore.setState({
-      scanErrors: [{ service: 'dynamo', region: 'eu-west-1', message: 'ThrottlingException' }],
+      scanErrors: [{ service: 'dynamo', region: 'eu-west-1', message: 'ThrottlingException' }]
     })
     render(<Sidebar />)
     const badge = screen.getByTitle('[dynamo] eu-west-1 — ThrottlingException')
@@ -94,9 +100,9 @@ describe('Plugin node types in Sidebar', () => {
           badgeColor: '#0078D4',
           shortLabel: 'VM',
           displayName: 'Azure VM',
-          hasCreate: true,
-        },
-      },
+          hasCreate: true
+        }
+      }
     })
     render(<Sidebar />)
     expect(screen.getByText('⬡ Azure VM')).toBeInTheDocument()
@@ -111,9 +117,9 @@ describe('Plugin node types in Sidebar', () => {
           badgeColor: '#ccc',
           shortLabel: 'RO',
           displayName: 'Azure Read Only',
-          hasCreate: false,
-        },
-      },
+          hasCreate: false
+        }
+      }
     })
     render(<Sidebar />)
     expect(screen.queryByText('⬡ Azure Read Only')).not.toBeInTheDocument()
@@ -148,8 +154,8 @@ describe('Sidebar instant multi-select filter', () => {
     useCloudStore.setState({
       nodes: [
         { id: '1', type: 'ec2', label: 'i-1', region: 'us-east-1', raw: {} },
-        { id: '2', type: 'lambda', label: 'fn-1', region: 'us-east-1', raw: {} },
-      ],
+        { id: '2', type: 'lambda', label: 'fn-1', region: 'us-east-1', raw: {} }
+      ]
     })
     render(<Sidebar />)
     fireEvent.click(screen.getByText('⬡ EC2').closest('div')!)
@@ -163,7 +169,7 @@ describe('Sidebar instant multi-select filter', () => {
 
   it('clears command preview and filter when all types deselected', () => {
     useCloudStore.setState({
-      nodes: [{ id: '1', type: 'ec2', label: 'i-1', region: 'us-east-1', raw: {} }],
+      nodes: [{ id: '1', type: 'ec2', label: 'i-1', region: 'us-east-1', raw: {} }]
     })
     render(<Sidebar />)
     const ec2Row = screen.getByText('⬡ EC2').closest('div')!
@@ -249,7 +255,7 @@ describe('SCAN_KEY_TO_TYPE contract', () => {
       'elasticache',
       'eks',
       'opensearch',
-      'msk',
+      'msk'
     ])
     const actualKeys = new Set(Object.keys(SCAN_KEY_TO_TYPE))
     expect(actualKeys).toEqual(expectedKeys)

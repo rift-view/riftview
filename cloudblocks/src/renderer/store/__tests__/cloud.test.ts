@@ -6,38 +6,56 @@ import type { Theme, NodeType } from '../../types/cloud'
 
 beforeEach(() => {
   useCloudStore.setState({
-    pendingNodes: [],
+    pendingNodes: []
   })
   useCliStore.setState({
-    cliOutput:      [],
+    cliOutput: [],
     commandPreview: [],
-    pendingCommand: null,
+    pendingCommand: null
   })
   useUIStore.setState({
-    activeCreate: null,
+    activeCreate: null
   })
 })
 
 describe('pendingNodes', () => {
   it('addPendingNode adds a ghost node', () => {
-    const ghost = { id: 'pending:abc', type: 'vpc' as const, label: 'New VPC',
-      status: 'creating' as const, region: 'us-east-1', metadata: {} }
+    const ghost = {
+      id: 'pending:abc',
+      type: 'vpc' as const,
+      label: 'New VPC',
+      status: 'creating' as const,
+      region: 'us-east-1',
+      metadata: {}
+    }
     useCloudStore.getState().addPendingNode(ghost)
     expect(useCloudStore.getState().pendingNodes).toHaveLength(1)
     expect(useCloudStore.getState().pendingNodes[0].id).toBe('pending:abc')
   })
 
   it('removePendingNode removes by id', () => {
-    const ghost = { id: 'pending:abc', type: 'vpc' as const, label: 'New VPC',
-      status: 'creating' as const, region: 'us-east-1', metadata: {} }
+    const ghost = {
+      id: 'pending:abc',
+      type: 'vpc' as const,
+      label: 'New VPC',
+      status: 'creating' as const,
+      region: 'us-east-1',
+      metadata: {}
+    }
     useCloudStore.getState().addPendingNode(ghost)
     useCloudStore.getState().removePendingNode('pending:abc')
     expect(useCloudStore.getState().pendingNodes).toHaveLength(0)
   })
 
   it('clearPendingNodes empties all', () => {
-    const ghost = { id: 'pending:abc', type: 'vpc' as const, label: 'New VPC',
-      status: 'creating' as const, region: 'us-east-1', metadata: {} }
+    const ghost = {
+      id: 'pending:abc',
+      type: 'vpc' as const,
+      label: 'New VPC',
+      status: 'creating' as const,
+      region: 'us-east-1',
+      metadata: {}
+    }
     useCloudStore.getState().addPendingNode(ghost)
     useCloudStore.getState().clearPendingNodes()
     expect(useCloudStore.getState().pendingNodes).toHaveLength(0)
@@ -61,7 +79,9 @@ describe('cliOutput', () => {
 describe('commandPreview', () => {
   it('setCommandPreview stores the array', () => {
     useCliStore.getState().setCommandPreview(['aws ec2 create-vpc --cidr-block 10.0.0.0/16'])
-    expect(useCliStore.getState().commandPreview).toEqual(['aws ec2 create-vpc --cidr-block 10.0.0.0/16'])
+    expect(useCliStore.getState().commandPreview).toEqual([
+      'aws ec2 create-vpc --cidr-block 10.0.0.0/16'
+    ])
   })
 
   it('setCommandPreview with empty array clears it', () => {
@@ -72,10 +92,15 @@ describe('commandPreview', () => {
 
   it('setCommandPreview accepts string array', () => {
     const store = createCloudStore()
-    useCliStore.getState().setCommandPreview(['aws ec2 stop-instances --instance-ids i-123', 'aws ec2 start-instances --instance-ids i-123'])
+    useCliStore
+      .getState()
+      .setCommandPreview([
+        'aws ec2 stop-instances --instance-ids i-123',
+        'aws ec2 start-instances --instance-ids i-123'
+      ])
     expect(useCliStore.getState().commandPreview).toEqual([
       'aws ec2 stop-instances --instance-ids i-123',
-      'aws ec2 start-instances --instance-ids i-123',
+      'aws ec2 start-instances --instance-ids i-123'
     ])
     // createCloudStore is still valid (no-op usage to keep the import)
     expect(store).toBeDefined()
@@ -83,7 +108,9 @@ describe('commandPreview', () => {
 
   it('setPendingCommand stores command chain', () => {
     useCliStore.getState().setPendingCommand([['ec2', 'stop-instances', '--instance-ids', 'i-123']])
-    expect(useCliStore.getState().pendingCommand).toEqual([['ec2', 'stop-instances', '--instance-ids', 'i-123']])
+    expect(useCliStore.getState().pendingCommand).toEqual([
+      ['ec2', 'stop-instances', '--instance-ids', 'i-123']
+    ])
     useCliStore.getState().setPendingCommand(null)
     expect(useCliStore.getState().pendingCommand).toBeNull()
   })
@@ -184,7 +211,14 @@ describe('scanGeneration', () => {
 
   it('setProfile increments generation and clears nodes', () => {
     const store = createCloudStore()
-    const node = { id: 'n1', type: 'vpc' as const, label: 'VPC', status: 'active' as const, region: 'us-east-1', metadata: {} }
+    const node = {
+      id: 'n1',
+      type: 'vpc' as const,
+      label: 'VPC',
+      status: 'active' as const,
+      region: 'us-east-1',
+      metadata: {}
+    }
     store.getState().applyDelta({ added: [node], changed: [], removed: [] })
     expect(store.getState().nodes).toHaveLength(1)
     store.getState().setProfile({ name: 'other' })
@@ -201,7 +235,14 @@ describe('scanGeneration', () => {
   it('applyDelta without generation always applies', () => {
     const store = createCloudStore()
     store.getState().incrementGeneration() // generation = 1
-    const node = { id: 'n1', type: 'vpc' as const, label: 'VPC', status: 'active' as const, region: 'us-east-1', metadata: {} }
+    const node = {
+      id: 'n1',
+      type: 'vpc' as const,
+      label: 'VPC',
+      status: 'active' as const,
+      region: 'us-east-1',
+      metadata: {}
+    }
     store.getState().applyDelta({ added: [node], changed: [], removed: [] })
     expect(store.getState().nodes).toHaveLength(1)
   })
@@ -209,7 +250,14 @@ describe('scanGeneration', () => {
   it('applyDelta with matching generation applies', () => {
     const store = createCloudStore()
     const gen = store.getState().scanGeneration
-    const node = { id: 'n1', type: 'vpc' as const, label: 'VPC', status: 'active' as const, region: 'us-east-1', metadata: {} }
+    const node = {
+      id: 'n1',
+      type: 'vpc' as const,
+      label: 'VPC',
+      status: 'active' as const,
+      region: 'us-east-1',
+      metadata: {}
+    }
     store.getState().applyDelta({ added: [node], changed: [], removed: [] }, gen)
     expect(store.getState().nodes).toHaveLength(1)
   })
@@ -218,7 +266,14 @@ describe('scanGeneration', () => {
     const store = createCloudStore()
     const staleGen = store.getState().scanGeneration
     store.getState().incrementGeneration() // generation now = 1, staleGen = 0
-    const node = { id: 'n1', type: 'vpc' as const, label: 'VPC', status: 'active' as const, region: 'us-east-1', metadata: {} }
+    const node = {
+      id: 'n1',
+      type: 'vpc' as const,
+      label: 'VPC',
+      status: 'active' as const,
+      region: 'us-east-1',
+      metadata: {}
+    }
     store.getState().applyDelta({ added: [node], changed: [], removed: [] }, staleGen)
     expect(store.getState().nodes).toHaveLength(0)
   })
@@ -234,7 +289,7 @@ describe('scanErrors', () => {
     const store = createCloudStore()
     store.getState().setScanErrors([
       { service: 'sqs', region: 'us-east-1', message: 'AccessDenied' },
-      { service: 'ecr', region: 'us-east-1', message: 'ThrottlingException' },
+      { service: 'ecr', region: 'us-east-1', message: 'ThrottlingException' }
     ])
     expect(store.getState().scanErrors).toHaveLength(2)
     expect(store.getState().scanErrors[0].service).toBe('sqs')
@@ -243,7 +298,9 @@ describe('scanErrors', () => {
 
   it('clearScanErrors empties the array', () => {
     const store = createCloudStore()
-    store.getState().setScanErrors([{ service: 'lambda', region: 'us-east-1', message: 'Forbidden' }])
+    store
+      .getState()
+      .setScanErrors([{ service: 'lambda', region: 'us-east-1', message: 'Forbidden' }])
     store.getState().clearScanErrors()
     expect(store.getState().scanErrors).toEqual([])
   })
@@ -272,9 +329,9 @@ describe('theme defaults', () => {
 
   it('Theme type includes all five values', () => {
     const themes: Theme[] = ['dark', 'light', 'solarized', 'rose-pine', 'catppuccin']
-    themes.forEach(t => {
+    themes.forEach((t) => {
       const store = createCloudStore()
-      store.setState(s => ({ settings: { ...s.settings, theme: t } }))
+      store.setState((s) => ({ settings: { ...s.settings, theme: t } }))
       expect(store.getState().settings.theme).toBe(t)
     })
   })
@@ -293,14 +350,31 @@ describe('clearImportedNodes', () => {
   })
 
   it('clears importedNodes array', () => {
-    const node = { id: 'i-123', type: 'ec2' as const, label: 'Instance', status: 'active' as const, region: 'us-east-1', metadata: {}, driftStatus: 'managed' as const }
+    const node = {
+      id: 'i-123',
+      type: 'ec2' as const,
+      label: 'Instance',
+      status: 'active' as const,
+      region: 'us-east-1',
+      metadata: {},
+      driftStatus: 'managed' as const
+    }
     useCloudStore.setState({ importedNodes: [node] })
     useCloudStore.getState().clearImportedNodes()
     expect(useCloudStore.getState().importedNodes).toEqual([])
   })
 
   it('removes drift metadata from live nodes', () => {
-    const nodeWithDrift = { id: 'i-123', type: 'ec2' as const, label: 'Instance', status: 'active' as const, region: 'us-east-1', metadata: {}, driftStatus: 'managed' as const, tfMetadata: { name: 'test' } }
+    const nodeWithDrift = {
+      id: 'i-123',
+      type: 'ec2' as const,
+      label: 'Instance',
+      status: 'active' as const,
+      region: 'us-east-1',
+      metadata: {},
+      driftStatus: 'managed' as const,
+      tfMetadata: { name: 'test' }
+    }
     useCloudStore.setState({ nodes: [nodeWithDrift] })
     useCloudStore.getState().clearImportedNodes()
     const clearedNode = useCloudStore.getState().nodes[0]

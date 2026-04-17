@@ -9,7 +9,9 @@ import { pluginRegistry } from '../plugin/index'
  * Falls back to pluginRegistry.getHclGenerator for non-built-in node types.
  */
 export function generateTerraformBlock(node: CloudNode): string {
-  const builtinGen = (terraformGenerators as Record<string, TerraformGenerator | undefined>)[node.type]
+  const builtinGen = (terraformGenerators as Record<string, TerraformGenerator | undefined>)[
+    node.type
+  ]
   const gen = builtinGen ?? pluginRegistry.getHclGenerator(node.type)
   if (!gen) return ''
   return gen(node)
@@ -33,6 +35,6 @@ export function generateTerraformFile(nodes: CloudNode[]): { hcl: string; skippe
     .filter((b) => b.length > 0)
   return {
     hcl: blocks.join('\n\n'),
-    skippedTypes: [...new Set(skippedTypes)],  // deduplicate
+    skippedTypes: [...new Set(skippedTypes)] // deduplicate
   }
 }

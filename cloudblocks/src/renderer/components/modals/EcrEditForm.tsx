@@ -2,10 +2,29 @@ import React, { useState } from 'react'
 import type { CloudNode } from '../../types/cloud'
 import type { EcrEditParams } from '../../types/edit'
 
-interface Props { node: CloudNode; onChange: (p: EcrEditParams) => void }
+interface Props {
+  node: CloudNode
+  onChange: (p: EcrEditParams) => void
+}
 
-const inp: React.CSSProperties = { width: '100%', background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)', borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10, boxSizing: 'border-box' as const }
-const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
+const inp: React.CSSProperties = {
+  width: '100%',
+  background: 'var(--cb-bg-panel)',
+  border: '1px solid var(--cb-border)',
+  borderRadius: 3,
+  padding: '3px 6px',
+  color: 'var(--cb-text-primary)',
+  fontFamily: 'monospace',
+  fontSize: 10,
+  boxSizing: 'border-box' as const
+}
+const lbl: React.CSSProperties = {
+  fontSize: 9,
+  color: 'var(--cb-text-muted)',
+  textTransform: 'uppercase',
+  marginBottom: 2,
+  marginTop: 8
+}
 
 export default function EcrEditForm({ node, onChange }: Props): React.JSX.Element {
   const repositoryName = (node.metadata.repositoryName as string) ?? node.label
@@ -27,7 +46,7 @@ export default function EcrEditForm({ node, onChange }: Props): React.JSX.Elemen
       <select
         style={inp}
         value={imageTagMutability}
-        onChange={e => {
+        onChange={(e) => {
           const v = e.target.value as 'MUTABLE' | 'IMMUTABLE'
           setImageTagMutability(v)
           emit(v, scanOnPush)
@@ -41,9 +60,15 @@ export default function EcrEditForm({ node, onChange }: Props): React.JSX.Elemen
           type="checkbox"
           id="ecr-scan-on-push"
           checked={scanOnPush}
-          onChange={e => { setScanOnPush(e.target.checked); emit(imageTagMutability, e.target.checked) }}
+          onChange={(e) => {
+            setScanOnPush(e.target.checked)
+            emit(imageTagMutability, e.target.checked)
+          }}
         />
-        <label htmlFor="ecr-scan-on-push" style={{ fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase' }}>
+        <label
+          htmlFor="ecr-scan-on-push"
+          style={{ fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase' }}
+        >
           Scan on Push
         </label>
       </div>

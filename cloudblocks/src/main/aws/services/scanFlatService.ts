@@ -14,8 +14,8 @@ export interface FlatServiceConfig<TClient, TItem> {
 export async function scanFlatService<TClient, TItem>(
   client: TClient,
   region: string,
-  config: FlatServiceConfig<TClient, TItem>,
+  config: FlatServiceConfig<TClient, TItem>
 ): Promise<CloudNode[]> {
   const items = await config.fetch(client)
-  return items.map(item => config.map(item, region))
+  return items.map((item) => config.map(item, region))
 }

@@ -13,7 +13,7 @@ const ORIGIN_Y = 40
 
 export function computeTidyLayout(
   nodes: CloudNode[],
-  view: 'topology' | 'graph',
+  view: 'topology' | 'graph'
 ): Record<string, { x: number; y: number }> {
   if (view === 'graph') {
     // All nodes, grouped by type
@@ -53,7 +53,7 @@ function groupedGrid(nodes: CloudNode[]): Record<string, { x: number; y: number 
     groupNodes.forEach((n, i) => {
       positions[n.id] = {
         x: groupX + (i % NODES_PER_ROW) * (GRID_W + NODE_GAP_X),
-        y: rowY + Math.floor(i / NODES_PER_ROW) * (GRID_H + NODE_GAP_Y),
+        y: rowY + Math.floor(i / NODES_PER_ROW) * (GRID_H + NODE_GAP_Y)
       }
     })
 

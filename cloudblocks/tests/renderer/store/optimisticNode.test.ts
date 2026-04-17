@@ -21,7 +21,7 @@ const makeOptimisticNode = (id: string): CloudNode => ({
   label: 'New EC2',
   status: 'creating',
   region: 'us-east-1',
-  metadata: {},
+  metadata: {}
 })
 
 describe('optimistic node store operations', () => {
@@ -59,8 +59,12 @@ describe('optimistic node store operations', () => {
 
   it('removeOptimisticNode only removes the matching node', () => {
     const keepNode: CloudNode = {
-      id: 'real-node', type: 'vpc', label: 'prod-vpc',
-      status: 'running', region: 'us-east-1', metadata: {},
+      id: 'real-node',
+      type: 'vpc',
+      label: 'prod-vpc',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: {}
     }
     useCloudStore.setState({ nodes: [keepNode] })
 
@@ -94,11 +98,15 @@ describe('optimistic node store operations', () => {
 
   it('removePendingNode clears pending node alongside optimistic removal on failure', () => {
     const optimisticId = 'optimistic-combined'
-    const pendingId    = 'pending:abc-123'
+    const pendingId = 'pending:abc-123'
 
     const pendingNode: CloudNode = {
-      id: pendingId, type: 'ec2', label: 'Creating',
-      status: 'creating', region: 'us-east-1', metadata: {},
+      id: pendingId,
+      type: 'ec2',
+      label: 'Creating',
+      status: 'creating',
+      region: 'us-east-1',
+      metadata: {}
     }
 
     useCloudStore.getState().addOptimisticNode(makeOptimisticNode(optimisticId))
@@ -126,8 +134,12 @@ describe('optimistic node store operations', () => {
     expect(useCloudStore.getState().nodes).toHaveLength(1)
 
     const realNode: CloudNode = {
-      id: 'i-0abc1234', type: 'ec2', label: 'New EC2',
-      status: 'running', region: 'us-east-1', metadata: {},
+      id: 'i-0abc1234',
+      type: 'ec2',
+      label: 'New EC2',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: {}
     }
     useCloudStore.getState().applyDelta({ added: [realNode], changed: [], removed: [optimisticId] })
 

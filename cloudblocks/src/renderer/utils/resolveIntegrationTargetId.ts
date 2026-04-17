@@ -7,33 +7,38 @@ import type { CloudNode } from '../types/cloud'
  */
 export function resolveIntegrationTargetId(nodes: CloudNode[], targetId: string): string {
   // Already a node ID — fast path
-  if (nodes.some(n => n.id === targetId)) return targetId
+  if (nodes.some((n) => n.id === targetId)) return targetId
 
   // Match against ALB dnsName
-  const albMatch = nodes.find(n => n.type === 'alb' && n.metadata.dnsName === targetId)
+  const albMatch = nodes.find((n) => n.type === 'alb' && n.metadata.dnsName === targetId)
   if (albMatch) return albMatch.id
 
   // Match against APIGW endpoint hostname
-  const apigwMatch = nodes.find(n => {
+  const apigwMatch = nodes.find((n) => {
     if (n.type !== 'apigw') return false
     const endpoint = n.metadata.endpoint as string | undefined
     if (!endpoint) return false
     try {
-      return new URL(endpoint.startsWith('http') ? endpoint : `https://${endpoint}`).hostname === targetId
-    } catch { return false }
+      return (
+        new URL(endpoint.startsWith('http') ? endpoint : `https://${endpoint}`).hostname ===
+        targetId
+      )
+    } catch {
+      return false
+    }
   })
   if (apigwMatch) return apigwMatch.id
 
   // Match against CloudFront domain name (e.g. d1234.cloudfront.net)
-  const cfMatch = nodes.find(n => n.type === 'cloudfront' && n.metadata.domainName === targetId)
+  const cfMatch = nodes.find((n) => n.type === 'cloudfront' && n.metadata.domainName === targetId)
   if (cfMatch) return cfMatch.id
 
   // Match against RDS endpoint hostname (metadata.endpoint)
-  const rdsMatch = nodes.find(n => n.type === 'rds' && n.metadata.endpoint === targetId)
+  const rdsMatch = nodes.find((n) => n.type === 'rds' && n.metadata.endpoint === targetId)
   if (rdsMatch) return rdsMatch.id
 
   // Match against ECR repo URI — exact match or URI-with-tag/digest stripped
-  const ecrMatch = nodes.find(n => {
+  const ecrMatch = nodes.find((n) => {
     if (n.type !== 'ecr-repo') return false
     const uri = n.metadata.uri as string | undefined
     if (!uri) return false
@@ -42,7 +47,7 @@ export function resolveIntegrationTargetId(nodes: CloudNode[], targetId: string)
   if (ecrMatch) return ecrMatch.id
 
   // Match against OpenSearch endpoint hostname
-  const osMatch = nodes.find(n => {
+  const osMatch = nodes.find((n) => {
     if (n.type !== 'opensearch') return false
     const ep = n.metadata.endpoint as string | undefined
     if (!ep) return false
@@ -52,7 +57,7 @@ export function resolveIntegrationTargetId(nodes: CloudNode[], targetId: string)
   if (osMatch) return osMatch.id
 
   // Match ALB by target group ARN (ECS services → ALB via target group)
-  const albByTgMatch = nodes.find(n => {
+  const albByTgMatch = nodes.find((n) => {
     if (n.type !== 'alb') return false
     const tgArns = n.metadata.targetGroupArns as string[] | undefined
     return tgArns?.includes(targetId) ?? false
@@ -60,7 +65,7 @@ export function resolveIntegrationTargetId(nodes: CloudNode[], targetId: string)
   if (albByTgMatch) return albByTgMatch.id
 
   // Match against ElastiCache primary endpoint hostname (*.cache.amazonaws.com)
-  const ecMatch = nodes.find(n => {
+  const ecMatch = nodes.find((n) => {
     if (n.type !== 'elasticache') return false
     const ep = n.metadata.endpoint as string | undefined
     if (!ep) return false

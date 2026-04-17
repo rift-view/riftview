@@ -9,7 +9,7 @@ const TYPE_LABELS: Record<string, string> = {
   lambda: 'Lambda',
   alb: 'ALB',
   'security-group': 'Security Group',
-  igw: 'IGW',
+  igw: 'IGW'
 }
 
 interface SidebarFilterDialogProps {
@@ -19,7 +19,12 @@ interface SidebarFilterDialogProps {
   onConfirm: () => void
 }
 
-export default function SidebarFilterDialog({ type, count, onClose, onConfirm }: SidebarFilterDialogProps): React.JSX.Element {
+export default function SidebarFilterDialog({
+  type,
+  count,
+  onClose,
+  onConfirm
+}: SidebarFilterDialogProps): React.JSX.Element {
   const label = TYPE_LABELS[type] ?? type.toUpperCase()
 
   const overlay: React.CSSProperties = {
@@ -29,7 +34,7 @@ export default function SidebarFilterDialog({ type, count, onClose, onConfirm }:
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 200,
+    zIndex: 200
   }
 
   const dialog: React.CSSProperties = {
@@ -38,18 +43,24 @@ export default function SidebarFilterDialog({ type, count, onClose, onConfirm }:
     borderRadius: 8,
     padding: 20,
     width: 300,
-    fontFamily: 'monospace',
+    fontFamily: 'monospace'
   }
 
   return (
     <div
       style={overlay}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-      onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
       tabIndex={-1}
     >
       <div style={dialog}>
-        <div style={{ color: 'var(--cb-accent)', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>
+        <div
+          style={{ color: 'var(--cb-accent)', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}
+        >
           Filter to [{label}] only?
         </div>
         <div style={{ color: 'var(--cb-text-secondary)', fontSize: 10, marginBottom: 16 }}>
@@ -66,7 +77,7 @@ export default function SidebarFilterDialog({ type, count, onClose, onConfirm }:
               color: 'var(--cb-text-muted)',
               fontFamily: 'monospace',
               fontSize: 11,
-              cursor: 'pointer',
+              cursor: 'pointer'
             }}
           >
             Cancel
@@ -83,7 +94,7 @@ export default function SidebarFilterDialog({ type, count, onClose, onConfirm }:
               fontFamily: 'monospace',
               fontSize: 11,
               fontWeight: 'bold',
-              cursor: 'pointer',
+              cursor: 'pointer'
             }}
           >
             Apply Filter
