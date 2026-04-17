@@ -6,6 +6,7 @@ import { createClients } from './client'
 import type { CloudNode, ScanDelta } from '../../renderer/types/cloud'
 import { describeKeyPairs } from './services/ec2'
 import { pluginRegistry } from '../plugin/index'
+import { markStandaloneNodes } from './markStandalone'
 
 // --- Per-node change history ---
 interface FieldChange { field: string; before: string; after: string }
@@ -130,6 +131,7 @@ export class ResourceScanner {
     for (const n of freshNodes) currentMap.set(n.id, n)
     for (const id of delta.removed) currentMap.delete(id)
     this.currentNodes = Array.from(currentMap.values())
+    markStandaloneNodes(this.currentNodes)
 
     // Build updated error list: remove stale entry for this service, add new ones
     const updatedErrors = [
@@ -168,6 +170,8 @@ export class ResourceScanner {
 
       const nextNodes  = regionResults.flatMap((r) => r.nodes)
       const scanErrors = regionResults.flatMap((r) => r.errors)
+
+      markStandaloneNodes(nextNodes)
 
       const delta = computeDelta(this.currentNodes, nextNodes)
 
