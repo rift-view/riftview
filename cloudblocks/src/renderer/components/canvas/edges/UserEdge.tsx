@@ -26,7 +26,8 @@ export default function UserEdge({
   sourcePosition,
   targetPosition,
   selected,
-  data
+  data,
+  style: edgeStyle
 }: EdgeProps): React.JSX.Element {
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
@@ -79,7 +80,13 @@ export default function UserEdge({
       <BaseEdge
         id={id}
         path={edgePath}
-        style={{ stroke: color, strokeWidth: selected ? 2.5 : 1.5, opacity: selected ? 1 : 0.8 }}
+        style={{
+          stroke: color,
+          strokeWidth: selected ? 2.5 : 1.5,
+          opacity: selected ? 1 : 0.8,
+          // Caller-provided style overrides (blast radius dim/highlight, etc.)
+          ...(edgeStyle ?? {})
+        }}
       />
       {label && !selected && (
         <EdgeLabelRenderer>
