@@ -70,6 +70,7 @@ interface UIState {
   keyboardHelpOpen:       boolean
   terminalSessionId:      string | null
   terminalNodeId:         string | null
+  savedViewport:          { x: number; y: number; zoom: number } | null
 
   setView:              (view: ViewKey) => void
   selectNode:           (id: string | null) => void
@@ -124,6 +125,7 @@ interface UIState {
   setKeyboardHelpOpen:    (open: boolean) => void
   openTerminal:           (nodeId: string, sessionId: string) => void
   closeTerminalPane:      () => void
+  setSavedViewport:       (vp: { x: number; y: number; zoom: number } | null) => void
   removeCustomEdge:       (id: string) => void
   updateCustomEdgeLabel:  (id: string, label: string) => void
   updateCustomEdgeColor:  (id: string, color: CustomEdge['color']) => void
@@ -171,6 +173,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   keyboardHelpOpen:     false,
   terminalSessionId:    null,
   terminalNodeId:       null,
+  savedViewport:        null,
 
   setView:             (view) => set({ view }),
   selectNode:          (id)   => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
@@ -340,4 +343,5 @@ export const useUIStore = create<UIState>((set, get) => ({
   setKeyboardHelpOpen: (open) => set({ keyboardHelpOpen: open }),
   openTerminal: (nodeId, sessionId) => set({ terminalNodeId: nodeId, terminalSessionId: sessionId }),
   closeTerminalPane: () => set({ terminalNodeId: null, terminalSessionId: null }),
+  setSavedViewport: (vp) => set({ savedViewport: vp }),
 }))

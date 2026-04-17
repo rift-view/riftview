@@ -19,6 +19,7 @@ import UserEdge from './edges/UserEdge'
 import IntegrationLegend from './IntegrationLegend'
 import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
 import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../utils/filterToHide'
+import { buildBlastRadius, hopRingStyle, directionSymbol } from '../../utils/blastRadius'
 
 const SNAP_GRID_SIZE = 20
 
@@ -189,7 +190,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
   const activeFilters      = useUIStore((s) => s.activeFilters)
   const clearFilters       = useUIStore((s) => s.clearFilters)
-  const { screenToFlowPosition, fitView } = useReactFlow()
+  const { screenToFlowPosition, fitView, getViewport, setViewport } = useReactFlow()
   const graphPositions  = useUIStore((s) => s.nodePositions.graph)
   const setNodePosition = useUIStore((s) => s.setNodePosition)
   const { onSave: onStickyNotesSave, onDelete: onStickyNoteDelete } = useStickyNoteCallbacks()
@@ -199,6 +200,8 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   const setBlastRadiusId = useUIStore((s) => s.setBlastRadiusId)
   const pathTraceId      = useUIStore((s) => s.pathTraceId)
   const setPathTraceId   = useUIStore((s) => s.setPathTraceId)
+  const savedViewport    = useUIStore((s) => s.savedViewport)
+  const setSavedViewport = useUIStore((s) => s.setSavedViewport)
 
   // Path trace animation state (local, transient)
   const [pathTraceNodes, setPathTraceNodes] = useState<string[]>([])
@@ -290,19 +293,22 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   }, [visibleNodes, selectedId, activeFilters.length, selectNodeFn])
 
   // ── Blast radius ────────────────────────────────────────────────────────────
-  const blastRadiusSet = useMemo((): Set<string> | null => {
-    if (!blastRadiusId) return null
-    const ids = new Set([blastRadiusId])
-    for (const n of allNodes) {
-      for (const { targetId } of (n.integrations ?? [])) {
-        if (targetId === blastRadiusId || n.id === blastRadiusId) {
-          ids.add(n.id)
-          ids.add(targetId)
-        }
-      }
+  const blastRadius = useMemo(
+    () => blastRadiusId ? buildBlastRadius(allNodes, blastRadiusId) : null,
+    [blastRadiusId, allNodes],
+  )
+
+  // ── Blast radius fit-view on activation / restore on deactivation ──────────
+  useEffect(() => {
+    if (blastRadiusId && blastRadius) {
+      setSavedViewport(getViewport())
+      const memberIds = [...blastRadius.members.keys()]
+      fitView({ nodes: memberIds.map((id) => ({ id })), duration: 300, padding: 0.3 })
+    } else if (!blastRadiusId && savedViewport) {
+      setViewport(savedViewport, { duration: 300 })
+      setSavedViewport(null)
     }
-    return ids
-  }, [blastRadiusId, allNodes])
+  }, [blastRadiusId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Path trace ──────────────────────────────────────────────────────────────
   const INTERNET_SOURCE_TYPES_GV = new Set(['igw', 'cloudfront', 'apigw'])
@@ -548,13 +554,24 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
   // Blast radius / path trace opacity overlay
   const displayNodes: Node[] = useMemo(() => {
-    if (!blastRadiusSet && !pathTraceId) return flowNodes
+    if (!blastRadius && !pathTraceId) return flowNodes
     return flowNodes.map((n) => {
       if (OPACITY_CONTAINER_TYPES.has(n.type ?? '')) return n
       let opacity = 1
       let boxShadow: string | undefined
-      if (blastRadiusSet) {
-        opacity = blastRadiusSet.has(n.id) ? 1 : 0.2
+      let blastInfo: { hop: number; direction: string; edgeTypes: string[] } | undefined
+      let pointerEvents: React.CSSProperties['pointerEvents'] | undefined
+
+      if (blastRadius) {
+        const member = blastRadius.members.get(n.id)
+        if (member) {
+          opacity   = 1
+          boxShadow = hopRingStyle(member.hopDistance)
+          blastInfo = { hop: member.hopDistance, direction: member.direction, edgeTypes: member.edgeTypes }
+        } else {
+          opacity       = 0
+          pointerEvents = 'none'
+        }
       } else if (pathTraceId) {
         if (pathTraceRevealedSet.has(n.id)) {
           opacity   = 1
@@ -563,12 +580,23 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           opacity = 0.15
         }
       }
-      return { ...n, style: { ...(n.style ?? {}), opacity, transition: 'opacity 0.15s ease', ...(boxShadow ? { boxShadow } : {}) } }
-    })
-  }, [flowNodes, blastRadiusSet, pathTraceId, pathTraceRevealedSet])
 
-  const pathSourceNode = pathTraceNodes.length > 0 ? allNodes.find((n) => n.id === pathTraceNodes[0]) : null
-  const pathTargetNode = pathTraceId ? allNodes.find((n) => n.id === pathTraceId) : null
+      return {
+        ...n,
+        style: {
+          ...(n.style ?? {}),
+          opacity,
+          transition:  'opacity 0.15s ease',
+          ...(boxShadow    ? { boxShadow }    : {}),
+          ...(pointerEvents ? { pointerEvents } : {}),
+        },
+        data: blastInfo ? { ...(n.data as object), blastInfo } : n.data,
+      }
+    })
+  }, [flowNodes, blastRadius, pathTraceId, pathTraceRevealedSet])
+
+  const pathSourceNode = pathTraceNodes.length > 0  ? allNodes.find((n) => n.id === pathTraceNodes[0]) : null
+  const pathTargetNode = pathTraceId   ? allNodes.find((n) => n.id === pathTraceId)   : null
   const blastNode      = blastRadiusId ? allNodes.find((n) => n.id === blastRadiusId) : null
 
   return (
@@ -587,13 +615,38 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
             flexShrink:   0,
           }}
         >
-          {blastRadiusId && (
-            <span
-              style={{ color: '#f59e0b', cursor: 'pointer' }}
-              onClick={() => setBlastRadiusId(null)}
-              title="Clear blast radius"
-            >
-              BLAST RADIUS · {blastNode?.label ?? blastRadiusId} ✕
+          {blastRadiusId && blastRadius && (
+            <span style={{ color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span
+                style={{ cursor: 'pointer' }}
+                onClick={() => setBlastRadiusId(null)}
+                title="Clear blast radius"
+              >
+                BLAST RADIUS
+                {' · '}
+                {blastNode?.label ?? blastRadiusId}
+                {' · '}
+                {blastRadius.members.size} node{blastRadius.members.size !== 1 ? 's' : ''}
+                {' · '}
+                {blastRadius.upstreamCount > 0 && <span>↑{blastRadius.upstreamCount} </span>}
+                {blastRadius.downstreamCount > 0 && <span>↓{blastRadius.downstreamCount} </span>}
+                {' ✕'}
+              </span>
+              <span
+                style={{ cursor: 'pointer', opacity: 0.8 }}
+                title="Copy blast radius to clipboard"
+                onClick={() => {
+                  const lines = [...blastRadius.members.entries()]
+                    .sort((a, b) => a[1].hopDistance - b[1].hopDistance)
+                    .map(([id, info]) => {
+                      const node = allNodes.find((n) => n.id === id)
+                      return `${directionSymbol(info.direction)} [${info.hopDistance}] ${node?.label ?? id} (${node?.type ?? ''})`
+                    })
+                  void navigator.clipboard.writeText(`Blast radius: ${blastRadiusId}\n\n${lines.join('\n')}`)
+                }}
+              >
+                📋
+              </span>
             </span>
           )}
           {pathTraceId && (
