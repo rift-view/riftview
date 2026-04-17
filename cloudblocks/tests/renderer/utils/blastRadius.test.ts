@@ -82,6 +82,59 @@ describe('buildBlastRadius', () => {
     expect(result.members.get('C')?.direction).toBe('both')
   })
 
+  it('resolves DNS-name targetIds (ALB case) to real node IDs in member set', () => {
+    // apigw integrates with ALB via ALB's dnsName string, not the node id.
+    // buildBlastRadius must resolve so members can be matched against edge IDs.
+    const apigw: CloudNode = {
+      id: 'apigw-1',
+      type: 'apigw',
+      label: 'api',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: {},
+      integrations: [{ targetId: 'my-alb.us-east-1.elb.amazonaws.com', edgeType: 'trigger' }],
+    }
+    const alb: CloudNode = {
+      id: 'alb-1',
+      type: 'alb',
+      label: 'alb',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { dnsName: 'my-alb.us-east-1.elb.amazonaws.com' },
+    }
+    const result = buildBlastRadius([apigw, alb], 'apigw-1')
+    // Member set must contain resolved node id, NOT the raw DNS name
+    expect(result.members.has('alb-1')).toBe(true)
+    expect(result.members.has('my-alb.us-east-1.elb.amazonaws.com')).toBe(false)
+    expect(result.members.get('alb-1')?.direction).toBe('downstream')
+  })
+
+  it('resolves targetIds on backward BFS too (upstream by resolved id)', () => {
+    const lambda: CloudNode = {
+      id: 'lambda-1',
+      type: 'lambda',
+      label: 'fn',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: {},
+      integrations: [{ targetId: 'some-queue.sqs.amazonaws.com', edgeType: 'trigger' }],
+    }
+    // SQS node ID is different from the queue endpoint — simulate via dnsName-style
+    // resolver (not real, but proves the pathway). Use rds trick with endpoint.
+    const rds: CloudNode = {
+      id: 'rds-1',
+      type: 'rds',
+      label: 'db',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { endpoint: 'some-queue.sqs.amazonaws.com' },
+    }
+    // Click rds-1 — backward BFS should find lambda via resolved id
+    const result = buildBlastRadius([lambda, rds], 'rds-1')
+    expect(result.members.has('lambda-1')).toBe(true)
+    expect(result.members.get('lambda-1')?.direction).toBe('upstream')
+  })
+
   it('upstreamCount and downstreamCount are correct', () => {
     // X→A (upstream), A→Y (downstream), A→Z (downstream)
     const nodes = [
