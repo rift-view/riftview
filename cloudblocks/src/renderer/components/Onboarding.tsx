@@ -2,7 +2,7 @@ export function Onboarding(): React.JSX.Element {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-4 text-center" style={{ fontFamily: 'monospace' }}>
       <div className="text-3xl font-bold tracking-tighter" style={{ color: 'var(--cb-accent)' }}>TERMINUS</div>
-      <p className="text-sm font-semibold" style={{ color: 'var(--cb-text-primary)' }}>The incident diagnostic layer AWS doesn't have.</p>
+      <p className="text-sm font-semibold" style={{ color: 'var(--cb-text-primary)' }}>The incident diagnostic layer AWS doesn&apos;t have.</p>
       <p className="text-[11px] max-w-sm" style={{ color: 'var(--cb-text-muted)', lineHeight: 1.6 }}>
         Connect your AWS account to see your infrastructure as a live,
         connected graph — so you understand blast radius before the 3am page,

@@ -6,21 +6,23 @@ import { useUIStore } from '../../../src/renderer/store/ui'
 // ---- xterm mocks -----------------------------------------------------------
 // vi.mock is hoisted — factory must not reference variables from outer scope
 
+/* eslint-disable @typescript-eslint/no-empty-function */
 vi.mock('@xterm/xterm', () => ({
   Terminal: class Terminal {
-    loadAddon(): void {}
-    open(): void {}
-    onData(): void {}
-    write(): void {}
-    dispose(): void {}
+    loadAddon(): void { /* mock */ }
+    open(): void { /* mock */ }
+    onData(): void { /* mock */ }
+    write(): void { /* mock */ }
+    dispose(): void { /* mock */ }
   },
 }))
 
 vi.mock('@xterm/addon-fit', () => ({
   FitAddon: class FitAddon {
-    fit(): void {}
+    fit(): void { /* mock */ }
   },
 }))
+/* eslint-enable @typescript-eslint/no-empty-function */
 
 // ---- Window.terminus mock --------------------------------------------------
 

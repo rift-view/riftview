@@ -47,7 +47,7 @@ function makeNode(type: CloudNode['type'], id = `id-${type}`): CloudNode {
   return { id, type, label: type, status: 'running', region: 'us-east-1', metadata: {} }
 }
 
-const noop = () => {}
+const noop = (): void => { /* noop */ }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
