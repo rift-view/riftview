@@ -16,7 +16,9 @@ describe('demoMode', () => {
     })
 
     it('redact is a no-op', () => {
-      const input = 'arn:aws:iam::123456789012:user/julius AKIAIOSFODNN7EXAMPLE'
+      // Fake keys: structurally match the regex (AKIA + 16 chars) but are
+      // obviously placeholders so GitHub secret-scanning doesn't flag them.
+      const input = 'arn:aws:iam::123456789012:user/julius AKIAZZ1111ZZ2222ZZ33'
       expect(redact(input)).toBe(input)
     })
 
@@ -40,12 +42,13 @@ describe('demoMode', () => {
     })
 
     it('masks AKIA access keys', () => {
-      expect(redact('key=AKIAIOSFODNN7EXAMPLE value'))
+      // AKIAZZ1111ZZ2222ZZ33 = 20 chars, fits AKIA[0-9A-Z]{16} pattern.
+      expect(redact('key=AKIAZZ1111ZZ2222ZZ33 value'))
         .toBe('key=AKIA**************** value')
     })
 
     it('masks ASIA session keys', () => {
-      expect(redact('ASIAIOSFODNN7EXAMPLE'))
+      expect(redact('ASIAZZ1111ZZ2222ZZ33'))
         .toBe('ASIA****************')
     })
 
