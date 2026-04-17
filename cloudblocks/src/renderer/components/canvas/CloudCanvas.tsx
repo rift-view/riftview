@@ -355,25 +355,30 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
               background: 'rgba(15, 23, 42, 0.92)',
               border: '1px solid #334155',
               borderRadius: 8,
-              padding: '10px 16px',
+              padding: '10px 16px 10px 16px',
               color: '#94a3b8',
               fontSize: 12,
               textAlign: 'center',
-              pointerEvents: 'none',
+              pointerEvents: 'auto',
+              cursor: 'pointer',
               zIndex: 20,
               opacity: hintOpacity,
               transition: 'opacity 0.5s',
               whiteSpace: 'nowrap',
               fontFamily: 'monospace'
             }}
+            title="Click to dismiss"
           >
+            <div style={{ color: '#e2e8f0', marginBottom: 4, fontWeight: 600 }}>
+              Found {nodes.length} resource{nodes.length === 1 ? '' : 's'}
+            </div>
             <div>
               <span style={{ color: '#f59e0b' }}>⬤</span>
-              {' Click any node'}
+              {' Click any node to see its blast radius'}
             </div>
             <div>
               <span style={{ color: '#60a5fa' }}>⇧</span>
-              {' Shift + click to trace path'}
+              {' Shift + click to trace a path'}
             </div>
           </div>
         )}
