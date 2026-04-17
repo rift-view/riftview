@@ -58,7 +58,9 @@ export default function IntegrationEdge({
   targetY,
   sourcePosition,
   targetPosition,
-  data
+  data,
+  style: edgeStyle,
+  animated
 }: EdgeProps<IntegrationEdgeType>): React.JSX.Element {
   useEffect(() => {
     ensureStyle()
@@ -103,9 +105,15 @@ export default function IntegrationEdge({
             EDGE_TYPE_STYLES[edgeType].strokeDasharray === 'none'
               ? undefined
               : EDGE_TYPE_STYLES[edgeType].strokeDasharray,
-          animation: EDGE_TYPE_STYLES[edgeType].animated
-            ? `dash-flow ${duration} linear infinite`
-            : undefined
+          animation:
+            animated === false
+              ? undefined
+              : EDGE_TYPE_STYLES[edgeType].animated
+                ? `dash-flow ${duration} linear infinite`
+                : undefined,
+          // Merge caller-provided style LAST so it can override (blast radius
+          // dim/highlight, path trace, etc.)
+          ...(edgeStyle ?? {})
         }}
       />
       <EdgeLabelRenderer>
