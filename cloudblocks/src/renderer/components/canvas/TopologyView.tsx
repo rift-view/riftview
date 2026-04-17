@@ -282,6 +282,7 @@ function buildFlowNodes(
       type: 'vpc',
       position: { x: vpcX, y: vpcY },
       style: { width: vpcW, height: effectiveVpcH },
+      dragHandle: '.cb-zone-drag-handle',
       data: {
         label: vpc.label,
         cidr: vpc.metadata.cidr as string | undefined,
@@ -302,6 +303,7 @@ function buildFlowNodes(
           extent: 'parent',
           position: { x: subX, y: VPC_LABEL + VPC_PAD },
           style: { width: sw, height: sh },
+          dragHandle: '.cb-zone-drag-handle',
           data: {
             label: subnet.label,
             isPublic: subnet.metadata.mapPublicIp,
@@ -574,6 +576,7 @@ function buildFlowNodes(
         type: 'regionZone',
         position: { x: zoneX, y: zoneY },
         style: { width: zoneW, height: zoneH },
+        dragHandle: '.cb-zone-drag-handle',
         data: { label: region, color: regionColorMap[region] },
         selectable: true,
         draggable: true,

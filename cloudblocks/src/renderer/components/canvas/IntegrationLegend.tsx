@@ -88,6 +88,32 @@ export default function IntegrationLegend(): React.JSX.Element | null {
           <span style={{ color: 'var(--cb-text)' }}>{label}</span>
         </div>
       ))}
+
+      {/* Draw-your-own hint */}
+      <div
+        style={{
+          marginTop: 6,
+          paddingTop: 6,
+          borderTop: '1px dashed var(--cb-border)',
+          fontSize: 9,
+          color: 'var(--cb-text-muted)',
+          lineHeight: 1.4
+        }}
+      >
+        Hover a node, drag between the
+        <span
+          style={{
+            display: 'inline-block',
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: 'var(--cb-accent)',
+            margin: '0 3px',
+            verticalAlign: 'middle'
+          }}
+        />
+        handles to draw a custom edge.
+      </div>
     </div>
   )
 }

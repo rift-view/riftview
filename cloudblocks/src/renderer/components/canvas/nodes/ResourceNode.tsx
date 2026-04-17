@@ -320,10 +320,10 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
         />
       )}
 
-      <Handle id="top" type="target" position={Position.Top} style={{ opacity: 0 }} />
-      <Handle id="bottom" type="source" position={Position.Bottom} style={{ opacity: 0 }} />
-      <Handle id="left" type="target" position={Position.Left} style={{ opacity: 0 }} />
-      <Handle id="right" type="source" position={Position.Right} style={{ opacity: 0 }} />
+      <Handle id="top" type="target" position={Position.Top} className="cb-handle" />
+      <Handle id="bottom" type="source" position={Position.Bottom} className="cb-handle" />
+      <Handle id="left" type="target" position={Position.Left} className="cb-handle" />
+      <Handle id="right" type="source" position={Position.Right} className="cb-handle" />
 
       {/* Region accent strip — 3px left-edge color band for multi-region views */}
       {d.regionColor && (
