@@ -158,17 +158,19 @@ describe('applyBlastRadiusToEdges', () => {
     expect(applyBlastRadiusToEdges(edges, null)).toEqual(edges)
   })
 
-  it('highlights edges where both endpoints are members', () => {
+  it('highlights edges where both endpoints are members without overriding native color', () => {
     const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
     const blast = buildBlastRadius(nodes, 'A')
+    // Caller-provided style simulates an edge type's native color (e.g. indigo for 'serves')
     const edges: { source: string; target: string; style?: Record<string, unknown>; animated?: boolean }[] = [
-      { source: 'A', target: 'B' }
+      { source: 'A', target: 'B', style: { stroke: '#6366f1' } }
     ]
     const result = applyBlastRadiusToEdges(edges, blast)
-    expect(result[0].style?.stroke).toBe('#f59e0b')
+    // Native color preserved (no amber override)
+    expect(result[0].style?.stroke).toBe('#6366f1')
+    // Still thickened and brightened
     expect(result[0].style?.strokeWidth).toBe(2.5)
     expect(result[0].style?.opacity).toBe(1)
-    expect(result[0].animated).toBe(true)
   })
 
   it('dims edges where either endpoint is NOT a member', () => {

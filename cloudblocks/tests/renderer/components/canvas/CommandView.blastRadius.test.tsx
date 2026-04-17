@@ -196,17 +196,33 @@ describe('CommandView blast radius integration', () => {
     expect(nonMemberEdge?.style?.opacity).toBe(0)
   })
 
-  it('member edges get highlighted stroke when blast radius is active', () => {
+  it('member edges get thicker stroke + full opacity when blast radius is active', () => {
     render(<CommandView onNodeContextMenu={noop} />)
     useUIStore.setState({ blastRadiusId: 'A' })
     render(<CommandView onNodeContextMenu={noop} />)
 
     const lastCall = reactFlowEdgesSpy.mock.calls[reactFlowEdgesSpy.mock.calls.length - 1]
-    const edges = lastCall[0] as { source: string; target: string; style?: { stroke?: string; strokeWidth?: number } }[]
+    const edges = lastCall[0] as { source: string; target: string; style?: { strokeWidth?: number; opacity?: number } }[]
     const memberEdge = edges.find((e) => e.source === 'A' && e.target === 'B')
 
-    expect(memberEdge?.style?.stroke).toBe('#f59e0b')
+    // Native edge color (set by buildCommandEdges) is preserved — just
+    // brighter and thicker.
     expect(memberEdge?.style?.strokeWidth).toBeGreaterThan(1.5)
+    expect(memberEdge?.style?.opacity).toBe(1)
+  })
+
+  it('clearing blast radius restores default stroke width', () => {
+    render(<CommandView onNodeContextMenu={noop} />)
+    useUIStore.setState({ blastRadiusId: 'A' })
+    render(<CommandView onNodeContextMenu={noop} />)
+    useUIStore.setState({ blastRadiusId: null })
+    render(<CommandView onNodeContextMenu={noop} />)
+
+    const lastCall = reactFlowEdgesSpy.mock.calls[reactFlowEdgesSpy.mock.calls.length - 1]
+    const edges = lastCall[0] as { source: string; target: string; style?: { strokeWidth?: number } }[]
+    // All edges should have default strokeWidth (not the boosted 2.5)
+    const boosted = edges.filter((e) => e.style?.strokeWidth === 2.5)
+    expect(boosted).toHaveLength(0)
   })
 
   it('non-member edges have pointerEvents: none to block interaction', () => {
@@ -221,7 +237,7 @@ describe('CommandView blast radius integration', () => {
     expect(nonMemberEdge?.style?.pointerEvents).toBe('none')
   })
 
-  it('clearing blast radius restores normal edge styling', () => {
+  it('clearing blast radius restores normal edge opacity', () => {
     render(<CommandView onNodeContextMenu={noop} />)
     useUIStore.setState({ blastRadiusId: 'A' })
     render(<CommandView onNodeContextMenu={noop} />)
@@ -229,14 +245,10 @@ describe('CommandView blast radius integration', () => {
     render(<CommandView onNodeContextMenu={noop} />)
 
     const lastCall = reactFlowEdgesSpy.mock.calls[reactFlowEdgesSpy.mock.calls.length - 1]
-    const edges = lastCall[0] as { source: string; target: string; style?: { opacity?: number; stroke?: string } }[]
+    const edges = lastCall[0] as { source: string; target: string; style?: { opacity?: number } }[]
 
-    // No edges should have opacity 0 now
+    // No edges should be dimmed after clearing
     const dimmedEdges = edges.filter((e) => e.style?.opacity === 0)
     expect(dimmedEdges).toHaveLength(0)
-
-    // No edges should have the amber highlight stroke
-    const amberEdges = edges.filter((e) => e.style?.stroke === '#f59e0b')
-    expect(amberEdges).toHaveLength(0)
   })
 })
