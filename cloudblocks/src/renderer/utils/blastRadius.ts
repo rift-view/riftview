@@ -1,4 +1,5 @@
 import type { CloudNode } from '../types/cloud'
+import { resolveIntegrationTargetId } from './resolveIntegrationTargetId'
 
 export interface BlastRadiusNode {
   nodeId: string
@@ -17,12 +18,17 @@ export interface BlastRadiusResult {
 const HOP_LIMIT = 6
 
 export function buildBlastRadius(nodes: CloudNode[], sourceId: string): BlastRadiusResult {
-  // Build adjacency maps from node.integrations
+  // Build adjacency maps from node.integrations.
+  // Integration targetIds may be raw DNS names, ARNs, endpoint hostnames, etc.
+  // They must be resolved against the node list so BFS member IDs match
+  // the actual node IDs the canvas uses on edges.
   const outboundMap = new Map<string, { targetId: string; edgeType: string }[]>()
   const inboundMap = new Map<string, { sourceId: string; edgeType: string }[]>()
 
   for (const node of nodes) {
-    for (const { targetId, edgeType } of node.integrations ?? []) {
+    for (const { targetId: rawTargetId, edgeType } of node.integrations ?? []) {
+      const targetId = resolveIntegrationTargetId(nodes, rawTargetId)
+
       // outbound: node.id → target
       if (!outboundMap.has(node.id)) outboundMap.set(node.id, [])
       outboundMap.get(node.id)!.push({ targetId, edgeType })
