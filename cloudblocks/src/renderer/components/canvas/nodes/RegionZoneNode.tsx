@@ -32,7 +32,17 @@ export function RegionZoneNode({ id, data }: NodeProps): React.JSX.Element {
         minHeight={80}
         onResizeEnd={(_e, params) => d.onResizeEnd(id, params.width, params.height)}
       />
-      <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div
+        className="cb-zone-drag-handle"
+        style={{
+          padding: '5px 10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          cursor: 'move'
+        }}
+        title="Drag header to move zone"
+      >
         {d.color && (
           <span
             style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }}

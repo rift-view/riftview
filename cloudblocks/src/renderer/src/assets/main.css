@@ -219,3 +219,21 @@ code {
 .resource-node:hover .action-rail {
   opacity: 1;
 }
+
+/* Connection handles — hidden by default, visible on node hover so users
+   discover that they can drag between nodes to draw custom edges. */
+.cb-handle {
+  opacity: 0;
+  background: var(--cb-accent);
+  border: 1.5px solid var(--cb-bg-panel);
+  width: 8px;
+  height: 8px;
+  transition: opacity 150ms, transform 150ms;
+}
+.react-flow__node:hover .cb-handle {
+  opacity: 0.75;
+}
+.react-flow__node:hover .cb-handle:hover {
+  opacity: 1;
+  transform: scale(1.4);
+}
