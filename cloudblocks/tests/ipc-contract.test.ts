@@ -19,7 +19,8 @@ const PUSH_ONLY_CHANNELS = new Set<string>([
   IPC.CLI_DONE,
   IPC.UPDATE_AVAILABLE,
   IPC.PLUGIN_METADATA,
-  IPC.TERMINAL_OUTPUT
+  IPC.TERMINAL_OUTPUT,
+  IPC.SCAN_ERROR_DETAIL
 ])
 
 // Fire-and-forget channel registered with ipcMain.on, not ipcMain.handle

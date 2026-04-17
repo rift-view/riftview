@@ -7,6 +7,7 @@ import type { CloudNode, ScanDelta } from '../../renderer/types/cloud'
 import { describeKeyPairs } from './services/ec2'
 import { pluginRegistry } from '../plugin/index'
 import { markStandaloneNodes } from './markStandalone'
+import { classifyScanError } from './classifyScanError'
 
 // --- Per-node change history ---
 interface FieldChange {
@@ -242,9 +243,11 @@ export class ResourceScanner {
 
       // Signal successful connection on the first scan that completes
       this.window.webContents.send(IPC.CONN_STATUS, 'connected')
-    } catch {
+    } catch (err) {
+      const detail = classifyScanError(err)
       this.window.webContents.send(IPC.SCAN_STATUS, 'error')
       this.window.webContents.send(IPC.CONN_STATUS, 'error')
+      this.window.webContents.send(IPC.SCAN_ERROR_DETAIL, detail)
     }
   }
 }

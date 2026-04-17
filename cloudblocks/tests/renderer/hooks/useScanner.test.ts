@@ -12,6 +12,7 @@ beforeEach(() => {
     onScanDelta: vi.fn().mockReturnValue(vi.fn()),
     onScanStatus: vi.fn().mockReturnValue(vi.fn()),
     onConnStatus: vi.fn().mockReturnValue(vi.fn()),
+    onScanErrorDetail: vi.fn().mockReturnValue(vi.fn()),
     onScanKeypairs: vi.fn().mockReturnValue(vi.fn()),
     runCli: vi.fn().mockResolvedValue({ code: 0 }),
     cancelCli: vi.fn(),

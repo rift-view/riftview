@@ -7,6 +7,7 @@ interface Window {
     onScanDelta(cb: (delta: import('../renderer/types/cloud').ScanDelta) => void): () => void
     onScanStatus(cb: (status: string) => void): () => void
     onConnStatus(cb: (status: string) => void): () => void
+    onScanErrorDetail(cb: (detail: { kind: string; message: string; raw: string }) => void): () => void
     runCli(commands: string[][]): Promise<{ code: number }>
     cancelCli(): void
     onCliOutput(cb: (data: { line: string; stream: 'stdout' | 'stderr' }) => void): () => void
