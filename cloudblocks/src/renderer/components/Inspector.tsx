@@ -99,13 +99,13 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
     ...allAdvisories.filter((a) => a.severity === 'info'),
   ]
 
-  const severityDotColor = (severity: Advisory['severity']) => {
+  const severityDotColor = (severity: Advisory['severity']): string => {
     if (severity === 'critical') return '#ef4444'
     if (severity === 'warning')  return '#f59e0b'
     return '#60a5fa'
   }
 
-  const severityLabel = (severity: Advisory['severity']) => {
+  const severityLabel = (severity: Advisory['severity']): string => {
     if (severity === 'critical') return 'CRITICAL'
     if (severity === 'warning')  return 'WARNING'
     return 'INFO'
@@ -511,7 +511,6 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
 
   // Navigation between nodes that have advisories (OP_INTELLIGENCE)
   const advisoryNavigation = useMemo(() => {
-    if (!true) return null
     const withIssues = nodes.filter((n) => analyzeNode(n).length > 0)
     // Sort: nodes with any critical advisory first, then rest
     const sorted = [...withIssues].sort((a, b) => {
@@ -528,7 +527,11 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
   }, [selectedId])
 
   useEffect(() => {
-    if (!selectedId) { setNodeHistory([]); return }
+    if (!selectedId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setNodeHistory([])
+      return
+    }
     window.terminus?.getNodeHistory?.(selectedId).then(setNodeHistory).catch(() => { setNodeHistory([]) })
   }, [selectedId])
 
@@ -766,8 +769,8 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
             )
           })()}
 
-          {/* ADVISORIES section + next/prev navigation — flag-gated OP_INTELLIGENCE */}
-          {true && (() => {
+          {/* ADVISORIES section + next/prev navigation (always-on since OP_INTELLIGENCE launch) */}
+          {(() => {
             const rawAdvisories = analyzeNode(node as CloudNode)
             const severityOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 }
             const advisories: Advisory[] = [...rawAdvisories].sort(
@@ -851,8 +854,8 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
             )
           })()}
 
-          {/* Advisory next/prev navigation strip — flag-gated OP_INTELLIGENCE */}
-          {true && advisoryNavigation && advisoryNavigation.sorted.length > 1 && advisoryNavigation.currentIdx !== -1 && (() => {
+          {/* Advisory next/prev navigation strip (always-on since OP_INTELLIGENCE launch) */}
+          {advisoryNavigation && advisoryNavigation.sorted.length > 1 && advisoryNavigation.currentIdx !== -1 && (() => {
             const { sorted, currentIdx } = advisoryNavigation
             const prevNode = currentIdx > 0 ? sorted[currentIdx - 1] : null
             const nextNode = currentIdx < sorted.length - 1 ? sorted[currentIdx + 1] : null
