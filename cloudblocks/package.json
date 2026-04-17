@@ -1,6 +1,6 @@
 {
   "name": "terminus",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Visual AWS infrastructure management desktop app",
   "main": "./out/main/index.js",
   "author": "juliushamm",
@@ -18,7 +18,6 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "electron-vite build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
-    "dist:mac": "electron-builder --mac --dir",
     "build:linux": "electron-vite build && electron-builder --linux",
     "test": "vitest run",
     "test:watch": "vitest",
