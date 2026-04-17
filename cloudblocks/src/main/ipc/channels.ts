@@ -43,7 +43,8 @@ export const IPC = {
   TERMINAL_INPUT: 'terminal:input', // invoke(sessionId, data) → void
   TERMINAL_RESIZE: 'terminal:resize', // invoke(sessionId, cols, rows) → void
   TERMINAL_CLOSE: 'terminal:close', // invoke(sessionId) → void
-  TERMINAL_OUTPUT: 'terminal:output' // push: main → renderer
+  TERMINAL_OUTPUT: 'terminal:output', // push: main → renderer
+  SCAN_ERROR_DETAIL: 'scan:error-detail' // push: main → renderer — { message, kind } for actionable scan failure toasts
 } as const
 
 export type IpcChannel = (typeof IPC)[keyof typeof IPC]

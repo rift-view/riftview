@@ -22,8 +22,15 @@ export function useIpc(): void {
       setScanStatus(status as 'idle' | 'scanning' | 'error')
     })
     const unsubConn = window.terminus.onConnStatus((status) => {
-      if (status === 'error') setError('Connection failed. Check your AWS credentials and network.')
-      else setError(null)
+      if (status === 'error') {
+        // Keep the generic fallback; the specific detail arrives via SCAN_ERROR_DETAIL and overrides.
+        setError('Connection failed. Check your AWS credentials and network.')
+      } else {
+        setError(null)
+      }
+    })
+    const unsubErrorDetail = window.terminus.onScanErrorDetail((detail) => {
+      setError(detail.message)
     })
     const unsubKeypairs = window.terminus.onScanKeypairs((pairs: string[]) => {
       setKeyPairs(pairs)
@@ -32,6 +39,7 @@ export function useIpc(): void {
       unsubDelta()
       unsubStatus()
       unsubConn()
+      unsubErrorDetail()
       unsubKeypairs()
     }
   }, [applyDelta, setScanStatus, setError, setKeyPairs, setScanErrors])
