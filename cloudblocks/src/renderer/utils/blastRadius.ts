@@ -163,7 +163,10 @@ interface DimmableEdge {
  * Apply blast-radius styling to an edge list. Used by all three canvas views
  * (CommandView, GraphView, TopologyView) to avoid duplication.
  *
- * - Both endpoints are members → amber highlight (stroke #f59e0b, strokeWidth 2.5, opacity 1, animated)
+ * - Both endpoints are members → brighten + thicken while preserving the
+ *   edge's native color, dash pattern, and animation (triggers stay amber
+ *   dashed-animated, subscriptions stay teal, serves/origin stays solid
+ *   indigo, user-drawn edges keep their user-chosen color).
  * - Either endpoint is NOT a member → dimmed (opacity 0, pointerEvents none)
  * - blastRadius null → edges returned unchanged
  */
@@ -176,12 +179,13 @@ export function applyBlastRadiusToEdges<T extends DimmableEdge>(
     const srcMember = blastRadius.members.has(e.source)
     const tgtMember = blastRadius.members.has(e.target)
     if (srcMember && tgtMember) {
+      // Preserve edge-type-specific styling (color, dash, animation). Only
+      // bump stroke width and force full opacity so the member path stands
+      // out against the dimmed background.
       return {
         ...e,
-        animated: true,
         style: {
           ...(e.style ?? {}),
-          stroke:      '#f59e0b',
           strokeWidth: 2.5,
           opacity:     1,
         },
