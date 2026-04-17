@@ -3,6 +3,9 @@
 Three Zustand stores cover the renderer. Each owns a strict slice — do not
 reach into the wrong store for convenience.
 
+For the IPC boundary catalogue (the other half of renderer architecture),
+see [`docs/IPC.md`](../../docs/IPC.md).
+
 ---
 
 ## 1. Store Ownership
