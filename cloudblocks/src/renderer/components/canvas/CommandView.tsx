@@ -21,7 +21,12 @@ import { ResourceNode } from './nodes/ResourceNode'
 import type { CloudNode, NodeType } from '../../types/cloud'
 import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
 import { buildCommandNodes, getTierForNode } from '../../utils/commandLayout'
-import { buildBlastRadius, hopRingStyle, directionSymbol } from '../../utils/blastRadius'
+import {
+  buildBlastRadius,
+  hopRingStyle,
+  directionSymbol,
+  applyBlastRadiusToEdges
+} from '../../utils/blastRadius'
 
 // ── Layout constants (local — only needed for TierLabelNode width) ────────────
 
@@ -334,8 +339,8 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
   ])
 
   const flowEdges = useMemo(
-    () => buildCommandEdges(nodes, showIntegrations),
-    [nodes, showIntegrations]
+    () => applyBlastRadiusToEdges(buildCommandEdges(nodes, showIntegrations), blastRadius),
+    [nodes, showIntegrations, blastRadius]
   )
 
   const onNodesChange = useCallback(

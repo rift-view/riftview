@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildBlastRadius } from '../../../src/renderer/utils/blastRadius'
+import { buildBlastRadius, applyBlastRadiusToEdges } from '../../../src/renderer/utils/blastRadius'
 import type { CloudNode } from '../../../src/renderer/types/cloud'
 
 function makeNode(
@@ -96,5 +96,66 @@ describe('buildBlastRadius', () => {
     const result = buildBlastRadius(nodes, 'A')
     expect(result.upstreamCount).toBe(1) // X
     expect(result.downstreamCount).toBe(2) // Y + Z
+  })
+})
+
+describe('applyBlastRadiusToEdges', () => {
+  it('returns edges unchanged when blastRadius is null', () => {
+    const edges = [{ source: 'A', target: 'B', style: { stroke: 'red' } }]
+    expect(applyBlastRadiusToEdges(edges, null)).toEqual(edges)
+  })
+
+  it('highlights edges where both endpoints are members', () => {
+    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
+    const blast = buildBlastRadius(nodes, 'A')
+    const edges: { source: string; target: string; style?: Record<string, unknown>; animated?: boolean }[] = [
+      { source: 'A', target: 'B' }
+    ]
+    const result = applyBlastRadiusToEdges(edges, blast)
+    expect(result[0].style?.stroke).toBe('#f59e0b')
+    expect(result[0].style?.strokeWidth).toBe(2.5)
+    expect(result[0].style?.opacity).toBe(1)
+    expect(result[0].animated).toBe(true)
+  })
+
+  it('dims edges where either endpoint is NOT a member', () => {
+    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
+    const blast = buildBlastRadius(nodes, 'A')
+    // C is not in the blast radius
+    const edges: { source: string; target: string; style?: Record<string, unknown>; animated?: boolean }[] = [
+      { source: 'C', target: 'D' }
+    ]
+    const result = applyBlastRadiusToEdges(edges, blast)
+    expect(result[0].style?.opacity).toBe(0)
+    expect(result[0].style?.pointerEvents).toBe('none')
+    expect(result[0].animated).toBe(false)
+  })
+
+  it('dims edges where only one endpoint is a member (boundary case)', () => {
+    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
+    const blast = buildBlastRadius(nodes, 'A')
+    // A is member, C is not
+    const edges: { source: string; target: string; style?: Record<string, unknown> }[] = [
+      { source: 'A', target: 'C' }
+    ]
+    const result = applyBlastRadiusToEdges(edges, blast)
+    expect(result[0].style?.opacity).toBe(0)
+  })
+
+  it('preserves other style properties on member edges', () => {
+    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
+    const blast = buildBlastRadius(nodes, 'A')
+    const edges = [{ source: 'A', target: 'B', style: { strokeDasharray: '4 2' } }]
+    const result = applyBlastRadiusToEdges(edges, blast)
+    expect(result[0].style?.strokeDasharray).toBe('4 2')
+  })
+
+  it('does not mutate the input edges', () => {
+    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
+    const blast = buildBlastRadius(nodes, 'A')
+    const edges = [{ source: 'A', target: 'B' }]
+    const original = JSON.stringify(edges)
+    applyBlastRadiusToEdges(edges, blast)
+    expect(JSON.stringify(edges)).toBe(original)
   })
 })

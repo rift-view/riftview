@@ -37,7 +37,12 @@ import UserEdge from './edges/UserEdge'
 import IntegrationLegend from './IntegrationLegend'
 import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
 import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../utils/filterToHide'
-import { buildBlastRadius, hopRingStyle, directionSymbol } from '../../utils/blastRadius'
+import {
+  buildBlastRadius,
+  hopRingStyle,
+  directionSymbol,
+  applyBlastRadiusToEdges
+} from '../../utils/blastRadius'
 
 const SNAP_GRID_SIZE = 20
 
@@ -628,8 +633,8 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       type: 'user',
       data: { isCustom: true as const, color: ce.color, label: ce.label }
     }))
-    return [...withOpacity, ...userEdges]
-  }, [visibleNodes, selectedId, showIntegrations, customEdges])
+    return applyBlastRadiusToEdges([...withOpacity, ...userEdges], blastRadius)
+  }, [visibleNodes, selectedId, showIntegrations, customEdges, blastRadius])
 
   // Blast radius / path trace opacity overlay
   const displayNodes: Node[] = useMemo(() => {

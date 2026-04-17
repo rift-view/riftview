@@ -15,13 +15,15 @@ import { useCloudStore } from '../../../../src/renderer/store/cloud'
 // ── ReactFlow mock that captures props ───────────────────────────────────────
 
 const reactFlowNodesSpy = vi.fn()
+const reactFlowEdgesSpy = vi.fn()
 const fitViewSpy = vi.fn()
 const getViewportSpy = vi.fn(() => ({ x: 10, y: 20, zoom: 1.5 }))
 const setViewportSpy = vi.fn()
 
 vi.mock('@xyflow/react', () => ({
-  ReactFlow: (props: { nodes: unknown[] }): React.JSX.Element => {
+  ReactFlow: (props: { nodes: unknown[]; edges: unknown[] }): React.JSX.Element => {
     reactFlowNodesSpy(props.nodes)
+    reactFlowEdgesSpy(props.edges)
     return <div data-testid="reactflow" />
   },
   Background: (): null => null,
@@ -82,17 +84,24 @@ const noop = (): void => {
 describe('CommandView blast radius integration', () => {
   beforeEach(() => {
     reactFlowNodesSpy.mockClear()
+    reactFlowEdgesSpy.mockClear()
     fitViewSpy.mockClear()
     getViewportSpy.mockClear()
     setViewportSpy.mockClear()
     useCloudStore.setState({
       nodes: [
         n('A', 'lambda', [{ targetId: 'B', edgeType: 'trigger' }]),
-        n('B', 'rds'),
-        n('C', 'ec2') // unrelated — should be hidden
+        n('B', 'rds', [{ targetId: 'D', edgeType: 'trigger' }]),
+        n('C', 'ec2', [{ targetId: 'D', edgeType: 'trigger' }]), // unrelated chain C→D
+        n('D', 'sqs')
       ]
     })
-    useUIStore.setState({ blastRadiusId: null, pathTraceId: null, savedViewport: null })
+    useUIStore.setState({
+      blastRadiusId: null,
+      pathTraceId: null,
+      savedViewport: null,
+      showIntegrations: true
+    })
   })
 
   afterEach(() => {
@@ -136,7 +145,8 @@ describe('CommandView blast radius integration', () => {
     const lastCall = fitViewSpy.mock.calls[fitViewSpy.mock.calls.length - 1]
     const arg = lastCall[0] as { nodes: { id: string }[]; duration?: number; padding?: number }
     const ids = arg.nodes.map((x) => x.id).sort()
-    expect(ids).toEqual(['A', 'B'])
+    // A → B → D reachable downstream; C is unrelated
+    expect(ids).toEqual(['A', 'B', 'D'])
   })
 
   it('activating blast radius saves prior viewport, clearing it restores', () => {
@@ -163,5 +173,70 @@ describe('CommandView blast radius integration', () => {
     const passedNodes = lastCall[0] as { id: string; style?: { pointerEvents?: string } }[]
     const cNode = passedNodes.find((node) => node.id === 'C')
     expect(cNode?.style?.pointerEvents).toBe('none')
+  })
+
+  // ── CX1-CX3: edge dimming regression ────────────────────────────────────────
+
+  it('dims non-member edges to opacity 0 when blast radius is active', () => {
+    render(<CommandView onNodeContextMenu={noop} />)
+    useUIStore.setState({ blastRadiusId: 'A' })
+    render(<CommandView onNodeContextMenu={noop} />)
+
+    const lastCall = reactFlowEdgesSpy.mock.calls[reactFlowEdgesSpy.mock.calls.length - 1]
+    const edges = lastCall[0] as { source: string; target: string; style?: { opacity?: number } }[]
+
+    // Member edge A→B should NOT be dimmed
+    const memberEdge = edges.find((e) => e.source === 'A' && e.target === 'B')
+    expect(memberEdge).toBeDefined()
+    expect(memberEdge?.style?.opacity).not.toBe(0)
+
+    // Non-member edge C→D should be dimmed to opacity 0
+    const nonMemberEdge = edges.find((e) => e.source === 'C' && e.target === 'D')
+    expect(nonMemberEdge).toBeDefined()
+    expect(nonMemberEdge?.style?.opacity).toBe(0)
+  })
+
+  it('member edges get highlighted stroke when blast radius is active', () => {
+    render(<CommandView onNodeContextMenu={noop} />)
+    useUIStore.setState({ blastRadiusId: 'A' })
+    render(<CommandView onNodeContextMenu={noop} />)
+
+    const lastCall = reactFlowEdgesSpy.mock.calls[reactFlowEdgesSpy.mock.calls.length - 1]
+    const edges = lastCall[0] as { source: string; target: string; style?: { stroke?: string; strokeWidth?: number } }[]
+    const memberEdge = edges.find((e) => e.source === 'A' && e.target === 'B')
+
+    expect(memberEdge?.style?.stroke).toBe('#f59e0b')
+    expect(memberEdge?.style?.strokeWidth).toBeGreaterThan(1.5)
+  })
+
+  it('non-member edges have pointerEvents: none to block interaction', () => {
+    render(<CommandView onNodeContextMenu={noop} />)
+    useUIStore.setState({ blastRadiusId: 'A' })
+    render(<CommandView onNodeContextMenu={noop} />)
+
+    const lastCall = reactFlowEdgesSpy.mock.calls[reactFlowEdgesSpy.mock.calls.length - 1]
+    const edges = lastCall[0] as { source: string; target: string; style?: { pointerEvents?: string } }[]
+    const nonMemberEdge = edges.find((e) => e.source === 'C' && e.target === 'D')
+
+    expect(nonMemberEdge?.style?.pointerEvents).toBe('none')
+  })
+
+  it('clearing blast radius restores normal edge styling', () => {
+    render(<CommandView onNodeContextMenu={noop} />)
+    useUIStore.setState({ blastRadiusId: 'A' })
+    render(<CommandView onNodeContextMenu={noop} />)
+    useUIStore.setState({ blastRadiusId: null })
+    render(<CommandView onNodeContextMenu={noop} />)
+
+    const lastCall = reactFlowEdgesSpy.mock.calls[reactFlowEdgesSpy.mock.calls.length - 1]
+    const edges = lastCall[0] as { source: string; target: string; style?: { opacity?: number; stroke?: string } }[]
+
+    // No edges should have opacity 0 now
+    const dimmedEdges = edges.filter((e) => e.style?.opacity === 0)
+    expect(dimmedEdges).toHaveLength(0)
+
+    // No edges should have the amber highlight stroke
+    const amberEdges = edges.filter((e) => e.style?.stroke === '#f59e0b')
+    expect(amberEdges).toHaveLength(0)
   })
 })
