@@ -102,6 +102,12 @@ const TYPE_LABEL = {
   'unknown':         '?',
 } satisfies Record<NodeType, string>
 
+interface BlastInfo {
+  hop:       number
+  direction: 'source' | 'upstream' | 'downstream' | 'both'
+  edgeTypes: string[]
+}
+
 interface ResourceNodeData {
   label:        string
   nodeType:     NodeType
@@ -116,6 +122,7 @@ interface ResourceNodeData {
   regionColor?: string  // multi-region accent strip on left edge
   subscribers?: string[]  // SNS only — subscriber node labels
   metadata?:    Record<string, unknown>  // raw node metadata for inline hint display
+  blastInfo?:   BlastInfo  // blast radius — hop distance + direction badge
 }
 
 function getNodeMeta(nodeType: NodeType, m: Record<string, unknown>): string | undefined {
@@ -159,7 +166,7 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
     const profile = useCloudStore.getState().profile
     const region  = d.region ?? useCloudStore.getState().region
 
-    function doFetch() {
+    function doFetch(): void {
       if (typeof window !== 'undefined' && window.terminus) {
         window.terminus
           .fetchMetrics({ nodeId: id, nodeType: d.nodeType, resourceId, region, profile })
@@ -306,6 +313,27 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
           }}
           title={d.annotation}
         />
+      )}
+
+      {/* Blast radius direction badge — top-right monospace symbol */}
+      {d.blastInfo && (
+        <span
+          style={{
+            position:      'absolute',
+            top:           2,
+            right:         d.annotation ? 14 : 4,
+            fontFamily:    'monospace',
+            fontSize:      8,
+            color:         'var(--cb-accent, #FF9900)',
+            pointerEvents: 'none',
+            lineHeight:    1,
+          }}
+          title={`hop ${d.blastInfo.hop} · ${d.blastInfo.direction}${d.blastInfo.edgeTypes.length > 0 ? ` · ${d.blastInfo.edgeTypes.join(', ')}` : ''}`}
+        >
+          {d.blastInfo.direction === 'source'     ? '●' :
+           d.blastInfo.direction === 'upstream'   ? '↑' :
+           d.blastInfo.direction === 'downstream' ? '↓' : '↕'}
+        </span>
       )}
 
       {/* Type label row */}
