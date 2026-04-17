@@ -17,8 +17,10 @@ export function EmptyCanvasState(): React.JSX.Element | null {
     const prev = prevStatusRef.current
     prevStatusRef.current = scanStatus
     if (scanStatus === 'scanning') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasScanned(false)
     } else if (prev === 'scanning' && scanStatus === 'idle') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasScanned(true)
     }
   }, [scanStatus])

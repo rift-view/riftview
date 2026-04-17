@@ -54,6 +54,7 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
     if (localStorage.getItem('terminus-hint-seen')) return
     // Show the hint (mark seen immediately so it never re-shows)
     localStorage.setItem('terminus-hint-seen', '1')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHintOpacity(1)
     setHintVisible(true)
     // Fade out after 4 seconds
