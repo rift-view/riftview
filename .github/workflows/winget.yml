@@ -1,0 +1,21 @@
+name: winget
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to submit (e.g. v0.1.0)
+        required: true
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: vedantmgoyal2009/winget-releaser@v2
+        with:
+          identifier: juliushamm.Terminus
+          installers-regex: '-setup\.exe$'
+          release-tag: ${{ inputs.tag || github.event.release.tag_name }}
+          token: ${{ secrets.WINGET_TOKEN }}
