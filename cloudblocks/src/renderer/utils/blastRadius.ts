@@ -138,3 +138,57 @@ export function directionSymbol(direction: BlastRadiusNode['direction']): string
   if (direction === 'downstream') return '↓'
   return '↕'
 }
+
+/**
+ * Minimal edge shape the dimmer operates on — matches React Flow's Edge type
+ * structurally without importing it (keeps this util free of @xyflow/react).
+ * `style` is typed loosely so both CSSProperties and React Flow's style
+ * objects assign cleanly.
+ */
+interface DimmableEdge {
+  source:    string
+  target:    string
+  animated?: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  style?:    any
+}
+
+/**
+ * Apply blast-radius styling to an edge list. Used by all three canvas views
+ * (CommandView, GraphView, TopologyView) to avoid duplication.
+ *
+ * - Both endpoints are members → amber highlight (stroke #f59e0b, strokeWidth 2.5, opacity 1, animated)
+ * - Either endpoint is NOT a member → dimmed (opacity 0, pointerEvents none)
+ * - blastRadius null → edges returned unchanged
+ */
+export function applyBlastRadiusToEdges<T extends DimmableEdge>(
+  edges:        T[],
+  blastRadius:  BlastRadiusResult | null,
+): T[] {
+  if (!blastRadius) return edges
+  return edges.map((e) => {
+    const srcMember = blastRadius.members.has(e.source)
+    const tgtMember = blastRadius.members.has(e.target)
+    if (srcMember && tgtMember) {
+      return {
+        ...e,
+        animated: true,
+        style: {
+          ...(e.style ?? {}),
+          stroke:      '#f59e0b',
+          strokeWidth: 2.5,
+          opacity:     1,
+        },
+      }
+    }
+    return {
+      ...e,
+      animated: false,
+      style: {
+        ...(e.style ?? {}),
+        opacity:       0,
+        pointerEvents: 'none' as const,
+      },
+    }
+  })
+}

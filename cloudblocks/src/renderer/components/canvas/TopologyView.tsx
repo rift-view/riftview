@@ -42,7 +42,12 @@ import IntegrationEdge from './edges/IntegrationEdge'
 import UserEdge from './edges/UserEdge'
 import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../utils/filterToHide'
 import IntegrationLegend from './IntegrationLegend'
-import { buildBlastRadius, hopRingStyle, directionSymbol } from '../../utils/blastRadius'
+import {
+  buildBlastRadius,
+  hopRingStyle,
+  directionSymbol,
+  applyBlastRadiusToEdges
+} from '../../utils/blastRadius'
 
 const SNAP_GRID_SIZE = 20
 
@@ -1262,8 +1267,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       type: 'user',
       data: { isCustom: true as const, color: ce.color, label: ce.label }
     }))
-    return [...withOpacity, ...userEdges]
-  }, [visibleNodes, selectedId, showIntegrations, customEdges])
+    return applyBlastRadiusToEdges([...withOpacity, ...userEdges], blastRadius)
+  }, [visibleNodes, selectedId, showIntegrations, customEdges, blastRadius])
 
   const pathSourceNode =
     pathTraceNodes.length > 0 ? allNodes.find((n) => n.id === pathTraceNodes[0]) : null
