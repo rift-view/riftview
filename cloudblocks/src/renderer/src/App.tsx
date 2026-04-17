@@ -24,6 +24,7 @@ import type { AwsProfile, CloudNode } from '../types/cloud'
 import { AboutModal } from '../components/AboutModal'
 import { SettingsModal } from '../components/SettingsModal'
 import { KeyboardHelp } from '../components/KeyboardHelp'
+import { KeyboardHelpButton } from '../components/KeyboardHelpButton'
 import { TerminalPane } from '../components/TerminalPane'
 import { useKeyboardNav } from '../hooks/useKeyboardNav'
 
@@ -276,6 +277,7 @@ export default function App(): React.JSX.Element | null {
       {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
       <KeyboardHelp />
+      <KeyboardHelpButton />
       <TerminalPane />
     </div>
   )
