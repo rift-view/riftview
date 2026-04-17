@@ -12,7 +12,14 @@ interface TfState {
   resources: TfStateResource[]
 }
 
-const SENSITIVE_KEYS = ['password', 'secret', 'token', 'key_pair', 'private_key', 'sensitive_values']
+const SENSITIVE_KEYS = [
+  'password',
+  'secret',
+  'token',
+  'key_pair',
+  'private_key',
+  'sensitive_values'
+]
 
 function sanitizeAttributes(attrs: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
@@ -24,18 +31,24 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
   const base = {
     status: 'imported' as NodeStatus,
     region: (attrs['region'] as string | undefined) ?? 'unknown',
-    metadata: attrs,
+    metadata: attrs
   }
 
   switch (type) {
     case 'aws_instance':
-      return { ...base, id: attrs['id'] as string, type: 'ec2', label: (attrs['id'] as string) ?? name }
+      return {
+        ...base,
+        id: attrs['id'] as string,
+        type: 'ec2',
+        label: (attrs['id'] as string) ?? name
+      }
     case 'aws_vpc':
       return {
         ...base,
         id: attrs['id'] as string,
         type: 'vpc',
-        label: ((attrs['tags'] as Record<string, string> | undefined)?.['Name']) ?? (attrs['id'] as string),
+        label:
+          (attrs['tags'] as Record<string, string> | undefined)?.['Name'] ?? (attrs['id'] as string)
       }
     case 'aws_subnet':
       return {
@@ -43,36 +56,63 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
         id: attrs['id'] as string,
         type: 'subnet',
         label: attrs['id'] as string,
-        parentId: attrs['vpc_id'] as string | undefined,
+        parentId: attrs['vpc_id'] as string | undefined
       }
     case 'aws_security_group':
-      return { ...base, id: attrs['id'] as string, type: 'security-group', label: (attrs['name'] as string) ?? name }
+      return {
+        ...base,
+        id: attrs['id'] as string,
+        type: 'security-group',
+        label: (attrs['name'] as string) ?? name
+      }
     case 'aws_s3_bucket':
       return { ...base, id: attrs['id'] as string, type: 's3', label: attrs['id'] as string }
     case 'aws_lambda_function':
-      return { ...base, id: attrs['function_name'] as string, type: 'lambda', label: attrs['function_name'] as string }
+      return {
+        ...base,
+        id: attrs['function_name'] as string,
+        type: 'lambda',
+        label: attrs['function_name'] as string
+      }
     case 'aws_db_instance':
       return { ...base, id: attrs['id'] as string, type: 'rds', label: attrs['id'] as string }
     case 'aws_lb':
     case 'aws_alb':
-      return { ...base, id: attrs['arn'] as string, type: 'alb', label: (attrs['name'] as string) ?? name }
+      return {
+        ...base,
+        id: attrs['arn'] as string,
+        type: 'alb',
+        label: (attrs['name'] as string) ?? name
+      }
     case 'aws_api_gateway_v2_api':
-      return { ...base, id: attrs['id'] as string, type: 'apigw', label: (attrs['name'] as string) ?? name }
+      return {
+        ...base,
+        id: attrs['id'] as string,
+        type: 'apigw',
+        label: (attrs['name'] as string) ?? name
+      }
     case 'aws_cloudfront_distribution':
-      return { ...base, id: attrs['id'] as string, type: 'cloudfront', label: (attrs['domain_name'] as string) ?? name }
+      return {
+        ...base,
+        id: attrs['id'] as string,
+        type: 'cloudfront',
+        label: (attrs['domain_name'] as string) ?? name
+      }
     case 'aws_internet_gateway':
       return {
         ...base,
         id: attrs['id'] as string,
         type: 'igw',
-        label: ((attrs['tags'] as Record<string, string> | undefined)?.['Name']) ?? (attrs['id'] as string),
+        label:
+          (attrs['tags'] as Record<string, string> | undefined)?.['Name'] ?? (attrs['id'] as string)
       }
     case 'aws_nat_gateway':
       return {
         ...base,
         id: attrs['id'] as string,
         type: 'nat-gateway',
-        label: ((attrs['tags'] as Record<string, string> | undefined)?.['Name']) ?? (attrs['id'] as string),
+        label:
+          (attrs['tags'] as Record<string, string> | undefined)?.['Name'] ?? (attrs['id'] as string)
       }
     case 'aws_sqs_queue':
       // Scanner enriches node ID from queue URL to queue ARN
@@ -80,21 +120,23 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
         ...base,
         id: attrs['arn'] as string,
         type: 'sqs',
-        label: ((attrs['url'] as string | undefined) ?? (attrs['arn'] as string)).split('/').pop() ?? (attrs['arn'] as string),
+        label:
+          ((attrs['url'] as string | undefined) ?? (attrs['arn'] as string)).split('/').pop() ??
+          (attrs['arn'] as string)
       }
     case 'aws_sns_topic':
       return {
         ...base,
         id: attrs['arn'] as string,
         type: 'sns',
-        label: (attrs['arn'] as string).split(':').pop() ?? (attrs['arn'] as string),
+        label: (attrs['arn'] as string).split(':').pop() ?? (attrs['arn'] as string)
       }
     case 'aws_dynamodb_table':
       return {
         ...base,
         id: attrs['id'] as string,
         type: 'dynamo',
-        label: attrs['id'] as string,
+        label: attrs['id'] as string
       }
     case 'aws_ssm_parameter':
       // Scanner uses ARN ?? Name as ID
@@ -102,14 +144,14 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
         ...base,
         id: (attrs['arn'] as string | undefined) ?? (attrs['name'] as string),
         type: 'ssm-param',
-        label: attrs['name'] as string,
+        label: attrs['name'] as string
       }
     case 'aws_secretsmanager_secret':
       return {
         ...base,
         id: attrs['arn'] as string,
         type: 'secret',
-        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string),
+        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string)
       }
     case 'aws_ecr_repository':
       // Scanner uses repositoryArn as ID
@@ -117,7 +159,7 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
         ...base,
         id: attrs['arn'] as string,
         type: 'ecr-repo',
-        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string),
+        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string)
       }
     case 'aws_route53_zone':
       // Scanner uses item.Id (e.g. /hostedzone/Z1234) as ID; TF state 'id' matches this
@@ -125,28 +167,28 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
         ...base,
         id: attrs['id'] as string,
         type: 'r53-zone',
-        label: (attrs['name'] as string | undefined) ?? (attrs['id'] as string),
+        label: (attrs['name'] as string | undefined) ?? (attrs['id'] as string)
       }
     case 'aws_sfn_state_machine':
       return {
         ...base,
         id: attrs['arn'] as string,
         type: 'sfn',
-        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string),
+        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string)
       }
     case 'aws_cloudwatch_event_bus':
       return {
         ...base,
         id: attrs['arn'] as string,
         type: 'eventbridge-bus',
-        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string),
+        label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string)
       }
     case 'aws_acm_certificate':
       return {
         ...base,
         id: attrs['arn'] as string,
         type: 'acm',
-        label: (attrs['domain_name'] as string | undefined) ?? (attrs['arn'] as string),
+        label: (attrs['domain_name'] as string | undefined) ?? (attrs['arn'] as string)
       }
     case 'aws_apigatewayv2_route':
       // Scanner ID is `${apiId}/routes/${routeId}`
@@ -154,7 +196,7 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
         ...base,
         id: `${attrs['api_id'] as string}/routes/${attrs['id'] as string}`,
         type: 'apigw-route',
-        label: (attrs['route_key'] as string | undefined) ?? (attrs['id'] as string),
+        label: (attrs['route_key'] as string | undefined) ?? (attrs['id'] as string)
       }
     default:
       return {
@@ -162,7 +204,7 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
         id: `tf-unknown-${type}-${name}`,
         type: 'unknown',
         label: `${type}.${name}`,
-        metadata: { ...attrs, unsupportedTfType: type },
+        metadata: { ...attrs, unsupportedTfType: type }
       }
   }
 }
@@ -209,7 +251,7 @@ export function parseTfStateModules(raw: string): TfModuleGroup[] {
     if (!r.type.startsWith('aws_')) continue
     // module.vpc.aws_vpc.main → top-level segment is "vpc"; no module field → "(root)"
     const moduleName = r.module
-      ? r.module.replace(/^module\./, '').split('.')[0] ?? '(root)'
+      ? (r.module.replace(/^module\./, '').split('.')[0] ?? '(root)')
       : '(root)'
 
     let group = groups.get(moduleName)
@@ -228,6 +270,6 @@ export function parseTfStateModules(raw: string): TfModuleGroup[] {
   return Array.from(groups.entries()).map(([name, g]) => ({
     name,
     resourceCount: g.resourceCount,
-    nodes: g.nodes,
+    nodes: g.nodes
   }))
 }

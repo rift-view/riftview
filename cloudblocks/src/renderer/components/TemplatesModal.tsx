@@ -46,7 +46,7 @@ resource "aws_route_table" "public" {
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public.id
-}`,
+}`
   },
   {
     id: 'web-server',
@@ -97,7 +97,7 @@ resource "aws_instance" "web" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.web.id]
   tags = { Name = "web-server" }
-}`,
+}`
   },
   {
     id: 'serverless-api',
@@ -170,7 +170,7 @@ resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.main.id
   name        = "$default"
   auto_deploy = true
-}`,
+}`
   },
   {
     id: 'static-site',
@@ -222,7 +222,7 @@ resource "aws_cloudfront_distribution" "site" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
-}`,
+}`
   },
   {
     id: 'container-app',
@@ -263,8 +263,8 @@ resource "aws_lambda_function" "app" {
   image_uri     = "\${aws_ecr_repository.app.repository_url}:latest"
   timeout       = 30
   memory_size   = 512
-}`,
-  },
+}`
+  }
 ]
 
 interface TemplatesModalProps {
@@ -274,14 +274,14 @@ interface TemplatesModalProps {
 type DeployState = 'idle' | 'deploying' | 'success' | 'error'
 
 export default function TemplatesModal({ onClose }: TemplatesModalProps): React.JSX.Element {
-  const [selected, setSelected]         = useState<string>(TEMPLATES[0].id)
-  const [copied, setCopied]             = useState(false)
-  const [deployState, setDeployState]   = useState<DeployState>('idle')
+  const [selected, setSelected] = useState<string>(TEMPLATES[0].id)
+  const [copied, setCopied] = useState(false)
+  const [deployState, setDeployState] = useState<DeployState>('idle')
   const [deployOutput, setDeployOutput] = useState<string>('')
 
   const profile = useCloudStore((s) => s.profile)
   const isLocal = !!profile.endpoint
-  const region  = profile.region ?? 'us-east-1'
+  const region = profile.region ?? 'us-east-1'
 
   const current = TEMPLATES.find((t) => t.id === selected) ?? TEMPLATES[0]
 
@@ -301,61 +301,104 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
   const handleDeploy = (): void => {
     setDeployState('deploying')
     setDeployOutput('')
-    void window.terminus.terraformDeploy(current.hcl, region, profile.endpoint).then((result) => {
-      if (result.status === 'not_found') {
+    void window.terminus
+      .terraformDeploy(current.hcl, region, profile.endpoint)
+      .then((result) => {
+        if (result.status === 'not_found') {
+          setDeployState('error')
+          setDeployOutput(
+            'Terraform not installed — install it from terraform.io and restart Terminus.'
+          )
+        } else if (result.status === 'error') {
+          setDeployState('error')
+          setDeployOutput(result.output)
+        } else {
+          setDeployState('success')
+          setDeployOutput(result.output)
+          void window.terminus.startScan()
+        }
+      })
+      .catch((err: unknown) => {
         setDeployState('error')
-        setDeployOutput('Terraform not installed — install it from terraform.io and restart Terminus.')
-      } else if (result.status === 'error') {
-        setDeployState('error')
-        setDeployOutput(result.output)
-      } else {
-        setDeployState('success')
-        setDeployOutput(result.output)
-        void window.terminus.startScan()
-      }
-    }).catch((err: unknown) => {
-      setDeployState('error')
-      setDeployOutput(err instanceof Error ? err.message : 'Deploy failed — check the app log.')
-    })
+        setDeployOutput(err instanceof Error ? err.message : 'Deploy failed — check the app log.')
+      })
   }
 
   const overlay: React.CSSProperties = {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200,
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 200
   }
   const modal: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)',
-    borderRadius: 8, width: 760, height: 520, display: 'flex', flexDirection: 'column',
-    fontFamily: 'monospace', color: 'var(--cb-text-primary)', overflow: 'hidden',
+    background: 'var(--cb-bg-panel)',
+    border: '1px solid var(--cb-border)',
+    borderRadius: 8,
+    width: 760,
+    height: 520,
+    display: 'flex',
+    flexDirection: 'column',
+    fontFamily: 'monospace',
+    color: 'var(--cb-text-primary)',
+    overflow: 'hidden'
   }
   const header: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '12px 16px', borderBottom: '1px solid var(--cb-border-strong)',
-    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 16px',
+    borderBottom: '1px solid var(--cb-border-strong)',
+    flexShrink: 0
   }
   const body: React.CSSProperties = {
-    display: 'flex', flex: 1, overflow: 'hidden',
+    display: 'flex',
+    flex: 1,
+    overflow: 'hidden'
   }
   const sidebar: React.CSSProperties = {
-    width: 200, borderRight: '1px solid var(--cb-border)', padding: '8px 0',
-    overflowY: 'auto', flexShrink: 0,
+    width: 200,
+    borderRight: '1px solid var(--cb-border)',
+    padding: '8px 0',
+    overflowY: 'auto',
+    flexShrink: 0
   }
   const preview: React.CSSProperties = {
-    flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden'
   }
   const previewHeader: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '8px 16px', borderBottom: '1px solid var(--cb-border)', flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '8px 16px',
+    borderBottom: '1px solid var(--cb-border)',
+    flexShrink: 0
   }
   const code: React.CSSProperties = {
-    flex: 1, overflowY: 'auto', padding: '12px 16px',
-    fontSize: 11, lineHeight: 1.7, color: 'var(--cb-text-primary)',
-    background: 'var(--cb-bg-elevated)', whiteSpace: 'pre', margin: 0,
-    fontFamily: 'monospace',
+    flex: 1,
+    overflowY: 'auto',
+    padding: '12px 16px',
+    fontSize: 11,
+    lineHeight: 1.7,
+    color: 'var(--cb-text-primary)',
+    background: 'var(--cb-bg-elevated)',
+    whiteSpace: 'pre',
+    margin: 0,
+    fontFamily: 'monospace'
   }
 
   return (
-    <div style={overlay} onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <div
+      style={overlay}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
       <div style={modal}>
         <div style={header}>
           <span style={{ fontSize: 13, fontWeight: 'bold', color: 'var(--cb-accent)' }}>
@@ -363,7 +406,14 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
           </span>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cb-text-muted)', fontSize: 16, lineHeight: 1 }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--cb-text-muted)',
+              fontSize: 16,
+              lineHeight: 1
+            }}
           >
             ×
           </button>
@@ -375,14 +425,23 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
                 key={t.id}
                 onClick={() => handleSelectTemplate(t.id)}
                 style={{
-                  padding: '8px 16px', cursor: 'pointer', fontSize: 11,
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  fontSize: 11,
                   background: selected === t.id ? 'var(--cb-bg-elevated)' : 'transparent',
                   borderLeft: `2px solid ${selected === t.id ? 'var(--cb-accent)' : 'transparent'}`,
-                  color: selected === t.id ? 'var(--cb-text-primary)' : 'var(--cb-text-secondary)',
+                  color: selected === t.id ? 'var(--cb-text-primary)' : 'var(--cb-text-secondary)'
                 }}
               >
                 <div style={{ fontWeight: selected === t.id ? 600 : 400 }}>{t.name}</div>
-                <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginTop: 2, lineHeight: 1.4 }}>
+                <div
+                  style={{
+                    fontSize: 9,
+                    color: 'var(--cb-text-muted)',
+                    marginTop: 2,
+                    lineHeight: 1.4
+                  }}
+                >
                   {t.description}
                 </div>
               </div>
@@ -399,22 +458,33 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
                     onClick={deployState === 'deploying' ? undefined : handleDeploy}
                     disabled={deployState === 'deploying'}
                     style={{
-                      background: deployState === 'success'
-                        ? '#22c55e'
-                        : deployState === 'error'
-                          ? '#ef4444'
-                          : 'var(--cb-bg-elevated)',
+                      background:
+                        deployState === 'success'
+                          ? '#22c55e'
+                          : deployState === 'error'
+                            ? '#ef4444'
+                            : 'var(--cb-bg-elevated)',
                       border: `1px solid ${
-                        deployState === 'success' ? '#22c55e'
-                        : deployState === 'error' ? '#ef4444'
-                        : 'var(--cb-border)'
+                        deployState === 'success'
+                          ? '#22c55e'
+                          : deployState === 'error'
+                            ? '#ef4444'
+                            : 'var(--cb-border)'
                       }`,
-                      borderRadius: 3, padding: '3px 12px', cursor: deployState === 'deploying' ? 'default' : 'pointer',
-                      color: (deployState === 'success' || deployState === 'error') ? '#000' : 'var(--cb-text-secondary)',
-                      fontFamily: 'monospace', fontSize: 10,
-                      fontWeight: (deployState === 'success' || deployState === 'error') ? 'bold' : 'normal',
-                      transition: 'all 0.15s', marginRight: 8,
-                      opacity: deployState === 'deploying' ? 0.6 : 1,
+                      borderRadius: 3,
+                      padding: '3px 12px',
+                      cursor: deployState === 'deploying' ? 'default' : 'pointer',
+                      color:
+                        deployState === 'success' || deployState === 'error'
+                          ? '#000'
+                          : 'var(--cb-text-secondary)',
+                      fontFamily: 'monospace',
+                      fontSize: 10,
+                      fontWeight:
+                        deployState === 'success' || deployState === 'error' ? 'bold' : 'normal',
+                      transition: 'all 0.15s',
+                      marginRight: 8,
+                      opacity: deployState === 'deploying' ? 0.6 : 1
                     }}
                   >
                     {deployState === 'deploying'
@@ -431,10 +501,14 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
                   style={{
                     background: copied ? '#22c55e' : 'var(--cb-bg-elevated)',
                     border: `1px solid ${copied ? '#22c55e' : 'var(--cb-border)'}`,
-                    borderRadius: 3, padding: '3px 12px', cursor: 'pointer',
+                    borderRadius: 3,
+                    padding: '3px 12px',
+                    cursor: 'pointer',
                     color: copied ? '#000' : 'var(--cb-text-secondary)',
-                    fontFamily: 'monospace', fontSize: 10, fontWeight: copied ? 'bold' : 'normal',
-                    transition: 'all 0.15s',
+                    fontFamily: 'monospace',
+                    fontSize: 10,
+                    fontWeight: copied ? 'bold' : 'normal',
+                    transition: 'all 0.15s'
                   }}
                 >
                   {copied ? '✓ Copied' : 'Copy'}
@@ -443,19 +517,23 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
             </div>
             <pre style={code}>{current.hcl}</pre>
             {deployOutput && (
-              <div style={{
-                borderTop: `1px solid ${deployState === 'error' ? '#ef4444' : deployState === 'success' ? '#22c55e' : 'var(--cb-border)'}`,
-                padding: '8px 16px',
-                maxHeight: 120,
-                overflowY: 'auto',
-                background: 'var(--cb-bg-elevated)',
-                fontSize: 10,
-                fontFamily: 'monospace',
-                color: deployState === 'error' ? '#ef4444' : 'var(--cb-text-secondary)',
-                lineHeight: 1.5,
-                flexShrink: 0,
-              }}>
-                <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{deployOutput}</pre>
+              <div
+                style={{
+                  borderTop: `1px solid ${deployState === 'error' ? '#ef4444' : deployState === 'success' ? '#22c55e' : 'var(--cb-border)'}`,
+                  padding: '8px 16px',
+                  maxHeight: 120,
+                  overflowY: 'auto',
+                  background: 'var(--cb-bg-elevated)',
+                  fontSize: 10,
+                  fontFamily: 'monospace',
+                  color: deployState === 'error' ? '#ef4444' : 'var(--cb-text-secondary)',
+                  lineHeight: 1.5,
+                  flexShrink: 0
+                }}
+              >
+                <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                  {deployOutput}
+                </pre>
               </div>
             )}
           </div>

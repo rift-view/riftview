@@ -15,7 +15,7 @@ const inp: React.CSSProperties = {
   color: 'var(--cb-text-primary)',
   fontFamily: 'monospace',
   fontSize: 10,
-  boxSizing: 'border-box' as const,
+  boxSizing: 'border-box' as const
 }
 
 const lbl: React.CSSProperties = {
@@ -23,7 +23,7 @@ const lbl: React.CSSProperties = {
   color: 'var(--cb-text-muted)',
   textTransform: 'uppercase',
   marginBottom: 2,
-  marginTop: 8,
+  marginTop: 8
 }
 
 export function IgwCreateForm({ onChange }: Props): React.JSX.Element {
@@ -40,7 +40,10 @@ export function IgwCreateForm({ onChange }: Props): React.JSX.Element {
         style={inp}
         value={name}
         placeholder="my-igw"
-        onChange={(e) => { setName(e.target.value); emit(e.target.value) }}
+        onChange={(e) => {
+          setName(e.target.value)
+          emit(e.target.value)
+        }}
       />
     </div>
   )

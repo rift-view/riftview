@@ -16,7 +16,7 @@ describe('CloudNode type', () => {
       label: 'i-0abc',
       status: 'running',
       region: 'us-east-1',
-      metadata: { InstanceType: 't3.micro' },
+      metadata: { InstanceType: 't3.micro' }
     }
     expect(node.id).toBe('arn:aws:ec2:us-east-1:123456789012:instance/i-0abc')
     expect(node.status).toBe('running')
@@ -30,7 +30,7 @@ describe('CloudNode type', () => {
       status: 'running',
       region: 'us-east-1',
       metadata: {},
-      parentId: 'subnet-0abc',
+      parentId: 'subnet-0abc'
     }
     expect(node.parentId).toBe('subnet-0abc')
   })
@@ -41,7 +41,7 @@ describe('ScanDelta type', () => {
     const delta: ScanDelta = {
       added: [],
       changed: [],
-      removed: [],
+      removed: []
     }
     expect(delta.added).toHaveLength(0)
     expect(delta.changed).toHaveLength(0)
@@ -52,7 +52,7 @@ describe('ScanDelta type', () => {
     const delta: ScanDelta = {
       added: [],
       changed: [],
-      removed: ['i-001', 'i-002'],
+      removed: ['i-001', 'i-002']
     }
     expect(delta.removed[0]).toBe('i-001')
     expect(typeof delta.removed[0]).toBe('string')

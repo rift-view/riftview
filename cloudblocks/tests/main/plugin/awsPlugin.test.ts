@@ -3,49 +3,120 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('electron', () => ({ BrowserWindow: vi.fn() }))
 
 vi.mock('../../../src/main/aws/client', () => ({
-  createClients: vi.fn().mockReturnValue({ stubClient: true }),
+  createClients: vi.fn().mockReturnValue({ stubClient: true })
 }))
 
 vi.mock('../../../src/main/aws/services/ec2', () => ({
-  describeInstances:      vi.fn().mockResolvedValue([]),
-  describeVpcs:           vi.fn().mockResolvedValue([]),
-  describeSubnets:        vi.fn().mockResolvedValue([]),
+  describeInstances: vi.fn().mockResolvedValue([]),
+  describeVpcs: vi.fn().mockResolvedValue([]),
+  describeSubnets: vi.fn().mockResolvedValue([]),
   describeSecurityGroups: vi.fn().mockResolvedValue([]),
-  describeKeyPairs:       vi.fn().mockResolvedValue([]),
+  describeKeyPairs: vi.fn().mockResolvedValue([])
 }))
-vi.mock('../../../src/main/aws/services/igw',         () => ({ listInternetGateways: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/nat',         () => ({ listNatGateways:       vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/rds',         () => ({ describeDBInstances:   vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/s3',          () => ({ listBuckets:           vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/lambda',      () => ({ listFunctions:         vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/alb',         () => ({ describeLoadBalancers: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/acm',         () => ({ listCertificates:      vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/cloudfront',  () => ({ listDistributions:     vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/apigw',       () => ({ listApis:              vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/sqs',         () => ({ listQueues:            vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/secrets',     () => ({ listSecrets:           vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/ecr',         () => ({ listRepositories:      vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/sns',         () => ({ listTopics:            vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/dynamo',      () => ({ listTables:            vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/ssm',         () => ({ listParameters:        vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/r53',         () => ({ listHostedZones:       vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/sfn',         () => ({ listStateMachines:     vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/eventbridge', () => ({ listEventBuses:        vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/ses',         () => ({ listIdentities:        vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/cognito',     () => ({ listUserPools:         vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/kinesis',     () => ({ listStreams:            vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/ecs',         () => ({ listEcsServices:        vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/elasticache', () => ({ listCacheClusters:      vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/eks',         () => ({ listEksClusters:        vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/opensearch',  () => ({ listOpenSearchDomains:  vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/msk',         () => ({ listMskClusters:        vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/igw', () => ({
+  listInternetGateways: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/nat', () => ({
+  listNatGateways: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/rds', () => ({
+  describeDBInstances: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/s3', () => ({ listBuckets: vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/lambda', () => ({
+  listFunctions: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/alb', () => ({
+  describeLoadBalancers: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/acm', () => ({
+  listCertificates: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/cloudfront', () => ({
+  listDistributions: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/apigw', () => ({ listApis: vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/sqs', () => ({ listQueues: vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/secrets', () => ({
+  listSecrets: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/ecr', () => ({
+  listRepositories: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/sns', () => ({ listTopics: vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/dynamo', () => ({
+  listTables: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/ssm', () => ({
+  listParameters: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/r53', () => ({
+  listHostedZones: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/sfn', () => ({
+  listStateMachines: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/eventbridge', () => ({
+  listEventBuses: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/ses', () => ({
+  listIdentities: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/cognito', () => ({
+  listUserPools: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/kinesis', () => ({
+  listStreams: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/ecs', () => ({
+  listEcsServices: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/elasticache', () => ({
+  listCacheClusters: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/eks', () => ({
+  listEksClusters: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/opensearch', () => ({
+  listOpenSearchDomains: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/msk', () => ({
+  listMskClusters: vi.fn().mockResolvedValue([])
+}))
 
 const ALL_NODE_TYPES = [
-  'ec2', 'vpc', 'subnet', 'rds', 's3', 'lambda', 'alb', 'security-group',
-  'igw', 'acm', 'cloudfront', 'apigw', 'apigw-route', 'sqs', 'secret',
-  'ecr-repo', 'sns', 'dynamo', 'ssm-param', 'nat-gateway', 'r53-zone',
-  'sfn', 'eventbridge-bus', 'ses', 'cognito', 'kinesis', 'ecs', 'elasticache',
-  'eks', 'opensearch', 'msk', 'unknown',
+  'ec2',
+  'vpc',
+  'subnet',
+  'rds',
+  's3',
+  'lambda',
+  'alb',
+  'security-group',
+  'igw',
+  'acm',
+  'cloudfront',
+  'apigw',
+  'apigw-route',
+  'sqs',
+  'secret',
+  'ecr-repo',
+  'sns',
+  'dynamo',
+  'ssm-param',
+  'nat-gateway',
+  'r53-zone',
+  'sfn',
+  'eventbridge-bus',
+  'ses',
+  'cognito',
+  'kinesis',
+  'ecs',
+  'elasticache',
+  'eks',
+  'opensearch',
+  'msk',
+  'unknown'
 ] as const
 
 describe('awsPlugin', () => {
@@ -101,12 +172,36 @@ describe('awsPlugin', () => {
 
   it('scan() returns merged nodes from all services', async () => {
     const { describeInstances } = await import('../../../src/main/aws/services/ec2')
-    const mockNode = { id: 'i-123', type: 'ec2', label: 'web', status: 'running', region: 'us-east-1', metadata: {} }
+    const mockNode = {
+      id: 'i-123',
+      type: 'ec2',
+      label: 'web',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: {}
+    }
     vi.mocked(describeInstances).mockResolvedValueOnce([mockNode] as never)
 
-    const stubClients = { ec2: {}, rds: {}, s3: {}, lambda: {}, alb: {}, acm: {}, cloudfront: {},
-      apigw: {}, sqs: {}, secrets: {}, ecr: {}, sns: {}, dynamo: {}, ssm: {}, r53: {}, sfn: {},
-      eventbridge: {}, iam: {} }
+    const stubClients = {
+      ec2: {},
+      rds: {},
+      s3: {},
+      lambda: {},
+      alb: {},
+      acm: {},
+      cloudfront: {},
+      apigw: {},
+      sqs: {},
+      secrets: {},
+      ecr: {},
+      sns: {},
+      dynamo: {},
+      ssm: {},
+      r53: {},
+      sfn: {},
+      eventbridge: {},
+      iam: {}
+    }
 
     const result = await awsPlugin.scan({ credentials: stubClients, region: 'us-east-1' })
     expect(result.nodes).toHaveLength(1)
@@ -117,13 +212,37 @@ describe('awsPlugin', () => {
   it('scan() collects errors from failing services without dropping healthy results', async () => {
     const { listQueues } = await import('../../../src/main/aws/services/sqs')
     const { describeInstances } = await import('../../../src/main/aws/services/ec2')
-    const mockNode = { id: 'i-456', type: 'ec2', label: 'db', status: 'running', region: 'us-east-1', metadata: {} }
+    const mockNode = {
+      id: 'i-456',
+      type: 'ec2',
+      label: 'db',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: {}
+    }
     vi.mocked(describeInstances).mockResolvedValueOnce([mockNode] as never)
     vi.mocked(listQueues).mockRejectedValueOnce(new Error('AccessDenied'))
 
-    const stubClients = { ec2: {}, rds: {}, s3: {}, lambda: {}, alb: {}, acm: {}, cloudfront: {},
-      apigw: {}, sqs: {}, secrets: {}, ecr: {}, sns: {}, dynamo: {}, ssm: {}, r53: {}, sfn: {},
-      eventbridge: {}, iam: {} }
+    const stubClients = {
+      ec2: {},
+      rds: {},
+      s3: {},
+      lambda: {},
+      alb: {},
+      acm: {},
+      cloudfront: {},
+      apigw: {},
+      sqs: {},
+      secrets: {},
+      ecr: {},
+      sns: {},
+      dynamo: {},
+      ssm: {},
+      r53: {},
+      sfn: {},
+      eventbridge: {},
+      iam: {}
+    }
 
     const result = await awsPlugin.scan({ credentials: stubClients, region: 'us-east-1' })
     expect(result.nodes).toHaveLength(1)
@@ -136,9 +255,26 @@ describe('awsPlugin', () => {
     const { listBuckets } = await import('../../../src/main/aws/services/s3')
     vi.mocked(listBuckets).mockRejectedValueOnce(new Error('NetworkError'))
 
-    const stubClients = { ec2: {}, rds: {}, s3: {}, lambda: {}, alb: {}, acm: {}, cloudfront: {},
-      apigw: {}, sqs: {}, secrets: {}, ecr: {}, sns: {}, dynamo: {}, ssm: {}, r53: {}, sfn: {},
-      eventbridge: {}, iam: {} }
+    const stubClients = {
+      ec2: {},
+      rds: {},
+      s3: {},
+      lambda: {},
+      alb: {},
+      acm: {},
+      cloudfront: {},
+      apigw: {},
+      sqs: {},
+      secrets: {},
+      ecr: {},
+      sns: {},
+      dynamo: {},
+      ssm: {},
+      r53: {},
+      sfn: {},
+      eventbridge: {},
+      iam: {}
+    }
 
     const result = await awsPlugin.scan({ credentials: stubClients, region: 'eu-west-1' })
     const s3Error = result.errors.find((e: { service: string }) => e.service === 's3')

@@ -5,7 +5,7 @@ import { listParameters } from '../../../../src/main/aws/services/ssm'
 const mockSend = vi.fn()
 const mockClient = { send: mockSend } as unknown as SSMClient
 
-const PARAM_ARN  = 'arn:aws:ssm:us-east-1:123456789012:parameter/my-param'
+const PARAM_ARN = 'arn:aws:ssm:us-east-1:123456789012:parameter/my-param'
 const PARAM_ARN2 = 'arn:aws:ssm:us-east-1:123456789012:parameter/my-param-2'
 
 describe('listParameters', () => {
@@ -15,12 +15,14 @@ describe('listParameters', () => {
 
   it('maps a parameter to a CloudNode', async () => {
     mockSend.mockResolvedValueOnce({
-      Parameters: [{
-        ARN:  PARAM_ARN,
-        Name: '/my-param',
-        Type: 'String',
-        Tier: 'Standard',
-      }],
+      Parameters: [
+        {
+          ARN: PARAM_ARN,
+          Name: '/my-param',
+          Type: 'String',
+          Tier: 'Standard'
+        }
+      ]
     })
 
     const nodes = await listParameters(mockClient, 'us-east-1')
@@ -35,12 +37,14 @@ describe('listParameters', () => {
 
   it('stores type and tier in metadata', async () => {
     mockSend.mockResolvedValueOnce({
-      Parameters: [{
-        ARN:  PARAM_ARN,
-        Name: '/my-param',
-        Type: 'SecureString',
-        Tier: 'Advanced',
-      }],
+      Parameters: [
+        {
+          ARN: PARAM_ARN,
+          Name: '/my-param',
+          Type: 'SecureString',
+          Tier: 'Advanced'
+        }
+      ]
     })
 
     const nodes = await listParameters(mockClient, 'us-east-1')
@@ -51,12 +55,14 @@ describe('listParameters', () => {
 
   it('uses Name as id when ARN is missing', async () => {
     mockSend.mockResolvedValueOnce({
-      Parameters: [{
-        ARN:  undefined,
-        Name: '/my-param',
-        Type: 'String',
-        Tier: 'Standard',
-      }],
+      Parameters: [
+        {
+          ARN: undefined,
+          Name: '/my-param',
+          Type: 'String',
+          Tier: 'Standard'
+        }
+      ]
     })
 
     const nodes = await listParameters(mockClient, 'us-east-1')
@@ -66,7 +72,7 @@ describe('listParameters', () => {
 
   it('falls back to empty string id when both ARN and Name are missing', async () => {
     mockSend.mockResolvedValueOnce({
-      Parameters: [{ ARN: undefined, Name: undefined, Type: 'String', Tier: 'Standard' }],
+      Parameters: [{ ARN: undefined, Name: undefined, Type: 'String', Tier: 'Standard' }]
     })
 
     const nodes = await listParameters(mockClient, 'us-east-1')
@@ -77,7 +83,7 @@ describe('listParameters', () => {
 
   it('defaults type and tier to empty string when absent', async () => {
     mockSend.mockResolvedValueOnce({
-      Parameters: [{ ARN: PARAM_ARN, Name: '/my-param', Type: undefined, Tier: undefined }],
+      Parameters: [{ ARN: PARAM_ARN, Name: '/my-param', Type: undefined, Tier: undefined }]
     })
 
     const nodes = await listParameters(mockClient, 'us-east-1')
@@ -89,18 +95,18 @@ describe('listParameters', () => {
   it('paginates across multiple pages', async () => {
     mockSend
       .mockResolvedValueOnce({
-        Parameters: [{ ARN: PARAM_ARN,  Name: '/p1', Type: 'String', Tier: 'Standard' }],
-        NextToken: 'tok1',
+        Parameters: [{ ARN: PARAM_ARN, Name: '/p1', Type: 'String', Tier: 'Standard' }],
+        NextToken: 'tok1'
       })
       .mockResolvedValueOnce({
         Parameters: [{ ARN: PARAM_ARN2, Name: '/p2', Type: 'String', Tier: 'Standard' }],
-        NextToken: undefined,
+        NextToken: undefined
       })
 
     const nodes = await listParameters(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(2)
-    expect(nodes.map(n => n.id).sort()).toEqual([PARAM_ARN, PARAM_ARN2].sort())
+    expect(nodes.map((n) => n.id).sort()).toEqual([PARAM_ARN, PARAM_ARN2].sort())
   })
 
   it('returns empty array when no parameters exist', async () => {

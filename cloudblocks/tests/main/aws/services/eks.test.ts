@@ -17,16 +17,17 @@ describe('listEksClusters', () => {
 
   it('maps EKS clusters to CloudNodes', async () => {
     mockSend
-      .mockResolvedValueOnce({ clusters: [CLUSTER_NAME] })    // ListClusters
-      .mockResolvedValueOnce({                                 // DescribeCluster
+      .mockResolvedValueOnce({ clusters: [CLUSTER_NAME] }) // ListClusters
+      .mockResolvedValueOnce({
+        // DescribeCluster
         cluster: {
           arn: CLUSTER_ARN,
           name: CLUSTER_NAME,
           status: 'ACTIVE',
           version: '1.29',
           endpoint: ENDPOINT,
-          resourcesVpcConfig: { vpcId: VPC_ID },
-        },
+          resourcesVpcConfig: { vpcId: VPC_ID }
+        }
       })
 
     const nodes = await listEksClusters(mockClient, 'us-east-1')
@@ -40,18 +41,16 @@ describe('listEksClusters', () => {
   })
 
   it('stores version and endpoint in metadata', async () => {
-    mockSend
-      .mockResolvedValueOnce({ clusters: [CLUSTER_NAME] })
-      .mockResolvedValueOnce({
-        cluster: {
-          arn: CLUSTER_ARN,
-          name: CLUSTER_NAME,
-          status: 'ACTIVE',
-          version: '1.29',
-          endpoint: ENDPOINT,
-          resourcesVpcConfig: { vpcId: VPC_ID },
-        },
-      })
+    mockSend.mockResolvedValueOnce({ clusters: [CLUSTER_NAME] }).mockResolvedValueOnce({
+      cluster: {
+        arn: CLUSTER_ARN,
+        name: CLUSTER_NAME,
+        status: 'ACTIVE',
+        version: '1.29',
+        endpoint: ENDPOINT,
+        resourcesVpcConfig: { vpcId: VPC_ID }
+      }
+    })
 
     const nodes = await listEksClusters(mockClient, 'us-east-1')
 
@@ -60,16 +59,14 @@ describe('listEksClusters', () => {
   })
 
   it('sets parentId from vpcId', async () => {
-    mockSend
-      .mockResolvedValueOnce({ clusters: [CLUSTER_NAME] })
-      .mockResolvedValueOnce({
-        cluster: {
-          arn: CLUSTER_ARN,
-          name: CLUSTER_NAME,
-          status: 'ACTIVE',
-          resourcesVpcConfig: { vpcId: VPC_ID },
-        },
-      })
+    mockSend.mockResolvedValueOnce({ clusters: [CLUSTER_NAME] }).mockResolvedValueOnce({
+      cluster: {
+        arn: CLUSTER_ARN,
+        name: CLUSTER_NAME,
+        status: 'ACTIVE',
+        resourcesVpcConfig: { vpcId: VPC_ID }
+      }
+    })
 
     const nodes = await listEksClusters(mockClient, 'us-east-1')
 
@@ -79,14 +76,18 @@ describe('listEksClusters', () => {
   it('paginates cluster listing across multiple pages', async () => {
     mockSend
       .mockResolvedValueOnce({ clusters: ['cluster-1'], nextToken: 'tok1' }) // page 1
-      .mockResolvedValueOnce({ clusters: ['cluster-2'] })                    // page 2
-      .mockResolvedValueOnce({ cluster: { arn: 'arn-1', name: 'cluster-1', status: 'ACTIVE', resourcesVpcConfig: {} } })
-      .mockResolvedValueOnce({ cluster: { arn: 'arn-2', name: 'cluster-2', status: 'ACTIVE', resourcesVpcConfig: {} } })
+      .mockResolvedValueOnce({ clusters: ['cluster-2'] }) // page 2
+      .mockResolvedValueOnce({
+        cluster: { arn: 'arn-1', name: 'cluster-1', status: 'ACTIVE', resourcesVpcConfig: {} }
+      })
+      .mockResolvedValueOnce({
+        cluster: { arn: 'arn-2', name: 'cluster-2', status: 'ACTIVE', resourcesVpcConfig: {} }
+      })
 
     const nodes = await listEksClusters(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(2)
-    expect(nodes.map(n => n.label)).toEqual(['cluster-1', 'cluster-2'])
+    expect(nodes.map((n) => n.label)).toEqual(['cluster-1', 'cluster-2'])
   })
 
   it('falls back to cluster name as id/label when describe fails', async () => {
@@ -106,14 +107,19 @@ describe('listEksClusters', () => {
     const statuses: [string, string][] = [
       ['CREATING', 'creating'],
       ['DELETING', 'deleting'],
-      ['FAILED', 'error'],
+      ['FAILED', 'error']
     ]
 
     for (const [awsStatus, expected] of statuses) {
       vi.clearAllMocks()
-      mockSend
-        .mockResolvedValueOnce({ clusters: [CLUSTER_NAME] })
-        .mockResolvedValueOnce({ cluster: { arn: CLUSTER_ARN, name: CLUSTER_NAME, status: awsStatus, resourcesVpcConfig: {} } })
+      mockSend.mockResolvedValueOnce({ clusters: [CLUSTER_NAME] }).mockResolvedValueOnce({
+        cluster: {
+          arn: CLUSTER_ARN,
+          name: CLUSTER_NAME,
+          status: awsStatus,
+          resourcesVpcConfig: {}
+        }
+      })
 
       const nodes = await listEksClusters(mockClient, 'us-east-1')
       expect(nodes[0].status).toBe(expected)

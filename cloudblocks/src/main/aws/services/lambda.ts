@@ -1,4 +1,10 @@
-import { LambdaClient, ListFunctionsCommand, ListEventSourceMappingsCommand, GetFunctionConfigurationCommand, GetFunctionConcurrencyCommand } from '@aws-sdk/client-lambda'
+import {
+  LambdaClient,
+  ListFunctionsCommand,
+  ListEventSourceMappingsCommand,
+  GetFunctionConfigurationCommand,
+  GetFunctionConcurrencyCommand
+} from '@aws-sdk/client-lambda'
 import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
 
 function lambdaStatusToNodeStatus(state: string | undefined): NodeStatus {
@@ -9,7 +15,7 @@ function lambdaStatusToNodeStatus(state: string | undefined): NodeStatus {
 }
 
 function extractEnvVarIntegrations(
-  envVars: Record<string, string> | undefined,
+  envVars: Record<string, string> | undefined
 ): { targetId: string; edgeType: 'trigger' }[] {
   if (!envVars) return []
   const results: { targetId: string; edgeType: 'trigger' }[] = []
@@ -68,65 +74,91 @@ function extractEnvVarIntegrations(
 
 export async function listFunctions(client: LambdaClient, region: string): Promise<CloudNode[]> {
   try {
-    const allFunctions: { FunctionArn?: string; FunctionName?: string; State?: string; Runtime?: string; Handler?: string; VpcConfig?: { VpcId?: string } }[] = []
+    const allFunctions: {
+      FunctionArn?: string
+      FunctionName?: string
+      State?: string
+      Runtime?: string
+      Handler?: string
+      VpcConfig?: { VpcId?: string }
+    }[] = []
     let marker: string | undefined
     do {
       const res = await client.send(new ListFunctionsCommand({ Marker: marker }))
       allFunctions.push(...(res.Functions ?? []))
       marker = res.NextMarker
     } while (marker)
-    return Promise.all(allFunctions.map(async (fn): Promise<CloudNode> => {
-      const allIntegrations: { targetId: string; edgeType: 'trigger' }[] = []
-      // Add event source mappings (SQS / Kinesis / MSK triggers)
-      try {
-        const mappingsRes = await client.send(new ListEventSourceMappingsCommand({ FunctionName: fn.FunctionArn }))
-        for (const m of mappingsRes.EventSourceMappings ?? []) {
-          if (
-            m.EventSourceArn?.startsWith('arn:aws:sqs:') ||
-            m.EventSourceArn?.startsWith('arn:aws:kinesis:') ||
-            m.EventSourceArn?.startsWith('arn:aws:kafka:')
-          ) {
-            allIntegrations.push({ targetId: m.EventSourceArn!, edgeType: 'trigger' })
+    return Promise.all(
+      allFunctions.map(async (fn): Promise<CloudNode> => {
+        const allIntegrations: { targetId: string; edgeType: 'trigger' }[] = []
+        // Add event source mappings (SQS / Kinesis / MSK triggers)
+        try {
+          const mappingsRes = await client.send(
+            new ListEventSourceMappingsCommand({ FunctionName: fn.FunctionArn })
+          )
+          for (const m of mappingsRes.EventSourceMappings ?? []) {
+            if (
+              m.EventSourceArn?.startsWith('arn:aws:sqs:') ||
+              m.EventSourceArn?.startsWith('arn:aws:kinesis:') ||
+              m.EventSourceArn?.startsWith('arn:aws:kafka:')
+            ) {
+              allIntegrations.push({ targetId: m.EventSourceArn!, edgeType: 'trigger' })
+            }
           }
+        } catch {
+          /* ignore */
         }
-      } catch { /* ignore */ }
-      // Capture timeout/memory from config; also add env var ARN integrations
-      let timeout: number | undefined
-      let memorySize: number | undefined
-      let hasDlq = false
-      try {
-        const configRes = await client.send(new GetFunctionConfigurationCommand({ FunctionName: fn.FunctionArn }))
-        timeout = configRes.Timeout
-        memorySize = configRes.MemorySize
-        hasDlq = !!(configRes.DeadLetterConfig?.TargetArn)
-        const envVarIntegrations = extractEnvVarIntegrations(configRes.Environment?.Variables)
-        const existingTargets = new Set(allIntegrations.map((i) => i.targetId))
-        for (const i of envVarIntegrations) {
-          if (!existingTargets.has(i.targetId)) {
-            allIntegrations.push(i)
-            existingTargets.add(i.targetId)
+        // Capture timeout/memory from config; also add env var ARN integrations
+        let timeout: number | undefined
+        let memorySize: number | undefined
+        let hasDlq = false
+        try {
+          const configRes = await client.send(
+            new GetFunctionConfigurationCommand({ FunctionName: fn.FunctionArn })
+          )
+          timeout = configRes.Timeout
+          memorySize = configRes.MemorySize
+          hasDlq = !!configRes.DeadLetterConfig?.TargetArn
+          const envVarIntegrations = extractEnvVarIntegrations(configRes.Environment?.Variables)
+          const existingTargets = new Set(allIntegrations.map((i) => i.targetId))
+          for (const i of envVarIntegrations) {
+            if (!existingTargets.has(i.targetId)) {
+              allIntegrations.push(i)
+              existingTargets.add(i.targetId)
+            }
           }
+        } catch {
+          /* ignore */
         }
-      } catch { /* ignore */ }
-      let reservedConcurrentExecutions: number | null | undefined = undefined
-      try {
-        const r = await client.send(new GetFunctionConcurrencyCommand({ FunctionName: fn.FunctionName! }))
-        reservedConcurrentExecutions = r.ReservedConcurrentExecutions ?? null
-      } catch {
-        // permission denied or throttled — leave as undefined (advisory will skip)
-      }
-      const integrations = allIntegrations.length > 0 ? allIntegrations : undefined
-      return {
-        id:       fn.FunctionArn ?? fn.FunctionName ?? 'unknown',
-        type:     'lambda',
-        label:    fn.FunctionName ?? 'Lambda',
-        status:   lambdaStatusToNodeStatus(fn.State),
-        region,
-        metadata: { runtime: fn.Runtime, handler: fn.Handler, timeout, memorySize, hasDlq, reservedConcurrentExecutions },
-        parentId: fn.VpcConfig?.VpcId,
-        integrations,
-      }
-    }))
+        let reservedConcurrentExecutions: number | null | undefined = undefined
+        try {
+          const r = await client.send(
+            new GetFunctionConcurrencyCommand({ FunctionName: fn.FunctionName! })
+          )
+          reservedConcurrentExecutions = r.ReservedConcurrentExecutions ?? null
+        } catch {
+          // permission denied or throttled — leave as undefined (advisory will skip)
+        }
+        const integrations = allIntegrations.length > 0 ? allIntegrations : undefined
+        return {
+          id: fn.FunctionArn ?? fn.FunctionName ?? 'unknown',
+          type: 'lambda',
+          label: fn.FunctionName ?? 'Lambda',
+          status: lambdaStatusToNodeStatus(fn.State),
+          region,
+          metadata: {
+            runtime: fn.Runtime,
+            handler: fn.Handler,
+            timeout,
+            memorySize,
+            hasDlq,
+            reservedConcurrentExecutions
+          },
+          parentId: fn.VpcConfig?.VpcId,
+          integrations
+        }
+      })
+    )
   } catch {
     return []
   }

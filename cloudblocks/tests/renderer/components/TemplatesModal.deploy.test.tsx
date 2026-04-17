@@ -7,44 +7,46 @@ import { useCloudStore } from '../../../src/renderer/store/cloud'
 
 function makeTerminus(overrides: Partial<typeof window.terminus> = {}): typeof window.terminus {
   return {
-    listProfiles:         vi.fn().mockResolvedValue([{ name: 'default' }]),
-    selectProfile:        vi.fn().mockResolvedValue(undefined),
-    selectRegion:         vi.fn().mockResolvedValue(undefined),
-    startScan:            vi.fn().mockResolvedValue(undefined),
-    onScanDelta:          vi.fn().mockReturnValue(vi.fn()),
-    onScanStatus:         vi.fn().mockReturnValue(vi.fn()),
-    onConnStatus:         vi.fn().mockReturnValue(vi.fn()),
-    onScanKeypairs:       vi.fn().mockReturnValue(vi.fn()),
-    runCli:               vi.fn().mockResolvedValue({ code: 0 }),
-    cancelCli:            vi.fn(),
-    onCliOutput:          vi.fn().mockReturnValue(vi.fn()),
-    onCliDone:            vi.fn().mockReturnValue(vi.fn()),
-    getSettings:          vi.fn().mockResolvedValue({ deleteConfirmStyle: 'type-to-confirm', scanInterval: 30 }),
-    setSettings:          vi.fn().mockResolvedValue(undefined),
-    getThemeOverrides:    vi.fn().mockResolvedValue({}),
-    createCloudFront:     vi.fn().mockResolvedValue({ code: 0 }),
-    updateCloudFront:     vi.fn().mockResolvedValue({ code: 0 }),
-    deleteCloudFront:     vi.fn().mockResolvedValue({ code: 0 }),
+    listProfiles: vi.fn().mockResolvedValue([{ name: 'default' }]),
+    selectProfile: vi.fn().mockResolvedValue(undefined),
+    selectRegion: vi.fn().mockResolvedValue(undefined),
+    startScan: vi.fn().mockResolvedValue(undefined),
+    onScanDelta: vi.fn().mockReturnValue(vi.fn()),
+    onScanStatus: vi.fn().mockReturnValue(vi.fn()),
+    onConnStatus: vi.fn().mockReturnValue(vi.fn()),
+    onScanKeypairs: vi.fn().mockReturnValue(vi.fn()),
+    runCli: vi.fn().mockResolvedValue({ code: 0 }),
+    cancelCli: vi.fn(),
+    onCliOutput: vi.fn().mockReturnValue(vi.fn()),
+    onCliDone: vi.fn().mockReturnValue(vi.fn()),
+    getSettings: vi
+      .fn()
+      .mockResolvedValue({ deleteConfirmStyle: 'type-to-confirm', scanInterval: 30 }),
+    setSettings: vi.fn().mockResolvedValue(undefined),
+    getThemeOverrides: vi.fn().mockResolvedValue({}),
+    createCloudFront: vi.fn().mockResolvedValue({ code: 0 }),
+    updateCloudFront: vi.fn().mockResolvedValue({ code: 0 }),
+    deleteCloudFront: vi.fn().mockResolvedValue({ code: 0 }),
     invalidateCloudFront: vi.fn().mockResolvedValue({ code: 0 }),
-    deleteAcm:            vi.fn().mockResolvedValue({ code: 0 }),
-    exportTerraform:      vi.fn().mockResolvedValue({ success: true }),
-    exportPng:            vi.fn().mockResolvedValue({ success: true }),
-    listAwsProfiles:      vi.fn().mockResolvedValue(['default']),
-    onUpdateAvailable:    vi.fn().mockReturnValue(vi.fn()),
-    loadAnnotations:      vi.fn().mockResolvedValue({}),
-    saveAnnotations:      vi.fn().mockResolvedValue(undefined),
-    importTfState:        vi.fn().mockResolvedValue({ nodes: [] }),
-    clearTfState:         vi.fn().mockResolvedValue({ ok: true }),
-    analyzeIam:           vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 }),
-    notifyDrift:          vi.fn().mockResolvedValue(undefined),
-    onPluginMetadata:     vi.fn().mockReturnValue(vi.fn()),
-    terraformDeploy:      vi.fn().mockResolvedValue({ status: 'not_found' }),
-    loadCustomEdges:      vi.fn().mockResolvedValue([]),
-    saveCustomEdges:      vi.fn().mockResolvedValue(undefined),
-    listTfStateModules:   vi.fn().mockResolvedValue({ modules: [] }),
-    saveBaseline:         vi.fn().mockResolvedValue({ ok: true }),
-    retryScanService:     vi.fn().mockResolvedValue({ ok: true }),
-    ...overrides,
+    deleteAcm: vi.fn().mockResolvedValue({ code: 0 }),
+    exportTerraform: vi.fn().mockResolvedValue({ success: true }),
+    exportPng: vi.fn().mockResolvedValue({ success: true }),
+    listAwsProfiles: vi.fn().mockResolvedValue(['default']),
+    onUpdateAvailable: vi.fn().mockReturnValue(vi.fn()),
+    loadAnnotations: vi.fn().mockResolvedValue({}),
+    saveAnnotations: vi.fn().mockResolvedValue(undefined),
+    importTfState: vi.fn().mockResolvedValue({ nodes: [] }),
+    clearTfState: vi.fn().mockResolvedValue({ ok: true }),
+    analyzeIam: vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 }),
+    notifyDrift: vi.fn().mockResolvedValue(undefined),
+    onPluginMetadata: vi.fn().mockReturnValue(vi.fn()),
+    terraformDeploy: vi.fn().mockResolvedValue({ status: 'not_found' }),
+    loadCustomEdges: vi.fn().mockResolvedValue([]),
+    saveCustomEdges: vi.fn().mockResolvedValue(undefined),
+    listTfStateModules: vi.fn().mockResolvedValue({ modules: [] }),
+    saveBaseline: vi.fn().mockResolvedValue({ ok: true }),
+    retryScanService: vi.fn().mockResolvedValue({ ok: true }),
+    ...overrides
   } as typeof window.terminus
 }
 
@@ -54,7 +56,7 @@ const noop = (): void => {}
 function setLocalProfile(): void {
   useCloudStore.setState({
     profile: { name: 'localstack', endpoint: 'http://localhost:4566', region: 'us-east-1' },
-    region: 'us-east-1',
+    region: 'us-east-1'
   })
 }
 
@@ -68,7 +70,7 @@ describe('TemplatesModal — terraformDeploy', () => {
 
   it('shows "Terraform not installed" message when status is not_found', async () => {
     window.terminus = makeTerminus({
-      terraformDeploy: vi.fn().mockResolvedValue({ status: 'not_found' }),
+      terraformDeploy: vi.fn().mockResolvedValue({ status: 'not_found' })
     })
 
     render(<TemplatesModal onClose={noop} />)
@@ -84,7 +86,7 @@ describe('TemplatesModal — terraformDeploy', () => {
   it('shows error output when status is error', async () => {
     const errorMsg = 'Error: Failed to download provider'
     window.terminus = makeTerminus({
-      terraformDeploy: vi.fn().mockResolvedValue({ status: 'error', output: errorMsg }),
+      terraformDeploy: vi.fn().mockResolvedValue({ status: 'error', output: errorMsg })
     })
 
     render(<TemplatesModal onClose={noop} />)
@@ -100,7 +102,7 @@ describe('TemplatesModal — terraformDeploy', () => {
     const successMsg = 'Apply complete! Resources: 3 added, 0 changed, 0 destroyed.'
     window.terminus = makeTerminus({
       terraformDeploy: vi.fn().mockResolvedValue({ status: 'success', output: successMsg }),
-      startScan:       vi.fn().mockResolvedValue(undefined),
+      startScan: vi.fn().mockResolvedValue(undefined)
     })
 
     render(<TemplatesModal onClose={noop} />)
@@ -114,10 +116,12 @@ describe('TemplatesModal — terraformDeploy', () => {
 
   it('shows a deploying state while the promise is pending', async () => {
     let resolve!: (v: { status: string; output?: string }) => void
-    const pending = new Promise<{ status: string; output?: string }>((res) => { resolve = res })
+    const pending = new Promise<{ status: string; output?: string }>((res) => {
+      resolve = res
+    })
 
     window.terminus = makeTerminus({
-      terraformDeploy: vi.fn().mockReturnValue(pending),
+      terraformDeploy: vi.fn().mockReturnValue(pending)
     })
 
     render(<TemplatesModal onClose={noop} />)

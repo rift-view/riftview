@@ -1,4 +1,7 @@
-export function buildLocalStackProvider(region: string, endpoint = 'http://localhost:4566'): string {
+export function buildLocalStackProvider(
+  region: string,
+  endpoint = 'http://localhost:4566'
+): string {
   return `terraform {
   required_providers {
     aws = {

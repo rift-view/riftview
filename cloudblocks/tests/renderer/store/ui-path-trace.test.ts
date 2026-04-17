@@ -4,7 +4,7 @@ import { useUIStore } from '../../../src/renderer/store/ui'
 beforeEach(() => {
   useUIStore.setState({
     blastRadiusId: null,
-    pathTraceId:   null,
+    pathTraceId: null
   })
 })
 

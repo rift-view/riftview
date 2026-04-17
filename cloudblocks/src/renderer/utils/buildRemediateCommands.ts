@@ -17,25 +17,25 @@ export function buildRemediateCommands(node: CloudNode): string[][] {
 
 function buildMatchedCommands(node: CloudNode): string[][] {
   const live = node.metadata
-  const tf   = node.tfMetadata!
+  const tf = node.tfMetadata!
 
   function diffed(key: string): string | null {
     const liveVal = String(live[key] ?? '')
-    const tfVal   = String(tf[key] ?? '')
+    const tfVal = String(tf[key] ?? '')
     return liveVal !== tfVal && tf[key] !== undefined ? tfVal : null
   }
 
   if (node.type === 'lambda') {
-    const runtimeVal  = diffed('runtime')
-    const memoryVal   = diffed('memorySize')
-    const timeoutVal  = diffed('timeout')
+    const runtimeVal = diffed('runtime')
+    const memoryVal = diffed('memorySize')
+    const timeoutVal = diffed('timeout')
 
     if (!runtimeVal && !memoryVal && !timeoutVal) return []
 
     const cmd = ['lambda', 'update-function-configuration', '--function-name', node.id]
-    if (runtimeVal)  cmd.push('--runtime',     runtimeVal)
-    if (memoryVal)   cmd.push('--memory-size',  memoryVal)
-    if (timeoutVal)  cmd.push('--timeout',      timeoutVal)
+    if (runtimeVal) cmd.push('--runtime', runtimeVal)
+    if (memoryVal) cmd.push('--memory-size', memoryVal)
+    if (timeoutVal) cmd.push('--timeout', timeoutVal)
     return [cmd]
   }
 
@@ -43,13 +43,20 @@ function buildMatchedCommands(node: CloudNode): string[][] {
     const instanceTypeVal = diffed('instanceType')
     if (!instanceTypeVal) return []
 
-    const modify = ['ec2', 'modify-instance-attribute', '--instance-id', node.id, '--instance-type', `Value=${instanceTypeVal}`]
+    const modify = [
+      'ec2',
+      'modify-instance-attribute',
+      '--instance-id',
+      node.id,
+      '--instance-type',
+      `Value=${instanceTypeVal}`
+    ]
 
     if (node.status === 'running') {
       return [
-        ['ec2', 'stop-instances',  '--instance-ids', node.id],
+        ['ec2', 'stop-instances', '--instance-ids', node.id],
         modify,
-        ['ec2', 'start-instances', '--instance-ids', node.id],
+        ['ec2', 'start-instances', '--instance-ids', node.id]
       ]
     }
     return [modify]
@@ -58,7 +65,17 @@ function buildMatchedCommands(node: CloudNode): string[][] {
   if (node.type === 'rds') {
     const instanceClassVal = diffed('instanceClass')
     if (!instanceClassVal) return []
-    return [['rds', 'modify-db-instance', '--db-instance-identifier', node.id, '--db-instance-class', instanceClassVal, '--apply-immediately']]
+    return [
+      [
+        'rds',
+        'modify-db-instance',
+        '--db-instance-identifier',
+        node.id,
+        '--db-instance-class',
+        instanceClassVal,
+        '--apply-immediately'
+      ]
+    ]
   }
 
   return []

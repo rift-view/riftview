@@ -21,18 +21,21 @@ describe('listEcsServices', () => {
 
   it('maps ECS services to CloudNodes', async () => {
     mockSend
-      .mockResolvedValueOnce({ clusterArns: [CLUSTER_ARN] })            // ListClusters
-      .mockResolvedValueOnce({ serviceArns: [SERVICE_ARN] })             // ListServices
-      .mockResolvedValueOnce({                                            // DescribeServices
-        services: [{
-          serviceArn: SERVICE_ARN,
-          serviceName: 'my-svc',
-          status: 'ACTIVE',
-          desiredCount: 2,
-          runningCount: 2,
-          launchType: 'FARGATE',
-          loadBalancers: [],
-        }],
+      .mockResolvedValueOnce({ clusterArns: [CLUSTER_ARN] }) // ListClusters
+      .mockResolvedValueOnce({ serviceArns: [SERVICE_ARN] }) // ListServices
+      .mockResolvedValueOnce({
+        // DescribeServices
+        services: [
+          {
+            serviceArn: SERVICE_ARN,
+            serviceName: 'my-svc',
+            status: 'ACTIVE',
+            desiredCount: 2,
+            runningCount: 2,
+            launchType: 'FARGATE',
+            loadBalancers: []
+          }
+        ]
       })
 
     const nodes = await listEcsServices(mockClient, 'us-east-1')
@@ -51,15 +54,17 @@ describe('listEcsServices', () => {
       .mockResolvedValueOnce({ clusterArns: [CLUSTER_ARN] })
       .mockResolvedValueOnce({ serviceArns: [SERVICE_ARN] })
       .mockResolvedValueOnce({
-        services: [{
-          serviceArn: SERVICE_ARN,
-          serviceName: 'my-svc',
-          status: 'ACTIVE',
-          loadBalancers: [],
-          networkConfiguration: {
-            awsvpcConfiguration: { subnets: [SUBNET_ID, 'subnet-other'] },
-          },
-        }],
+        services: [
+          {
+            serviceArn: SERVICE_ARN,
+            serviceName: 'my-svc',
+            status: 'ACTIVE',
+            loadBalancers: [],
+            networkConfiguration: {
+              awsvpcConfiguration: { subnets: [SUBNET_ID, 'subnet-other'] }
+            }
+          }
+        ]
       })
 
     const nodes = await listEcsServices(mockClient, 'us-east-1')
@@ -72,12 +77,14 @@ describe('listEcsServices', () => {
       .mockResolvedValueOnce({ clusterArns: [CLUSTER_ARN] })
       .mockResolvedValueOnce({ serviceArns: [SERVICE_ARN] })
       .mockResolvedValueOnce({
-        services: [{
-          serviceArn: SERVICE_ARN,
-          serviceName: 'my-svc',
-          status: 'ACTIVE',
-          loadBalancers: [{ targetGroupArn: TG_ARN }],
-        }],
+        services: [
+          {
+            serviceArn: SERVICE_ARN,
+            serviceName: 'my-svc',
+            status: 'ACTIVE',
+            loadBalancers: [{ targetGroupArn: TG_ARN }]
+          }
+        ]
       })
 
     const nodes = await listEcsServices(mockClient, 'us-east-1')
@@ -90,18 +97,21 @@ describe('listEcsServices', () => {
       .mockResolvedValueOnce({ clusterArns: [CLUSTER_ARN] })
       .mockResolvedValueOnce({ serviceArns: [SERVICE_ARN] })
       .mockResolvedValueOnce({
-        services: [{
-          serviceArn: SERVICE_ARN,
-          serviceName: 'my-svc',
-          status: 'ACTIVE',
-          loadBalancers: [],
-          taskDefinition: TASK_DEF_ARN,
-        }],
+        services: [
+          {
+            serviceArn: SERVICE_ARN,
+            serviceName: 'my-svc',
+            status: 'ACTIVE',
+            loadBalancers: [],
+            taskDefinition: TASK_DEF_ARN
+          }
+        ]
       })
-      .mockResolvedValueOnce({                                            // DescribeTaskDefinition
+      .mockResolvedValueOnce({
+        // DescribeTaskDefinition
         taskDefinition: {
-          containerDefinitions: [{ image: ECR_IMAGE }],
-        },
+          containerDefinitions: [{ image: ECR_IMAGE }]
+        }
       })
 
     const nodes = await listEcsServices(mockClient, 'us-east-1')
@@ -115,22 +125,30 @@ describe('listEcsServices', () => {
 
     mockSend
       .mockResolvedValueOnce({ clusterArns: [CLUSTER_ARN], nextToken: 'tok1' }) // ListClusters page 1
-      .mockResolvedValueOnce({ clusterArns: [CLUSTER_ARN_2] })                  // ListClusters page 2
-      .mockResolvedValueOnce({ serviceArns: [SERVICE_ARN] })                    // ListServices cluster 1
-      .mockResolvedValueOnce({ services: [{ serviceArn: SERVICE_ARN, serviceName: 'svc-1', status: 'ACTIVE', loadBalancers: [] }] })
-      .mockResolvedValueOnce({ serviceArns: [SERVICE_ARN_2] })                  // ListServices cluster 2
-      .mockResolvedValueOnce({ services: [{ serviceArn: SERVICE_ARN_2, serviceName: 'svc-2', status: 'ACTIVE', loadBalancers: [] }] })
+      .mockResolvedValueOnce({ clusterArns: [CLUSTER_ARN_2] }) // ListClusters page 2
+      .mockResolvedValueOnce({ serviceArns: [SERVICE_ARN] }) // ListServices cluster 1
+      .mockResolvedValueOnce({
+        services: [
+          { serviceArn: SERVICE_ARN, serviceName: 'svc-1', status: 'ACTIVE', loadBalancers: [] }
+        ]
+      })
+      .mockResolvedValueOnce({ serviceArns: [SERVICE_ARN_2] }) // ListServices cluster 2
+      .mockResolvedValueOnce({
+        services: [
+          { serviceArn: SERVICE_ARN_2, serviceName: 'svc-2', status: 'ACTIVE', loadBalancers: [] }
+        ]
+      })
 
     const nodes = await listEcsServices(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(2)
-    expect(nodes.map(n => n.label)).toEqual(['svc-1', 'svc-2'])
+    expect(nodes.map((n) => n.label)).toEqual(['svc-1', 'svc-2'])
   })
 
   it('skips clusters with no services', async () => {
     mockSend
       .mockResolvedValueOnce({ clusterArns: [CLUSTER_ARN] })
-      .mockResolvedValueOnce({ serviceArns: [] })                        // empty
+      .mockResolvedValueOnce({ serviceArns: [] }) // empty
 
     const nodes = await listEcsServices(mockClient, 'us-east-1')
 

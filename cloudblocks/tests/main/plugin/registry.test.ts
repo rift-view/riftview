@@ -10,10 +10,20 @@ function makePlugin(id: string, nodeTypes: string[] = ['test-node']): TerminusPl
     displayName: `Plugin ${id}`,
     nodeTypes,
     nodeTypeMetadata: Object.fromEntries(
-      nodeTypes.map((t) => [t, { label: t.toUpperCase(), borderColor: '#fff', badgeColor: '#fff', shortLabel: t, displayName: t, hasCreate: false }])
+      nodeTypes.map((t) => [
+        t,
+        {
+          label: t.toUpperCase(),
+          borderColor: '#fff',
+          badgeColor: '#fff',
+          shortLabel: t,
+          displayName: t,
+          hasCreate: false
+        }
+      ])
     ),
     createCredentials: vi.fn().mockReturnValue({ stubClient: true }),
-    scan: vi.fn().mockResolvedValue({ nodes: [], errors: [] }),
+    scan: vi.fn().mockResolvedValue({ nodes: [], errors: [] })
   }
 }
 
@@ -33,7 +43,9 @@ describe('PluginRegistry', () => {
 
   it('throws on duplicate NodeType registration', () => {
     registry.register(makePlugin('com.test.a', ['shared-type']))
-    expect(() => registry.register(makePlugin('com.test.b', ['shared-type']))).toThrow(/shared-type/)
+    expect(() => registry.register(makePlugin('com.test.b', ['shared-type']))).toThrow(
+      /shared-type/
+    )
   })
 
   it('getNodeTypeMetadata returns metadata for registered type', () => {
@@ -47,8 +59,22 @@ describe('PluginRegistry', () => {
   })
 
   it('scanAll merges results from all plugins', async () => {
-    const nodeA = { id: 'a', type: 'ec2' as const, label: 'A', status: 'running' as const, region: 'us-east-1', metadata: {} }
-    const nodeB = { id: 'b', type: 'ec2' as const, label: 'B', status: 'running' as const, region: 'us-east-1', metadata: {} }
+    const nodeA = {
+      id: 'a',
+      type: 'ec2' as const,
+      label: 'A',
+      status: 'running' as const,
+      region: 'us-east-1',
+      metadata: {}
+    }
+    const nodeB = {
+      id: 'b',
+      type: 'ec2' as const,
+      label: 'B',
+      status: 'running' as const,
+      region: 'us-east-1',
+      metadata: {}
+    }
     const pa = makePlugin('com.test.a', ['type-a'])
     const pb = makePlugin('com.test.b', ['type-b'])
     ;(pa.scan as ReturnType<typeof vi.fn>).mockResolvedValue({ nodes: [nodeA], errors: [] })

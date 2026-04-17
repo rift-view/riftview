@@ -29,20 +29,18 @@ describe('listSecrets', () => {
 
   it('attaches rotation Lambda as trigger integration from ListSecrets response', async () => {
     mockSend.mockResolvedValueOnce({
-      SecretList: [{ ARN: SECRET_ARN, Name: 'my-secret', RotationLambdaARN: ROTATION_LAMBDA_ARN }],
+      SecretList: [{ ARN: SECRET_ARN, Name: 'my-secret', RotationLambdaARN: ROTATION_LAMBDA_ARN }]
     })
 
     const nodes = await listSecrets(mockClient, 'us-east-1')
 
-    expect(nodes[0].integrations).toEqual([
-      { targetId: ROTATION_LAMBDA_ARN, edgeType: 'trigger' },
-    ])
+    expect(nodes[0].integrations).toEqual([{ targetId: ROTATION_LAMBDA_ARN, edgeType: 'trigger' }])
     expect(mockSend).toHaveBeenCalledTimes(1)
   })
 
   it('returns node without integrations when no rotation Lambda is configured', async () => {
     mockSend.mockResolvedValueOnce({
-      SecretList: [{ ARN: SECRET_ARN, Name: 'my-secret' }],
+      SecretList: [{ ARN: SECRET_ARN, Name: 'my-secret' }]
     })
 
     const nodes = await listSecrets(mockClient, 'us-east-1')
@@ -55,8 +53,8 @@ describe('listSecrets', () => {
     mockSend.mockResolvedValueOnce({
       SecretList: [
         { ARN: SECRET_ARN, Name: 'my-secret', RotationLambdaARN: ROTATION_LAMBDA_ARN },
-        { ARN: ARN2, Name: 'other-secret' },
-      ],
+        { ARN: ARN2, Name: 'other-secret' }
+      ]
     })
 
     const nodes = await listSecrets(mockClient, 'us-east-1')

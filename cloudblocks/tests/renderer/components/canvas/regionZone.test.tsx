@@ -41,7 +41,13 @@ describe('useUIStore — zoneSizes', () => {
     // Update only us-east-1
     useUIStore.getState().setZoneSize('region-zone-us-east-1', { width: 450, height: 250 })
     // eu-west-1 should be unchanged
-    expect(useUIStore.getState().zoneSizes['region-zone-eu-west-1']).toEqual({ width: 600, height: 350 })
-    expect(useUIStore.getState().zoneSizes['region-zone-us-east-1']).toEqual({ width: 450, height: 250 })
+    expect(useUIStore.getState().zoneSizes['region-zone-eu-west-1']).toEqual({
+      width: 600,
+      height: 350
+    })
+    expect(useUIStore.getState().zoneSizes['region-zone-us-east-1']).toEqual({
+      width: 450,
+      height: 250
+    })
   })
 })

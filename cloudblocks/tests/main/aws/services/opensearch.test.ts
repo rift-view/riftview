@@ -6,7 +6,7 @@ const mockSend = vi.fn()
 const mockClient = { send: mockSend } as unknown as OpenSearchClient
 
 const DOMAIN_ARN = 'arn:aws:es:us-east-1:123456789012:domain/my-domain'
-const VPC_ID     = 'vpc-abc123'
+const VPC_ID = 'vpc-abc123'
 
 describe('listOpenSearchDomains', () => {
   beforeEach(() => {
@@ -15,15 +15,18 @@ describe('listOpenSearchDomains', () => {
 
   it('maps a domain to a CloudNode', async () => {
     mockSend
-      .mockResolvedValueOnce({ DomainNames: [{ DomainName: 'my-domain' }] })  // ListDomainNames
-      .mockResolvedValueOnce({                                                  // DescribeDomains
-        DomainStatusList: [{
-          ARN:                   DOMAIN_ARN,
-          DomainName:            'my-domain',
-          DomainProcessingStatus: 'Active',
-          EngineVersion:         'OpenSearch_2.3',
-          Endpoint:              'search-my-domain.us-east-1.es.amazonaws.com',
-        }],
+      .mockResolvedValueOnce({ DomainNames: [{ DomainName: 'my-domain' }] }) // ListDomainNames
+      .mockResolvedValueOnce({
+        // DescribeDomains
+        DomainStatusList: [
+          {
+            ARN: DOMAIN_ARN,
+            DomainName: 'my-domain',
+            DomainProcessingStatus: 'Active',
+            EngineVersion: 'OpenSearch_2.3',
+            Endpoint: 'search-my-domain.us-east-1.es.amazonaws.com'
+          }
+        ]
       })
 
     const nodes = await listOpenSearchDomains(mockClient, 'us-east-1')
@@ -40,13 +43,15 @@ describe('listOpenSearchDomains', () => {
     mockSend
       .mockResolvedValueOnce({ DomainNames: [{ DomainName: 'my-domain' }] })
       .mockResolvedValueOnce({
-        DomainStatusList: [{
-          ARN:                    DOMAIN_ARN,
-          DomainName:             'my-domain',
-          DomainProcessingStatus: 'Active',
-          EngineVersion:          'OpenSearch_2.3',
-          Endpoint:               'search-my-domain.us-east-1.es.amazonaws.com',
-        }],
+        DomainStatusList: [
+          {
+            ARN: DOMAIN_ARN,
+            DomainName: 'my-domain',
+            DomainProcessingStatus: 'Active',
+            EngineVersion: 'OpenSearch_2.3',
+            Endpoint: 'search-my-domain.us-east-1.es.amazonaws.com'
+          }
+        ]
       })
 
     const nodes = await listOpenSearchDomains(mockClient, 'us-east-1')
@@ -59,13 +64,15 @@ describe('listOpenSearchDomains', () => {
     mockSend
       .mockResolvedValueOnce({ DomainNames: [{ DomainName: 'my-domain' }] })
       .mockResolvedValueOnce({
-        DomainStatusList: [{
-          ARN:                    DOMAIN_ARN,
-          DomainName:             'my-domain',
-          DomainProcessingStatus: 'Active',
-          VPCOptions:             { VPCId: VPC_ID },
-          Endpoints:              { vpc: 'vpc-endpoint.us-east-1.es.amazonaws.com' },
-        }],
+        DomainStatusList: [
+          {
+            ARN: DOMAIN_ARN,
+            DomainName: 'my-domain',
+            DomainProcessingStatus: 'Active',
+            VPCOptions: { VPCId: VPC_ID },
+            Endpoints: { vpc: 'vpc-endpoint.us-east-1.es.amazonaws.com' }
+          }
+        ]
       })
 
     const nodes = await listOpenSearchDomains(mockClient, 'us-east-1')
@@ -78,13 +85,15 @@ describe('listOpenSearchDomains', () => {
     mockSend
       .mockResolvedValueOnce({ DomainNames: [{ DomainName: 'my-domain' }] })
       .mockResolvedValueOnce({
-        DomainStatusList: [{
-          ARN:                    DOMAIN_ARN,
-          DomainName:             'my-domain',
-          DomainProcessingStatus: 'Active',
-          Endpoint:               undefined,
-          Endpoints:              { vpc: 'vpc-ep.us-east-1.es.amazonaws.com' },
-        }],
+        DomainStatusList: [
+          {
+            ARN: DOMAIN_ARN,
+            DomainName: 'my-domain',
+            DomainProcessingStatus: 'Active',
+            Endpoint: undefined,
+            Endpoints: { vpc: 'vpc-ep.us-east-1.es.amazonaws.com' }
+          }
+        ]
       })
 
     const nodes = await listOpenSearchDomains(mockClient, 'us-east-1')
@@ -93,26 +102,31 @@ describe('listOpenSearchDomains', () => {
   })
 
   it.each([
-    ['Active',   'running'],
+    ['Active', 'running'],
     ['Creating', 'creating'],
     ['Deleting', 'deleting'],
-    ['Failed',   'error'],
-    ['Modifying','unknown'],
-  ])('maps DomainProcessingStatus %s to node status %s', async (processingStatus, expectedStatus) => {
-    mockSend
-      .mockResolvedValueOnce({ DomainNames: [{ DomainName: 'my-domain' }] })
-      .mockResolvedValueOnce({
-        DomainStatusList: [{
-          ARN:                    DOMAIN_ARN,
-          DomainName:             'my-domain',
-          DomainProcessingStatus: processingStatus,
-        }],
-      })
+    ['Failed', 'error'],
+    ['Modifying', 'unknown']
+  ])(
+    'maps DomainProcessingStatus %s to node status %s',
+    async (processingStatus, expectedStatus) => {
+      mockSend
+        .mockResolvedValueOnce({ DomainNames: [{ DomainName: 'my-domain' }] })
+        .mockResolvedValueOnce({
+          DomainStatusList: [
+            {
+              ARN: DOMAIN_ARN,
+              DomainName: 'my-domain',
+              DomainProcessingStatus: processingStatus
+            }
+          ]
+        })
 
-    const nodes = await listOpenSearchDomains(mockClient, 'us-east-1')
+      const nodes = await listOpenSearchDomains(mockClient, 'us-east-1')
 
-    expect(nodes[0].status).toBe(expectedStatus)
-  })
+      expect(nodes[0].status).toBe(expectedStatus)
+    }
+  )
 
   it('returns empty array when no domains exist', async () => {
     mockSend.mockResolvedValueOnce({ DomainNames: [] })
@@ -120,7 +134,7 @@ describe('listOpenSearchDomains', () => {
     const nodes = await listOpenSearchDomains(mockClient, 'us-east-1')
 
     expect(nodes).toEqual([])
-    expect(mockSend).toHaveBeenCalledTimes(1)  // DescribeDomains should not be called
+    expect(mockSend).toHaveBeenCalledTimes(1) // DescribeDomains should not be called
   })
 
   it('returns empty array on top-level error', async () => {
@@ -135,11 +149,13 @@ describe('listOpenSearchDomains', () => {
     mockSend
       .mockResolvedValueOnce({ DomainNames: [{ DomainName: 'my-domain' }] })
       .mockResolvedValueOnce({
-        DomainStatusList: [{
-          ARN:                    undefined,
-          DomainName:             'my-domain',
-          DomainProcessingStatus: 'Active',
-        }],
+        DomainStatusList: [
+          {
+            ARN: undefined,
+            DomainName: 'my-domain',
+            DomainProcessingStatus: 'Active'
+          }
+        ]
       })
 
     const nodes = await listOpenSearchDomains(mockClient, 'us-east-1')

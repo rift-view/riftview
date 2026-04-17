@@ -5,13 +5,15 @@ import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 export async function listTables(
   client: DynamoDBClient,
   lambdaClient: LambdaClient,
-  region: string,
+  region: string
 ): Promise<CloudNode[]> {
   const tableNames: string[] = []
   try {
     let exclusiveStartTableName: string | undefined
     do {
-      const res = await client.send(new ListTablesCommand({ ExclusiveStartTableName: exclusiveStartTableName }))
+      const res = await client.send(
+        new ListTablesCommand({ ExclusiveStartTableName: exclusiveStartTableName })
+      )
       tableNames.push(...(res.TableNames ?? []))
       exclusiveStartTableName = res.LastEvaluatedTableName
     } while (exclusiveStartTableName)
@@ -34,9 +36,9 @@ export async function listTables(
         region,
         metadata: {
           billingMode: table?.BillingModeSummary?.BillingMode ?? 'PROVISIONED',
-          itemCount:   table?.ItemCount,
-          sizeBytes:   table?.TableSizeBytes,
-        },
+          itemCount: table?.ItemCount,
+          sizeBytes: table?.TableSizeBytes
+        }
       }
 
       const streamArn = table?.LatestStreamArn

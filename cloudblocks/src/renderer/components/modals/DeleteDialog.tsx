@@ -9,11 +9,20 @@ interface DeleteDialogProps {
 }
 
 const RESOURCE_LABELS: Record<string, string> = {
-  vpc: 'VPC', ec2: 'EC2 Instance', 'security-group': 'Security Group',
-  rds: 'RDS Instance', s3: 'S3 Bucket', lambda: 'Lambda Function', alb: 'Load Balancer',
+  vpc: 'VPC',
+  ec2: 'EC2 Instance',
+  'security-group': 'Security Group',
+  rds: 'RDS Instance',
+  s3: 'S3 Bucket',
+  lambda: 'Lambda Function',
+  alb: 'Load Balancer'
 }
 
-export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogProps): React.JSX.Element {
+export default function DeleteDialog({
+  node,
+  onClose,
+  onConfirm
+}: DeleteDialogProps): React.JSX.Element {
   const [input, setInput] = useState('')
   const [skipSnapshot, setSkipSnapshot] = useState(false)
   const [force, setForce] = useState(false)
@@ -22,16 +31,32 @@ export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogP
   const confirmed = input === node.id
 
   const overlay: React.CSSProperties = {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200,
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 200
   }
   const dialog: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)', border: '1px solid #ff5f57', borderRadius: 8,
-    padding: 20, width: 340, fontFamily: 'monospace',
+    background: 'var(--cb-bg-panel)',
+    border: '1px solid #ff5f57',
+    borderRadius: 8,
+    padding: 20,
+    width: 340,
+    fontFamily: 'monospace'
   }
 
   return (
-    <div style={overlay} onClick={e => e.target === e.currentTarget && onClose()} onKeyDown={(e) => { if (e.key === 'Escape') onClose() }} tabIndex={-1}>
+    <div
+      style={overlay}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
+      tabIndex={-1}
+    >
       <div style={dialog}>
         <div style={{ color: '#ff5f57', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>
           Delete {RESOURCE_LABELS[node.type] ?? node.type}?
@@ -43,41 +68,97 @@ export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogP
           autoFocus
           placeholder={node.id}
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={(e) => setInput(e.target.value)}
           style={{
-            width: '100%', background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)',
-            borderRadius: 3, padding: '4px 8px', color: 'var(--cb-text-primary)',
-            fontFamily: 'monospace', fontSize: 11, boxSizing: 'border-box', marginBottom: 10,
+            width: '100%',
+            background: 'var(--cb-bg-panel)',
+            border: '1px solid var(--cb-border)',
+            borderRadius: 3,
+            padding: '4px 8px',
+            color: 'var(--cb-text-primary)',
+            fontFamily: 'monospace',
+            fontSize: 11,
+            boxSizing: 'border-box',
+            marginBottom: 10
           }}
         />
 
         {node.type === 's3' && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--cb-text-secondary)', marginBottom: 8, cursor: 'pointer' }}>
-            <input type="checkbox" checked={force} onChange={e => setForce(e.target.checked)} />
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 10,
+              color: 'var(--cb-text-secondary)',
+              marginBottom: 8,
+              cursor: 'pointer'
+            }}
+          >
+            <input type="checkbox" checked={force} onChange={(e) => setForce(e.target.checked)} />
             Force delete (removes all objects)
           </label>
         )}
 
         {node.type === 'rds' && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--cb-text-secondary)', marginBottom: 8, cursor: 'pointer' }}>
-            <input type="checkbox" checked={skipSnapshot} onChange={e => setSkipSnapshot(e.target.checked)} />
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 10,
+              color: 'var(--cb-text-secondary)',
+              marginBottom: 8,
+              cursor: 'pointer'
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={skipSnapshot}
+              onChange={(e) => setSkipSnapshot(e.target.checked)}
+            />
             Skip final snapshot
           </label>
         )}
 
         {node.type === 'rds' && node.metadata?.deletionProtection === true && (
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--cb-text-secondary)', marginBottom: 8, cursor: 'pointer' }}>
-            <input type="checkbox" checked={disableProtection} onChange={e => setDisableProtection(e.target.checked)} />
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 10,
+              color: 'var(--cb-text-secondary)',
+              marginBottom: 8,
+              cursor: 'pointer'
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={disableProtection}
+              onChange={(e) => setDisableProtection(e.target.checked)}
+            />
             Disable deletion protection first
           </label>
         )}
 
-        <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, marginBottom: 12 }}>This action cannot be undone.</div>
+        <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, marginBottom: 12 }}>
+          This action cannot be undone.
+        </div>
 
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}
-            style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 3, padding: '4px 14px', color: 'var(--cb-text-secondary)', fontFamily: 'monospace', fontSize: 11, cursor: 'pointer' }}
+            style={{
+              background: 'var(--cb-bg-elevated)',
+              border: '1px solid var(--cb-border)',
+              borderRadius: 3,
+              padding: '4px 14px',
+              color: 'var(--cb-text-secondary)',
+              fontFamily: 'monospace',
+              fontSize: 11,
+              cursor: 'pointer'
+            }}
           >
             Cancel
           </button>
@@ -92,9 +173,15 @@ export default function DeleteDialog({ node, onClose, onConfirm }: DeleteDialogP
             }}
             style={{
               background: confirmed ? '#ff5f57' : '#3a1a1a',
-              border: '1px solid #ff5f57', borderRadius: 3, padding: '4px 14px',
-              color: confirmed ? '#000' : '#ff5f57', fontFamily: 'monospace', fontSize: 11,
-              fontWeight: 'bold', cursor: confirmed ? 'pointer' : 'not-allowed', opacity: confirmed ? 1 : 0.5,
+              border: '1px solid #ff5f57',
+              borderRadius: 3,
+              padding: '4px 14px',
+              color: confirmed ? '#000' : '#ff5f57',
+              fontFamily: 'monospace',
+              fontSize: 11,
+              fontWeight: 'bold',
+              cursor: confirmed ? 'pointer' : 'not-allowed',
+              opacity: confirmed ? 1 : 0.5
             }}
           >
             Delete

@@ -14,7 +14,7 @@ function makeProps(nodeType: NodeType, status: NodeStatus, label: string): Recor
     isConnectable: true,
     positionAbsoluteX: 0,
     positionAbsoluteY: 0,
-    data: { label, nodeType, status, metadata: {} },
+    data: { label, nodeType, status, metadata: {} }
   } as Parameters<typeof ResourceNode>[0]
 }
 
@@ -25,18 +25,10 @@ export const LambdaRunning: Story = () => (
 export const Ec2Running: Story = () => (
   <ResourceNode {...makeProps('ec2', 'running', 'i-0abc123')} />
 )
-export const S3Running: Story = () => (
-  <ResourceNode {...makeProps('s3', 'running', 'my-bucket')} />
-)
-export const RdsRunning: Story = () => (
-  <ResourceNode {...makeProps('rds', 'running', 'my-db')} />
-)
-export const AlbRunning: Story = () => (
-  <ResourceNode {...makeProps('alb', 'running', 'my-alb')} />
-)
-export const SqsRunning: Story = () => (
-  <ResourceNode {...makeProps('sqs', 'running', 'my-queue')} />
-)
+export const S3Running: Story = () => <ResourceNode {...makeProps('s3', 'running', 'my-bucket')} />
+export const RdsRunning: Story = () => <ResourceNode {...makeProps('rds', 'running', 'my-db')} />
+export const AlbRunning: Story = () => <ResourceNode {...makeProps('alb', 'running', 'my-alb')} />
+export const SqsRunning: Story = () => <ResourceNode {...makeProps('sqs', 'running', 'my-queue')} />
 export const DynamoRunning: Story = () => (
   <ResourceNode {...makeProps('dynamo', 'running', 'my-table')} />
 )
@@ -54,9 +46,7 @@ export const CognitoRunning: Story = () => (
 export const LambdaError: Story = () => (
   <ResourceNode {...makeProps('lambda', 'error', 'broken-function')} />
 )
-export const Ec2Error: Story = () => (
-  <ResourceNode {...makeProps('ec2', 'error', 'i-broken')} />
-)
+export const Ec2Error: Story = () => <ResourceNode {...makeProps('ec2', 'error', 'i-broken')} />
 
 // --- Pending state ---
 export const RdsPending: Story = () => (

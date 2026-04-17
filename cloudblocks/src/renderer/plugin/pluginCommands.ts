@@ -13,7 +13,10 @@ import type { PluginCommandHandlers } from '../../main/plugin/types'
 // Registry for plugin command handlers (populated at startup for bundled plugins)
 const pluginHandlers = new Map<string, PluginCommandHandlers>()
 
-export function registerPluginCommandHandlers(nodeType: string, handlers: PluginCommandHandlers): void {
+export function registerPluginCommandHandlers(
+  nodeType: string,
+  handlers: PluginCommandHandlers
+): void {
   pluginHandlers.set(nodeType, handlers)
 }
 
@@ -22,7 +25,10 @@ function isBuiltinNodeType(type: string): boolean {
   return !pluginHandlers.has(type)
 }
 
-export function resolveCreateCommands(resource: string, params: Record<string, unknown>): string[][] {
+export function resolveCreateCommands(
+  resource: string,
+  params: Record<string, unknown>
+): string[][] {
   if (isBuiltinNodeType(resource)) {
     return buildCommands({ resource, ...params } as CreateParams)
   }

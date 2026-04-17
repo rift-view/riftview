@@ -12,7 +12,7 @@ function makeSubnetProps(label: string, isPublic: boolean, az?: string): Record<
     isConnectable: false,
     positionAbsoluteX: 0,
     positionAbsoluteY: 0,
-    data: { label, isPublic, az },
+    data: { label, isPublic, az }
   } as Parameters<typeof SubnetNode>[0]
 }
 

@@ -3,69 +3,92 @@ import {
   DescribeLoadBalancersCommand,
   DescribeTargetGroupsCommand,
   DescribeTargetHealthCommand,
-  DescribeListenersCommand,
+  DescribeListenersCommand
 } from '@aws-sdk/client-elastic-load-balancing-v2'
 import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
 
 function albStatusToNodeStatus(code: string | undefined): NodeStatus {
-  if (code === 'active')       return 'running'
+  if (code === 'active') return 'running'
   if (code === 'provisioning') return 'pending'
-  if (code === 'failed')       return 'error'
+  if (code === 'failed') return 'error'
   return 'unknown'
 }
 
 export async function describeLoadBalancers(
   client: ElasticLoadBalancingV2Client,
-  region: string,
+  region: string
 ): Promise<CloudNode[]> {
   try {
-    const allLbs: { LoadBalancerArn?: string; LoadBalancerName?: string; State?: { Code?: string }; DNSName?: string; Scheme?: string; Type?: string; VpcId?: string }[] = []
+    const allLbs: {
+      LoadBalancerArn?: string
+      LoadBalancerName?: string
+      State?: { Code?: string }
+      DNSName?: string
+      Scheme?: string
+      Type?: string
+      VpcId?: string
+    }[] = []
     let marker: string | undefined
     do {
       const res = await client.send(new DescribeLoadBalancersCommand({ Marker: marker }))
       allLbs.push(...(res.LoadBalancers ?? []))
       marker = res.NextMarker
     } while (marker)
-    return Promise.all(allLbs.map(async (lb): Promise<CloudNode> => {
-      const allIntegrations: { targetId: string; edgeType: 'origin' | 'trigger' }[] = []
-      const targetGroupArns: string[] = []
-      try {
-        const tgRes = await client.send(new DescribeTargetGroupsCommand({ LoadBalancerArn: lb.LoadBalancerArn }))
-        for (const tg of tgRes.TargetGroups ?? []) {
-          if (tg.TargetGroupArn) targetGroupArns.push(tg.TargetGroupArn)
-          const healthRes = await client.send(new DescribeTargetHealthCommand({ TargetGroupArn: tg.TargetGroupArn }))
-          for (const desc of healthRes.TargetHealthDescriptions ?? []) {
-            const id = desc.Target?.Id
-            if (id?.startsWith('i-')) allIntegrations.push({ targetId: id, edgeType: 'origin' })
-            if (id?.startsWith('arn:aws:lambda:')) allIntegrations.push({ targetId: id, edgeType: 'trigger' })
+    return Promise.all(
+      allLbs.map(async (lb): Promise<CloudNode> => {
+        const allIntegrations: { targetId: string; edgeType: 'origin' | 'trigger' }[] = []
+        const targetGroupArns: string[] = []
+        try {
+          const tgRes = await client.send(
+            new DescribeTargetGroupsCommand({ LoadBalancerArn: lb.LoadBalancerArn })
+          )
+          for (const tg of tgRes.TargetGroups ?? []) {
+            if (tg.TargetGroupArn) targetGroupArns.push(tg.TargetGroupArn)
+            const healthRes = await client.send(
+              new DescribeTargetHealthCommand({ TargetGroupArn: tg.TargetGroupArn })
+            )
+            for (const desc of healthRes.TargetHealthDescriptions ?? []) {
+              const id = desc.Target?.Id
+              if (id?.startsWith('i-')) allIntegrations.push({ targetId: id, edgeType: 'origin' })
+              if (id?.startsWith('arn:aws:lambda:'))
+                allIntegrations.push({ targetId: id, edgeType: 'trigger' })
+            }
           }
+        } catch {
+          /* ignore */
         }
-      } catch { /* ignore */ }
-      try {
-        // ACM certificates used by HTTPS listeners
-        const listenersRes = await client.send(new DescribeListenersCommand({ LoadBalancerArn: lb.LoadBalancerArn }))
-        const certArns = [...new Set(
-          (listenersRes.Listeners ?? [])
-            .flatMap((l) => l.Certificates ?? [])
-            .map((c) => c.CertificateArn)
-            .filter((arn): arn is string => !!arn && arn.includes(':certificate/')),
-        )]
-        for (const arn of certArns) {
-          allIntegrations.push({ targetId: arn, edgeType: 'origin' })
+        try {
+          // ACM certificates used by HTTPS listeners
+          const listenersRes = await client.send(
+            new DescribeListenersCommand({ LoadBalancerArn: lb.LoadBalancerArn })
+          )
+          const certArns = [
+            ...new Set(
+              (listenersRes.Listeners ?? [])
+                .flatMap((l) => l.Certificates ?? [])
+                .map((c) => c.CertificateArn)
+                .filter((arn): arn is string => !!arn && arn.includes(':certificate/'))
+            )
+          ]
+          for (const arn of certArns) {
+            allIntegrations.push({ targetId: arn, edgeType: 'origin' })
+          }
+        } catch {
+          /* ignore */
         }
-      } catch { /* ignore */ }
-      const integrations = allIntegrations.length > 0 ? allIntegrations : undefined
-      return {
-        id:       lb.LoadBalancerArn ?? lb.LoadBalancerName ?? 'unknown',
-        type:     'alb',
-        label:    lb.LoadBalancerName ?? 'ALB',
-        status:   albStatusToNodeStatus(lb.State?.Code),
-        region,
-        metadata: { dnsName: lb.DNSName, scheme: lb.Scheme, type: lb.Type, targetGroupArns },
-        parentId: lb.VpcId,
-        integrations,
-      }
-    }))
+        const integrations = allIntegrations.length > 0 ? allIntegrations : undefined
+        return {
+          id: lb.LoadBalancerArn ?? lb.LoadBalancerName ?? 'unknown',
+          type: 'alb',
+          label: lb.LoadBalancerName ?? 'ALB',
+          status: albStatusToNodeStatus(lb.State?.Code),
+          region,
+          metadata: { dnsName: lb.DNSName, scheme: lb.Scheme, type: lb.Type, targetGroupArns },
+          parentId: lb.VpcId,
+          integrations
+        }
+      })
+    )
   } catch {
     return []
   }

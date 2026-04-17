@@ -7,26 +7,41 @@ import type { CloudNode } from '../../../../src/renderer/types/cloud'
 
 // ---- Mocks ----------------------------------------------------------------
 
-const runCliMock          = vi.fn().mockResolvedValue({ code: 0 })
+const runCliMock = vi.fn().mockResolvedValue({ code: 0 })
 const exportTerraformMock = vi.fn().mockResolvedValue({ success: true })
 
 Object.defineProperty(window, 'terminus', {
   value: { runCli: runCliMock, exportTerraform: exportTerraformMock },
-  writable: true,
+  writable: true
 })
 
 // ---- Helpers ---------------------------------------------------------------
 
 const EC2_NODE_A: CloudNode = {
-  id: 'i-001', type: 'ec2', label: 'server-a', status: 'running', region: 'us-east-1', metadata: {},
+  id: 'i-001',
+  type: 'ec2',
+  label: 'server-a',
+  status: 'running',
+  region: 'us-east-1',
+  metadata: {}
 }
 
 const EC2_NODE_B: CloudNode = {
-  id: 'i-002', type: 'ec2', label: 'server-b', status: 'running', region: 'us-east-1', metadata: {},
+  id: 'i-002',
+  type: 'ec2',
+  label: 'server-b',
+  status: 'running',
+  region: 'us-east-1',
+  metadata: {}
 }
 
 const S3_NODE: CloudNode = {
-  id: 'my-bucket', type: 's3', label: 'my-bucket', status: 'running', region: 'us-east-1', metadata: {},
+  id: 'my-bucket',
+  type: 's3',
+  label: 'my-bucket',
+  status: 'running',
+  region: 'us-east-1',
+  metadata: {}
 }
 
 // ---- Tests -----------------------------------------------------------------

@@ -5,7 +5,7 @@ export interface IamFinding {
   title: string
   detail: string
   policyName?: string
-  statement?: string  // JSON.stringify of offending statement
+  statement?: string // JSON.stringify of offending statement
 }
 
 export interface IamAnalysisResult {

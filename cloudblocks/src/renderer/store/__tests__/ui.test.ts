@@ -3,9 +3,9 @@ import { useUIStore } from '../ui'
 
 beforeEach(() => {
   useUIStore.setState({
-    nodePositions:  { topology: {}, graph: {} },
-    savedViews:     [null, null, null, null],
-    activeViewSlot: null,
+    nodePositions: { topology: {}, graph: {} },
+    savedViews: [null, null, null, null],
+    activeViewSlot: null
   })
 })
 
@@ -30,7 +30,7 @@ describe('setNodePosition', () => {
 describe('saveView', () => {
   it('snapshots current view positions into the slot with the given name', () => {
     useUIStore.setState({
-      nodePositions: { topology: { 'vpc-1': { x: 50, y: 60 } }, graph: {} },
+      nodePositions: { topology: { 'vpc-1': { x: 50, y: 60 } }, graph: {} }
     })
     useUIStore.getState().saveView(1, 'Prod Layout', 'topology')
     const slot = useUIStore.getState().savedViews[1]
@@ -56,7 +56,7 @@ describe('saveView', () => {
 describe('loadView', () => {
   it('copies slot positions into the correct view map', () => {
     useUIStore.setState({
-      nodePositions: { topology: { 'vpc-1': { x: 50, y: 60 } }, graph: {} },
+      nodePositions: { topology: { 'vpc-1': { x: 50, y: 60 } }, graph: {} }
     })
     useUIStore.getState().saveView(0, 'Layout A', 'topology')
     useUIStore.setState({ nodePositions: { topology: {}, graph: {} } })

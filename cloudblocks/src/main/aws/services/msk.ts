@@ -3,14 +3,18 @@ import { LambdaClient, ListEventSourceMappingsCommand } from '@aws-sdk/client-la
 import type { CloudNode, NodeStatus, EdgeType } from '../../../renderer/types/cloud'
 
 function mskStatusToNodeStatus(state: string | undefined): NodeStatus {
-  if (state === 'ACTIVE')   return 'running'
+  if (state === 'ACTIVE') return 'running'
   if (state === 'CREATING') return 'creating'
   if (state === 'DELETING') return 'deleting'
-  if (state === 'FAILED')   return 'error'
+  if (state === 'FAILED') return 'error'
   return 'unknown'
 }
 
-export async function listMskClusters(client: KafkaClient, lambdaClient: LambdaClient, region: string): Promise<CloudNode[]> {
+export async function listMskClusters(
+  client: KafkaClient,
+  lambdaClient: LambdaClient,
+  region: string
+): Promise<CloudNode[]> {
   try {
     const allClusters: import('@aws-sdk/client-kafka').Cluster[] = []
     let nextToken: string | undefined
@@ -27,16 +31,16 @@ export async function listMskClusters(client: KafkaClient, lambdaClient: LambdaC
           cluster.Serverless?.VpcConfigs?.[0]?.SubnetIds?.[0]
         const clusterArn = cluster.ClusterArn ?? cluster.ClusterName ?? 'unknown'
         const baseNode: CloudNode = {
-          id:       clusterArn,
-          type:     'msk',
-          label:    cluster.ClusterName ?? 'MSK',
-          status:   mskStatusToNodeStatus(cluster.State),
+          id: clusterArn,
+          type: 'msk',
+          label: cluster.ClusterName ?? 'MSK',
+          status: mskStatusToNodeStatus(cluster.State),
           region,
           metadata: {
-            clusterType:  cluster.ClusterType,
-            instanceType: cluster.Provisioned?.BrokerNodeGroupInfo?.InstanceType,
+            clusterType: cluster.ClusterType,
+            instanceType: cluster.Provisioned?.BrokerNodeGroupInfo?.InstanceType
           },
-          ...(firstSubnet ? { parentId: firstSubnet } : {}),
+          ...(firstSubnet ? { parentId: firstSubnet } : {})
         }
 
         if (!cluster.ClusterArn) return baseNode

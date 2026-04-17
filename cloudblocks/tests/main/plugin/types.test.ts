@@ -1,15 +1,20 @@
 import { describe, it, expect } from 'vitest'
-import type { TerminusPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from '../../../src/main/plugin/types'
+import type {
+  TerminusPlugin,
+  NodeTypeMetadata,
+  PluginScanResult,
+  ScanContext
+} from '../../../src/main/plugin/types'
 
 describe('TerminusPlugin interface — structural shape', () => {
   it('NodeTypeMetadata has all required fields', () => {
     const meta: NodeTypeMetadata = {
-      label:       'EC2',
+      label: 'EC2',
       borderColor: '#FF9900',
-      badgeColor:  '#FF9900',
-      shortLabel:  'EC2',
+      badgeColor: '#FF9900',
+      shortLabel: 'EC2',
       displayName: 'EC2 Instance',
-      hasCreate:   true,
+      hasCreate: true
     }
     expect(meta.label).toBe('EC2')
     expect(meta.hasCreate).toBe(true)
@@ -28,17 +33,21 @@ describe('TerminusPlugin interface — structural shape', () => {
 
   it('TerminusPlugin duck-type: minimal plugin object satisfies required fields', () => {
     const plugin: TerminusPlugin = {
-      id:              'com.test.plugin',
-      displayName:     'Test Plugin',
-      nodeTypes:       ['test-node'],
+      id: 'com.test.plugin',
+      displayName: 'Test Plugin',
+      nodeTypes: ['test-node'],
       nodeTypeMetadata: {
         'test-node': {
-          label: 'TEST', borderColor: '#fff', badgeColor: '#fff',
-          shortLabel: 'T', displayName: 'Test Node', hasCreate: false,
-        },
+          label: 'TEST',
+          borderColor: '#fff',
+          badgeColor: '#fff',
+          shortLabel: 'T',
+          displayName: 'Test Node',
+          hasCreate: false
+        }
       },
       createCredentials: () => ({}),
-      scan: async () => ({ nodes: [], errors: [] }),
+      scan: async () => ({ nodes: [], errors: [] })
     }
     expect(plugin.id).toBe('com.test.plugin')
     expect(plugin.nodeTypes).toHaveLength(1)

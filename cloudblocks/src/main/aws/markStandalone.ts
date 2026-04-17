@@ -25,7 +25,7 @@ export function markStandaloneNodes(nodes: CloudNode[]): CloudNode[] {
   for (const node of nodes) {
     if (CONTAINER_TYPES.has(node.type)) continue
     const hasOutbound = (node.integrations ?? []).length > 0
-    const hasInbound  = referencedIds.has(node.id)
+    const hasInbound = referencedIds.has(node.id)
     const metadata = node.metadata ?? {}
     node.metadata = { ...metadata, standalone: !hasOutbound && !hasInbound }
   }

@@ -8,10 +8,10 @@ const DEFAULT_PROFILE = { name: 'default' }
 
 beforeEach(() => {
   useCloudStore.setState({
-    profile:         DEFAULT_PROFILE,
-    nodes:           [],
-    scanStatus:      'idle',
-    selectedRegions: ['us-east-1'],
+    profile: DEFAULT_PROFILE,
+    nodes: [],
+    scanStatus: 'idle',
+    selectedRegions: ['us-east-1']
   })
   useUIStore.setState({ showSettings: false })
 })
@@ -55,7 +55,9 @@ describe('EmptyCanvasState', () => {
 
   it('renders nothing when nodes exist', () => {
     useCloudStore.setState({
-      nodes: [{ id: 'i-1', type: 'ec2', label: 'web', region: 'us-east-1', status: 'running', raw: {} }],
+      nodes: [
+        { id: 'i-1', type: 'ec2', label: 'web', region: 'us-east-1', status: 'running', raw: {} }
+      ]
     })
     const { container } = render(<EmptyCanvasState />)
     expect(container.firstChild).toBeNull()

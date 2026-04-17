@@ -17,33 +17,65 @@ function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
     color: 'var(--cb-text-primary)',
     fontFamily: 'monospace',
     fontSize: 10,
-    boxSizing: 'border-box' as const,
+    boxSizing: 'border-box' as const
   }
 }
 
 export function S3Form({ onChange, showErrors = false }: Props): React.JSX.Element {
-  const currentRegion       = useCloudStore((s) => s.region)
-  const [bucketName,        setBucketName]        = useState('')
-  const [region,            setRegion]            = useState(currentRegion)
+  const currentRegion = useCloudStore((s) => s.region)
+  const [bucketName, setBucketName] = useState('')
+  const [region, setRegion] = useState(currentRegion)
   const [blockPublicAccess, setBlockPublicAccess] = useState(true)
 
-  function update(partial: Partial<{ bucketName: string; region: string; blockPublicAccess: boolean }>): void {
+  function update(
+    partial: Partial<{ bucketName: string; region: string; blockPublicAccess: boolean }>
+  ): void {
     const next = { bucketName, region, blockPublicAccess, ...partial }
-    setBucketName(next.bucketName); setRegion(next.region); setBlockPublicAccess(next.blockPublicAccess)
+    setBucketName(next.bucketName)
+    setRegion(next.region)
+    setBlockPublicAccess(next.blockPublicAccess)
     onChange({ resource: 's3', ...next })
   }
 
-  const labelStyle: React.CSSProperties = { color: 'var(--cb-text-muted)', fontSize: '9px', marginBottom: '3px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.08em' }
+  const labelStyle: React.CSSProperties = {
+    color: 'var(--cb-text-muted)',
+    fontSize: '9px',
+    marginBottom: '3px',
+    display: 'block',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em'
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      <label><span style={labelStyle}>Bucket Name</span>
-        <input style={fieldStyle(bucketName, showErrors)} value={bucketName} onChange={(e) => update({ bucketName: e.target.value })} placeholder="my-unique-bucket-name" /></label>
-      <label><span style={labelStyle}>Region</span>
-        <input style={fieldStyle(region, false)} value={region} onChange={(e) => update({ region: e.target.value })} /></label>
+      <label>
+        <span style={labelStyle}>Bucket Name</span>
+        <input
+          style={fieldStyle(bucketName, showErrors)}
+          value={bucketName}
+          onChange={(e) => update({ bucketName: e.target.value })}
+          placeholder="my-unique-bucket-name"
+        />
+      </label>
+      <label>
+        <span style={labelStyle}>Region</span>
+        <input
+          style={fieldStyle(region, false)}
+          value={region}
+          onChange={(e) => update({ region: e.target.value })}
+        />
+      </label>
       <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-        <input type="checkbox" checked={blockPublicAccess} onChange={(e) => update({ blockPublicAccess: e.target.checked })} />
-        <span style={{ color: 'var(--cb-text-secondary)', fontSize: '11px', fontFamily: 'monospace' }}>Block all public access</span>
+        <input
+          type="checkbox"
+          checked={blockPublicAccess}
+          onChange={(e) => update({ blockPublicAccess: e.target.checked })}
+        />
+        <span
+          style={{ color: 'var(--cb-text-secondary)', fontSize: '11px', fontFamily: 'monospace' }}
+        >
+          Block all public access
+        </span>
       </label>
     </div>
   )

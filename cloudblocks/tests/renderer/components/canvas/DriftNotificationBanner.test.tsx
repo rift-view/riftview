@@ -14,7 +14,7 @@ const makeImportedNode = (id: string, driftStatus: CloudNode['driftStatus']): Cl
   status: 'running',
   region: 'us-east-1',
   metadata: {},
-  driftStatus,
+  driftStatus
 })
 
 // ---- Tests -----------------------------------------------------------------
@@ -23,7 +23,7 @@ describe('DriftNotificationBanner', () => {
   beforeEach(() => {
     useCloudStore.setState({
       importedNodes: [],
-      scanErrors:    [],
+      scanErrors: [],
       settings: {
         deleteConfirmStyle: 'type-to-confirm',
         scanInterval: 30,
@@ -31,8 +31,8 @@ describe('DriftNotificationBanner', () => {
         showRegionIndicators: true,
         regionColors: {},
         showScanErrorBadges: true,
-        notifyOnDrift: true,
-      },
+        notifyOnDrift: true
+      }
     })
     useUIStore.setState({ driftBannerDismissed: false })
   })
@@ -44,7 +44,7 @@ describe('DriftNotificationBanner', () => {
 
   it('does not render when driftedCount is 0 (all matched)', () => {
     useCloudStore.setState({
-      importedNodes: [makeImportedNode('i-001', 'matched')],
+      importedNodes: [makeImportedNode('i-001', 'matched')]
     })
     const { container } = render(<DriftNotificationBanner />)
     expect(container.firstChild).toBeNull()
@@ -52,10 +52,7 @@ describe('DriftNotificationBanner', () => {
 
   it('renders when driftedCount > 0', () => {
     useCloudStore.setState({
-      importedNodes: [
-        makeImportedNode('i-001', 'unmanaged'),
-        makeImportedNode('i-002', 'matched'),
-      ],
+      importedNodes: [makeImportedNode('i-001', 'unmanaged'), makeImportedNode('i-002', 'matched')]
     })
     render(<DriftNotificationBanner />)
     expect(screen.getByText(/1 resource drifted from Terraform state/)).toBeTruthy()
@@ -63,10 +60,7 @@ describe('DriftNotificationBanner', () => {
 
   it('renders plural form for multiple drifted resources', () => {
     useCloudStore.setState({
-      importedNodes: [
-        makeImportedNode('i-001', 'unmanaged'),
-        makeImportedNode('i-002', 'missing'),
-      ],
+      importedNodes: [makeImportedNode('i-001', 'unmanaged'), makeImportedNode('i-002', 'missing')]
     })
     render(<DriftNotificationBanner />)
     expect(screen.getByText(/2 resources drifted from Terraform state/)).toBeTruthy()
@@ -74,7 +68,7 @@ describe('DriftNotificationBanner', () => {
 
   it('is hidden when driftBannerDismissed is true', () => {
     useCloudStore.setState({
-      importedNodes: [makeImportedNode('i-001', 'unmanaged')],
+      importedNodes: [makeImportedNode('i-001', 'unmanaged')]
     })
     useUIStore.setState({ driftBannerDismissed: true })
     const { container } = render(<DriftNotificationBanner />)
@@ -83,7 +77,7 @@ describe('DriftNotificationBanner', () => {
 
   it('dismiss button sets driftBannerDismissed to true', () => {
     useCloudStore.setState({
-      importedNodes: [makeImportedNode('i-001', 'missing')],
+      importedNodes: [makeImportedNode('i-001', 'missing')]
     })
     render(<DriftNotificationBanner />)
     const dismissBtn = screen.getByTitle('Dismiss')
@@ -101,8 +95,8 @@ describe('DriftNotificationBanner', () => {
         showRegionIndicators: true,
         regionColors: {},
         showScanErrorBadges: true,
-        notifyOnDrift: false,
-      },
+        notifyOnDrift: false
+      }
     })
     const { container } = render(<DriftNotificationBanner />)
     expect(container.firstChild).toBeNull()

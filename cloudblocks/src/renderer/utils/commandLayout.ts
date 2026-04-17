@@ -5,22 +5,43 @@ import type { CloudNode, NodeType } from '../types/cloud'
 
 export const NODE_TIER: Partial<Record<NodeType, number>> = {
   // Tier 0 — Internet / DNS
-  'igw': 0, 'cloudfront': 0, 'acm': 0, 'r53-zone': 0,
+  igw: 0,
+  cloudfront: 0,
+  acm: 0,
+  'r53-zone': 0,
 
   // Tier 1 — Edge / Gateway
-  'alb': 1, 'apigw': 1, 'apigw-route': 1,
+  alb: 1,
+  apigw: 1,
+  'apigw-route': 1,
 
   // Tier 2 — Compute
-  'lambda': 2, 'ec2': 2, 'ecs': 2, 'eks': 2,
+  lambda: 2,
+  ec2: 2,
+  ecs: 2,
+  eks: 2,
 
   // Tier 3 — Data
-  'rds': 3, 'dynamo': 3, 's3': 3, 'opensearch': 3, 'kinesis': 3, 'elasticache': 3, 'msk': 3,
+  rds: 3,
+  dynamo: 3,
+  s3: 3,
+  opensearch: 3,
+  kinesis: 3,
+  elasticache: 3,
+  msk: 3,
 
   // Tier 4 — Messaging
-  'sqs': 4, 'sns': 4, 'eventbridge-bus': 4, 'sfn': 4, 'ses': 4,
+  sqs: 4,
+  sns: 4,
+  'eventbridge-bus': 4,
+  sfn: 4,
+  ses: 4,
 
   // Tier 5 — Config / Identity
-  'ssm-param': 5, 'secret': 5, 'cognito': 5, 'ecr-repo': 5,
+  'ssm-param': 5,
+  secret: 5,
+  cognito: 5,
+  'ecr-repo': 5
 }
 
 export const DEFAULT_TIER = 6
@@ -31,13 +52,13 @@ const TIER_NAMES = ['Internet', 'Edge', 'Compute', 'Data', 'Messaging', 'Config'
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 
-const CMD_NODE_W  = 150
-const CMD_NODE_H  = 66
-const CMD_GAP_X   = 12
-const CMD_COLS    = 8
-const CMD_TIER_H  = CMD_NODE_H + 80   // node height + gap including label space
-const LANE_TOP    = 60
-const LANE_X      = 200               // left margin for tier labels
+const CMD_NODE_W = 150
+const CMD_NODE_H = 66
+const CMD_GAP_X = 12
+const CMD_COLS = 8
+const CMD_TIER_H = CMD_NODE_H + 80 // node height + gap including label space
+const LANE_TOP = 60
+const LANE_X = 200 // left margin for tier labels
 
 // ── Crossing reduction — barycentric heuristic ───────────────────────────────
 //
@@ -53,11 +74,13 @@ function buildAdjacency(allNodes: CloudNode[]): Map<string, Set<string>> {
   }
   for (const node of allNodes) {
     ensure(node.id)
-    for (const { targetId } of (node.integrations ?? [])) {
+    for (const { targetId } of node.integrations ?? []) {
       // targetId may be a raw ARN — resolve to node id via SNS pattern
-      const resolved = allNodes.find(
-        (n) => n.id === targetId || (n.metadata?.QueueArn === targetId) || (n.metadata?.arn === targetId)
-      )?.id ?? targetId
+      const resolved =
+        allNodes.find(
+          (n) =>
+            n.id === targetId || n.metadata?.QueueArn === targetId || n.metadata?.arn === targetId
+        )?.id ?? targetId
       ensure(node.id).add(resolved)
       ensure(resolved).add(node.id)
     }
@@ -67,10 +90,10 @@ function buildAdjacency(allNodes: CloudNode[]): Map<string, Set<string>> {
 
 function sortByBarycenter(
   nodes: CloudNode[],
-  placed: Map<string, number>,   // nodeId → col index already placed
+  placed: Map<string, number> // nodeId → col index already placed
 ): CloudNode[] {
   const scored = nodes.map((n) => {
-    const neighbors = [...(placed.keys())].filter(() => false) // placeholder
+    const neighbors = [...placed.keys()].filter(() => false) // placeholder
     void neighbors
     // Collect placed neighbours
     const positions: number[] = []
@@ -83,10 +106,7 @@ function sortByBarycenter(
   return scored.map((s) => s.node)
 }
 
-function reduceCrossings(
-  byTier: Map<number, CloudNode[]>,
-  adj: Map<string, Set<string>>,
-): void {
+function reduceCrossings(byTier: Map<number, CloudNode[]>, adj: Map<string, Set<string>>): void {
   const tierOrder = [...byTier.keys()].sort((a, b) => a - b)
   // placed: nodeId → column index within its tier (used for barycenter calc)
   const placed = new Map<string, number>()
@@ -109,7 +129,7 @@ function reduceCrossings(
 function barycenter(
   nodeId: string,
   adj: Map<string, Set<string>>,
-  placed: Map<string, number>,
+  placed: Map<string, number>
 ): number {
   const neighbors = adj.get(nodeId) ?? new Set()
   const positions: number[] = []
@@ -156,12 +176,12 @@ export function buildCommandNodes(cloudNodes: CloudNode[]): Node[] {
 
     // Tier label node
     result.push({
-      id:         `__tier_label_${tier}__`,
-      type:       'tier-label',
-      position:   { x: 0, y: tierY },
-      draggable:  false,
+      id: `__tier_label_${tier}__`,
+      type: 'tier-label',
+      position: { x: 0, y: tierY },
+      draggable: false,
       selectable: false,
-      data:       { name: TIER_NAMES[tier] ?? `Tier ${tier}` },
+      data: { name: TIER_NAMES[tier] ?? `Tier ${tier}` }
     })
 
     // Resource nodes in a grid
@@ -169,19 +189,19 @@ export function buildCommandNodes(cloudNodes: CloudNode[]): Node[] {
       const col = idx % CMD_COLS
       const row = Math.floor(idx / CMD_COLS)
       result.push({
-        id:       node.id,
-        type:     'resource',
+        id: node.id,
+        type: 'resource',
         position: {
           x: LANE_X + col * (CMD_NODE_W + CMD_GAP_X),
-          y: tierY + row * (CMD_NODE_H + 12),
+          y: tierY + row * (CMD_NODE_H + 12)
         },
         data: {
-          label:    node.label,
+          label: node.label,
           nodeType: node.type,
-          status:   node.status,
-          region:   node.region,
-          metadata: node.metadata,
-        },
+          status: node.status,
+          region: node.region,
+          metadata: node.metadata
+        }
       })
     })
   }

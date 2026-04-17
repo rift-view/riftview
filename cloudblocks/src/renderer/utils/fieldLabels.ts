@@ -1,53 +1,53 @@
 export const FIELD_LABELS: Record<string, string> = {
   // General
-  vpcId:              'VPC',
-  subnetId:           'Subnet',
-  availabilityZone:   'AZ',
-  region:             'Region',
+  vpcId: 'VPC',
+  subnetId: 'Subnet',
+  availabilityZone: 'AZ',
+  region: 'Region',
   // EC2
-  instanceType:       'Instance Type',
-  keyName:            'Key Pair',
-  privateIpAddress:   'Private IP',
-  publicIpAddress:    'Public IP',
+  instanceType: 'Instance Type',
+  keyName: 'Key Pair',
+  privateIpAddress: 'Private IP',
+  publicIpAddress: 'Public IP',
   iamInstanceProfile: 'IAM Role',
   // RDS
-  engine:             'Engine',
-  engineVersion:      'Version',
-  dbInstanceClass:    'Instance Class',
-  multiAZ:            'Multi-AZ',
-  storageEncrypted:   'Encrypted',
-  subnetGroupName:    'Subnet Group',
+  engine: 'Engine',
+  engineVersion: 'Version',
+  dbInstanceClass: 'Instance Class',
+  multiAZ: 'Multi-AZ',
+  storageEncrypted: 'Encrypted',
+  subnetGroupName: 'Subnet Group',
   // S3
-  bucketRegion:       'Region',
-  versioning:         'Versioning',
+  bucketRegion: 'Region',
+  versioning: 'Versioning',
   // Lambda
-  runtime:            'Runtime',
-  handler:            'Handler',
-  memorySize:         'Memory (MB)',
-  timeout:            'Timeout (s)',
-  codeSize:           'Code Size',
-  lastModified:       'Last Modified',
+  runtime: 'Runtime',
+  handler: 'Handler',
+  memorySize: 'Memory (MB)',
+  timeout: 'Timeout (s)',
+  codeSize: 'Code Size',
+  lastModified: 'Last Modified',
   // ALB
-  dnsName:            'DNS Name',
-  scheme:             'Scheme',
+  dnsName: 'DNS Name',
+  scheme: 'Scheme',
   // ACM
-  domainName:         'Domain',
-  validationMethod:   'Validation',
-  inUseBy:            'In Use By',
+  domainName: 'Domain',
+  validationMethod: 'Validation',
+  inUseBy: 'In Use By',
   // CloudFront
-  origins:            'Origins',
-  priceClass:         'Price Class',
-  defaultRootObject:  'Default Root',
-  certArn:            'Certificate',
+  origins: 'Origins',
+  priceClass: 'Price Class',
+  defaultRootObject: 'Default Root',
+  certArn: 'Certificate',
   // API Gateway
-  endpoint:           'Endpoint',
-  corsOrigins:        'CORS Origins',
+  endpoint: 'Endpoint',
+  corsOrigins: 'CORS Origins',
   // ECS (future-proofing)
-  clusterName:        'Cluster',
-  taskCount:          'Tasks',
+  clusterName: 'Cluster',
+  taskCount: 'Tasks',
   // General extras
-  createdAt:          'Created',
-  updatedAt:          'Updated',
+  createdAt: 'Created',
+  updatedAt: 'Updated'
 }
 
 /**
@@ -57,7 +57,5 @@ export const FIELD_LABELS: Record<string, string> = {
  */
 export function fieldLabel(key: string): string {
   if (key in FIELD_LABELS) return FIELD_LABELS[key]
-  return key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, (s) => s.toUpperCase())
+  return key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())
 }

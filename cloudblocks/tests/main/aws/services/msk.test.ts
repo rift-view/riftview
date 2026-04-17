@@ -21,18 +21,20 @@ describe('listMskClusters', () => {
 
   it('maps provisioned MSK clusters to CloudNodes', async () => {
     mockSend.mockResolvedValueOnce({
-      ClusterInfoList: [{
-        ClusterArn: CLUSTER_ARN,
-        ClusterName: 'my-cluster',
-        State: 'ACTIVE',
-        ClusterType: 'PROVISIONED',
-        Provisioned: {
-          BrokerNodeGroupInfo: {
-            InstanceType: 'kafka.m5.large',
-            ClientSubnets: [SUBNET_ID],
-          },
-        },
-      }],
+      ClusterInfoList: [
+        {
+          ClusterArn: CLUSTER_ARN,
+          ClusterName: 'my-cluster',
+          State: 'ACTIVE',
+          ClusterType: 'PROVISIONED',
+          Provisioned: {
+            BrokerNodeGroupInfo: {
+              InstanceType: 'kafka.m5.large',
+              ClientSubnets: [SUBNET_ID]
+            }
+          }
+        }
+      ]
     })
 
     const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
@@ -47,15 +49,17 @@ describe('listMskClusters', () => {
 
   it('stores clusterType and instanceType in metadata', async () => {
     mockSend.mockResolvedValueOnce({
-      ClusterInfoList: [{
-        ClusterArn: CLUSTER_ARN,
-        ClusterName: 'my-cluster',
-        State: 'ACTIVE',
-        ClusterType: 'PROVISIONED',
-        Provisioned: {
-          BrokerNodeGroupInfo: { InstanceType: 'kafka.m5.large', ClientSubnets: [] },
-        },
-      }],
+      ClusterInfoList: [
+        {
+          ClusterArn: CLUSTER_ARN,
+          ClusterName: 'my-cluster',
+          State: 'ACTIVE',
+          ClusterType: 'PROVISIONED',
+          Provisioned: {
+            BrokerNodeGroupInfo: { InstanceType: 'kafka.m5.large', ClientSubnets: [] }
+          }
+        }
+      ]
     })
 
     const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
@@ -66,14 +70,16 @@ describe('listMskClusters', () => {
 
   it('sets parentId from first provisioned broker subnet', async () => {
     mockSend.mockResolvedValueOnce({
-      ClusterInfoList: [{
-        ClusterArn: CLUSTER_ARN,
-        ClusterName: 'my-cluster',
-        State: 'ACTIVE',
-        Provisioned: {
-          BrokerNodeGroupInfo: { ClientSubnets: [SUBNET_ID, 'subnet-other'] },
-        },
-      }],
+      ClusterInfoList: [
+        {
+          ClusterArn: CLUSTER_ARN,
+          ClusterName: 'my-cluster',
+          State: 'ACTIVE',
+          Provisioned: {
+            BrokerNodeGroupInfo: { ClientSubnets: [SUBNET_ID, 'subnet-other'] }
+          }
+        }
+      ]
     })
 
     const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
@@ -84,15 +90,17 @@ describe('listMskClusters', () => {
   it('sets parentId from serverless VPC config when provisioned subnets absent', async () => {
     const SERVERLESS_SUBNET = 'subnet-serverless'
     mockSend.mockResolvedValueOnce({
-      ClusterInfoList: [{
-        ClusterArn: CLUSTER_ARN,
-        ClusterName: 'my-cluster',
-        State: 'ACTIVE',
-        ClusterType: 'SERVERLESS',
-        Serverless: {
-          VpcConfigs: [{ SubnetIds: [SERVERLESS_SUBNET] }],
-        },
-      }],
+      ClusterInfoList: [
+        {
+          ClusterArn: CLUSTER_ARN,
+          ClusterName: 'my-cluster',
+          State: 'ACTIVE',
+          ClusterType: 'SERVERLESS',
+          Serverless: {
+            VpcConfigs: [{ SubnetIds: [SERVERLESS_SUBNET] }]
+          }
+        }
+      ]
     })
 
     const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
@@ -103,32 +111,34 @@ describe('listMskClusters', () => {
   it('paginates cluster listing', async () => {
     const CLUSTER_ARN_2 = 'arn:aws:kafka:us-east-1:123456789:cluster/cluster-2/xyz'
     mockSend
-      .mockResolvedValueOnce({                                             // page 1
+      .mockResolvedValueOnce({
+        // page 1
         ClusterInfoList: [{ ClusterArn: CLUSTER_ARN, ClusterName: 'cluster-1', State: 'ACTIVE' }],
-        NextToken: 'tok1',
+        NextToken: 'tok1'
       })
-      .mockResolvedValueOnce({                                             // page 2
-        ClusterInfoList: [{ ClusterArn: CLUSTER_ARN_2, ClusterName: 'cluster-2', State: 'ACTIVE' }],
+      .mockResolvedValueOnce({
+        // page 2
+        ClusterInfoList: [{ ClusterArn: CLUSTER_ARN_2, ClusterName: 'cluster-2', State: 'ACTIVE' }]
       })
 
     const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes).toHaveLength(2)
-    expect(nodes.map(n => n.label)).toEqual(['cluster-1', 'cluster-2'])
+    expect(nodes.map((n) => n.label)).toEqual(['cluster-1', 'cluster-2'])
   })
 
   it('maps CREATING/DELETING/FAILED statuses', async () => {
     const statuses: [string, string][] = [
       ['CREATING', 'creating'],
       ['DELETING', 'deleting'],
-      ['FAILED', 'error'],
+      ['FAILED', 'error']
     ]
 
     for (const [awsStatus, expected] of statuses) {
       vi.clearAllMocks()
       mockLambdaSend.mockResolvedValue({ EventSourceMappings: [] })
       mockSend.mockResolvedValueOnce({
-        ClusterInfoList: [{ ClusterArn: CLUSTER_ARN, ClusterName: 'my-cluster', State: awsStatus }],
+        ClusterInfoList: [{ ClusterArn: CLUSTER_ARN, ClusterName: 'my-cluster', State: awsStatus }]
       })
 
       const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
@@ -147,10 +157,10 @@ describe('listMskClusters', () => {
   it('emits trigger integrations for Lambda ESMs on a cluster', async () => {
     const LAMBDA_ARN = 'arn:aws:lambda:us-east-1:123456789012:function:my-fn'
     mockSend.mockResolvedValueOnce({
-      ClusterInfoList: [{ ClusterArn: CLUSTER_ARN, ClusterName: 'my-cluster', State: 'ACTIVE' }],
+      ClusterInfoList: [{ ClusterArn: CLUSTER_ARN, ClusterName: 'my-cluster', State: 'ACTIVE' }]
     })
     mockLambdaSend.mockResolvedValueOnce({
-      EventSourceMappings: [{ FunctionArn: LAMBDA_ARN }],
+      EventSourceMappings: [{ FunctionArn: LAMBDA_ARN }]
     })
 
     const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
@@ -160,7 +170,7 @@ describe('listMskClusters', () => {
 
   it('omits integrations when no ESMs exist for a cluster', async () => {
     mockSend.mockResolvedValueOnce({
-      ClusterInfoList: [{ ClusterArn: CLUSTER_ARN, ClusterName: 'my-cluster', State: 'ACTIVE' }],
+      ClusterInfoList: [{ ClusterArn: CLUSTER_ARN, ClusterName: 'my-cluster', State: 'ACTIVE' }]
     })
     mockLambdaSend.mockResolvedValueOnce({ EventSourceMappings: [] })
 

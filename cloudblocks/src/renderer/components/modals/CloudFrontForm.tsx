@@ -2,21 +2,45 @@ import React, { useState } from 'react'
 import type { CloudFrontParams } from '../../types/create'
 import { useCloudStore } from '../../store/cloud'
 
-interface Props { onChange: (p: CloudFrontParams) => void; showErrors?: boolean }
+interface Props {
+  onChange: (p: CloudFrontParams) => void
+  showErrors?: boolean
+}
 
 const inp = (err: boolean): React.CSSProperties => ({
-  width: '100%', background: 'var(--cb-bg-panel)', border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`,
-  borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10,
-  boxSizing: 'border-box' as const,
+  width: '100%',
+  background: 'var(--cb-bg-panel)',
+  border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`,
+  borderRadius: 3,
+  padding: '3px 6px',
+  color: 'var(--cb-text-primary)',
+  fontFamily: 'monospace',
+  fontSize: 10,
+  boxSizing: 'border-box' as const
 })
 const sel = inp
-const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
-const btnSm: React.CSSProperties = { background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)', borderRadius: 2, padding: '2px 6px', color: 'var(--cb-text-muted)', fontFamily: 'monospace', fontSize: 9, cursor: 'pointer' }
+const lbl: React.CSSProperties = {
+  fontSize: 9,
+  color: 'var(--cb-text-muted)',
+  textTransform: 'uppercase',
+  marginBottom: 2,
+  marginTop: 8
+}
+const btnSm: React.CSSProperties = {
+  background: 'var(--cb-bg-elevated)',
+  border: '1px solid var(--cb-border)',
+  borderRadius: 2,
+  padding: '2px 6px',
+  color: 'var(--cb-text-muted)',
+  fontFamily: 'monospace',
+  fontSize: 9,
+  cursor: 'pointer'
+}
 
 export function CloudFrontForm({ onChange, showErrors }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
   const acmNodes = nodes.filter((n) => n.type === 'acm' && n.status === 'running')
-  const s3Nodes  = nodes.filter((n) => n.type === 's3')
+  const s3Nodes = nodes.filter((n) => n.type === 's3')
   const albNodes = nodes.filter((n) => n.type === 'alb')
 
   const [form, setForm] = useState<Omit<CloudFrontParams, 'resource'>>({
@@ -24,7 +48,7 @@ export function CloudFrontForm({ onChange, showErrors }: Props): React.JSX.Eleme
     origins: [{ id: 'origin-1', domainName: '' }],
     defaultRootObject: 'index.html',
     certArn: undefined,
-    priceClass: 'PriceClass_All',
+    priceClass: 'PriceClass_All'
   })
 
   const err = showErrors ?? false
@@ -36,13 +60,16 @@ export function CloudFrontForm({ onChange, showErrors }: Props): React.JSX.Eleme
   }
 
   const updateOrigin = (i: number, field: 'id' | 'domainName', value: string): void => {
-    const next = form.origins.map((o, j) => j === i ? { ...o, [field]: value } : o)
+    const next = form.origins.map((o, j) => (j === i ? { ...o, [field]: value } : o))
     update('origins', next)
   }
 
   const originOptions = [
     ...s3Nodes.map((n) => ({ label: `S3: ${n.label}`, value: `${n.id}.s3.amazonaws.com` })),
-    ...albNodes.map((n) => ({ label: `ALB: ${n.label}`, value: (n.metadata.dnsName as string) ?? '' })),
+    ...albNodes.map((n) => ({
+      label: `ALB: ${n.label}`,
+      value: (n.metadata.dnsName as string) ?? ''
+    }))
   ]
 
   return (
@@ -73,7 +100,9 @@ export function CloudFrontForm({ onChange, showErrors }: Props): React.JSX.Eleme
               >
                 <option value="">— select or type below —</option>
                 {originOptions.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
                 ))}
               </select>
             ) : (
@@ -91,13 +120,22 @@ export function CloudFrontForm({ onChange, showErrors }: Props): React.JSX.Eleme
               const next = form.origins.filter((_, j) => j !== i)
               update('origins', next.length > 0 ? next : [{ id: 'origin-1', domainName: '' }])
             }}
-          >✕</button>
+          >
+            ✕
+          </button>
         </div>
       ))}
       <button
         style={{ ...btnSm, marginTop: 6 }}
-        onClick={() => update('origins', [...form.origins, { id: `origin-${form.origins.length + 1}`, domainName: '' }])}
-      >+ Add Origin</button>
+        onClick={() =>
+          update('origins', [
+            ...form.origins,
+            { id: `origin-${form.origins.length + 1}`, domainName: '' }
+          ])
+        }
+      >
+        + Add Origin
+      </button>
 
       <div style={lbl}>Default Root Object</div>
       <input
@@ -115,7 +153,9 @@ export function CloudFrontForm({ onChange, showErrors }: Props): React.JSX.Eleme
       >
         <option value="">Use default CloudFront certificate</option>
         {acmNodes.map((n) => (
-          <option key={n.id} value={n.id}>{n.label} ({n.id.slice(-8)})</option>
+          <option key={n.id} value={n.id}>
+            {n.label} ({n.id.slice(-8)})
+          </option>
         ))}
       </select>
 

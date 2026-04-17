@@ -7,7 +7,7 @@ const PALETTE = [
   '#f87171', // red
   '#34d399', // teal
   '#fbbf24', // amber
-  '#a78bfa', // violet
+  '#a78bfa' // violet
 ]
 
 // Stable first-seen assignment: once a region gets a color it keeps it
@@ -30,9 +30,7 @@ export function getRegionColor(region: string, override?: string): string {
  */
 export function buildRegionColorMap(
   regions: string[],
-  overrides: Record<string, string> = {},
+  overrides: Record<string, string> = {}
 ): Record<string, string> {
-  return Object.fromEntries(
-    regions.map((r) => [r, getRegionColor(r, overrides[r])])
-  )
+  return Object.fromEntries(regions.map((r) => [r, getRegionColor(r, overrides[r])]))
 }

@@ -19,14 +19,18 @@ vi.mock('@xyflow/react', async (importOriginal) => {
     },
     useReactFlow: () => ({
       fitView: mockFitView,
-      screenToFlowPosition: vi.fn().mockReturnValue({ x: 0, y: 0 }),
-    }),
+      screenToFlowPosition: vi.fn().mockReturnValue({ x: 0, y: 0 })
+    })
   }
 })
 
 const baseVpc = (id: string): CloudNode => ({
-  id, type: 'vpc', label: id, status: 'running',
-  region: 'us-east-1', metadata: {},
+  id,
+  type: 'vpc',
+  label: id,
+  status: 'running',
+  region: 'us-east-1',
+  metadata: {}
 })
 
 beforeEach(() => {
@@ -34,10 +38,10 @@ beforeEach(() => {
   capturedOnNodesChange = undefined
   useCloudStore.setState({ nodes: [], pendingNodes: [] })
   useUIStore.setState({
-    nodePositions:  { topology: {}, graph: {} },
-    savedViews:     [null, null, null, null],
+    nodePositions: { topology: {}, graph: {} },
+    savedViews: [null, null, null, null],
     activeViewSlot: null,
-    selectedNodeId: null,
+    selectedNodeId: null
   })
 })
 
@@ -49,24 +53,36 @@ describe('TopologyView — one-time fitView', () => {
 
   it('calls fitView when nodes first become non-empty', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
     expect(mockFitView).toHaveBeenCalledOnce()
   })
 
   it('does NOT call fitView again on subsequent node updates', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
     mockFitView.mockClear()
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1'), baseVpc('vpc-2')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1'), baseVpc('vpc-2')] })
+    })
     expect(mockFitView).not.toHaveBeenCalled()
   })
 
   it('calls fitView again after node count drops to 0 then rises', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
-    act(() => { useCloudStore.setState({ nodes: [] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
+    act(() => {
+      useCloudStore.setState({ nodes: [] })
+    })
     mockFitView.mockClear()
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
     expect(mockFitView).toHaveBeenCalledOnce()
   })
 })
@@ -76,7 +92,7 @@ describe('TopologyView — position overrides (extent guard)', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
     act(() => {
       capturedOnNodesChange?.([
-        { type: 'position', id: 'subnet-phantom', position: { x: 5, y: 5 }, dragging: false },
+        { type: 'position', id: 'subnet-phantom', position: { x: 5, y: 5 }, dragging: false }
       ])
     })
     expect(useUIStore.getState().nodePositions.topology['subnet-phantom']).toBeUndefined()
@@ -84,10 +100,12 @@ describe('TopologyView — position overrides (extent guard)', () => {
 
   it('persists position for a top-level VPC node after drag-end', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
     act(() => {
       capturedOnNodesChange?.([
-        { type: 'position', id: 'vpc-1', position: { x: 300, y: 400 }, dragging: false },
+        { type: 'position', id: 'vpc-1', position: { x: 300, y: 400 }, dragging: false }
       ])
     })
     expect(useUIStore.getState().nodePositions.topology['vpc-1']).toEqual({ x: 300, y: 400 })
@@ -95,10 +113,12 @@ describe('TopologyView — position overrides (extent guard)', () => {
 
   it('does NOT persist mid-drag positions (dragging: true)', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
     act(() => {
       capturedOnNodesChange?.([
-        { type: 'position', id: 'vpc-1', position: { x: 300, y: 400 }, dragging: true },
+        { type: 'position', id: 'vpc-1', position: { x: 300, y: 400 }, dragging: true }
       ])
     })
     expect(useUIStore.getState().nodePositions.topology['vpc-1']).toBeUndefined()

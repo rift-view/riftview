@@ -3,11 +3,16 @@ import { computeDelta } from '../../../src/main/aws/scanner'
 import type { CloudNode } from '../../../src/renderer/types/cloud'
 
 vi.mock('electron', () => ({
-  BrowserWindow: vi.fn(),
+  BrowserWindow: vi.fn()
 }))
 
 const makeNode = (id: string, status = 'running', label = id): CloudNode => ({
-  id, type: 'ec2', label, status: status as import('../../../src/renderer/types/cloud').NodeStatus, region: 'us-east-1', metadata: {},
+  id,
+  type: 'ec2',
+  label,
+  status: status as import('../../../src/renderer/types/cloud').NodeStatus,
+  region: 'us-east-1',
+  metadata: {}
 })
 
 describe('computeDelta', () => {
@@ -55,16 +60,16 @@ describe('computeDelta', () => {
 })
 
 vi.mock('../../../src/main/aws/client', () => ({
-  createClients: vi.fn().mockReturnValue({}),
+  createClients: vi.fn().mockReturnValue({})
 }))
 vi.mock('../../../src/main/plugin/index', () => ({
   pluginRegistry: {
     activateAll: vi.fn().mockResolvedValue(undefined),
-    scanAll: vi.fn().mockResolvedValue({ nodes: [], errors: [] }),
-  },
+    scanAll: vi.fn().mockResolvedValue({ nodes: [], errors: [] })
+  }
 }))
 vi.mock('../../../src/main/aws/services/ec2', () => ({
-  describeKeyPairs: vi.fn().mockResolvedValue([]),
+  describeKeyPairs: vi.fn().mockResolvedValue([])
 }))
 
 import { ResourceScanner } from '../../../src/main/aws/scanner'
