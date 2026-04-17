@@ -26,8 +26,9 @@ export function SubnetNode({ data }: NodeProps): React.JSX.Element {
         height: '100%'
       }}
     >
-      {/* Header */}
+      {/* Header — drag handle */}
       <div
+        className="cb-zone-drag-handle"
         style={{
           background: `${color}14`,
           borderBottom: d.collapsed ? 'none' : `1px solid ${color}44`,
@@ -36,8 +37,10 @@ export function SubnetNode({ data }: NodeProps): React.JSX.Element {
           alignItems: 'center',
           gap: 6,
           height: 32,
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          cursor: 'move'
         }}
+        title="Drag header to move subnet"
       >
         {d.onToggleCollapse && (
           <button

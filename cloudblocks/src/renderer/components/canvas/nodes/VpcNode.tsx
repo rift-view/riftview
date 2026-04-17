@@ -25,16 +25,19 @@ export function VpcNode({ data }: NodeProps): React.JSX.Element {
         boxSizing: 'border-box'
       }}
     >
-      {/* Header bar */}
+      {/* Header bar — drag handle */}
       <div
+        className="cb-zone-drag-handle"
         style={{
           background: 'rgba(25, 118, 210, 0.15)',
           borderBottom: '1px solid rgba(25, 118, 210, 0.4)',
           padding: '5px 10px',
           display: 'flex',
           alignItems: 'center',
-          gap: 8
+          gap: 8,
+          cursor: 'move'
         }}
+        title="Drag header to move VPC"
       >
         {d.onToggleCollapse && (
           <button
