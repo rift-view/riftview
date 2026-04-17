@@ -13,24 +13,28 @@ asarUnpack:
   - resources/**
 win:
   executableName: terminus
+  target:
+    - nsis
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
+  target:
+    - dmg
+    - zip
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-  # TODO: enable before public release — requires Apple Developer account + notarize config
-  notarize: false
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  notarize: true
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
   target:
     - AppImage
-    - snap
-    - deb
   maintainer: electronjs.org
   category: Utility
 appImage:
