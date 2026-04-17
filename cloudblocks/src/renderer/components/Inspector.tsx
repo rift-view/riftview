@@ -13,6 +13,7 @@ import type { Advisory } from '../types/cloud'
 import { resolveIntegrationTargetId } from '../utils/resolveIntegrationTargetId'
 import { buildAdvisoryRemediation } from '../utils/buildAdvisoryRemediations'
 import { buildBlastRadius, directionSymbol } from '../utils/blastRadius'
+import { redact } from '../utils/demoMode'
 
 function DriftDiffTable({
   metadata,
@@ -80,7 +81,7 @@ function DriftDiffTable({
                 }}
               >
                 <div style={{ color: '#6b7280', fontSize: 7, marginBottom: 1 }}>{k}</div>
-                <div style={{ color: '#fca5a5' }}>{String(metadata[k] ?? '—')}</div>
+                <div style={{ color: '#fca5a5' }}>{redact(String(metadata[k] ?? '—'))}</div>
               </div>
               <div
                 style={{
@@ -90,7 +91,7 @@ function DriftDiffTable({
                 }}
               >
                 <div style={{ color: '#6b7280', fontSize: 7, marginBottom: 1 }}>{k}</div>
-                <div style={{ color: '#86efac' }}>{String(tfMetadata[k] ?? '—')}</div>
+                <div style={{ color: '#86efac' }}>{redact(String(tfMetadata[k] ?? '—'))}</div>
               </div>
             </React.Fragment>
           ))}
@@ -1577,7 +1578,7 @@ export function Inspector({
                 )}
               </div>
               <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
-                {val}
+                {redact(val)}
               </div>
             </div>
           ))}
