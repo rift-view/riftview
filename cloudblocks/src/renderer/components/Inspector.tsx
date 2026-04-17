@@ -12,6 +12,7 @@ import { analyzeNode } from '../utils/analyzeNode'
 import type { Advisory } from '../types/cloud'
 import { resolveIntegrationTargetId } from '../utils/resolveIntegrationTargetId'
 import { buildAdvisoryRemediation } from '../utils/buildAdvisoryRemediations'
+import { buildBlastRadius, directionSymbol } from '../utils/blastRadius'
 
 function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unknown>; tfMetadata: Record<string, unknown> }): React.JSX.Element {
   const allKeys = Array.from(new Set([...Object.keys(metadata), ...Object.keys(tfMetadata)]))
@@ -491,6 +492,8 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
   const selectedEdgeInfo = useUIStore((s) => s.selectedEdgeInfo)
   const setActiveCreate = useUIStore((s) => s.setActiveCreate)
   const selectNode      = useUIStore((s) => s.selectNode)
+  const blastRadiusId   = useUIStore((s) => s.blastRadiusId)
+  const setBlastRadiusId = useUIStore((s) => s.setBlastRadiusId)
   const lockedNodes     = useUIStore((s) => s.lockedNodes)
   const toggleLockNode  = useUIStore((s) => s.toggleLockNode)
   const annotations     = useUIStore((s) => s.annotations)
@@ -676,6 +679,152 @@ export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemed
               <DriftDiffTable metadata={node.metadata} tfMetadata={node.tfMetadata ?? {}} />
             </div>
           )}
+
+          {/* BLAST RADIUS section — active when this node is the blast source */}
+          {blastRadiusId === node.id && (() => {
+            const result = buildBlastRadius(nodes, node.id)
+            const grouped: Record<'upstream' | 'downstream' | 'both', { id: string; hop: number; edgeTypes: string[] }[]> = {
+              upstream: [], downstream: [], both: [],
+            }
+            for (const [id, m] of result.members.entries()) {
+              if (m.direction === 'source') continue
+              grouped[m.direction].push({ id, hop: m.hopDistance, edgeTypes: m.edgeTypes })
+            }
+            for (const k of Object.keys(grouped) as (keyof typeof grouped)[]) {
+              grouped[k].sort((a, b) => a.hop - b.hop)
+            }
+
+            const copyMarkdown = (): void => {
+              const lines: string[] = [`# Blast Radius — ${node.label}`, '']
+              lines.push(`- Source: \`${node.label}\` (${node.type})`)
+              lines.push(`- Reach: ${result.upstreamCount} upstream · ${result.downstreamCount} downstream · max ${result.maxHops} hop${result.maxHops === 1 ? '' : 's'}`)
+              lines.push('')
+              for (const dir of ['upstream', 'both', 'downstream'] as const) {
+                if (grouped[dir].length === 0) continue
+                lines.push(`## ${dir.toUpperCase()}`)
+                for (const m of grouped[dir]) {
+                  const n = nodes.find((x) => x.id === m.id)
+                  const edges = m.edgeTypes.length > 0 ? ` — ${m.edgeTypes.join(', ')}` : ''
+                  lines.push(`- \`${n?.label ?? m.id}\` (${n?.type ?? '?'}) · hop ${m.hop}${edges}`)
+                }
+                lines.push('')
+              }
+              void navigator.clipboard.writeText(lines.join('\n'))
+            }
+
+            const dirRow = (dir: 'upstream' | 'both' | 'downstream', label: string, color: string): React.JSX.Element | null => {
+              if (grouped[dir].length === 0) return null
+              return (
+                <div key={dir} style={{ marginBottom: 6 }}>
+                  <div style={{ fontSize: 8, color, letterSpacing: '0.08em', marginBottom: 3, fontWeight: 700 }}>
+                    {directionSymbol(dir === 'both' ? 'both' : dir)} {label} ({grouped[dir].length})
+                  </div>
+                  {grouped[dir].map((m) => {
+                    const n = nodes.find((x) => x.id === m.id)
+                    return (
+                      <div
+                        key={m.id}
+                        onClick={() => selectNode(m.id)}
+                        style={{
+                          display:       'flex',
+                          alignItems:    'baseline',
+                          gap:           6,
+                          padding:       '2px 6px',
+                          borderRadius:  3,
+                          cursor:        'pointer',
+                          fontSize:      9,
+                          background:    m.id === selectedId ? 'var(--cb-bg-hover)' : undefined,
+                        }}
+                      >
+                        <span style={{ color: 'var(--cb-text-muted)', fontSize: 8, minWidth: 20 }}>
+                          h{m.hop}
+                        </span>
+                        <span style={{ color: 'var(--cb-text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {n?.label ?? m.id}
+                        </span>
+                        <span style={{ color: 'var(--cb-text-muted)', fontSize: 8 }}>
+                          {n?.type ?? ''}
+                        </span>
+                        {m.edgeTypes.length > 0 && (
+                          <span style={{ color: 'var(--cb-text-muted)', fontSize: 8, fontStyle: 'italic' }}>
+                            {m.edgeTypes.join(',')}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            }
+
+            return (
+              <div style={{
+                padding:      '8px 10px',
+                borderRadius: 4,
+                background:   'rgba(245,158,11,0.08)',
+                border:       '1px solid rgba(245,158,11,0.4)',
+                fontSize:     10,
+                marginBottom: 8,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div style={{ fontWeight: 700, color: '#f59e0b', fontSize: 9, letterSpacing: '0.08em' }}>
+                    BLAST RADIUS
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      onClick={copyMarkdown}
+                      style={{
+                        background: 'none',
+                        border:     '1px solid rgba(245,158,11,0.4)',
+                        color:      '#f59e0b',
+                        fontFamily: 'monospace',
+                        fontSize:   8,
+                        padding:    '1px 6px',
+                        borderRadius: 3,
+                        cursor:     'pointer',
+                      }}
+                      title="Copy as Markdown (Slack-ready)"
+                    >
+                      COPY
+                    </button>
+                    <button
+                      onClick={() => setBlastRadiusId(null)}
+                      style={{
+                        background: 'none',
+                        border:     '1px solid rgba(245,158,11,0.4)',
+                        color:      '#f59e0b',
+                        fontFamily: 'monospace',
+                        fontSize:   8,
+                        padding:    '1px 6px',
+                        borderRadius: 3,
+                        cursor:     'pointer',
+                      }}
+                      title="Clear blast radius"
+                    >
+                      CLEAR
+                    </button>
+                  </div>
+                </div>
+                <div style={{ fontSize: 9, color: 'var(--cb-text-secondary)', marginBottom: 6 }}>
+                  ↑{result.upstreamCount} upstream · ↓{result.downstreamCount} downstream · max {result.maxHops} hop{result.maxHops === 1 ? '' : 's'}
+                </div>
+                {result.members.size === 1 ? (
+                  <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', fontStyle: 'italic' }}>
+                    No known dependencies. This node has no integration edges.
+                  </div>
+                ) : (
+                  <>
+                    {dirRow('upstream',   'UPSTREAM',   '#60a5fa')}
+                    {dirRow('both',       'BIDIRECTIONAL', '#a78bfa')}
+                    {dirRow('downstream', 'DOWNSTREAM', '#f59e0b')}
+                    <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', marginTop: 4, fontStyle: 'italic' }}>
+                      Shift-click a node to re-root from there.
+                    </div>
+                  </>
+                )}
+              </div>
+            )
+          })()}
 
           {/* REMEDIATE section — unmanaged + matched only */}
           {(node.driftStatus === 'unmanaged' || node.driftStatus === 'matched') && (() => {
