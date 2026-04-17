@@ -3,3 +3,5 @@ CloudblocksMemory/
 .superpowers/
 .claude/worktrees/
 .env
+graphify-out/
+cloudblocks/graphify-out/
