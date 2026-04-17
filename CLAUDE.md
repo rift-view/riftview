@@ -155,6 +155,12 @@
   | Phase 0 | ✅ Done | Terminus rename (window.terminus, all 25 renderer files); feature flag system (VITE_FLAG_* + flag() util); Ladle component dev environment (port 61000, standalone vite config) |
   | Phase 1 | ✅ Done | STATUS_LANGUAGE (error pulse, pending shimmer, stopped dim, deleting fade-pulse); ACTION_RAIL (Copy ARN + Open Console hover strip); COMMAND_BOARD (swim-lane view, 7-tier NODE_TIER, TierLabelNode, integration edges); all three now always-on |
   | Phase 2 | ✅ Done | EXECUTION_ENGINE: guided remediation in Inspector (REMEDIATE section, buildRemediateCommands, drift diff table); now always-on |
+  | Phase 3 | ✅ Done | OP_INTELLIGENCE: `analyzeNode()` pure fn, advisory system (critical/warning/info), scan metadata additions (multiAZ, publicAccessEnabled, hasPublicSsh); always-on |
+  | Phase 4 | ✅ Done | Advisory surface: ResourceNode advisory badges, 5 new rules (sqs-no-dlq, rds-no-backup, rds-no-deletion-protection, s3-no-versioning, lambda-no-dlq), Inspector Fix button + buildAdvisoryRemediations |
+  | Remediation Loop | ✅ Done | `patchNodeStatus` store action, optimistic pending, toast feedback, auto-rescan after successful remediate |
+  | Op Intelligence | ✅ Done | CloudWatch metrics overlay on Lambda/RDS/ECS, per-node change history in Inspector, SSM terminal pane with xterm.js, keyboard-first navigation (j/k/Enter/r/?/1-4) |
+  | Blast Radius Polish | ✅ Done | Bidirectional BFS traversal, hop-distance rings, direction badges (● ↑ ↓ ↕), non-members opacity 0 + pointerEvents none, fitView on enter, savedViewport restore on exit, Inspector BLAST RADIUS section with grouped member list, copy-as-Markdown, click-to-re-root |
+  | Outreach Readiness | 🚧 In-progress | Positioning doc, IPC boundary doc, code signing/notarization, redact-account-IDs demo mode, landing one-pager, cold email templates |
   | M6 | Planned | Multi-cloud plugin architecture (Azure, GCP, Vercel) |
 
   ---
