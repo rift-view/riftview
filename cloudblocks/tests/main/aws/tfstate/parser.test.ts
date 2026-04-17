@@ -4,12 +4,17 @@ import { parseTfState } from '../../../../src/main/aws/tfstate/parser'
 const minimal = (type: string, attrs: Record<string, unknown>): string =>
   JSON.stringify({
     version: 4,
-    resources: [{ type, name: 'main', instances: [{ attributes: attrs }] }],
+    resources: [{ type, name: 'main', instances: [{ attributes: attrs }] }]
   })
 
 describe('parseTfState', () => {
   it('maps aws_instance to ec2 node', () => {
-    const raw = minimal('aws_instance', { id: 'i-abc', instance_type: 't3.micro', subnet_id: 'sub-1', vpc_security_group_ids: [] })
+    const raw = minimal('aws_instance', {
+      id: 'i-abc',
+      instance_type: 't3.micro',
+      subnet_id: 'sub-1',
+      vpc_security_group_ids: []
+    })
     const nodes = parseTfState(raw)
     expect(nodes).toHaveLength(1)
     expect(nodes[0].type).toBe('ec2')
@@ -17,19 +22,33 @@ describe('parseTfState', () => {
   })
 
   it('maps aws_vpc to vpc node', () => {
-    const raw = minimal('aws_vpc', { id: 'vpc-123', cidr_block: '10.0.0.0/16', tags: { Name: 'main-vpc' } })
+    const raw = minimal('aws_vpc', {
+      id: 'vpc-123',
+      cidr_block: '10.0.0.0/16',
+      tags: { Name: 'main-vpc' }
+    })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('vpc')
   })
 
   it('maps aws_subnet to subnet node', () => {
-    const raw = minimal('aws_subnet', { id: 'sub-1', vpc_id: 'vpc-123', cidr_block: '10.0.1.0/24', availability_zone: 'us-east-1a' })
+    const raw = minimal('aws_subnet', {
+      id: 'sub-1',
+      vpc_id: 'vpc-123',
+      cidr_block: '10.0.1.0/24',
+      availability_zone: 'us-east-1a'
+    })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('subnet')
   })
 
   it('maps aws_security_group to security-group node', () => {
-    const raw = minimal('aws_security_group', { id: 'sg-1', vpc_id: 'vpc-123', name: 'web-sg', description: 'Web SG' })
+    const raw = minimal('aws_security_group', {
+      id: 'sg-1',
+      vpc_id: 'vpc-123',
+      name: 'web-sg',
+      description: 'Web SG'
+    })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('security-group')
   })
@@ -41,43 +60,74 @@ describe('parseTfState', () => {
   })
 
   it('maps aws_lambda_function to lambda node', () => {
-    const raw = minimal('aws_lambda_function', { function_name: 'my-fn', runtime: 'nodejs20.x', memory_size: 128, timeout: 30 })
+    const raw = minimal('aws_lambda_function', {
+      function_name: 'my-fn',
+      runtime: 'nodejs20.x',
+      memory_size: 128,
+      timeout: 30
+    })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('lambda')
   })
 
   it('maps aws_db_instance to rds node', () => {
-    const raw = minimal('aws_db_instance', { id: 'mydb', engine: 'postgres', instance_class: 'db.t3.micro', db_subnet_group_name: 'default' })
+    const raw = minimal('aws_db_instance', {
+      id: 'mydb',
+      engine: 'postgres',
+      instance_class: 'db.t3.micro',
+      db_subnet_group_name: 'default'
+    })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('rds')
   })
 
   it('maps aws_lb to alb node', () => {
-    const raw = minimal('aws_lb', { arn: 'arn:aws:elasticloadbalancing:us-east-1:123:loadbalancer/app/my-lb/1', name: 'my-lb', scheme: 'internet-facing', subnets: [] })
+    const raw = minimal('aws_lb', {
+      arn: 'arn:aws:elasticloadbalancing:us-east-1:123:loadbalancer/app/my-lb/1',
+      name: 'my-lb',
+      scheme: 'internet-facing',
+      subnets: []
+    })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('alb')
   })
 
   it('maps aws_alb to alb node', () => {
-    const raw = minimal('aws_alb', { arn: 'arn:aws:elasticloadbalancing:us-east-1:123:loadbalancer/app/my-lb/2', name: 'my-lb2', scheme: 'internal', subnets: [] })
+    const raw = minimal('aws_alb', {
+      arn: 'arn:aws:elasticloadbalancing:us-east-1:123:loadbalancer/app/my-lb/2',
+      name: 'my-lb2',
+      scheme: 'internal',
+      subnets: []
+    })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('alb')
   })
 
   it('maps aws_api_gateway_v2_api to apigw node', () => {
-    const raw = minimal('aws_api_gateway_v2_api', { id: 'abc123', name: 'my-api', protocol_type: 'HTTP' })
+    const raw = minimal('aws_api_gateway_v2_api', {
+      id: 'abc123',
+      name: 'my-api',
+      protocol_type: 'HTTP'
+    })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('apigw')
   })
 
   it('maps aws_cloudfront_distribution to cloudfront node', () => {
-    const raw = minimal('aws_cloudfront_distribution', { id: 'ABCDE', domain_name: 'd111111abcdef8.cloudfront.net' })
+    const raw = minimal('aws_cloudfront_distribution', {
+      id: 'ABCDE',
+      domain_name: 'd111111abcdef8.cloudfront.net'
+    })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('cloudfront')
   })
 
   it('maps aws_internet_gateway to igw node', () => {
-    const raw = minimal('aws_internet_gateway', { id: 'igw-abc123', vpc_id: 'vpc-1', tags: { Name: 'main-igw' } })
+    const raw = minimal('aws_internet_gateway', {
+      id: 'igw-abc123',
+      vpc_id: 'vpc-1',
+      tags: { Name: 'main-igw' }
+    })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('igw')
     expect(nodes[0].id).toBe('igw-abc123')
@@ -94,7 +144,7 @@ describe('parseTfState', () => {
   it('maps aws_sqs_queue to sqs node using queue ARN as ID', () => {
     const raw = minimal('aws_sqs_queue', {
       arn: 'arn:aws:sqs:us-east-1:123456789:my-queue',
-      url: 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue',
+      url: 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue'
     })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('sqs')
@@ -121,7 +171,7 @@ describe('parseTfState', () => {
     const raw = minimal('aws_ssm_parameter', {
       arn: 'arn:aws:ssm:us-east-1:123456789:parameter/my-param',
       name: '/my-param',
-      type: 'String',
+      type: 'String'
     })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('ssm-param')
@@ -139,7 +189,7 @@ describe('parseTfState', () => {
   it('maps aws_secretsmanager_secret to secret node using ARN as ID', () => {
     const raw = minimal('aws_secretsmanager_secret', {
       arn: 'arn:aws:secretsmanager:us-east-1:123456789:secret:my-secret-abc123',
-      name: 'my-secret',
+      name: 'my-secret'
     })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('secret')
@@ -150,7 +200,7 @@ describe('parseTfState', () => {
   it('maps aws_ecr_repository to ecr-repo node using repository ARN as ID', () => {
     const raw = minimal('aws_ecr_repository', {
       arn: 'arn:aws:ecr:us-east-1:123456789:repository/my-repo',
-      name: 'my-repo',
+      name: 'my-repo'
     })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('ecr-repo')
@@ -169,7 +219,7 @@ describe('parseTfState', () => {
   it('maps aws_sfn_state_machine to sfn node using ARN as ID', () => {
     const raw = minimal('aws_sfn_state_machine', {
       arn: 'arn:aws:states:us-east-1:123456789:stateMachine:my-machine',
-      name: 'my-machine',
+      name: 'my-machine'
     })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('sfn')
@@ -180,7 +230,7 @@ describe('parseTfState', () => {
   it('maps aws_cloudwatch_event_bus to eventbridge-bus node using ARN as ID', () => {
     const raw = minimal('aws_cloudwatch_event_bus', {
       arn: 'arn:aws:events:us-east-1:123456789:event-bus/my-bus',
-      name: 'my-bus',
+      name: 'my-bus'
     })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('eventbridge-bus')
@@ -191,7 +241,7 @@ describe('parseTfState', () => {
   it('maps aws_acm_certificate to acm node using ARN as ID', () => {
     const raw = minimal('aws_acm_certificate', {
       arn: 'arn:aws:acm:us-east-1:123456789:certificate/abc-123',
-      domain_name: 'example.com',
+      domain_name: 'example.com'
     })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('acm')
@@ -203,7 +253,7 @@ describe('parseTfState', () => {
     const raw = minimal('aws_apigatewayv2_route', {
       api_id: 'abc123',
       id: 'route-xyz',
-      route_key: 'GET /users',
+      route_key: 'GET /users'
     })
     const nodes = parseTfState(raw)
     expect(nodes[0].type).toBe('apigw-route')
@@ -225,7 +275,14 @@ describe('parseTfState', () => {
   })
 
   it('strips sensitive keys from attributes', () => {
-    const raw = minimal('aws_db_instance', { id: 'mydb', engine: 'postgres', instance_class: 'db.t3.micro', db_subnet_group_name: 'default', password: 'hunter2', secret_arn: 'arn:aws:...' })
+    const raw = minimal('aws_db_instance', {
+      id: 'mydb',
+      engine: 'postgres',
+      instance_class: 'db.t3.micro',
+      db_subnet_group_name: 'default',
+      password: 'hunter2',
+      secret_arn: 'arn:aws:...'
+    })
     const nodes = parseTfState(raw)
     expect(nodes[0].metadata).not.toHaveProperty('password')
     expect(nodes[0].metadata).not.toHaveProperty('secret_arn')
@@ -234,10 +291,16 @@ describe('parseTfState', () => {
   it('handles resources with multiple instances', () => {
     const raw = JSON.stringify({
       version: 4,
-      resources: [{ type: 'aws_s3_bucket', name: 'logs', instances: [
-        { attributes: { id: 'bucket-1', region: 'us-east-1' } },
-        { attributes: { id: 'bucket-2', region: 'us-west-2' } },
-      ]}],
+      resources: [
+        {
+          type: 'aws_s3_bucket',
+          name: 'logs',
+          instances: [
+            { attributes: { id: 'bucket-1', region: 'us-east-1' } },
+            { attributes: { id: 'bucket-2', region: 'us-west-2' } }
+          ]
+        }
+      ]
     })
     const nodes = parseTfState(raw)
     expect(nodes).toHaveLength(2)
@@ -254,7 +317,7 @@ describe('parseTfState', () => {
   it('handles missing instances array gracefully', () => {
     const raw = JSON.stringify({
       version: 4,
-      resources: [{ type: 'aws_s3_bucket', name: 'logs', instances: null }],
+      resources: [{ type: 'aws_s3_bucket', name: 'logs', instances: null }]
     })
     const nodes = parseTfState(raw)
     expect(nodes).toHaveLength(0)

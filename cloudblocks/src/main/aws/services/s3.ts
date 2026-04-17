@@ -3,7 +3,7 @@ import {
   ListBucketsCommand,
   GetBucketNotificationConfigurationCommand,
   GetPublicAccessBlockCommand,
-  GetBucketVersioningCommand,
+  GetBucketVersioningCommand
 } from '@aws-sdk/client-s3'
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
@@ -26,7 +26,12 @@ export async function listBuckets(client: S3Client, region: string): Promise<Clo
           publicAccessEnabled = true
         } else {
           const c = pabRes.PublicAccessBlockConfiguration ?? {}
-          publicAccessEnabled = !(c.BlockPublicAcls && c.BlockPublicPolicy && c.RestrictPublicBuckets && c.IgnorePublicAcls)
+          publicAccessEnabled = !(
+            c.BlockPublicAcls &&
+            c.BlockPublicPolicy &&
+            c.RestrictPublicBuckets &&
+            c.IgnorePublicAcls
+          )
         }
 
         // Versioning status
@@ -44,7 +49,7 @@ export async function listBuckets(client: S3Client, region: string): Promise<Clo
           label: name,
           status: 'running',
           region,
-          metadata: { creationDate: b.CreationDate, publicAccessEnabled, versioningEnabled },
+          metadata: { creationDate: b.CreationDate, publicAccessEnabled, versioningEnabled }
         }
 
         const notifRes = await client
@@ -55,14 +60,16 @@ export async function listBuckets(client: S3Client, region: string): Promise<Clo
 
         const integrations: { targetId: string; edgeType: EdgeType }[] = [
           ...(notifRes.LambdaFunctionConfigurations ?? [])
-            .filter((c): c is typeof c & { LambdaFunctionArn: string } => c.LambdaFunctionArn != null)
+            .filter(
+              (c): c is typeof c & { LambdaFunctionArn: string } => c.LambdaFunctionArn != null
+            )
             .map((c) => ({ targetId: c.LambdaFunctionArn, edgeType: 'trigger' as EdgeType })),
           ...(notifRes.QueueConfigurations ?? [])
             .filter((c): c is typeof c & { QueueArn: string } => c.QueueArn != null)
             .map((c) => ({ targetId: c.QueueArn, edgeType: 'trigger' as EdgeType })),
           ...(notifRes.TopicConfigurations ?? [])
             .filter((c): c is typeof c & { TopicArn: string } => c.TopicArn != null)
-            .map((c) => ({ targetId: c.TopicArn, edgeType: 'trigger' as EdgeType })),
+            .map((c) => ({ targetId: c.TopicArn, edgeType: 'trigger' as EdgeType }))
         ]
 
         return integrations.length > 0 ? { ...baseNode, integrations } : baseNode

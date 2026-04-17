@@ -19,7 +19,7 @@ const PUSH_ONLY_CHANNELS = new Set<string>([
   IPC.CLI_DONE,
   IPC.UPDATE_AVAILABLE,
   IPC.PLUGIN_METADATA,
-  IPC.TERMINAL_OUTPUT,
+  IPC.TERMINAL_OUTPUT
 ])
 
 // Fire-and-forget channel registered with ipcMain.on, not ipcMain.handle
@@ -35,43 +35,55 @@ vi.mock('electron', () => ({
   BrowserWindow: vi.fn(),
   app: { getPath: vi.fn().mockReturnValue('/tmp'), getVersion: vi.fn().mockReturnValue('0.0.0') },
   dialog: { showSaveDialog: vi.fn(), showOpenDialog: vi.fn() },
-  Notification: vi.fn(function () { return { show: vi.fn() } }),
+  Notification: vi.fn(function () {
+    return { show: vi.fn() }
+  })
 }))
 vi.mock('../src/main/aws/credentials', () => ({
   listProfiles: vi.fn().mockReturnValue([]),
-  getDefaultRegion: vi.fn().mockReturnValue('us-east-1'),
+  getDefaultRegion: vi.fn().mockReturnValue('us-east-1')
 }))
 vi.mock('../src/main/aws/client', () => ({
-  createClients: vi.fn().mockReturnValue({}),
+  createClients: vi.fn().mockReturnValue({})
 }))
 vi.mock('../src/main/aws/scanner', () => ({
   ResourceScanner: vi.fn(function () {
-    return { start: vi.fn(), stop: vi.fn(), triggerManualScan: vi.fn(), updateRegions: vi.fn(), updateInterval: vi.fn() }
+    return {
+      start: vi.fn(),
+      stop: vi.fn(),
+      triggerManualScan: vi.fn(),
+      updateRegions: vi.fn(),
+      updateInterval: vi.fn()
+    }
   }),
-  historyFilePath: vi.fn().mockReturnValue('/tmp/history/node.json'),
+  historyFilePath: vi.fn().mockReturnValue('/tmp/history/node.json')
 }))
 vi.mock('../src/main/cli/engine', () => ({
-  CliEngine: vi.fn(function () { return { execute: vi.fn(), cancel: vi.fn() } }),
+  CliEngine: vi.fn(function () {
+    return { execute: vi.fn(), cancel: vi.fn() }
+  })
 }))
 vi.mock('../src/main/terraform/index', () => ({
-  generateTerraformFile: vi.fn().mockReturnValue({ hcl: '', skippedTypes: [] }),
+  generateTerraformFile: vi.fn().mockReturnValue({ hcl: '', skippedTypes: [] })
 }))
 vi.mock('../src/main/terraform/provider', () => ({
-  buildLocalStackProvider: vi.fn().mockReturnValue(''),
+  buildLocalStackProvider: vi.fn().mockReturnValue('')
 }))
 vi.mock('../src/main/aws/tfstate/parser', () => ({
-  parseTfState: vi.fn().mockReturnValue([]),
+  parseTfState: vi.fn().mockReturnValue([])
 }))
 vi.mock('../src/main/aws/iam/fetcher', () => ({
   fetchEc2IamData: vi.fn().mockResolvedValue([]),
   fetchLambdaIamData: vi.fn().mockResolvedValue([]),
-  fetchS3IamData: vi.fn().mockResolvedValue([]),
+  fetchS3IamData: vi.fn().mockResolvedValue([])
 }))
 vi.mock('@aws-sdk/client-cloudwatch', () => ({
-  CloudWatchClient: vi.fn(function () { return {} }),
+  CloudWatchClient: vi.fn(function () {
+    return {}
+  })
 }))
 vi.mock('../src/main/aws/services/cloudwatch', () => ({
-  fetchMetrics: vi.fn().mockResolvedValue([]),
+  fetchMetrics: vi.fn().mockResolvedValue([])
 }))
 
 import { ipcMain } from 'electron'
@@ -83,14 +95,12 @@ describe('IPC contract — channels vs handlers', () => {
   it('every invoke channel declared in channels.ts has a registered handler', () => {
     const mockWin = {
       webContents: { send: vi.fn(), capturePage: vi.fn() },
-      isFocused: vi.fn().mockReturnValue(true),
+      isFocused: vi.fn().mockReturnValue(true)
     } as unknown as Electron.BrowserWindow
 
     registerHandlers(mockWin)
 
-    const handledChannels = new Set(
-      vi.mocked(ipcMain.handle).mock.calls.map((c) => c[0] as string)
-    )
+    const handledChannels = new Set(vi.mocked(ipcMain.handle).mock.calls.map((c) => c[0] as string))
 
     const missing = INVOKE_CHANNELS.filter((ch) => !handledChannels.has(ch))
 
@@ -100,17 +110,13 @@ describe('IPC contract — channels vs handlers', () => {
   it('cli:cancel is registered with ipcMain.on, not ipcMain.handle', () => {
     const mockWin = {
       webContents: { send: vi.fn(), capturePage: vi.fn() },
-      isFocused: vi.fn().mockReturnValue(true),
+      isFocused: vi.fn().mockReturnValue(true)
     } as unknown as Electron.BrowserWindow
 
     registerHandlers(mockWin)
 
-    const onChannels = new Set(
-      vi.mocked(ipcMain.on).mock.calls.map((c) => c[0] as string)
-    )
-    const handleChannels = new Set(
-      vi.mocked(ipcMain.handle).mock.calls.map((c) => c[0] as string)
-    )
+    const onChannels = new Set(vi.mocked(ipcMain.on).mock.calls.map((c) => c[0] as string))
+    const handleChannels = new Set(vi.mocked(ipcMain.handle).mock.calls.map((c) => c[0] as string))
 
     expect(onChannels.has(IPC.CLI_CANCEL)).toBe(true)
     expect(handleChannels.has(IPC.CLI_CANCEL)).toBe(false)
@@ -119,16 +125,17 @@ describe('IPC contract — channels vs handlers', () => {
   it('push-only channels are not accidentally registered as handlers', () => {
     const mockWin = {
       webContents: { send: vi.fn(), capturePage: vi.fn() },
-      isFocused: vi.fn().mockReturnValue(true),
+      isFocused: vi.fn().mockReturnValue(true)
     } as unknown as Electron.BrowserWindow
 
     registerHandlers(mockWin)
 
-    const handleChannels = new Set(
-      vi.mocked(ipcMain.handle).mock.calls.map((c) => c[0] as string)
-    )
+    const handleChannels = new Set(vi.mocked(ipcMain.handle).mock.calls.map((c) => c[0] as string))
 
     const wronglyHandled = [...PUSH_ONLY_CHANNELS].filter((ch) => handleChannels.has(ch))
-    expect(wronglyHandled, `Push-only channels registered as handlers: ${wronglyHandled.join(', ')}`).toHaveLength(0)
+    expect(
+      wronglyHandled,
+      `Push-only channels registered as handlers: ${wronglyHandled.join(', ')}`
+    ).toHaveLength(0)
   })
 })

@@ -10,14 +10,16 @@ export async function listRepositories(client: ECRClient, region: string): Promi
       repos.push(...(res.repositories ?? []))
       nextToken = res.nextToken
     } while (nextToken)
-    return repos.map((item): CloudNode => ({
-      id:       item.repositoryArn ?? '',
-      type:     'ecr-repo',
-      label:    item.repositoryName ?? '',
-      status:   'running',
-      region,
-      metadata: { uri: item.repositoryUri ?? '' },
-    }))
+    return repos.map(
+      (item): CloudNode => ({
+        id: item.repositoryArn ?? '',
+        type: 'ecr-repo',
+        label: item.repositoryName ?? '',
+        status: 'running',
+        region,
+        metadata: { uri: item.repositoryUri ?? '' }
+      })
+    )
   } catch {
     return []
   }

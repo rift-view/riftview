@@ -10,7 +10,7 @@ function node(overrides: Partial<CloudNode>): CloudNode {
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    ...overrides,
+    ...overrides
   } as CloudNode
 }
 
@@ -36,7 +36,9 @@ describe('buildRemediateCommands', () => {
   })
 
   it('matched with no tfMetadata → []', () => {
-    expect(buildRemediateCommands(node({ driftStatus: 'matched', tfMetadata: undefined }))).toEqual([])
+    expect(buildRemediateCommands(node({ driftStatus: 'matched', tfMetadata: undefined }))).toEqual(
+      []
+    )
   })
 
   it('matched lambda runtime diff → update-function-configuration --runtime', () => {
@@ -44,11 +46,18 @@ describe('buildRemediateCommands', () => {
       node({
         driftStatus: 'matched',
         metadata: { runtime: 'python3.9' },
-        tfMetadata: { runtime: 'python3.11' },
+        tfMetadata: { runtime: 'python3.11' }
       })
     )
     expect(result).toEqual([
-      ['lambda', 'update-function-configuration', '--function-name', 'test-id', '--runtime', 'python3.11'],
+      [
+        'lambda',
+        'update-function-configuration',
+        '--function-name',
+        'test-id',
+        '--runtime',
+        'python3.11'
+      ]
     ])
   })
 
@@ -57,7 +66,7 @@ describe('buildRemediateCommands', () => {
       node({
         driftStatus: 'matched',
         metadata: { memorySize: '128', timeout: '3' },
-        tfMetadata: { memorySize: '512', timeout: '30' },
+        tfMetadata: { memorySize: '512', timeout: '30' }
       })
     )
     expect(result).toHaveLength(1)
@@ -74,7 +83,7 @@ describe('buildRemediateCommands', () => {
       node({
         driftStatus: 'matched',
         metadata: { tags: '{}' },
-        tfMetadata: { tags: '{"env":"prod"}' },
+        tfMetadata: { tags: '{"env":"prod"}' }
       })
     )
     expect(result).toEqual([])
@@ -88,13 +97,20 @@ describe('buildRemediateCommands', () => {
         status: 'running',
         driftStatus: 'matched',
         metadata: { instanceType: 't3.small' },
-        tfMetadata: { instanceType: 't3.medium' },
+        tfMetadata: { instanceType: 't3.medium' }
       })
     )
     expect(result).toEqual([
       ['ec2', 'stop-instances', '--instance-ids', 'i-abc123'],
-      ['ec2', 'modify-instance-attribute', '--instance-id', 'i-abc123', '--instance-type', 'Value=t3.medium'],
-      ['ec2', 'start-instances', '--instance-ids', 'i-abc123'],
+      [
+        'ec2',
+        'modify-instance-attribute',
+        '--instance-id',
+        'i-abc123',
+        '--instance-type',
+        'Value=t3.medium'
+      ],
+      ['ec2', 'start-instances', '--instance-ids', 'i-abc123']
     ])
   })
 
@@ -106,11 +122,18 @@ describe('buildRemediateCommands', () => {
         status: 'stopped',
         driftStatus: 'matched',
         metadata: { instanceType: 't3.small' },
-        tfMetadata: { instanceType: 't3.medium' },
+        tfMetadata: { instanceType: 't3.medium' }
       })
     )
     expect(result).toEqual([
-      ['ec2', 'modify-instance-attribute', '--instance-id', 'i-abc123', '--instance-type', 'Value=t3.medium'],
+      [
+        'ec2',
+        'modify-instance-attribute',
+        '--instance-id',
+        'i-abc123',
+        '--instance-type',
+        'Value=t3.medium'
+      ]
     ])
   })
 
@@ -121,11 +144,19 @@ describe('buildRemediateCommands', () => {
         type: 'rds',
         driftStatus: 'matched',
         metadata: { instanceClass: 'db.t3.small' },
-        tfMetadata: { instanceClass: 'db.t3.medium' },
+        tfMetadata: { instanceClass: 'db.t3.medium' }
       })
     )
     expect(result).toEqual([
-      ['rds', 'modify-db-instance', '--db-instance-identifier', 'my-db', '--db-instance-class', 'db.t3.medium', '--apply-immediately'],
+      [
+        'rds',
+        'modify-db-instance',
+        '--db-instance-identifier',
+        'my-db',
+        '--db-instance-class',
+        'db.t3.medium',
+        '--apply-immediately'
+      ]
     ])
   })
 })

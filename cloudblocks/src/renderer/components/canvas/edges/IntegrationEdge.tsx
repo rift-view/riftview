@@ -1,25 +1,39 @@
 import React, { useState, useEffect } from 'react'
-import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps, type Edge } from '@xyflow/react'
+import {
+  BaseEdge,
+  EdgeLabelRenderer,
+  getSmoothStepPath,
+  type EdgeProps,
+  type Edge
+} from '@xyflow/react'
 import type { EdgeType, IntegrationEdgeData } from '../../../types/cloud'
 
 type IntegrationEdgeType = Edge<IntegrationEdgeData, 'integration'>
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const EDGE_TYPE_STYLES: Record<EdgeType, {
-  color: string
-  label: string
-  strokeDasharray: string
-  animated: boolean
-}> = {
-  trigger:      { color: '#f59e0b', label: 'triggers',      strokeDasharray: '6 3',  animated: true  },
-  subscription: { color: '#14b8a6', label: 'subscribes to', strokeDasharray: '2 4',  animated: true  },
-  origin:       { color: '#6366f1', label: 'serves',        strokeDasharray: 'none', animated: false },
+export const EDGE_TYPE_STYLES: Record<
+  EdgeType,
+  {
+    color: string
+    label: string
+    strokeDasharray: string
+    animated: boolean
+  }
+> = {
+  trigger: { color: '#f59e0b', label: 'triggers', strokeDasharray: '6 3', animated: true },
+  subscription: {
+    color: '#14b8a6',
+    label: 'subscribes to',
+    strokeDasharray: '2 4',
+    animated: true
+  },
+  origin: { color: '#6366f1', label: 'serves', strokeDasharray: 'none', animated: false }
 }
 
 const FLOW_DURATION: Record<EdgeType, string> = {
-  trigger:      '1s',
+  trigger: '1s',
   subscription: '2s',
-  origin:       '0s',  // unused but keeps the Record exhaustive
+  origin: '0s' // unused but keeps the Record exhaustive
 }
 
 // Inject the dash-flow keyframe once into the document head
@@ -44,9 +58,11 @@ export default function IntegrationEdge({
   targetY,
   sourcePosition,
   targetPosition,
-  data,
+  data
 }: EdgeProps<IntegrationEdgeType>): React.JSX.Element {
-  useEffect(() => { ensureStyle() }, [])
+  useEffect(() => {
+    ensureStyle()
+  }, [])
 
   const edgeType: EdgeType = data?.edgeType ?? 'trigger'
   const { color, label } = EDGE_TYPE_STYLES[edgeType]
@@ -61,7 +77,7 @@ export default function IntegrationEdge({
     targetX,
     targetY,
     targetPosition,
-    borderRadius: 8,
+    borderRadius: 8
   })
 
   return (
@@ -83,12 +99,13 @@ export default function IntegrationEdge({
         style={{
           stroke: color,
           strokeWidth: 1.5,
-          strokeDasharray: EDGE_TYPE_STYLES[edgeType].strokeDasharray === 'none'
-            ? undefined
-            : EDGE_TYPE_STYLES[edgeType].strokeDasharray,
+          strokeDasharray:
+            EDGE_TYPE_STYLES[edgeType].strokeDasharray === 'none'
+              ? undefined
+              : EDGE_TYPE_STYLES[edgeType].strokeDasharray,
           animation: EDGE_TYPE_STYLES[edgeType].animated
             ? `dash-flow ${duration} linear infinite`
-            : undefined,
+            : undefined
         }}
       />
       <EdgeLabelRenderer>
@@ -107,7 +124,7 @@ export default function IntegrationEdge({
             fontSize: 11,
             fontWeight: 500,
             whiteSpace: 'nowrap',
-            zIndex: 1000,
+            zIndex: 1000
           }}
           className="nodrag nopan"
         >

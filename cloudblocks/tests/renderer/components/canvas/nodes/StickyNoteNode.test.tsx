@@ -4,21 +4,21 @@ import { StickyNoteNode } from '../../../../../src/renderer/components/canvas/no
 import type { NodeProps } from '@xyflow/react'
 
 vi.mock('@xyflow/react', () => ({
-  Handle:   () => null,
-  Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
+  Handle: () => null,
+  Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' }
 }))
 
 // Mock window.terminus
 Object.defineProperty(window, 'terminus', {
   value: { saveAnnotations: vi.fn().mockResolvedValue(undefined) },
-  writable: true,
+  writable: true
 })
 
 const makeProps = (content = '', onSave = vi.fn(), onDelete = vi.fn()): NodeProps =>
   ({
-    id:       'sn-001',
-    data:     { noteId: 'sn-001', content, onSave, onDelete },
-    selected: false,
+    id: 'sn-001',
+    data: { noteId: 'sn-001', content, onSave, onDelete },
+    selected: false
   }) as unknown as NodeProps
 
 describe('StickyNoteNode', () => {

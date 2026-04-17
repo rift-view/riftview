@@ -15,7 +15,7 @@ export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 300,
+    zIndex: 300
   }
 
   const dialog: React.CSSProperties = {
@@ -27,19 +27,29 @@ export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
     fontFamily: 'monospace',
     display: 'flex',
     flexDirection: 'column',
-    gap: 0,
+    gap: 0
   }
 
   return (
     <div
       style={overlay}
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose()
+      }}
       tabIndex={-1}
     >
       <div style={dialog}>
         {/* App name */}
-        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--cb-accent)', letterSpacing: '0.04em', marginBottom: 6 }}>
+        <div
+          style={{
+            fontSize: 22,
+            fontWeight: 700,
+            color: 'var(--cb-accent)',
+            letterSpacing: '0.04em',
+            marginBottom: 6
+          }}
+        >
           Terminus
         </div>
 
@@ -62,9 +72,11 @@ export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
         <div style={{ borderTop: '1px solid var(--cb-border)', marginBottom: 14 }} />
 
         {/* Disclaimer */}
-        <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', lineHeight: 1.6, marginBottom: 22 }}>
-          Not affiliated with, endorsed by, or sponsored by Amazon Web Services.
-          AWS and all related marks are trademarks of Amazon.com, Inc.
+        <div
+          style={{ fontSize: 9, color: 'var(--cb-text-muted)', lineHeight: 1.6, marginBottom: 22 }}
+        >
+          Not affiliated with, endorsed by, or sponsored by Amazon Web Services. AWS and all related
+          marks are trademarks of Amazon.com, Inc.
         </div>
 
         {/* Close button */}
@@ -80,7 +92,7 @@ export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
               color: 'var(--cb-text-secondary)',
               fontFamily: 'monospace',
               fontSize: 11,
-              cursor: 'pointer',
+              cursor: 'pointer'
             }}
           >
             Close

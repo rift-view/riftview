@@ -10,11 +10,11 @@ const analyzeIamMock = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fet
 
 Object.defineProperty(window, 'terminus', {
   value: { saveAnnotations: saveAnnotationsMock, analyzeIam: analyzeIamMock },
-  writable: true,
+  writable: true
 })
 
 vi.mock('../../../src/renderer/components/IamAdvisor', () => ({
-  IamAdvisor: () => null,
+  IamAdvisor: () => null
 }))
 
 function baseNode(overrides: Partial<CloudNode> = {}): CloudNode {
@@ -25,25 +25,24 @@ function baseNode(overrides: Partial<CloudNode> = {}): CloudNode {
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    ...overrides,
+    ...overrides
   } as CloudNode
 }
 
 function setup(node: CloudNode): ReturnType<typeof render> {
   useUIStore.setState({ selectedNodeId: node.id })
   useCloudStore.setState({ nodes: [node], importedNodes: [] })
-  return render(
-    <Inspector
-      onDelete={vi.fn()}
-      onEdit={vi.fn()}
-      onQuickAction={vi.fn()}
-    />
-  )
+  return render(<Inspector onDelete={vi.fn()} onEdit={vi.fn()} onQuickAction={vi.fn()} />)
 }
 
 describe('Inspector ADVISORIES section', () => {
   beforeEach(() => {
-    useUIStore.setState({ selectedNodeId: null, annotations: {}, selectedEdgeId: null, selectedEdgeInfo: null })
+    useUIStore.setState({
+      selectedNodeId: null,
+      annotations: {},
+      selectedEdgeId: null,
+      selectedEdgeInfo: null
+    })
     useCloudStore.setState({ nodes: [], importedNodes: [] })
   })
 
@@ -78,7 +77,7 @@ describe('Inspector ADVISORIES section', () => {
     // Severity labels are rendered as span text content "critical" / "info"
     const allSpans = Array.from(container.querySelectorAll('span'))
     const criticalIdx = allSpans.findIndex((s) => s.textContent === 'critical')
-    const infoIdx     = allSpans.findIndex((s) => s.textContent === 'info')
+    const infoIdx = allSpans.findIndex((s) => s.textContent === 'info')
     expect(criticalIdx).toBeGreaterThanOrEqual(0)
     expect(infoIdx).toBeGreaterThanOrEqual(0)
     expect(criticalIdx).toBeLessThan(infoIdx)
@@ -98,7 +97,12 @@ describe('Inspector ADVISORIES section', () => {
 
 describe('Inspector Advisory Queue group-by-rule toggle', () => {
   beforeEach(() => {
-    useUIStore.setState({ selectedNodeId: null, annotations: {}, selectedEdgeId: null, selectedEdgeInfo: null })
+    useUIStore.setState({
+      selectedNodeId: null,
+      annotations: {},
+      selectedEdgeId: null,
+      selectedEdgeInfo: null
+    })
     useCloudStore.setState({ nodes: [], importedNodes: [], lastScannedAt: new Date() })
   })
 
@@ -106,23 +110,18 @@ describe('Inspector Advisory Queue group-by-rule toggle', () => {
     // No selectedNodeId → Inspector renders FirstScanSummary (Top Risks view)
     useUIStore.setState({ selectedNodeId: null })
     useCloudStore.setState({ nodes, importedNodes: [], lastScannedAt: new Date() })
-    return render(
-      <Inspector
-        onDelete={vi.fn()}
-        onEdit={vi.fn()}
-        onQuickAction={vi.fn()}
-      />
-    )
+    return render(<Inspector onDelete={vi.fn()} onEdit={vi.fn()} onQuickAction={vi.fn()} />)
   }
 
-  const lambdaNode = (id: string, label: string): CloudNode => ({
-    id,
-    label,
-    type: 'lambda',
-    status: 'running',
-    region: 'us-east-1',
-    metadata: { timeout: 0 }, // triggers lambda-no-timeout (critical)
-  } as CloudNode)
+  const lambdaNode = (id: string, label: string): CloudNode =>
+    ({
+      id,
+      label,
+      type: 'lambda',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: { timeout: 0 } // triggers lambda-no-timeout (critical)
+    }) as CloudNode
 
   it('default post-scan view shows TOP RISKS header', () => {
     setupGlobal([lambdaNode('fn-a', 'fn-alpha'), lambdaNode('fn-b', 'fn-beta')])

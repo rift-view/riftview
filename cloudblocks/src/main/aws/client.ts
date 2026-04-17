@@ -46,12 +46,12 @@ export interface AwsClients {
   iam: IAMClient
   ses: SESClient
   cognito: CognitoIdentityProviderClient
-  kinesis:      KinesisClient
-  ecs:          ECSClient
-  elasticache:  ElastiCacheClient
-  eks:          EKSClient
-  opensearch:   OpenSearchClient
-  msk:          KafkaClient
+  kinesis: KinesisClient
+  ecs: ECSClient
+  elasticache: ElastiCacheClient
+  eks: EKSClient
+  opensearch: OpenSearchClient
+  msk: KafkaClient
 }
 
 // Creates a fresh set of AWS SDK clients for the given profile + region.
@@ -76,31 +76,36 @@ export function createClients(profile: string, region: string, endpoint?: string
   const globalRegion = endpoint ? region : 'us-east-1'
 
   return {
-    ec2:        new EC2Client(config),
-    rds:        new RDSClient(config),
-    s3:         new S3Client({ region, ...endpointConfig, ...credentialsConfig, ...(endpoint ? { forcePathStyle: true } : {}) }),
-    lambda:     new LambdaClient(config),
-    alb:        new ElasticLoadBalancingV2Client(config),
-    acm:        new ACMClient({ region: globalRegion, ...endpointConfig, ...credentialsConfig }),
+    ec2: new EC2Client(config),
+    rds: new RDSClient(config),
+    s3: new S3Client({
+      region,
+      ...endpointConfig,
+      ...credentialsConfig,
+      ...(endpoint ? { forcePathStyle: true } : {})
+    }),
+    lambda: new LambdaClient(config),
+    alb: new ElasticLoadBalancingV2Client(config),
+    acm: new ACMClient({ region: globalRegion, ...endpointConfig, ...credentialsConfig }),
     cloudfront: new CloudFrontClient(config),
-    apigw:      new ApiGatewayV2Client(config),
-    sqs:        new SQSClient(config),
-    secrets:    new SecretsManagerClient(config),
-    ecr:        new ECRClient(config),
-    sns:        new SNSClient(config),
-    dynamo:     new DynamoDBClient(config),
-    ssm:        new SSMClient(config),
-    r53:        new Route53Client({ region: globalRegion, ...endpointConfig, ...credentialsConfig }),
-    sfn:        new SFNClient(config),
+    apigw: new ApiGatewayV2Client(config),
+    sqs: new SQSClient(config),
+    secrets: new SecretsManagerClient(config),
+    ecr: new ECRClient(config),
+    sns: new SNSClient(config),
+    dynamo: new DynamoDBClient(config),
+    ssm: new SSMClient(config),
+    r53: new Route53Client({ region: globalRegion, ...endpointConfig, ...credentialsConfig }),
+    sfn: new SFNClient(config),
     eventbridge: new EventBridgeClient(config),
-    iam:         new IAMClient(config),
-    ses:         new SESClient(config),
-    cognito:     new CognitoIdentityProviderClient(config),
-    kinesis:     new KinesisClient(config),
-    ecs:         new ECSClient(config),
+    iam: new IAMClient(config),
+    ses: new SESClient(config),
+    cognito: new CognitoIdentityProviderClient(config),
+    kinesis: new KinesisClient(config),
+    ecs: new ECSClient(config),
     elasticache: new ElastiCacheClient(config),
-    eks:         new EKSClient(config),
-    opensearch:  new OpenSearchClient(config),
-    msk:         new KafkaClient(config),
+    eks: new EKSClient(config),
+    opensearch: new OpenSearchClient(config),
+    msk: new KafkaClient(config)
   }
 }

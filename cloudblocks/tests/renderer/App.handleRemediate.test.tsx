@@ -20,29 +20,29 @@ Object.defineProperty(window, 'terminus', {
   value: {
     runCli: runCliMock,
     // stubs for any other calls that may be triggered indirectly
-    saveAnnotations:  vi.fn().mockResolvedValue(undefined),
-    analyzeIam:       vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 }),
-    listProfiles:     vi.fn().mockResolvedValue([]),
-    loadAnnotations:  vi.fn().mockResolvedValue({}),
-    loadCustomEdges:  vi.fn().mockResolvedValue([]),
+    saveAnnotations: vi.fn().mockResolvedValue(undefined),
+    analyzeIam: vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 }),
+    listProfiles: vi.fn().mockResolvedValue([]),
+    loadAnnotations: vi.fn().mockResolvedValue({}),
+    loadCustomEdges: vi.fn().mockResolvedValue([]),
     getThemeOverrides: vi.fn().mockResolvedValue({}),
     onUpdateAvailable: vi.fn().mockReturnValue(() => {}),
-    onPluginMetadata:  vi.fn().mockReturnValue(() => {}),
+    onPluginMetadata: vi.fn().mockReturnValue(() => {})
   },
-  writable: true,
+  writable: true
 })
 
 // ---- helpers ---------------------------------------------------------------
 
 function baseNode(overrides: Partial<CloudNode> = {}): CloudNode {
   return {
-    id:       'arn:aws:lambda:us-east-1:123:function:my-fn',
-    label:    'my-fn',
-    type:     'lambda',
-    status:   'running',
-    region:   'us-east-1',
+    id: 'arn:aws:lambda:us-east-1:123:function:my-fn',
+    label: 'my-fn',
+    type: 'lambda',
+    status: 'running',
+    region: 'us-east-1',
     metadata: {},
-    ...overrides,
+    ...overrides
   } as CloudNode
 }
 
@@ -54,7 +54,7 @@ async function handleRemediate(
   node: CloudNode,
   commands: string[][],
   triggerScan: () => void,
-  setFixCount: (fn: (n: number) => number) => void,
+  setFixCount: (fn: (n: number) => number) => void
 ): Promise<{ code: number }> {
   const prevStatus = node.status
   useCloudStore.getState().patchNodeStatus(node.id, 'pending')

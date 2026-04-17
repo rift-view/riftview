@@ -9,28 +9,41 @@ import type { Advisory } from '../types/cloud'
 export function buildAdvisoryRemediation(advisory: Advisory, nodeId: string): string[][] | null {
   switch (advisory.ruleId) {
     case 's3-public-access':
-      return [[
-        's3api', 'put-public-access-block',
-        '--bucket', nodeId,
-        '--public-access-block-configuration',
-        'BlockPublicAcls=true,BlockPublicPolicy=true,IgnorePublicAcls=true,RestrictPublicBuckets=true',
-      ]]
+      return [
+        [
+          's3api',
+          'put-public-access-block',
+          '--bucket',
+          nodeId,
+          '--public-access-block-configuration',
+          'BlockPublicAcls=true,BlockPublicPolicy=true,IgnorePublicAcls=true,RestrictPublicBuckets=true'
+        ]
+      ]
 
     case 'rds-no-deletion-protection':
-      return [[
-        'rds', 'modify-db-instance',
-        '--db-instance-identifier', nodeId,
-        '--deletion-protection',
-        '--apply-immediately',
-      ]]
+      return [
+        [
+          'rds',
+          'modify-db-instance',
+          '--db-instance-identifier',
+          nodeId,
+          '--deletion-protection',
+          '--apply-immediately'
+        ]
+      ]
 
     case 'rds-no-backup':
-      return [[
-        'rds', 'modify-db-instance',
-        '--db-instance-identifier', nodeId,
-        '--backup-retention-period', '7',
-        '--apply-immediately',
-      ]]
+      return [
+        [
+          'rds',
+          'modify-db-instance',
+          '--db-instance-identifier',
+          nodeId,
+          '--backup-retention-period',
+          '7',
+          '--apply-immediately'
+        ]
+      ]
 
     default:
       return null

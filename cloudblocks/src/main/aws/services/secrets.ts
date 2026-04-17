@@ -1,11 +1,17 @@
-import {
-  SecretsManagerClient,
-  ListSecretsCommand,
-} from '@aws-sdk/client-secrets-manager'
+import { SecretsManagerClient, ListSecretsCommand } from '@aws-sdk/client-secrets-manager'
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
-export async function listSecrets(client: SecretsManagerClient, region: string): Promise<CloudNode[]> {
-  const secretList: { ARN?: string; Name?: string; Description?: string; LastRotatedDate?: Date; RotationLambdaARN?: string }[] = []
+export async function listSecrets(
+  client: SecretsManagerClient,
+  region: string
+): Promise<CloudNode[]> {
+  const secretList: {
+    ARN?: string
+    Name?: string
+    Description?: string
+    LastRotatedDate?: Date
+    RotationLambdaARN?: string
+  }[] = []
   try {
     let nextToken: string | undefined
     do {
@@ -26,14 +32,14 @@ export async function listSecrets(client: SecretsManagerClient, region: string):
       region,
       metadata: {
         description: item.Description ?? '',
-        lastRotated: item.LastRotatedDate?.toISOString() ?? '',
-      },
+        lastRotated: item.LastRotatedDate?.toISOString() ?? ''
+      }
     }
 
     if (!item.RotationLambdaARN) return baseNode
 
     const integrations: { targetId: string; edgeType: EdgeType }[] = [
-      { targetId: item.RotationLambdaARN, edgeType: 'trigger' },
+      { targetId: item.RotationLambdaARN, edgeType: 'trigger' }
     ]
     return { ...baseNode, integrations }
   })

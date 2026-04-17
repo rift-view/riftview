@@ -2,7 +2,14 @@ import { useEffect, useRef } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 
-const CONTAINER_TYPES = new Set(['vpc', 'subnet', 'security-group', 'nat-gateway', 'globalZone', 'regionZone'])
+const CONTAINER_TYPES = new Set([
+  'vpc',
+  'subnet',
+  'security-group',
+  'nat-gateway',
+  'globalZone',
+  'regionZone'
+])
 
 export function useKeyboardNav(): void {
   const indexRef = useRef(-1)
@@ -11,11 +18,8 @@ export function useKeyboardNav(): void {
     function onKeyDown(e: KeyboardEvent): void {
       // Guard: ignore if focused in an editable element
       const target = e.target as HTMLElement
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
-      ) return
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+        return
 
       // Guard: ignore if a modal is open
       const ui = useUIStore.getState()
@@ -49,7 +53,9 @@ export function useKeyboardNav(): void {
           const selectedId = useUIStore.getState().selectedNodeId
           if (!selectedId) return
           e.preventDefault()
-          window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId: selectedId } }))
+          window.dispatchEvent(
+            new CustomEvent('terminus:fitnode', { detail: { nodeId: selectedId } })
+          )
           break
         }
         case '/': {

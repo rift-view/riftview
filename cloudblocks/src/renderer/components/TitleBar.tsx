@@ -7,12 +7,12 @@ import TemplatesModal from './TemplatesModal'
 import TfModuleSelectorModal from './modals/TfModuleSelectorModal'
 import { getMonthlyEstimate, formatPrice } from '../utils/pricing'
 
-const LOCAL_PROFILE_NAME     = 'local'
+const LOCAL_PROFILE_NAME = 'local'
 const LOCAL_ENDPOINT_DEFAULT = 'http://localhost:4566'
 
 function relativeTime(date: Date): string {
   const secs = Math.floor((Date.now() - date.getTime()) / 1000)
-  if (secs < 60)   return `${secs}s ago`
+  if (secs < 60) return `${secs}s ago`
   if (secs < 3600) return `${Math.floor(secs / 60)}m ago`
   return `${Math.floor(secs / 3600)}h ago`
 }
@@ -23,23 +23,25 @@ interface Props {
 }
 
 export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
-  const [profiles, setProfiles]           = useState<AwsProfile[]>([])
-  const [connStatus, setConnStatus]       = useState<'unknown' | 'connected' | 'error'>('unknown')
-  const [endpointInput, setEndpointInput] = useState<string>(() => useCloudStore.getState().profile.endpoint ?? '')
-  const [importOpen, setImportOpen]       = useState(false)
-  const [exportOpen, setExportOpen]       = useState(false)
-  const [, forceUpdate]                   = useState(0)
+  const [profiles, setProfiles] = useState<AwsProfile[]>([])
+  const [connStatus, setConnStatus] = useState<'unknown' | 'connected' | 'error'>('unknown')
+  const [endpointInput, setEndpointInput] = useState<string>(
+    () => useCloudStore.getState().profile.endpoint ?? ''
+  )
+  const [importOpen, setImportOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
+  const [, forceUpdate] = useState(0)
 
-  const profile       = useCloudStore((s) => s.profile)
-  const setProfile    = useCloudStore((s) => s.setProfile)
-  const nodes         = useCloudStore((s) => s.nodes)
-  const scanStatus    = useCloudStore((s) => s.scanStatus)
+  const profile = useCloudStore((s) => s.profile)
+  const setProfile = useCloudStore((s) => s.setProfile)
+  const nodes = useCloudStore((s) => s.nodes)
+  const scanStatus = useCloudStore((s) => s.scanStatus)
   const lastScannedAt = useCloudStore((s) => s.lastScannedAt)
-  const isExporting   = useUIStore((s) => s.isExporting)
+  const isExporting = useUIStore((s) => s.isExporting)
 
   const [showTemplates, setShowTemplates] = useState(false)
-  const [costHover, setCostHover]         = useState(false)
-  const [tfModules, setTfModules]         = useState<TfModuleInfo[] | null>(null)
+  const [costHover, setCostHover] = useState(false)
+  const [tfModules, setTfModules] = useState<TfModuleInfo[] | null>(null)
   const importRef = useRef<HTMLDivElement>(null)
   const exportRef = useRef<HTMLDivElement>(null)
 
@@ -59,7 +61,7 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
   // Refresh relative timestamp every 10 seconds
   useEffect(() => {
     if (!lastScannedAt) return
-    const id = setInterval(() => forceUpdate(n => n + 1), 10_000)
+    const id = setInterval(() => forceUpdate((n) => n + 1), 10_000)
     return () => clearInterval(id)
   }, [lastScannedAt])
 
@@ -109,7 +111,9 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
     if (selectedNodes.length === 0) return
     useCloudStore.getState().setImportedNodes(selectedNodes)
     window.dispatchEvent(new CustomEvent('terminus:fitview'))
-    useUIStore.getState().showToast(`Imported ${selectedNodes.length} resources from Terraform state`, 'success')
+    useUIStore
+      .getState()
+      .showToast(`Imported ${selectedNodes.length} resources from Terraform state`, 'success')
   }
 
   async function handleImportTfState(): Promise<void> {
@@ -147,34 +151,57 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
     setTfModules(null)
   }
 
-  const statusColor = connStatus === 'connected' ? '#28c840' : connStatus === 'error' ? '#ff5f57' : '#febc2e'
-  const statusLabel = connStatus === 'connected' ? 'connected' : connStatus === 'error' ? 'error' : 'connecting…'
-  const statusGlow  = connStatus === 'connected' ? '0 0 6px #28c840' : 'none'
+  const statusColor =
+    connStatus === 'connected' ? '#28c840' : connStatus === 'error' ? '#ff5f57' : '#febc2e'
+  const statusLabel =
+    connStatus === 'connected' ? 'connected' : connStatus === 'error' ? 'error' : 'connecting…'
+  const statusGlow = connStatus === 'connected' ? '0 0 6px #28c840' : 'none'
   const showEndpointInput = profile.endpoint !== undefined
 
   const btnBase: React.CSSProperties = {
-    fontFamily: 'monospace', fontSize: 10, borderRadius: 4,
-    padding: '2px 8px', cursor: 'pointer',
-    background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)',
-    color: 'var(--cb-text-secondary)',
+    fontFamily: 'monospace',
+    fontSize: 10,
+    borderRadius: 4,
+    padding: '2px 8px',
+    cursor: 'pointer',
+    background: 'var(--cb-bg-elevated)',
+    border: '1px solid var(--cb-border)',
+    color: 'var(--cb-text-secondary)'
   }
   const dropdownMenu: React.CSSProperties = {
-    position: 'absolute', top: '100%', marginTop: 4, zIndex: 200,
-    background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border-strong)',
-    borderRadius: 4, overflow: 'hidden', minWidth: 150,
+    position: 'absolute',
+    top: '100%',
+    marginTop: 4,
+    zIndex: 200,
+    background: 'var(--cb-bg-elevated)',
+    border: '1px solid var(--cb-border-strong)',
+    borderRadius: 4,
+    overflow: 'hidden',
+    minWidth: 150
   }
   const dropdownItem: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 8,
-    width: '100%', textAlign: 'left',
-    background: 'none', border: 'none', borderBottom: '1px solid var(--cb-border)',
-    padding: '6px 12px', fontFamily: 'monospace', fontSize: 10,
-    color: 'var(--cb-text-secondary)', cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+    textAlign: 'left',
+    background: 'none',
+    border: 'none',
+    borderBottom: '1px solid var(--cb-border)',
+    padding: '6px 12px',
+    fontFamily: 'monospace',
+    fontSize: 10,
+    color: 'var(--cb-text-secondary)',
+    cursor: 'pointer'
   }
 
   return (
     <div
       className="flex items-center gap-2 px-3 h-9 flex-shrink-0"
-      style={{ background: 'var(--cb-bg-panel)', borderBottom: '1px solid var(--cb-border-strong)' }}
+      style={{
+        background: 'var(--cb-bg-panel)',
+        borderBottom: '1px solid var(--cb-border-strong)'
+      }}
     >
       {/* Traffic lights placeholder for macOS hiddenInset */}
       <div className="flex gap-1.5 mr-2">
@@ -183,7 +210,10 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
         <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
       </div>
 
-      <span className="text-[11px] font-bold tracking-widest font-mono" style={{ color: 'var(--cb-accent)' }}>
+      <span
+        className="text-[11px] font-bold tracking-widest font-mono"
+        style={{ color: 'var(--cb-accent)' }}
+      >
         TERMINUS
       </span>
 
@@ -194,10 +224,16 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
         value={profile.name}
         onChange={(e) => handleProfileChange(e.target.value)}
         className="text-[10px] font-mono px-2 py-0.5 rounded"
-        style={{ background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-accent)', color: 'var(--cb-accent)' }}
+        style={{
+          background: 'var(--cb-bg-elevated)',
+          border: '1px solid var(--cb-accent)',
+          color: 'var(--cb-accent)'
+        }}
       >
         {profiles.map((p) => (
-          <option key={p.name} value={p.name}>{p.name}</option>
+          <option key={p.name} value={p.name}>
+            {p.name}
+          </option>
         ))}
         <option disabled>──────────</option>
         <option value={LOCAL_PROFILE_NAME}>⬡ Local</option>
@@ -209,7 +245,9 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
           type="text"
           value={endpointInput}
           onChange={(e) => setEndpointInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleEndpointSubmit() }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleEndpointSubmit()
+          }}
           onBlur={handleEndpointSubmit}
           placeholder={LOCAL_ENDPOINT_DEFAULT}
           className="text-[10px] font-mono px-2 py-0.5 rounded"
@@ -217,15 +255,20 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
             background: 'var(--cb-bg-elevated)',
             border: '1px solid var(--cb-border)',
             color: 'var(--cb-text-secondary)',
-            width: '160px',
+            width: '160px'
           }}
         />
       )}
 
       {/* Connection status */}
       <div className="flex items-center gap-1.5">
-        <div className="w-2 h-2 rounded-full" style={{ background: statusColor, boxShadow: statusGlow }} />
-        <span className="text-[9px] font-mono" style={{ color: statusColor }}>{statusLabel}</span>
+        <div
+          className="w-2 h-2 rounded-full"
+          style={{ background: statusColor, boxShadow: statusGlow }}
+        />
+        <span className="text-[9px] font-mono" style={{ color: statusColor }}>
+          {statusLabel}
+        </span>
       </div>
 
       <div className="w-px h-4 flex-shrink-0" style={{ background: 'var(--cb-border-strong)' }} />
@@ -234,127 +277,208 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
       <button
         onClick={onScan}
         disabled={scanStatus === 'scanning'}
-        style={{ ...btnBase, border: '1px solid var(--cb-accent)', color: 'var(--cb-accent)', opacity: scanStatus === 'scanning' ? 0.5 : 1 }}
+        style={{
+          ...btnBase,
+          border: '1px solid var(--cb-accent)',
+          color: 'var(--cb-accent)',
+          opacity: scanStatus === 'scanning' ? 0.5 : 1
+        }}
       >
         {scanStatus === 'scanning' ? '⟳ Scanning…' : '⟳ Scan'}
       </button>
 
       {lastScannedAt && (
-        <span style={{ fontSize: 11, color: 'var(--cb-text-muted)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+        <span
+          style={{
+            fontSize: 11,
+            color: 'var(--cb-text-muted)',
+            fontFamily: 'monospace',
+            whiteSpace: 'nowrap'
+          }}
+        >
           {relativeTime(lastScannedAt)}
         </span>
       )}
 
       {fixCount > 0 && (
-        <span style={{ fontSize: 11, color: '#4ade80', marginLeft: 8, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+        <span
+          style={{
+            fontSize: 11,
+            color: '#4ade80',
+            marginLeft: 8,
+            fontFamily: 'monospace',
+            whiteSpace: 'nowrap'
+          }}
+        >
           ✓ {fixCount} fixed this session
         </span>
       )}
 
-      {nodes.length > 0 && (() => {
-        const nodesWithCost = nodes
-          .map((n) => ({
-            id: n.id,
-            label: n.label ?? n.id,
-            type: n.type,
-            cost: getMonthlyEstimate(n.type, n.region ?? 'us-east-1') ?? 0,
-          }))
-          .filter((n) => n.cost > 0)
-          .sort((a, b) => b.cost - a.cost)
-        const top5 = nodesWithCost.slice(0, 5)
-        const remainder = nodesWithCost.length - top5.length
-        const hasPopover = top5.length > 0
+      {nodes.length > 0 &&
+        (() => {
+          const nodesWithCost = nodes
+            .map((n) => ({
+              id: n.id,
+              label: n.label ?? n.id,
+              type: n.type,
+              cost: getMonthlyEstimate(n.type, n.region ?? 'us-east-1') ?? 0
+            }))
+            .filter((n) => n.cost > 0)
+            .sort((a, b) => b.cost - a.cost)
+          const top5 = nodesWithCost.slice(0, 5)
+          const remainder = nodesWithCost.length - top5.length
+          const hasPopover = top5.length > 0
 
-        return (
-          <div
-            style={{ position: 'relative' }}
-            onMouseEnter={() => { if (hasPopover) setCostHover(true) }}
-            onMouseLeave={() => setCostHover(false)}
-          >
-            <span style={{
-              fontSize: 11, color: '#22c55e', fontFamily: 'monospace', whiteSpace: 'nowrap',
-              padding: '1px 6px', borderRadius: 3,
-              border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.05)',
-              cursor: hasPopover ? 'default' : undefined,
-            }}>
-              {formatPrice(totalCost)}
-            </span>
+          return (
+            <div
+              style={{ position: 'relative' }}
+              onMouseEnter={() => {
+                if (hasPopover) setCostHover(true)
+              }}
+              onMouseLeave={() => setCostHover(false)}
+            >
+              <span
+                style={{
+                  fontSize: 11,
+                  color: '#22c55e',
+                  fontFamily: 'monospace',
+                  whiteSpace: 'nowrap',
+                  padding: '1px 6px',
+                  borderRadius: 3,
+                  border: '1px solid rgba(34,197,94,0.3)',
+                  background: 'rgba(34,197,94,0.05)',
+                  cursor: hasPopover ? 'default' : undefined
+                }}
+              >
+                {formatPrice(totalCost)}
+              </span>
 
-            {costHover && hasPopover && (
-              <div style={{
-                position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
-                marginTop: 6, zIndex: 300,
-                background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border-strong)',
-                borderRadius: 4, padding: '6px 0', minWidth: 220,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-              }}>
-                <div style={{
-                  fontSize: 9, fontFamily: 'monospace', color: 'var(--cb-text-muted)',
-                  padding: '0 10px 4px', textTransform: 'uppercase', letterSpacing: '0.08em',
-                  borderBottom: '1px solid var(--cb-border)',
-                }}>
-                  Top cost by node
+              {costHover && hasPopover && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    marginTop: 6,
+                    zIndex: 300,
+                    background: 'var(--cb-bg-elevated)',
+                    border: '1px solid var(--cb-border-strong)',
+                    borderRadius: 4,
+                    padding: '6px 0',
+                    minWidth: 220,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 9,
+                      fontFamily: 'monospace',
+                      color: 'var(--cb-text-muted)',
+                      padding: '0 10px 4px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      borderBottom: '1px solid var(--cb-border)'
+                    }}
+                  >
+                    Top cost by node
+                  </div>
+                  {top5.map((n) => (
+                    <div
+                      key={n.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '4px 10px',
+                        fontFamily: 'monospace',
+                        fontSize: 10
+                      }}
+                    >
+                      <span
+                        style={{
+                          flex: 1,
+                          color: 'var(--cb-text-secondary)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                        title={n.label}
+                      >
+                        {n.label}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 9,
+                          color: 'var(--cb-text-muted)',
+                          background: 'var(--cb-bg-panel)',
+                          borderRadius: 2,
+                          padding: '1px 4px',
+                          flexShrink: 0
+                        }}
+                      >
+                        {n.type}
+                      </span>
+                      <span style={{ color: '#22c55e', flexShrink: 0, fontSize: 10 }}>
+                        ~${n.cost.toFixed(2)}/mo
+                      </span>
+                    </div>
+                  ))}
+                  {remainder > 0 && (
+                    <div
+                      style={{
+                        padding: '3px 10px 0',
+                        fontFamily: 'monospace',
+                        fontSize: 9,
+                        color: 'var(--cb-text-muted)',
+                        borderTop: '1px solid var(--cb-border)',
+                        marginTop: 2
+                      }}
+                    >
+                      …and {remainder} more
+                    </div>
+                  )}
                 </div>
-                {top5.map((n) => (
-                  <div key={n.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '4px 10px', fontFamily: 'monospace', fontSize: 10,
-                  }}>
-                    <span style={{
-                      flex: 1, color: 'var(--cb-text-secondary)',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }} title={n.label}>
-                      {n.label}
-                    </span>
-                    <span style={{
-                      fontSize: 9, color: 'var(--cb-text-muted)',
-                      background: 'var(--cb-bg-panel)', borderRadius: 2,
-                      padding: '1px 4px', flexShrink: 0,
-                    }}>
-                      {n.type}
-                    </span>
-                    <span style={{ color: '#22c55e', flexShrink: 0, fontSize: 10 }}>
-                      ~${n.cost.toFixed(2)}/mo
-                    </span>
-                  </div>
-                ))}
-                {remainder > 0 && (
-                  <div style={{
-                    padding: '3px 10px 0', fontFamily: 'monospace', fontSize: 9,
-                    color: 'var(--cb-text-muted)', borderTop: '1px solid var(--cb-border)',
-                    marginTop: 2,
-                  }}>
-                    …and {remainder} more
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )
-      })()}
+              )}
+            </div>
+          )
+        })()}
 
       <div className="w-px h-4 flex-shrink-0" style={{ background: 'var(--cb-border-strong)' }} />
 
       {/* Import dropdown */}
       <div ref={importRef} style={{ position: 'relative' }}>
-        <button onClick={() => setImportOpen((o) => !o)} style={btnBase}>↑ Import ▾</button>
+        <button onClick={() => setImportOpen((o) => !o)} style={btnBase}>
+          ↑ Import ▾
+        </button>
         {importOpen && (
           <div style={{ ...dropdownMenu, left: 0 }}>
-            <button style={dropdownItem} onClick={() => { void handleImportTfState() }}>
+            <button
+              style={dropdownItem}
+              onClick={() => {
+                void handleImportTfState()
+              }}
+            >
               <span>⬡</span>
               <span style={{ flex: 1 }}>Terraform</span>
               <span style={{ fontSize: 9, color: 'var(--cb-text-muted)' }}>.tfstate</span>
             </button>
             <button
               style={dropdownItem}
-              onClick={() => { setImportOpen(false); window.dispatchEvent(new CustomEvent('terminus:show-templates')) }}
+              onClick={() => {
+                setImportOpen(false)
+                window.dispatchEvent(new CustomEvent('terminus:show-templates'))
+              }}
             >
               <span>⊞</span>
               <span style={{ flex: 1 }}>Templates</span>
             </button>
             <button
               style={{ ...dropdownItem, borderBottom: 'none' }}
-              onClick={() => { setImportOpen(false); useUIStore.getState().showToast('SAM import coming soon', 'error') }}
+              onClick={() => {
+                setImportOpen(false)
+                useUIStore.getState().showToast('SAM import coming soon', 'error')
+              }}
             >
               <span>⬡</span>
               <span style={{ flex: 1 }}>SAM</span>
@@ -366,7 +490,12 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
 
       {/* Export dropdown */}
       <div ref={exportRef} style={{ position: 'relative' }}>
-        <button onClick={() => { if (!isExporting) setExportOpen((o) => !o) }} style={{ ...btnBase, opacity: isExporting ? 0.5 : 1 }}>
+        <button
+          onClick={() => {
+            if (!isExporting) setExportOpen((o) => !o)
+          }}
+          style={{ ...btnBase, opacity: isExporting ? 0.5 : 1 }}
+        >
           {isExporting ? '⏳ Exporting…' : '↓ Export ▾'}
         </button>
         {exportOpen && !isExporting && (
@@ -374,21 +503,26 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
             <button
               onClick={() => {
                 setExportOpen(false)
-                window.terminus.exportTerraform(nodes).then((res) => {
-                  if (res.success) {
-                    if (res.skippedTypes && res.skippedTypes.length > 0) {
-                      useUIStore.getState().showToast(`Exported. Skipped: ${res.skippedTypes.join(', ')}`, 'error')
-                    } else {
-                      useUIStore.getState().showToast('HCL exported', 'success')
+                window.terminus
+                  .exportTerraform(nodes)
+                  .then((res) => {
+                    if (res.success) {
+                      if (res.skippedTypes && res.skippedTypes.length > 0) {
+                        useUIStore
+                          .getState()
+                          .showToast(`Exported. Skipped: ${res.skippedTypes.join(', ')}`, 'error')
+                      } else {
+                        useUIStore.getState().showToast('HCL exported', 'success')
+                      }
                     }
-                  }
-                }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
+                  })
+                  .catch(() => useUIStore.getState().showToast('Export failed', 'error'))
               }}
               disabled={nodes.length === 0}
               style={{
                 ...dropdownItem,
                 color: nodes.length === 0 ? 'var(--cb-text-muted)' : 'var(--cb-text-secondary)',
-                cursor: nodes.length === 0 ? 'not-allowed' : 'pointer',
+                cursor: nodes.length === 0 ? 'not-allowed' : 'pointer'
               }}
             >
               ⬡ Terraform HCL
@@ -396,13 +530,15 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
             <button
               onClick={() => {
                 setExportOpen(false)
-                window.dispatchEvent(new CustomEvent('terminus:export-canvas', { detail: { format: 'clipboard' } }))
+                window.dispatchEvent(
+                  new CustomEvent('terminus:export-canvas', { detail: { format: 'clipboard' } })
+                )
               }}
               disabled={nodes.length === 0}
               style={{
                 ...dropdownItem,
                 color: nodes.length === 0 ? 'var(--cb-text-muted)' : 'var(--cb-text-secondary)',
-                cursor: nodes.length === 0 ? 'not-allowed' : 'pointer',
+                cursor: nodes.length === 0 ? 'not-allowed' : 'pointer'
               }}
             >
               ⎘ Copy diagram to clipboard
@@ -410,14 +546,16 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
             <button
               onClick={() => {
                 setExportOpen(false)
-                window.dispatchEvent(new CustomEvent('terminus:export-canvas', { detail: { format: 'file' } }))
+                window.dispatchEvent(
+                  new CustomEvent('terminus:export-canvas', { detail: { format: 'file' } })
+                )
               }}
               disabled={nodes.length === 0}
               style={{
                 ...dropdownItem,
                 borderBottom: 'none',
                 color: nodes.length === 0 ? 'var(--cb-text-muted)' : 'var(--cb-text-secondary)',
-                cursor: nodes.length === 0 ? 'not-allowed' : 'pointer',
+                cursor: nodes.length === 0 ? 'not-allowed' : 'pointer'
               }}
             >
               ↓ Save diagram as PNG
@@ -443,9 +581,7 @@ export function TitleBar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
         ?
       </button>
 
-      {showTemplates && (
-        <TemplatesModal onClose={() => setShowTemplates(false)} />
-      )}
+      {showTemplates && <TemplatesModal onClose={() => setShowTemplates(false)} />}
 
       {tfModules && (
         <TfModuleSelectorModal

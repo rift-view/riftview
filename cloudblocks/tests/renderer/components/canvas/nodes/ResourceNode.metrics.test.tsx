@@ -6,11 +6,11 @@ import type { NodeProps } from '@xyflow/react'
 
 vi.mock('@xyflow/react', () => ({
   Handle: () => null,
-  Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
+  Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' }
 }))
 
 vi.mock('../../../../../src/renderer/components/canvas/nodes/ActionRail', () => ({
-  ActionRail: () => null,
+  ActionRail: () => null
 }))
 
 function makeProps(nodeType: string, metadata: Record<string, unknown> = {}): NodeProps {
@@ -28,8 +28,8 @@ function makeProps(nodeType: string, metadata: Record<string, unknown> = {}): No
       nodeType,
       status: 'running',
       region: 'us-east-1',
-      metadata,
-    },
+      metadata
+    }
   } as unknown as NodeProps
 }
 
@@ -53,24 +53,28 @@ describe('ResourceNode metric badges', () => {
     ;(window as any).terminus = { fetchMetrics }
 
     render(<ResourceNode {...makeProps('lambda', { functionName: 'my-fn' })} />)
-    await act(async () => { await Promise.resolve() })
+    await act(async () => {
+      await Promise.resolve()
+    })
 
     expect(fetchMetrics).toHaveBeenCalledOnce()
     expect(fetchMetrics).toHaveBeenCalledWith(
-      expect.objectContaining({ nodeType: 'lambda', resourceId: 'my-fn' }),
+      expect.objectContaining({ nodeType: 'lambda', resourceId: 'my-fn' })
     )
   })
 
   it('renders metric badges when metrics are returned', async () => {
     const fetchMetrics = vi.fn().mockResolvedValue([
       { name: 'Invocations', value: 42, unit: '' },
-      { name: 'Duration', value: 123, unit: 'ms' },
+      { name: 'Duration', value: 123, unit: 'ms' }
     ])
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).terminus = { fetchMetrics }
 
     render(<ResourceNode {...makeProps('lambda')} />)
-    await act(async () => { await Promise.resolve() })
+    await act(async () => {
+      await Promise.resolve()
+    })
 
     expect(screen.getByText('Invocations')).toBeInTheDocument()
     expect(screen.getByText('Duration')).toBeInTheDocument()
@@ -84,7 +88,9 @@ describe('ResourceNode metric badges', () => {
     ;(window as any).terminus = { fetchMetrics }
 
     render(<ResourceNode {...makeProps('s3')} />)
-    await act(async () => { await Promise.resolve() })
+    await act(async () => {
+      await Promise.resolve()
+    })
 
     expect(fetchMetrics).not.toHaveBeenCalled()
   })
@@ -96,7 +102,9 @@ describe('ResourceNode metric badges', () => {
     ;(window as any).terminus = { fetchMetrics }
 
     const { unmount } = render(<ResourceNode {...makeProps('rds', { dbInstanceId: 'my-db' })} />)
-    await act(async () => { await Promise.resolve() })
+    await act(async () => {
+      await Promise.resolve()
+    })
 
     unmount()
     expect(clearIntervalSpy).toHaveBeenCalled()

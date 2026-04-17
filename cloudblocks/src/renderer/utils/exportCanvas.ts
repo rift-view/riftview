@@ -12,7 +12,7 @@ import { useCloudStore } from '../store/cloud'
  */
 export async function exportCanvasToPng(
   fitView: (opts?: { duration?: number }) => void,
-  format: 'clipboard' | 'file',
+  format: 'clipboard' | 'file'
 ): Promise<void> {
   const setIsExporting = useUIStore.getState().setIsExporting
   const showToast = useUIStore.getState().showToast
@@ -28,20 +28,24 @@ export async function exportCanvasToPng(
     fitView({ duration: 0 })
 
     // Wait two frames for fitView to apply and UI chrome to hide
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    )
 
     const dataUrl = await toPng(viewport, {
-      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--cb-canvas-bg').trim() || '#0f1117',
+      backgroundColor:
+        getComputedStyle(document.documentElement).getPropertyValue('--cb-canvas-bg').trim() ||
+        '#0f1117',
       pixelRatio: 2,
       filter: (node) => {
         // Exclude React Flow controls, minimap, and any overlay panels from the capture
         if (node instanceof HTMLElement) {
           if (node.classList.contains('react-flow__controls')) return false
-          if (node.classList.contains('react-flow__minimap'))  return false
-          if (node.classList.contains('react-flow__panel'))    return false
+          if (node.classList.contains('react-flow__minimap')) return false
+          if (node.classList.contains('react-flow__panel')) return false
         }
         return true
-      },
+      }
     })
 
     if (format === 'clipboard') {
@@ -52,7 +56,9 @@ export async function exportCanvasToPng(
     } else {
       // Use Electron's save dialog via IPC
       const lastScanAt = useCloudStore.getState().lastScannedAt
-      const timestamp = lastScanAt ? new Date(lastScanAt).toISOString().slice(0, 16).replace('T', '-').replace(':', '') : 'export'
+      const timestamp = lastScanAt
+        ? new Date(lastScanAt).toISOString().slice(0, 16).replace('T', '-').replace(':', '')
+        : 'export'
       const defaultName = `terminus-${timestamp}.png`
       await window.terminus.saveExportImage(dataUrl, defaultName)
       showToast('Diagram saved', 'success')

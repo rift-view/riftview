@@ -4,14 +4,14 @@ import { useCloudStore } from '../store/cloud'
 // Subscribes to IPC events pushed from the main process and wires them
 // into the Zustand store. Call once at the app root.
 export function useIpc(): void {
-  const applyDelta    = useCloudStore((s) => s.applyDelta)
+  const applyDelta = useCloudStore((s) => s.applyDelta)
   const setScanStatus = useCloudStore((s) => s.setScanStatus)
-  const setError      = useCloudStore((s) => s.setError)
-  const setKeyPairs   = useCloudStore((s) => s.setKeyPairs)
+  const setError = useCloudStore((s) => s.setError)
+  const setKeyPairs = useCloudStore((s) => s.setKeyPairs)
   const setScanErrors = useCloudStore((s) => s.setScanErrors)
 
   useEffect(() => {
-    const unsubDelta  = window.terminus.onScanDelta((delta) => {
+    const unsubDelta = window.terminus.onScanDelta((delta) => {
       // Capture the generation at the moment the delta arrives so stale
       // deltas from a previous profile/region scan are discarded.
       const generation = useCloudStore.getState().scanGeneration
@@ -28,6 +28,11 @@ export function useIpc(): void {
     const unsubKeypairs = window.terminus.onScanKeypairs((pairs: string[]) => {
       setKeyPairs(pairs)
     })
-    return () => { unsubDelta(); unsubStatus(); unsubConn(); unsubKeypairs() }
+    return () => {
+      unsubDelta()
+      unsubStatus()
+      unsubConn()
+      unsubKeypairs()
+    }
   }, [applyDelta, setScanStatus, setError, setKeyPairs, setScanErrors])
 }

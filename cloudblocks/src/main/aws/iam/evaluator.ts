@@ -20,8 +20,9 @@ export function evaluatePolicy(doc: PolicyDocument, policyName?: string): IamFin
     findings.push({
       severity: 'critical',
       title: 'AdministratorAccess managed policy attached',
-      detail: 'The AdministratorAccess policy grants full access to all AWS services and resources.',
-      policyName,
+      detail:
+        'The AdministratorAccess policy grants full access to all AWS services and resources.',
+      policyName
     })
     // Still continue to check statements for other rules, but skip the wildcard duplicate
   }
@@ -45,7 +46,7 @@ export function evaluatePolicy(doc: PolicyDocument, policyName?: string): IamFin
         title: 'Wildcard action on all resources',
         detail: 'Action: * with Resource: * grants full access to every AWS service.',
         ...(policyName ? { policyName } : {}),
-        statement: stmtJson,
+        statement: stmtJson
       })
     }
 
@@ -56,7 +57,7 @@ export function evaluatePolicy(doc: PolicyDocument, policyName?: string): IamFin
         title: 'IAM full access',
         detail: 'iam:* grants complete control over IAM, enabling privilege escalation.',
         policyName,
-        statement: stmtJson,
+        statement: stmtJson
       })
     }
 
@@ -69,7 +70,7 @@ export function evaluatePolicy(doc: PolicyDocument, policyName?: string): IamFin
         title: 'S3 wildcard on all buckets',
         detail: 's3:* with Resource: * grants full S3 access across all buckets.',
         policyName,
-        statement: stmtJson,
+        statement: stmtJson
       })
     }
 
@@ -80,7 +81,7 @@ export function evaluatePolicy(doc: PolicyDocument, policyName?: string): IamFin
         title: 'EC2 full access',
         detail: 'ec2:* grants complete control over all EC2 resources.',
         policyName,
-        statement: stmtJson,
+        statement: stmtJson
       })
     }
 
@@ -91,7 +92,7 @@ export function evaluatePolicy(doc: PolicyDocument, policyName?: string): IamFin
         title: 'AssumeRole wildcard',
         detail: 'sts:AssumeRole with Resource: * allows assuming any role in the account.',
         policyName,
-        statement: stmtJson,
+        statement: stmtJson
       })
     }
 
@@ -111,9 +112,10 @@ export function evaluatePolicy(doc: PolicyDocument, policyName?: string): IamFin
         findings.push({
           severity: 'warning',
           title: 'Public principal — resource is publicly accessible',
-          detail: 'Principal: * allows any AWS principal (or unauthenticated request) to perform this action.',
+          detail:
+            'Principal: * allows any AWS principal (or unauthenticated request) to perform this action.',
           policyName,
-          statement: stmtJson,
+          statement: stmtJson
         })
       }
     }
@@ -125,25 +127,30 @@ export function evaluatePolicy(doc: PolicyDocument, policyName?: string): IamFin
       findings.push({
         severity: 'info',
         title: 'iam:PassRole present',
-        detail: 'iam:PassRole allows passing roles to AWS services; can be abused for privilege escalation.',
+        detail:
+          'iam:PassRole allows passing roles to AWS services; can be abused for privilege escalation.',
         policyName,
-        statement: stmtJson,
+        statement: stmtJson
       })
     }
 
     // Cross-account trust in Principal
-    if (stmt.Principal !== undefined && typeof stmt.Principal === 'object' && stmt.Principal !== null) {
+    if (
+      stmt.Principal !== undefined &&
+      typeof stmt.Principal === 'object' &&
+      stmt.Principal !== null
+    ) {
       const principalObj = stmt.Principal as Record<string, string | string[]>
       const vals = Object.values(principalObj).flat() as string[]
       const crossAccountPattern = /arn:aws:iam::\d{12}/
-      const hasCrossAccount = vals.some(v => crossAccountPattern.test(v))
+      const hasCrossAccount = vals.some((v) => crossAccountPattern.test(v))
       if (hasCrossAccount) {
         findings.push({
           severity: 'info',
           title: 'Cross-account trust in Principal',
           detail: 'This statement trusts a principal from another AWS account.',
           policyName,
-          statement: stmtJson,
+          statement: stmtJson
         })
       }
     }

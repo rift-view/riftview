@@ -8,13 +8,15 @@ const mockClient = { send: mockSend } as unknown as RDSClient
 describe('describeDBInstances', () => {
   it('maps RDS instances to CloudNodes', async () => {
     mockSend.mockResolvedValueOnce({
-      DBInstances: [{
-        DBInstanceIdentifier: 'prod-db',
-        DBInstanceStatus: 'available',
-        Engine: 'mysql',
-        DBSubnetGroup: { VpcId: 'vpc-0abc' },
-        MultiAZ: true,
-      }],
+      DBInstances: [
+        {
+          DBInstanceIdentifier: 'prod-db',
+          DBInstanceStatus: 'available',
+          Engine: 'mysql',
+          DBSubnetGroup: { VpcId: 'vpc-0abc' },
+          MultiAZ: true
+        }
+      ]
     })
     const nodes = await describeDBInstances(mockClient, 'us-east-1')
     expect(nodes[0].id).toBe('prod-db')

@@ -6,7 +6,7 @@ import type { NodeProps } from '@xyflow/react'
 
 vi.mock('@xyflow/react', () => ({
   Handle: () => null,
-  Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
+  Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' }
 }))
 
 beforeEach(() => {
@@ -16,7 +16,7 @@ beforeEach(() => {
 const props = {
   id: 'i-001',
   data: { label: 'web-server', nodeType: 'ec2', status: 'running' },
-  selected: false,
+  selected: false
 } as unknown as NodeProps
 
 describe('ResourceNode', () => {
@@ -46,14 +46,14 @@ describe('ResourceNode', () => {
           badgeColor: '#0078D4',
           shortLabel: 'VM',
           displayName: 'Azure VM',
-          hasCreate: true,
-        },
-      },
+          hasCreate: true
+        }
+      }
     })
     const pluginProps = {
       id: 'azure-vm-001',
       data: { label: 'my-vm', nodeType: 'azure-vm', status: 'running' },
-      selected: false,
+      selected: false
     } as unknown as NodeProps
     render(<ResourceNode {...pluginProps} />)
     // The type label should use plugin metadata label 'VM' (not fallback to 'AZURE-VM')

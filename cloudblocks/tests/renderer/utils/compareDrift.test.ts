@@ -3,11 +3,25 @@ import { compareDrift, applyDriftToState } from '../../../src/renderer/utils/com
 import type { CloudNode } from '../../../src/renderer/types/cloud'
 
 function node(id: string, type: CloudNode['type'] = 'ec2', label = id): CloudNode {
-  return { id, type, label, status: 'running', region: 'us-east-1', metadata: { instance_type: 't3.micro' } }
+  return {
+    id,
+    type,
+    label,
+    status: 'running',
+    region: 'us-east-1',
+    metadata: { instance_type: 't3.micro' }
+  }
 }
 
 function imported(id: string, type: CloudNode['type'] = 'ec2', label = id): CloudNode {
-  return { id, type, label, status: 'imported', region: 'us-east-1', metadata: { instance_type: 't3.micro' } }
+  return {
+    id,
+    type,
+    label,
+    status: 'imported',
+    region: 'us-east-1',
+    metadata: { instance_type: 't3.micro' }
+  }
 }
 
 describe('compareDrift', () => {
@@ -41,7 +55,7 @@ describe('compareDrift', () => {
 
   it('handles mixed matched/unmanaged/missing in one call', () => {
     const live = [node('i-match'), node('i-unmanaged')]
-    const imp  = [imported('i-match'), imported('i-missing')]
+    const imp = [imported('i-match'), imported('i-missing')]
     const result = compareDrift(live, imp)
     expect(result.matched).toEqual(['i-match'])
     expect(result.unmanaged).toEqual(['i-unmanaged'])
@@ -58,7 +72,7 @@ describe('compareDrift', () => {
 describe('compareDrift — fuzzy label matching', () => {
   it('matches by normalised label when IDs differ, same type', () => {
     const live = node('i-0abc123', 'ec2', 'my-web-server')
-    const imp  = imported('aws_instance.my_web_server', 'ec2', 'my-web-server')
+    const imp = imported('aws_instance.my_web_server', 'ec2', 'my-web-server')
     const result = compareDrift([live], [imp])
     expect(result.matched).toContain('i-0abc123')
     expect(result.unmanaged).toHaveLength(0)
@@ -68,14 +82,14 @@ describe('compareDrift — fuzzy label matching', () => {
 
   it('normalises separators: hyphens, underscores, spaces treated the same', () => {
     const live = node('i-111', 'ec2', 'my web server')
-    const imp  = imported('aws_instance.my_web_server', 'ec2', 'my_web_server')
+    const imp = imported('aws_instance.my_web_server', 'ec2', 'my_web_server')
     const result = compareDrift([live], [imp])
     expect(result.matched).toContain('i-111')
   })
 
   it('does NOT fuzzy-match across different types', () => {
     const live = node('bucket-abc', 's3', 'my-bucket')
-    const imp  = imported('aws_lambda.my_bucket', 'lambda', 'my-bucket')
+    const imp = imported('aws_lambda.my_bucket', 'lambda', 'my-bucket')
     const result = compareDrift([live], [imp])
     expect(result.matched).toHaveLength(0)
     expect(result.unmanaged).toContain('bucket-abc')
@@ -96,7 +110,7 @@ describe('compareDrift — fuzzy label matching', () => {
   it('each imported node is only consumed once in fuzzy matching', () => {
     const live1 = node('i-001', 'ec2', 'same-name')
     const live2 = node('i-002', 'ec2', 'same-name')
-    const imp   = imported('aws_instance.same_name', 'ec2', 'same-name')
+    const imp = imported('aws_instance.same_name', 'ec2', 'same-name')
     const result = compareDrift([live1, live2], [imp])
     // Only one live node can claim the fuzzy match
     expect(result.matched).toHaveLength(1)
@@ -107,7 +121,10 @@ describe('compareDrift — fuzzy label matching', () => {
 describe('applyDriftToState — fuzzy matches', () => {
   it('copies tfMetadata from fuzzy-matched imported node', () => {
     const live = node('i-0abc123', 'ec2', 'my-server')
-    const imp  = { ...imported('aws_instance.my_server', 'ec2', 'my-server'), metadata: { instance_type: 't3.large' } }
+    const imp = {
+      ...imported('aws_instance.my_server', 'ec2', 'my-server'),
+      metadata: { instance_type: 't3.large' }
+    }
     const result = applyDriftToState([live], [imp])
     const liveNode = result.nodes.find((n) => n.id === 'i-0abc123')!
     expect(liveNode.driftStatus).toBe('matched')
@@ -117,7 +134,7 @@ describe('applyDriftToState — fuzzy matches', () => {
 
   it('fuzzy-matched imported node is removed from importedNodes', () => {
     const live = node('i-xyz', 'ec2', 'web-server')
-    const imp  = imported('aws_instance.web_server', 'ec2', 'web-server')
+    const imp = imported('aws_instance.web_server', 'ec2', 'web-server')
     const result = applyDriftToState([live], [imp])
     expect(result.importedNodes).toHaveLength(0)
   })
@@ -125,8 +142,14 @@ describe('applyDriftToState — fuzzy matches', () => {
   it('both exact and fuzzy matches coexist correctly in the same call', () => {
     const liveExact = node('i-exact', 'ec2', 'exact-node')
     const liveFuzzy = node('i-fuzzy', 'ec2', 'fuzzy-node')
-    const impExact  = { ...imported('i-exact', 'ec2', 'exact-node'), metadata: { instance_type: 't3.small' } }
-    const impFuzzy  = { ...imported('aws_instance.fuzzy_node', 'ec2', 'fuzzy-node'), metadata: { instance_type: 't3.large' } }
+    const impExact = {
+      ...imported('i-exact', 'ec2', 'exact-node'),
+      metadata: { instance_type: 't3.small' }
+    }
+    const impFuzzy = {
+      ...imported('aws_instance.fuzzy_node', 'ec2', 'fuzzy-node'),
+      metadata: { instance_type: 't3.large' }
+    }
 
     const result = applyDriftToState([liveExact, liveFuzzy], [impExact, impFuzzy])
 
@@ -146,9 +169,9 @@ describe('applyDriftToState — fuzzy matches', () => {
 describe('applyDriftToState', () => {
   it('stamps driftStatus=matched and copies tfMetadata onto live node, removes from importedNodes', () => {
     const live = [node('i-123')]
-    const imp  = [{ ...imported('i-123'), metadata: { instance_type: 't3.large' } }]
+    const imp = [{ ...imported('i-123'), metadata: { instance_type: 't3.large' } }]
     const result = applyDriftToState(live, imp)
-    const liveNode = result.nodes.find(n => n.id === 'i-123')!
+    const liveNode = result.nodes.find((n) => n.id === 'i-123')!
     expect(liveNode.driftStatus).toBe('matched')
     expect(liveNode.tfMetadata).toEqual({ instance_type: 't3.large' })
     expect(result.importedNodes).toHaveLength(0)
@@ -167,9 +190,9 @@ describe('applyDriftToState', () => {
 
   it('excludes type:unknown imported nodes from matching', () => {
     const live = [node('i-123')]
-    const imp  = [imported('tf-unknown-nat-1', 'unknown')]
+    const imp = [imported('tf-unknown-nat-1', 'unknown')]
     const result = applyDriftToState(live, imp)
-    const liveNode = result.nodes.find(n => n.id === 'i-123')!
+    const liveNode = result.nodes.find((n) => n.id === 'i-123')!
     expect(liveNode.driftStatus).toBe('unmanaged')
     // unknown imported node kept in importedNodes but marked missing? No — excluded entirely
     expect(result.importedNodes[0].driftStatus).toBeUndefined()

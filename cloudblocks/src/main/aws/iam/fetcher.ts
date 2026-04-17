@@ -4,7 +4,7 @@ import {
   GetPolicyVersionCommand,
   GetRolePolicyCommand,
   ListAttachedRolePoliciesCommand,
-  ListRolePoliciesCommand,
+  ListRolePoliciesCommand
 } from '@aws-sdk/client-iam'
 import { DescribeInstancesCommand } from '@aws-sdk/client-ec2'
 import { GetBucketPolicyCommand } from '@aws-sdk/client-s3'
@@ -41,13 +41,11 @@ async function fetchRolePolicies(
     new ListAttachedRolePoliciesCommand({ RoleName: roleName })
   )
   for (const policy of attached.AttachedPolicies ?? []) {
-    const details = await clients.iam.send(
-      new GetPolicyCommand({ PolicyArn: policy.PolicyArn! })
-    )
+    const details = await clients.iam.send(new GetPolicyCommand({ PolicyArn: policy.PolicyArn! }))
     const version = await clients.iam.send(
       new GetPolicyVersionCommand({
         PolicyArn: policy.PolicyArn!,
-        VersionId: details.Policy!.DefaultVersionId!,
+        VersionId: details.Policy!.DefaultVersionId!
       })
     )
     const docStr = urlDecodePolicy(version.PolicyVersion!.Document!)
@@ -55,9 +53,7 @@ async function fetchRolePolicies(
   }
 
   // Inline policies
-  const inline = await clients.iam.send(
-    new ListRolePoliciesCommand({ RoleName: roleName })
-  )
+  const inline = await clients.iam.send(new ListRolePoliciesCommand({ RoleName: roleName }))
   for (const policyName of inline.PolicyNames ?? []) {
     const res = await clients.iam.send(
       new GetRolePolicyCommand({ RoleName: roleName, PolicyName: policyName })
@@ -70,9 +66,7 @@ async function fetchRolePolicies(
 }
 
 export async function fetchEc2IamData(node: CloudNode, clients: AwsClients): Promise<IamFinding[]> {
-  const instances = await clients.ec2.send(
-    new DescribeInstancesCommand({ InstanceIds: [node.id] })
-  )
+  const instances = await clients.ec2.send(new DescribeInstancesCommand({ InstanceIds: [node.id] }))
   const instance = instances.Reservations?.[0]?.Instances?.[0]
   if (!instance?.IamInstanceProfile?.Arn) return []
 
@@ -91,7 +85,10 @@ export async function fetchEc2IamData(node: CloudNode, clients: AwsClients): Pro
   return policies.flatMap(({ doc, policyName }) => evaluatePolicy(doc, policyName))
 }
 
-export async function fetchLambdaIamData(node: CloudNode, clients: AwsClients): Promise<IamFinding[]> {
+export async function fetchLambdaIamData(
+  node: CloudNode,
+  clients: AwsClients
+): Promise<IamFinding[]> {
   const roleArn = node.metadata?.['role'] as string | undefined
   if (!roleArn) return []
 

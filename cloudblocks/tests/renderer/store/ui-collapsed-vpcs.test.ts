@@ -5,8 +5,8 @@ import { useUIStore } from '../../../src/renderer/store/ui'
 describe('useUIStore — collapsedVpcs', () => {
   beforeEach(() => {
     useUIStore.setState({
-      collapsedVpcs:   new Set<string>(),
-      collapsedSubnets: new Set<string>(),
+      collapsedVpcs: new Set<string>(),
+      collapsedSubnets: new Set<string>()
     })
   })
 

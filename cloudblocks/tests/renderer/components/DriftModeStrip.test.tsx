@@ -6,22 +6,16 @@ import { useUIStore } from '../../../src/renderer/store/ui'
 import type { CloudNode } from '../../../src/renderer/types/cloud'
 
 const baseNode = (id: string, driftStatus: CloudNode['driftStatus']): CloudNode =>
-  ({ id, type: 'ec2', label: id, region: 'us-east-1', metadata: {}, driftStatus } as CloudNode)
+  ({ id, type: 'ec2', label: id, region: 'us-east-1', metadata: {}, driftStatus }) as CloudNode
 
 beforeEach(() => {
   window.terminus = {
     ...window.terminus,
-    clearTfState: vi.fn().mockResolvedValue({ ok: true }),
+    clearTfState: vi.fn().mockResolvedValue({ ok: true })
   } as unknown as typeof window.terminus
   useCloudStore.setState({
-    nodes: [
-      baseNode('n1', 'matched'),
-      baseNode('n2', 'unmanaged'),
-    ],
-    importedNodes: [
-      baseNode('i1', 'matched'),
-      baseNode('i2', 'missing'),
-    ],
+    nodes: [baseNode('n1', 'matched'), baseNode('n2', 'unmanaged')],
+    importedNodes: [baseNode('i1', 'matched'), baseNode('i2', 'missing')]
   })
   useUIStore.setState({ driftFilterActive: false })
 })
@@ -42,7 +36,9 @@ describe('DriftModeStrip', () => {
 
   it('drift only button calls toggleDriftFilter', () => {
     const toggle = vi.fn()
-    useUIStore.setState({ toggleDriftFilter: toggle } as unknown as Parameters<typeof useUIStore.setState>[0])
+    useUIStore.setState({ toggleDriftFilter: toggle } as unknown as Parameters<
+      typeof useUIStore.setState
+    >[0])
     render(<DriftModeStrip />)
     fireEvent.click(screen.getByTitle(/show only drifted/i))
     expect(toggle).toHaveBeenCalled()
@@ -56,7 +52,9 @@ describe('DriftModeStrip', () => {
 
   it('clear button calls clearImportedNodes on success', async () => {
     const clearImportedNodes = vi.fn()
-    useCloudStore.setState({ clearImportedNodes } as unknown as Parameters<typeof useCloudStore.setState>[0])
+    useCloudStore.setState({ clearImportedNodes } as unknown as Parameters<
+      typeof useCloudStore.setState
+    >[0])
     render(<DriftModeStrip />)
     fireEvent.click(screen.getByText(/clear tf/i))
     await vi.waitFor(() => expect(clearImportedNodes).toHaveBeenCalled())
@@ -69,7 +67,7 @@ describe('DriftModeStrip', () => {
       clearTfState: vi.fn().mockImplementation(async () => {
         useCloudStore.setState({ importedNodes: [] })
         return { ok: true }
-      }),
+      })
     } as unknown as typeof window.terminus
 
     const { container } = render(<DriftModeStrip />)

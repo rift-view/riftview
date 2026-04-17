@@ -10,20 +10,24 @@ function makeNode(overrides: Partial<CloudNode>): CloudNode {
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    ...overrides,
+    ...overrides
   }
 }
 
 describe('buildConsoleUrl', () => {
   it('returns EC2 console URL with instance ID', () => {
-    const url = buildConsoleUrl(makeNode({ id: 'i-1234567890abcdef0', type: 'ec2', region: 'us-east-1' }))
+    const url = buildConsoleUrl(
+      makeNode({ id: 'i-1234567890abcdef0', type: 'ec2', region: 'us-east-1' })
+    )
     expect(url).toContain('ec2')
     expect(url).toContain('i-1234567890abcdef0')
     expect(url).toContain('us-east-1')
   })
 
   it('returns Lambda URL with function name', () => {
-    const url = buildConsoleUrl(makeNode({ type: 'lambda', label: 'my-function', region: 'eu-west-1' }))
+    const url = buildConsoleUrl(
+      makeNode({ type: 'lambda', label: 'my-function', region: 'eu-west-1' })
+    )
     expect(url).toContain('lambda')
     expect(url).toContain('my-function')
     expect(url).toContain('eu-west-1')
@@ -36,18 +40,22 @@ describe('buildConsoleUrl', () => {
   })
 
   it('returns CloudFront URL with distribution ID', () => {
-    const url = buildConsoleUrl(makeNode({ type: 'cloudfront', id: 'E1ABCDEF2GHIJK', region: 'global' }))
+    const url = buildConsoleUrl(
+      makeNode({ type: 'cloudfront', id: 'E1ABCDEF2GHIJK', region: 'global' })
+    )
     expect(url).toContain('cloudfront')
     expect(url).toContain('E1ABCDEF2GHIJK')
   })
 
   it('returns ECS URL with cluster and service name', () => {
-    const url = buildConsoleUrl(makeNode({
-      type: 'ecs',
-      label: 'my-service',
-      region: 'us-east-1',
-      metadata: { clusterName: 'my-cluster' },
-    }))
+    const url = buildConsoleUrl(
+      makeNode({
+        type: 'ecs',
+        label: 'my-service',
+        region: 'us-east-1',
+        metadata: { clusterName: 'my-cluster' }
+      })
+    )
     expect(url).toContain('ecs')
     expect(url).toContain('my-cluster')
     expect(url).toContain('my-service')
@@ -62,7 +70,9 @@ describe('buildConsoleUrl', () => {
   })
 
   it('returns Cognito URL with pool ID', () => {
-    const url = buildConsoleUrl(makeNode({ type: 'cognito', id: 'us-east-1_ABCDEFGH', region: 'us-east-1' }))
+    const url = buildConsoleUrl(
+      makeNode({ type: 'cognito', id: 'us-east-1_ABCDEFGH', region: 'us-east-1' })
+    )
     expect(url).toContain('cognito')
     expect(url).toContain('us-east-1_ABCDEFGH')
   })
@@ -74,7 +84,9 @@ describe('buildConsoleUrl', () => {
   })
 
   it('returns OpenSearch URL with domain name', () => {
-    const url = buildConsoleUrl(makeNode({ type: 'opensearch', label: 'my-domain', region: 'us-east-1' }))
+    const url = buildConsoleUrl(
+      makeNode({ type: 'opensearch', label: 'my-domain', region: 'us-east-1' })
+    )
     expect(url).toContain('opensearch')
     expect(url).toContain('my-domain')
   })

@@ -6,20 +6,24 @@ function node(
   type: CloudNode['type'],
   id: string,
   label?: string,
-  metadata: Record<string, unknown> = {},
+  metadata: Record<string, unknown> = {}
 ): CloudNode {
   return { id, type, label: label ?? id, status: 'running', region: 'us-east-1', metadata }
 }
 
 describe('isNodeDeletable', () => {
   it('EventBridge default bus → not deletable', () => {
-    const result = isNodeDeletable(node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/default', 'default'))
+    const result = isNodeDeletable(
+      node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/default', 'default')
+    )
     expect(result.deletable).toBe(false)
     expect(result.reason).toBe('Cannot delete the default EventBridge bus')
   })
 
   it('EventBridge non-default bus → deletable', () => {
-    const result = isNodeDeletable(node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus', 'my-bus'))
+    const result = isNodeDeletable(
+      node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus', 'my-bus')
+    )
     expect(result.deletable).toBe(true)
     expect(result.reason).toBeUndefined()
   })
@@ -42,7 +46,9 @@ describe('isNodeDeletable', () => {
   })
 
   it('CloudFront with eTag → deletable', () => {
-    const result = isNodeDeletable(node('cloudfront', 'ABCDEF123', 'My Distribution', { eTag: 'E2QWRUHEXAMPLE' }))
+    const result = isNodeDeletable(
+      node('cloudfront', 'ABCDEF123', 'My Distribution', { eTag: 'E2QWRUHEXAMPLE' })
+    )
     expect(result.deletable).toBe(true)
   })
 

@@ -148,8 +148,8 @@ function generateApigw(node: CloudNode): string {
 function generateApigwRoute(node: CloudNode): string {
   const name = sanitizeName(node.label, node.id)
   const method = str(node.metadata['method'], 'GET')
-  const path   = str(node.metadata['path'], '/')
-  const apiId  = str(node.metadata['apiId'])
+  const path = str(node.metadata['path'], '/')
+  const apiId = str(node.metadata['apiId'])
   return `resource "aws_apigatewayv2_route" "${name}" {
   api_id    = "${apiId}"
   route_key = "${method} ${path}"
@@ -167,7 +167,8 @@ function generateSqs(node: CloudNode): string {
 function generateSecret(node: CloudNode): string {
   const name = sanitizeName(node.label, node.id)
   const description = str(node.metadata['description'], '')
-  const descLine = description && description !== 'UNKNOWN' ? `\n  description = "${description}"` : ''
+  const descLine =
+    description && description !== 'UNKNOWN' ? `\n  description = "${description}"` : ''
   return `resource "aws_secretsmanager_secret" "${name}" {
   name = "${node.label}"${descLine}
 }`
@@ -368,36 +369,36 @@ function generateMsk(node: CloudNode): string {
 }
 
 export const terraformGenerators: TerraformGeneratorMap = {
-  'vpc': generateVpc,
-  'subnet': generateSubnet,
-  'ec2': generateEc2,
-  's3': generateS3,
-  'lambda': generateLambda,
-  'rds': generateRds,
-  'alb': generateAlb,
+  vpc: generateVpc,
+  subnet: generateSubnet,
+  ec2: generateEc2,
+  s3: generateS3,
+  lambda: generateLambda,
+  rds: generateRds,
+  alb: generateAlb,
   'security-group': generateSg,
-  'igw': generateIgw,
-  'acm': generateAcm,
-  'cloudfront': generateCloudFront,
-  'apigw': generateApigw,
+  igw: generateIgw,
+  acm: generateAcm,
+  cloudfront: generateCloudFront,
+  apigw: generateApigw,
   'apigw-route': generateApigwRoute,
-  'sqs': generateSqs,
-  'secret': generateSecret,
+  sqs: generateSqs,
+  secret: generateSecret,
   'ecr-repo': generateEcr,
-  'sns': generateSns,
-  'dynamo': generateDynamo,
+  sns: generateSns,
+  dynamo: generateDynamo,
   'ssm-param': generateSsmParam,
   'nat-gateway': generateNatGateway,
   'r53-zone': generateR53Zone,
-  'sfn': generateSfn,
+  sfn: generateSfn,
   'eventbridge-bus': generateEventBridgeBus,
-  'ses': generateSes,
-  'cognito': generateCognito,
-  'kinesis': generateKinesis,
-  'ecs': generateEcs,
-  'elasticache': generateElastiCache,
-  'eks': generateEks,
-  'opensearch': generateOpenSearch,
-  'msk': generateMsk,
-  'unknown': () => '',
+  ses: generateSes,
+  cognito: generateCognito,
+  kinesis: generateKinesis,
+  ecs: generateEcs,
+  elasticache: generateElastiCache,
+  eks: generateEks,
+  opensearch: generateOpenSearch,
+  msk: generateMsk,
+  unknown: () => ''
 }

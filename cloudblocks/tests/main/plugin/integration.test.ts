@@ -18,8 +18,8 @@ describe('Plugin system — integration smoke test', () => {
         badgeColor: '#ff00ff',
         shortLabel: 'MCK',
         displayName: 'Mock Service',
-        hasCreate: true,
-      },
+        hasCreate: true
+      }
     },
     createCredentials: vi.fn().mockReturnValue({ mockCredential: true }),
     scan: vi.fn().mockResolvedValue({
@@ -30,14 +30,14 @@ describe('Plugin system — integration smoke test', () => {
           label: 'Mock Resource',
           status: 'running',
           region: 'us-east-1',
-          metadata: { key: 'value' },
-        },
+          metadata: { key: 'value' }
+        }
       ],
-      errors: [],
+      errors: []
     }),
     hclGenerators: {
-      'mock-service': (node) => `resource "mock_service" "${node.id}" {}`,
-    },
+      'mock-service': (node) => `resource "mock_service" "${node.id}" {}`
+    }
   }
 
   beforeEach(() => {
@@ -71,7 +71,14 @@ describe('Plugin system — integration smoke test', () => {
     registry.register(mockPlugin)
     const gen = registry.getHclGenerator('mock-service')
     expect(gen).toBeDefined()
-    const hcl = gen!({ id: 'r-001', type: 'mock-service', label: 'R', status: 'running', region: 'us-east-1', metadata: {} } as unknown as import('../../../src/renderer/types/cloud').CloudNode)
+    const hcl = gen!({
+      id: 'r-001',
+      type: 'mock-service',
+      label: 'R',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: {}
+    } as unknown as import('../../../src/renderer/types/cloud').CloudNode)
     expect(hcl).toBe('resource "mock_service" "r-001" {}')
   })
 
@@ -85,7 +92,7 @@ describe('Plugin system — integration smoke test', () => {
     registry.register(mockPlugin)
     const conflicting: TerminusPlugin = {
       ...mockPlugin,
-      id: 'com.test.conflict',
+      id: 'com.test.conflict'
     }
     expect(() => registry.register(conflicting)).toThrow(/mock-service/)
   })

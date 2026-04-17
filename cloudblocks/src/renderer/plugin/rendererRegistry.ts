@@ -3,7 +3,10 @@ import type { NodeProps } from '@xyflow/react'
 
 const pluginNodeComponents = new Map<string, React.ComponentType<NodeProps>>()
 
-export function registerPluginComponent(key: string, component: React.ComponentType<NodeProps>): void {
+export function registerPluginComponent(
+  key: string,
+  component: React.ComponentType<NodeProps>
+): void {
   pluginNodeComponents.set(key, component)
 }
 

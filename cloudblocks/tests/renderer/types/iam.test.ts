@@ -3,7 +3,11 @@ import type { IamFinding, IamAnalysisResult, IamSeverity } from '../../../src/re
 
 describe('IAM types', () => {
   it('IamFinding has required fields', () => {
-    const f: IamFinding = { severity: 'critical', title: 'AdministratorAccess', detail: 'Full admin access' }
+    const f: IamFinding = {
+      severity: 'critical',
+      title: 'AdministratorAccess',
+      detail: 'Full admin access'
+    }
     expect(f.severity).toBe('critical')
   })
 

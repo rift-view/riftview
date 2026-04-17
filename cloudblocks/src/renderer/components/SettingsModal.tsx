@@ -20,50 +20,56 @@ const ALL_REGIONS: string[] = [
   'eu-central-1',
   'ap-southeast-1',
   'ap-southeast-2',
-  'ap-northeast-1',
+  'ap-northeast-1'
 ]
 
 const THEME_META: Record<Theme, { label: string; accent: string }> = {
-  dark:              { label: 'Dark',             accent: '#FF9900' },
-  light:             { label: 'Light',            accent: '#e07800' },
-  solarized:         { label: 'Solarized Dark',   accent: '#2aa198' },
-  'rose-pine':       { label: 'Rosé Pine',        accent: '#eb6f92' },
-  catppuccin:        { label: 'Catppuccin Mocha', accent: '#fab387' },
-  'solarized-light': { label: 'Solarized Light',  accent: '#2aa198' },
-  'github-light':    { label: 'GitHub Light',     accent: '#0969da' },
-  'nord-light':      { label: 'Nord Light',       accent: '#5e81ac' },
-  'gruvbox-dark':    { label: 'Gruvbox Dark',     accent: '#fe8019' },
-  'gruvbox-light':   { label: 'Gruvbox Light',    accent: '#d65d0e' },
+  dark: { label: 'Dark', accent: '#FF9900' },
+  light: { label: 'Light', accent: '#e07800' },
+  solarized: { label: 'Solarized Dark', accent: '#2aa198' },
+  'rose-pine': { label: 'Rosé Pine', accent: '#eb6f92' },
+  catppuccin: { label: 'Catppuccin Mocha', accent: '#fab387' },
+  'solarized-light': { label: 'Solarized Light', accent: '#2aa198' },
+  'github-light': { label: 'GitHub Light', accent: '#0969da' },
+  'nord-light': { label: 'Nord Light', accent: '#5e81ac' },
+  'gruvbox-dark': { label: 'Gruvbox Dark', accent: '#fe8019' },
+  'gruvbox-light': { label: 'Gruvbox Light', accent: '#d65d0e' }
 }
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'profile',     label: 'Profile'    },
-  { key: 'regions',     label: 'Regions'    },
-  { key: 'appearance',  label: 'Appearance' },
-  { key: 'general',     label: 'General'    },
-  { key: 'localstack',  label: 'LocalStack' },
+  { key: 'profile', label: 'Profile' },
+  { key: 'regions', label: 'Regions' },
+  { key: 'appearance', label: 'Appearance' },
+  { key: 'general', label: 'General' },
+  { key: 'localstack', label: 'LocalStack' }
 ]
 
 export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Element {
-  const profile          = useCloudStore((s) => s.profile)
-  const setProfile       = useCloudStore((s) => s.setProfile)
-  const settings         = useCloudStore((s) => s.settings)
-  const saveSettings     = useCloudStore((s) => s.saveSettings)
-  const selectedRegions  = useCloudStore((s) => s.selectedRegions)
+  const profile = useCloudStore((s) => s.profile)
+  const setProfile = useCloudStore((s) => s.setProfile)
+  const settings = useCloudStore((s) => s.settings)
+  const saveSettings = useCloudStore((s) => s.saveSettings)
+  const selectedRegions = useCloudStore((s) => s.selectedRegions)
   const setSelectedRegions = useCloudStore((s) => s.setSelectedRegions)
 
-  const [tab, setTab]               = useState<TabKey>('profile')
+  const [tab, setTab] = useState<TabKey>('profile')
   const [awsProfiles, setAwsProfiles] = useState<string[]>(['default'])
   const [endpointInput, setEndpointInput] = useState<string>(profile.endpoint ?? '')
 
   useEffect(() => {
-    window.terminus.listAwsProfiles().then(setAwsProfiles).catch(() => setAwsProfiles(['default']))
+    window.terminus
+      .listAwsProfiles()
+      .then(setAwsProfiles)
+      .catch(() => setAwsProfiles(['default']))
   }, [])
 
   // Close on Escape
-  const handleKeyDown = useCallback((e: React.KeyboardEvent): void => {
-    if (e.key === 'Escape') onClose()
-  }, [onClose])
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent): void => {
+      if (e.key === 'Escape') onClose()
+    },
+    [onClose]
+  )
 
   function handleProfileSelect(name: string): void {
     const next: AwsProfile = { name, endpoint: profile.endpoint }
@@ -73,11 +79,15 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
   function handleThemeSelect(theme: Theme): void {
     const next: Settings = { ...settings, theme }
     applyTheme(theme)
-    saveSettings(next).catch(() => {/* best-effort */})
+    saveSettings(next).catch(() => {
+      /* best-effort */
+    })
   }
 
   function handleSettingChange<K extends keyof Settings>(key: K, val: Settings[K]): void {
-    saveSettings({ ...settings, [key]: val }).catch(() => {/* best-effort */})
+    saveSettings({ ...settings, [key]: val }).catch(() => {
+      /* best-effort */
+    })
   }
 
   function toggleRegion(region: string): void {
@@ -100,147 +110,156 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
   }
 
   const overlay: React.CSSProperties = {
-    position:        'fixed',
-    inset:           0,
-    background:      'rgba(0,0,0,0.75)',
-    display:         'flex',
-    alignItems:      'center',
-    justifyContent:  'center',
-    zIndex:          300,
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.75)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 300
   }
 
   const modal: React.CSSProperties = {
-    background:     'var(--cb-bg-panel)',
-    border:         '1px solid var(--cb-border-strong)',
-    borderRadius:   8,
-    width:          640,
-    maxHeight:      '80vh',
-    display:        'flex',
-    flexDirection:  'column',
-    fontFamily:     'monospace',
-    overflow:       'hidden',
+    background: 'var(--cb-bg-panel)',
+    border: '1px solid var(--cb-border-strong)',
+    borderRadius: 8,
+    width: 640,
+    maxHeight: '80vh',
+    display: 'flex',
+    flexDirection: 'column',
+    fontFamily: 'monospace',
+    overflow: 'hidden'
   }
 
   const header: React.CSSProperties = {
-    display:        'flex',
-    alignItems:     'center',
+    display: 'flex',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    padding:        '14px 20px',
-    borderBottom:   '1px solid var(--cb-border-strong)',
-    flexShrink:     0,
+    padding: '14px 20px',
+    borderBottom: '1px solid var(--cb-border-strong)',
+    flexShrink: 0
   }
 
   const body: React.CSSProperties = {
-    display:    'flex',
-    flex:       1,
-    overflow:   'hidden',
-    minHeight:  0,
+    display: 'flex',
+    flex: 1,
+    overflow: 'hidden',
+    minHeight: 0
   }
 
   const sidebar: React.CSSProperties = {
-    width:          130,
-    borderRight:    '1px solid var(--cb-border)',
-    padding:        '12px 0',
-    flexShrink:     0,
-    display:        'flex',
-    flexDirection:  'column',
-    gap:            2,
+    width: 130,
+    borderRight: '1px solid var(--cb-border)',
+    padding: '12px 0',
+    flexShrink: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2
   }
 
   const content: React.CSSProperties = {
-    flex:       1,
-    padding:    '20px 24px',
-    overflowY:  'auto',
+    flex: 1,
+    padding: '20px 24px',
+    overflowY: 'auto'
   }
 
   function tabBtn(key: TabKey): React.CSSProperties {
     const active = tab === key
     return {
-      display:        'block',
-      width:          '100%',
-      padding:        '6px 16px',
-      textAlign:      'left',
-      fontFamily:     'monospace',
-      fontSize:       11,
-      cursor:         'pointer',
-      border:         'none',
-      borderLeft:     active ? '2px solid var(--cb-accent)' : '2px solid transparent',
-      background:     active ? 'var(--cb-accent-subtle)' : 'transparent',
-      color:          active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)',
+      display: 'block',
+      width: '100%',
+      padding: '6px 16px',
+      textAlign: 'left',
+      fontFamily: 'monospace',
+      fontSize: 11,
+      cursor: 'pointer',
+      border: 'none',
+      borderLeft: active ? '2px solid var(--cb-accent)' : '2px solid transparent',
+      background: active ? 'var(--cb-accent-subtle)' : 'transparent',
+      color: active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)'
     }
   }
 
   const sectionLabel: React.CSSProperties = {
-    fontSize:        9,
-    color:           'var(--cb-text-muted)',
-    textTransform:   'uppercase',
-    letterSpacing:   '0.08em',
-    marginBottom:    10,
+    fontSize: 9,
+    color: 'var(--cb-text-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    marginBottom: 10
   }
 
   const noteStyle: React.CSSProperties = {
-    fontSize:    10,
-    color:       'var(--cb-text-muted)',
-    marginTop:   14,
-    lineHeight:  1.6,
+    fontSize: 10,
+    color: 'var(--cb-text-muted)',
+    marginTop: 14,
+    lineHeight: 1.6
   }
 
   const amberNote: React.CSSProperties = {
-    fontSize:     10,
-    color:        '#f59e0b',
-    background:   'rgba(251,191,36,0.08)',
-    border:       '1px solid rgba(251,191,36,0.25)',
+    fontSize: 10,
+    color: '#f59e0b',
+    background: 'rgba(251,191,36,0.08)',
+    border: '1px solid rgba(251,191,36,0.25)',
     borderRadius: 4,
-    padding:      '6px 10px',
-    marginTop:    14,
-    lineHeight:   1.6,
+    padding: '6px 10px',
+    marginTop: 14,
+    lineHeight: 1.6
   }
 
   const inputStyle: React.CSSProperties = {
-    width:        '100%',
-    background:   'var(--cb-bg-elevated)',
-    border:       '1px solid var(--cb-border-strong)',
+    width: '100%',
+    background: 'var(--cb-bg-elevated)',
+    border: '1px solid var(--cb-border-strong)',
     borderRadius: 4,
-    padding:      '5px 10px',
-    color:        'var(--cb-text-primary)',
-    fontFamily:   'monospace',
-    fontSize:     11,
-    boxSizing:    'border-box',
+    padding: '5px 10px',
+    color: 'var(--cb-text-primary)',
+    fontFamily: 'monospace',
+    fontSize: 11,
+    boxSizing: 'border-box'
   }
 
   const btnSecondary: React.CSSProperties = {
-    background:   'var(--cb-bg-elevated)',
-    border:       '1px solid var(--cb-border)',
+    background: 'var(--cb-bg-elevated)',
+    border: '1px solid var(--cb-border)',
     borderRadius: 4,
-    padding:      '4px 14px',
-    color:        'var(--cb-text-secondary)',
-    fontFamily:   'monospace',
-    fontSize:     11,
-    cursor:       'pointer',
+    padding: '4px 14px',
+    color: 'var(--cb-text-secondary)',
+    fontFamily: 'monospace',
+    fontSize: 11,
+    cursor: 'pointer'
   }
 
   const btnDanger: React.CSSProperties = {
-    background:   'transparent',
-    border:       '1px solid #ef4444',
+    background: 'transparent',
+    border: '1px solid #ef4444',
     borderRadius: 4,
-    padding:      '4px 14px',
-    color:        '#ef4444',
-    fontFamily:   'monospace',
-    fontSize:     11,
-    cursor:       'pointer',
+    padding: '4px 14px',
+    color: '#ef4444',
+    fontFamily: 'monospace',
+    fontSize: 11,
+    cursor: 'pointer'
   }
 
   return (
     <div
       style={overlay}
-      onClick={(e): void => { if (e.target === e.currentTarget) onClose() }}
+      onClick={(e): void => {
+        if (e.target === e.currentTarget) onClose()
+      }}
       onKeyDown={handleKeyDown}
       tabIndex={-1}
     >
       <div style={modal}>
         {/* Header */}
         <div style={header}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--cb-accent)', letterSpacing: '0.04em' }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: 'var(--cb-accent)',
+              letterSpacing: '0.04em'
+            }}
+          >
             Settings
           </span>
           <button
@@ -265,7 +284,6 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
 
           {/* Content */}
           <div style={content}>
-
             {/* ── Profile tab ── */}
             {tab === 'profile' && (
               <div>
@@ -278,30 +296,39 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                         key={name}
                         onClick={(): void => handleProfileSelect(name)}
                         style={{
-                          display:      'flex',
-                          alignItems:   'center',
-                          gap:          10,
-                          padding:      '6px 12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '6px 12px',
                           borderRadius: 4,
-                          border:       `1px solid ${active ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
-                          background:   active ? 'var(--cb-accent-subtle)' : 'transparent',
-                          color:        active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)',
-                          fontFamily:   'monospace',
-                          fontSize:     11,
-                          cursor:       'pointer',
-                          textAlign:    'left',
+                          border: `1px solid ${active ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
+                          background: active ? 'var(--cb-accent-subtle)' : 'transparent',
+                          color: active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)',
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                          textAlign: 'left'
                         }}
                       >
-                        <span style={{
-                          width:        8,
-                          height:       8,
-                          borderRadius: '50%',
-                          background:   active ? 'var(--cb-accent)' : 'var(--cb-border-strong)',
-                          flexShrink:   0,
-                        }} />
+                        <span
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: active ? 'var(--cb-accent)' : 'var(--cb-border-strong)',
+                            flexShrink: 0
+                          }}
+                        />
                         {name}
                         {active && (
-                          <span style={{ marginLeft: 'auto', fontSize: 9, color: 'var(--cb-accent)', opacity: 0.75 }}>
+                          <span
+                            style={{
+                              marginLeft: 'auto',
+                              fontSize: 9,
+                              color: 'var(--cb-accent)',
+                              opacity: 0.75
+                            }}
+                          >
                             active
                           </span>
                         )}
@@ -311,10 +338,17 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                 </div>
                 <div style={noteStyle}>
                   To add a profile, run{' '}
-                  <code style={{ color: 'var(--cb-text-primary)', background: 'var(--cb-bg-elevated)', padding: '1px 4px', borderRadius: 3 }}>
+                  <code
+                    style={{
+                      color: 'var(--cb-text-primary)',
+                      background: 'var(--cb-bg-elevated)',
+                      padding: '1px 4px',
+                      borderRadius: 3
+                    }}
+                  >
                     aws configure --profile &lt;name&gt;
-                  </code>
-                  {' '}in your terminal, then reopen Settings.
+                  </code>{' '}
+                  in your terminal, then reopen Settings.
                 </div>
               </div>
             )}
@@ -330,14 +364,14 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                       <label
                         key={region}
                         style={{
-                          display:      'flex',
-                          alignItems:   'center',
-                          gap:          10,
-                          cursor:       'pointer',
-                          padding:      '4px 8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          cursor: 'pointer',
+                          padding: '4px 8px',
                           borderRadius: 4,
-                          border:       `1px solid ${checked ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
-                          background:   checked ? 'var(--cb-accent-subtle)' : 'transparent',
+                          border: `1px solid ${checked ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
+                          background: checked ? 'var(--cb-accent-subtle)' : 'transparent'
                         }}
                       >
                         <input
@@ -346,11 +380,13 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                           onChange={(): void => toggleRegion(region)}
                           style={{ accentColor: 'var(--cb-accent)', cursor: 'pointer' }}
                         />
-                        <span style={{
-                          fontFamily: 'monospace',
-                          fontSize:   11,
-                          color:      checked ? 'var(--cb-accent)' : 'var(--cb-text-secondary)',
-                        }}>
+                        <span
+                          style={{
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            color: checked ? 'var(--cb-accent)' : 'var(--cb-text-secondary)'
+                          }}
+                        >
                           {region}
                         </span>
                       </label>
@@ -359,31 +395,72 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                 </div>
                 <div style={noteStyle}>
                   Selected regions are used when &quot;Scan All Selected&quot; is triggered.
-                  Currently scanning: <strong style={{ color: 'var(--cb-text-primary)' }}>{useCloudStore.getState().region}</strong>
+                  Currently scanning:{' '}
+                  <strong style={{ color: 'var(--cb-text-primary)' }}>
+                    {useCloudStore.getState().region}
+                  </strong>
                 </div>
 
-                <div style={{ marginTop: 16, borderTop: '1px solid var(--cb-border)', paddingTop: 12 }}>
+                <div
+                  style={{ marginTop: 16, borderTop: '1px solid var(--cb-border)', paddingTop: 12 }}
+                >
                   <div style={sectionLabel}>Region Indicators</div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 10 }}>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      cursor: 'pointer',
+                      marginBottom: 10
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={settings.showRegionIndicators}
-                      onChange={(e): void => handleSettingChange('showRegionIndicators', e.target.checked)}
+                      onChange={(e): void =>
+                        handleSettingChange('showRegionIndicators', e.target.checked)
+                      }
                       style={{ accentColor: 'var(--cb-accent)', cursor: 'pointer' }}
                     />
-                    <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--cb-text-secondary)' }}>
+                    <span
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        color: 'var(--cb-text-secondary)'
+                      }}
+                    >
                       Show region color indicators on nodes (when ≥ 2 regions active)
                     </span>
                   </label>
 
                   {settings.showRegionIndicators && selectedRegions.length >= 2 && (
                     <div>
-                      <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                      <div
+                        style={{
+                          fontSize: 9,
+                          color: 'var(--cb-text-muted)',
+                          marginBottom: 8,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.07em'
+                        }}
+                      >
                         Custom colors (hex, leave blank for default)
                       </div>
                       {selectedRegions.map((r) => (
-                        <label key={r} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                          <span style={{ fontFamily: 'monospace', fontSize: 10, color: 'var(--cb-text-secondary)', minWidth: 120 }}>{r}</span>
+                        <label
+                          key={r}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: 'monospace',
+                              fontSize: 10,
+                              color: 'var(--cb-text-secondary)',
+                              minWidth: 120
+                            }}
+                          >
+                            {r}
+                          </span>
                           <input
                             type="text"
                             placeholder={getRegionColor(r)}
@@ -391,22 +468,32 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                             onChange={(e): void => {
                               const val = e.target.value.trim()
                               const next = { ...settings.regionColors }
-                              if (val) next[r] = val; else delete next[r]
+                              if (val) next[r] = val
+                              else delete next[r]
                               handleSettingChange('regionColors', next)
                             }}
                             style={{
-                              width: 90, fontFamily: 'monospace', fontSize: 10,
-                              background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)',
-                              borderRadius: 3, padding: '2px 6px', color: 'var(--cb-text-primary)',
+                              width: 90,
+                              fontFamily: 'monospace',
+                              fontSize: 10,
+                              background: 'var(--cb-bg-elevated)',
+                              border: '1px solid var(--cb-border)',
+                              borderRadius: 3,
+                              padding: '2px 6px',
+                              color: 'var(--cb-text-primary)'
                             }}
                           />
                           {(settings.regionColors[r] || getRegionColor(r)) && (
-                            <span style={{
-                              width: 14, height: 14, borderRadius: '50%',
-                              background: settings.regionColors[r] || getRegionColor(r),
-                              border: '1px solid var(--cb-border)',
-                              flexShrink: 0,
-                            }} />
+                            <span
+                              style={{
+                                width: 14,
+                                height: 14,
+                                borderRadius: '50%',
+                                background: settings.regionColors[r] || getRegionColor(r),
+                                border: '1px solid var(--cb-border)',
+                                flexShrink: 0
+                              }}
+                            />
                           )}
                         </label>
                       ))}
@@ -421,42 +508,48 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
               <div>
                 <div style={sectionLabel}>Theme</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {(Object.entries(THEME_META) as [Theme, { label: string; accent: string }][]).map(([theme, { label, accent }]) => {
-                    const active = settings.theme === theme
-                    return (
-                      <button
-                        key={theme}
-                        onClick={(): void => handleThemeSelect(theme)}
-                        style={{
-                          display:      'flex',
-                          alignItems:   'center',
-                          gap:          10,
-                          padding:      '6px 12px',
-                          borderRadius: 4,
-                          border:       `1px solid ${active ? accent : 'var(--cb-border)'}`,
-                          background:   active ? 'var(--cb-accent-subtle)' : 'transparent',
-                          color:        active ? accent : 'var(--cb-text-secondary)',
-                          fontFamily:   'monospace',
-                          fontSize:     11,
-                          cursor:       'pointer',
-                          textAlign:    'left',
-                        }}
-                      >
-                        <span style={{
-                          width:        10,
-                          height:       10,
-                          borderRadius: '50%',
-                          background:   accent,
-                          flexShrink:   0,
-                          display:      'inline-block',
-                        }} />
-                        {label}
-                        {active && (
-                          <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>active</span>
-                        )}
-                      </button>
-                    )
-                  })}
+                  {(Object.entries(THEME_META) as [Theme, { label: string; accent: string }][]).map(
+                    ([theme, { label, accent }]) => {
+                      const active = settings.theme === theme
+                      return (
+                        <button
+                          key={theme}
+                          onClick={(): void => handleThemeSelect(theme)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            padding: '6px 12px',
+                            borderRadius: 4,
+                            border: `1px solid ${active ? accent : 'var(--cb-border)'}`,
+                            background: active ? 'var(--cb-accent-subtle)' : 'transparent',
+                            color: active ? accent : 'var(--cb-text-secondary)',
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            cursor: 'pointer',
+                            textAlign: 'left'
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: '50%',
+                              background: accent,
+                              flexShrink: 0,
+                              display: 'inline-block'
+                            }}
+                          />
+                          {label}
+                          {active && (
+                            <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>
+                              active
+                            </span>
+                          )}
+                        </button>
+                      )
+                    }
+                  )}
                 </div>
               </div>
             )}
@@ -474,16 +567,35 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                         key={val}
                         onClick={(): void => handleSettingChange('deleteConfirmStyle', val)}
                         style={{
-                          display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px',
-                          borderRadius: 4, border: `1px solid ${active ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '6px 12px',
+                          borderRadius: 4,
+                          border: `1px solid ${active ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
                           background: active ? 'var(--cb-accent-subtle)' : 'transparent',
                           color: active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)',
-                          fontFamily: 'monospace', fontSize: 11, cursor: 'pointer', textAlign: 'left',
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                          textAlign: 'left'
                         }}
                       >
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? 'var(--cb-accent)' : 'var(--cb-border-strong)', flexShrink: 0 }} />
+                        <span
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: active ? 'var(--cb-accent)' : 'var(--cb-border-strong)',
+                            flexShrink: 0
+                          }}
+                        />
                         {label}
-                        {active && <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>active</span>}
+                        {active && (
+                          <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>
+                            active
+                          </span>
+                        )}
                       </button>
                     )
                   })}
@@ -492,7 +604,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                 <div style={sectionLabel}>Scan Interval</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {(['15', '30', '60', 'manual'] as const).map((val) => {
-                    const numVal = val === 'manual' ? 'manual' : Number(val) as 15 | 30 | 60
+                    const numVal = val === 'manual' ? 'manual' : (Number(val) as 15 | 30 | 60)
                     const active = String(settings.scanInterval) === val
                     const label = val === 'manual' ? 'Manual only' : `${val}s`
                     return (
@@ -500,16 +612,35 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                         key={val}
                         onClick={(): void => handleSettingChange('scanInterval', numVal)}
                         style={{
-                          display: 'flex', alignItems: 'center', gap: 10, padding: '6px 12px',
-                          borderRadius: 4, border: `1px solid ${active ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '6px 12px',
+                          borderRadius: 4,
+                          border: `1px solid ${active ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
                           background: active ? 'var(--cb-accent-subtle)' : 'transparent',
                           color: active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)',
-                          fontFamily: 'monospace', fontSize: 11, cursor: 'pointer', textAlign: 'left',
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                          textAlign: 'left'
                         }}
                       >
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? 'var(--cb-accent)' : 'var(--cb-border-strong)', flexShrink: 0 }} />
+                        <span
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: active ? 'var(--cb-accent)' : 'var(--cb-border-strong)',
+                            flexShrink: 0
+                          }}
+                        />
                         {label}
-                        {active && <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>active</span>}
+                        {active && (
+                          <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>
+                            active
+                          </span>
+                        )}
                       </button>
                     )
                   })}
@@ -517,14 +648,24 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
 
                 <div style={{ marginTop: 20 }}>
                   <div style={sectionLabel}>Scan Errors</div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                  <label
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+                  >
                     <input
                       type="checkbox"
                       checked={settings.showScanErrorBadges}
-                      onChange={(e): void => handleSettingChange('showScanErrorBadges', e.target.checked)}
+                      onChange={(e): void =>
+                        handleSettingChange('showScanErrorBadges', e.target.checked)
+                      }
                       style={{ accentColor: 'var(--cb-accent)', cursor: 'pointer' }}
                     />
-                    <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--cb-text-secondary)' }}>
+                    <span
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        color: 'var(--cb-text-secondary)'
+                      }}
+                    >
                       Show error badges in sidebar when a service scan fails
                     </span>
                   </label>
@@ -532,14 +673,22 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
 
                 <div style={{ marginTop: 20 }}>
                   <div style={sectionLabel}>Drift Notifications</div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                  <label
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+                  >
                     <input
                       type="checkbox"
                       checked={settings.notifyOnDrift}
                       onChange={(e): void => handleSettingChange('notifyOnDrift', e.target.checked)}
                       style={{ accentColor: 'var(--cb-accent)', cursor: 'pointer' }}
                     />
-                    <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--cb-text-secondary)' }}>
+                    <span
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        color: 'var(--cb-text-secondary)'
+                      }}
+                    >
                       Notify when drift is detected
                     </span>
                   </label>
@@ -556,26 +705,39 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                     type="text"
                     value={endpointInput}
                     onChange={(e): void => setEndpointInput(e.target.value)}
-                    onKeyDown={(e): void => { if (e.key === 'Enter') handleEndpointSave() }}
+                    onKeyDown={(e): void => {
+                      if (e.key === 'Enter') handleEndpointSave()
+                    }}
                     placeholder="http://localhost:4566"
                     style={inputStyle}
                     spellCheck={false}
                   />
-                  <button onClick={handleEndpointSave} style={btnSecondary}>Set</button>
-                  <button onClick={handleEndpointClear} style={btnDanger}>Clear</button>
+                  <button onClick={handleEndpointSave} style={btnSecondary}>
+                    Set
+                  </button>
+                  <button onClick={handleEndpointClear} style={btnDanger}>
+                    Clear
+                  </button>
                 </div>
                 {profile.endpoint && (
-                  <div style={{ marginTop: 8, fontSize: 10, color: '#f59e0b', fontFamily: 'monospace' }}>
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 10,
+                      color: '#f59e0b',
+                      fontFamily: 'monospace'
+                    }}
+                  >
                     Active: {profile.endpoint}
                   </div>
                 )}
                 <div style={amberNote}>
-                  When an endpoint is set, all CLI commands route to the local emulator with test credentials (key: <code>test</code>).
-                  Real AWS credentials are never used for local calls.
+                  When an endpoint is set, all CLI commands route to the local emulator with test
+                  credentials (key: <code>test</code>). Real AWS credentials are never used for
+                  local calls.
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </div>

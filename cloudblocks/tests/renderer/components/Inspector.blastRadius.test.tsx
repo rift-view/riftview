@@ -10,14 +10,17 @@ const analyzeIamMock = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fet
 
 Object.defineProperty(window, 'terminus', {
   value: { saveAnnotations: saveAnnotationsMock, analyzeIam: analyzeIamMock },
-  writable: true,
+  writable: true
 })
 
 vi.mock('../../../src/renderer/components/IamAdvisor', () => ({
-  IamAdvisor: () => null,
+  IamAdvisor: () => null
 }))
 
-function n(id: string, integrations?: { targetId: string; edgeType: 'trigger' | 'origin' | 'subscription' }[]): CloudNode {
+function n(
+  id: string,
+  integrations?: { targetId: string; edgeType: 'trigger' | 'origin' | 'subscription' }[]
+): CloudNode {
   return {
     id,
     label: id,
@@ -25,20 +28,14 @@ function n(id: string, integrations?: { targetId: string; edgeType: 'trigger' | 
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    integrations: integrations ?? [],
+    integrations: integrations ?? []
   }
 }
 
 function setup(nodes: CloudNode[], sourceId: string): ReturnType<typeof render> {
   useUIStore.setState({ selectedNodeId: sourceId, blastRadiusId: sourceId })
   useCloudStore.setState({ nodes, importedNodes: [] })
-  return render(
-    <Inspector
-      onDelete={vi.fn()}
-      onEdit={vi.fn()}
-      onQuickAction={vi.fn()}
-    />
-  )
+  return render(<Inspector onDelete={vi.fn()} onEdit={vi.fn()} onQuickAction={vi.fn()} />)
 }
 
 describe('Inspector BLAST RADIUS section', () => {
@@ -48,7 +45,7 @@ describe('Inspector BLAST RADIUS section', () => {
       blastRadiusId: null,
       annotations: {},
       selectedEdgeId: null,
-      selectedEdgeInfo: null,
+      selectedEdgeInfo: null
     })
     useCloudStore.setState({ nodes: [], importedNodes: [] })
   })
@@ -71,9 +68,9 @@ describe('Inspector BLAST RADIUS section', () => {
       [
         n('X', [{ targetId: 'A', edgeType: 'trigger' }]),
         n('A', [{ targetId: 'Y', edgeType: 'trigger' }]),
-        n('Y'),
+        n('Y')
       ],
-      'A',
+      'A'
     )
     expect(screen.getByText(/1 upstream/)).toBeTruthy()
     expect(screen.getByText(/1 downstream/)).toBeTruthy()
@@ -85,24 +82,12 @@ describe('Inspector BLAST RADIUS section', () => {
   })
 
   it('renders UPSTREAM group header when there is an upstream member', () => {
-    setup(
-      [
-        n('X', [{ targetId: 'A', edgeType: 'trigger' }]),
-        n('A'),
-      ],
-      'A',
-    )
+    setup([n('X', [{ targetId: 'A', edgeType: 'trigger' }]), n('A')], 'A')
     expect(screen.getByText(/UPSTREAM/)).toBeTruthy()
   })
 
   it('renders DOWNSTREAM group header when there is a downstream member', () => {
-    setup(
-      [
-        n('A', [{ targetId: 'Y', edgeType: 'trigger' }]),
-        n('Y'),
-      ],
-      'A',
-    )
+    setup([n('A', [{ targetId: 'Y', edgeType: 'trigger' }]), n('Y')], 'A')
     expect(screen.getByText(/DOWNSTREAM/)).toBeTruthy()
   })
 

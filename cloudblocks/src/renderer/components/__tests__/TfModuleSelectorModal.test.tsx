@@ -11,19 +11,27 @@ function makeNode(id: string): CloudNode {
 const moduleA: TfModuleInfo = {
   name: 'module-a',
   resourceCount: 3,
-  nodes: [makeNode('a1'), makeNode('a2'), makeNode('a3')],
+  nodes: [makeNode('a1'), makeNode('a2'), makeNode('a3')]
 }
 
 const moduleB: TfModuleInfo = {
   name: 'module-b',
   resourceCount: 5,
-  nodes: [makeNode('b1'), makeNode('b2'), makeNode('b3'), makeNode('b4'), makeNode('b5')],
+  nodes: [makeNode('b1'), makeNode('b2'), makeNode('b3'), makeNode('b4'), makeNode('b5')]
 }
 
 const moduleC: TfModuleInfo = {
   name: 'module-c',
   resourceCount: 7,
-  nodes: [makeNode('c1'), makeNode('c2'), makeNode('c3'), makeNode('c4'), makeNode('c5'), makeNode('c6'), makeNode('c7')],
+  nodes: [
+    makeNode('c1'),
+    makeNode('c2'),
+    makeNode('c3'),
+    makeNode('c4'),
+    makeNode('c5'),
+    makeNode('c6'),
+    makeNode('c7')
+  ]
 }
 
 describe('TfModuleSelectorModal', () => {
@@ -112,7 +120,9 @@ describe('TfModuleSelectorModal', () => {
     const calledIds = calledWith.map((n) => n.id)
 
     // Should contain all of module-a and module-b nodes
-    expect(calledIds).toEqual(expect.arrayContaining(['a1', 'a2', 'a3', 'b1', 'b2', 'b3', 'b4', 'b5']))
+    expect(calledIds).toEqual(
+      expect.arrayContaining(['a1', 'a2', 'a3', 'b1', 'b2', 'b3', 'b4', 'b5'])
+    )
     // Should NOT contain module-c nodes
     expect(calledIds).not.toContain('c1')
   })
@@ -132,13 +142,7 @@ describe('TfModuleSelectorModal', () => {
   })
 
   it('single module: skips list, shows confirm directly', () => {
-    render(
-      <TfModuleSelectorModal
-        modules={[moduleA]}
-        onConfirm={vi.fn()}
-        onCancel={vi.fn()}
-      />
-    )
+    render(<TfModuleSelectorModal modules={[moduleA]} onConfirm={vi.fn()} onCancel={vi.fn()} />)
 
     // No checkboxes in single-module fast path
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0)

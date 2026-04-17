@@ -3,27 +3,45 @@ import type { CloudNode } from '../../types/cloud'
 import type { CloudFrontEditParams } from '../../types/edit'
 import { useCloudStore } from '../../store/cloud'
 
-interface Props { node: CloudNode; onChange: (p: CloudFrontEditParams) => void; showErrors?: boolean }
+interface Props {
+  node: CloudNode
+  onChange: (p: CloudFrontEditParams) => void
+  showErrors?: boolean
+}
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const inp = (_err: boolean): React.CSSProperties => ({
-  width: '100%', background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)',
-  borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10,
-  boxSizing: 'border-box' as const,
+  width: '100%',
+  background: 'var(--cb-bg-panel)',
+  border: '1px solid var(--cb-border)',
+  borderRadius: 3,
+  padding: '3px 6px',
+  color: 'var(--cb-text-primary)',
+  fontFamily: 'monospace',
+  fontSize: 10,
+  boxSizing: 'border-box' as const
 })
 const sel = inp
-const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
+const lbl: React.CSSProperties = {
+  fontSize: 9,
+  color: 'var(--cb-text-muted)',
+  textTransform: 'uppercase',
+  marginBottom: 2,
+  marginTop: 8
+}
 
 export default function CloudFrontEditForm({ node, onChange }: Props): React.JSX.Element {
-  const nodes    = useCloudStore((s) => s.nodes)
+  const nodes = useCloudStore((s) => s.nodes)
   const acmNodes = nodes.filter((n) => n.type === 'acm' && n.status === 'running')
 
   const [form, setForm] = useState<CloudFrontEditParams>({
-    resource:          'cloudfront',
-    comment:           (node.metadata.comment as string | undefined) ?? node.label,
+    resource: 'cloudfront',
+    comment: (node.metadata.comment as string | undefined) ?? node.label,
     defaultRootObject: (node.metadata.defaultRootObject as string | undefined) ?? '',
-    certArn:           (node.metadata.certArn as string | undefined) ?? undefined,
-    priceClass:        (node.metadata.priceClass as CloudFrontEditParams['priceClass'] | undefined) ?? 'PriceClass_All',
+    certArn: (node.metadata.certArn as string | undefined) ?? undefined,
+    priceClass:
+      (node.metadata.priceClass as CloudFrontEditParams['priceClass'] | undefined) ??
+      'PriceClass_All'
   })
 
   const update = <K extends keyof CloudFrontEditParams>(k: K, v: CloudFrontEditParams[K]): void => {
@@ -57,7 +75,9 @@ export default function CloudFrontEditForm({ node, onChange }: Props): React.JSX
       >
         <option value="">Use default CloudFront certificate</option>
         {acmNodes.map((n) => (
-          <option key={n.id} value={n.id}>{n.label} ({n.id.slice(-8)})</option>
+          <option key={n.id} value={n.id}>
+            {n.label} ({n.id.slice(-8)})
+          </option>
         ))}
       </select>
 

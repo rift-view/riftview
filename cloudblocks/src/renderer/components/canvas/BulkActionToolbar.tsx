@@ -4,10 +4,10 @@ import { useUIStore } from '../../store/ui'
 import { resolveDeleteCommands } from '../../plugin/pluginCommands'
 
 export function BulkActionToolbar(): React.JSX.Element | null {
-  const selectedNodeIds    = useUIStore((s) => s.selectedNodeIds)
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
   const clearSelectedNodeIds = useUIStore((s) => s.clearSelectedNodeIds)
-  const nodes              = useCloudStore((s) => s.nodes)
-  const importedNodes      = useCloudStore((s) => s.importedNodes)
+  const nodes = useCloudStore((s) => s.nodes)
+  const importedNodes = useCloudStore((s) => s.importedNodes)
 
   if (selectedNodeIds.size <= 1) return null
 
@@ -28,10 +28,9 @@ export function BulkActionToolbar(): React.JSX.Element | null {
     const res = await window.terminus.exportTerraform(selectedNodes)
     if (res.success) {
       if (res.skippedTypes && res.skippedTypes.length > 0) {
-        useUIStore.getState().showToast(
-          `Exported. Skipped unsupported types: ${res.skippedTypes.join(', ')}`,
-          'error',
-        )
+        useUIStore
+          .getState()
+          .showToast(`Exported. Skipped unsupported types: ${res.skippedTypes.join(', ')}`, 'error')
       } else {
         useUIStore.getState().showToast('HCL exported', 'success')
       }
@@ -46,7 +45,7 @@ export function BulkActionToolbar(): React.JSX.Element | null {
     borderRadius: '4px',
     padding: '3px 10px',
     cursor: 'pointer',
-    border: 'none',
+    border: 'none'
   }
 
   return (
@@ -65,7 +64,7 @@ export function BulkActionToolbar(): React.JSX.Element | null {
         background: 'var(--cb-bg-elevated)',
         border: '1px solid var(--cb-accent)',
         boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-        pointerEvents: 'all',
+        pointerEvents: 'all'
       }}
     >
       <span style={{ fontFamily: 'monospace', fontSize: '9px', color: 'var(--cb-accent)' }}>
@@ -73,20 +72,40 @@ export function BulkActionToolbar(): React.JSX.Element | null {
       </span>
       <div style={{ width: 1, height: 12, background: 'var(--cb-border-strong)' }} />
       <button
-        onClick={() => { void handleBulkDelete() }}
-        style={{ ...btnBase, background: 'rgba(239,68,68,0.15)', color: '#ff5f57', border: '1px solid #ff5f57' }}
+        onClick={() => {
+          void handleBulkDelete()
+        }}
+        style={{
+          ...btnBase,
+          background: 'rgba(239,68,68,0.15)',
+          color: '#ff5f57',
+          border: '1px solid #ff5f57'
+        }}
       >
         ✕ Delete {selectedNodeIds.size} nodes
       </button>
       <button
-        onClick={() => { void handleBulkExport() }}
-        style={{ ...btnBase, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', border: '1px solid #a78bfa' }}
+        onClick={() => {
+          void handleBulkExport()
+        }}
+        style={{
+          ...btnBase,
+          background: 'rgba(139,92,246,0.15)',
+          color: '#a78bfa',
+          border: '1px solid #a78bfa'
+        }}
       >
         ⬡ Export HCL
       </button>
       <button
         onClick={clearSelectedNodeIds}
-        style={{ ...btnBase, background: 'transparent', color: 'var(--cb-text-muted)', border: '1px solid var(--cb-border)', padding: '3px 6px' }}
+        style={{
+          ...btnBase,
+          background: 'transparent',
+          color: 'var(--cb-text-muted)',
+          border: '1px solid var(--cb-border)',
+          padding: '3px 6px'
+        }}
         title="Clear selection"
       >
         ✕

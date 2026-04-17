@@ -8,13 +8,13 @@ import { useCliStore } from '../../../store/cli'
 
 Object.defineProperty(window, 'terminus', {
   value: {
-    runCli:      vi.fn().mockResolvedValue({ code: 0 }),
-    cancelCli:   vi.fn(),
+    runCli: vi.fn().mockResolvedValue({ code: 0 }),
+    cancelCli: vi.fn(),
     onCliOutput: vi.fn().mockReturnValue(() => {}),
-    onCliDone:   vi.fn().mockReturnValue(() => {}),
-    startScan:   vi.fn().mockResolvedValue(undefined),
+    onCliDone: vi.fn().mockReturnValue(() => {}),
+    startScan: vi.fn().mockResolvedValue(undefined)
   },
-  writable: true,
+  writable: true
 })
 
 beforeEach(() => {
@@ -73,7 +73,7 @@ it('blocks submission and does not call runCli when required ALB fields are empt
 
   render(<CreateModal />)
   window.dispatchEvent(new CustomEvent('commanddrawer:run'))
-  await new Promise(r => setTimeout(r, 10))
+  await new Promise((r) => setTimeout(r, 10))
   expect(runCli).not.toHaveBeenCalled()
 })
 
@@ -87,7 +87,7 @@ it('blocks submission and does not call runCli when required VPC fields are empt
   render(<CreateModal />)
   // Trigger Run without filling fields
   window.dispatchEvent(new CustomEvent('commanddrawer:run'))
-  await new Promise(r => setTimeout(r, 10))
+  await new Promise((r) => setTimeout(r, 10))
   expect(runCli).not.toHaveBeenCalled()
 })
 
@@ -104,7 +104,7 @@ it('blocks submission and does not call runCli when R53 domain name is empty', a
 
   render(<CreateModal />)
   window.dispatchEvent(new CustomEvent('commanddrawer:run'))
-  await new Promise(r => setTimeout(r, 10))
+  await new Promise((r) => setTimeout(r, 10))
   expect(runCli).not.toHaveBeenCalled()
 })
 
@@ -121,7 +121,7 @@ it('blocks submission and does not call runCli when SSM param name and value are
 
   render(<CreateModal />)
   window.dispatchEvent(new CustomEvent('commanddrawer:run'))
-  await new Promise(r => setTimeout(r, 10))
+  await new Promise((r) => setTimeout(r, 10))
   expect(runCli).not.toHaveBeenCalled()
 })
 
@@ -138,7 +138,7 @@ it('blocks submission and does not call runCli when subnet vpcId and cidrBlock a
 
   render(<CreateModal />)
   window.dispatchEvent(new CustomEvent('commanddrawer:run'))
-  await new Promise(r => setTimeout(r, 10))
+  await new Promise((r) => setTimeout(r, 10))
   expect(runCli).not.toHaveBeenCalled()
 })
 

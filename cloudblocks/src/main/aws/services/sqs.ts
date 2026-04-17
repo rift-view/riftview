@@ -3,7 +3,11 @@ import { LambdaClient, ListEventSourceMappingsCommand } from '@aws-sdk/client-la
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 import { scanFlatService } from './scanFlatService'
 
-export async function listQueues(client: SQSClient, lambdaClient: LambdaClient, region: string): Promise<CloudNode[]> {
+export async function listQueues(
+  client: SQSClient,
+  lambdaClient: LambdaClient,
+  region: string
+): Promise<CloudNode[]> {
   const nodes = await scanFlatService(client, region, {
     fetch: async (c) => {
       const urls: string[] = []
@@ -16,19 +20,29 @@ export async function listQueues(client: SQSClient, lambdaClient: LambdaClient, 
       return urls
     },
     map: (url, region): CloudNode => ({
-      id:       url,
-      type:     'sqs',
-      label:    url.split('/').pop() ?? url,
-      status:   'running',
+      id: url,
+      type: 'sqs',
+      label: url.split('/').pop() ?? url,
+      status: 'running',
       region,
-      metadata: {},
-    }),
+      metadata: {}
+    })
   })
 
   const enriched = await Promise.all(
     nodes.map(async (node): Promise<CloudNode> => {
       const attrRes = await client
-        .send(new GetQueueAttributesCommand({ QueueUrl: node.id, AttributeNames: ['QueueArn', 'ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible', 'RedrivePolicy'] }))
+        .send(
+          new GetQueueAttributesCommand({
+            QueueUrl: node.id,
+            AttributeNames: [
+              'QueueArn',
+              'ApproximateNumberOfMessages',
+              'ApproximateNumberOfMessagesNotVisible',
+              'RedrivePolicy'
+            ]
+          })
+        )
         .catch((): { Attributes: Record<string, string> } => ({ Attributes: {} }))
 
       const queueArn = attrRes.Attributes?.['QueueArn']
@@ -42,20 +56,20 @@ export async function listQueues(client: SQSClient, lambdaClient: LambdaClient, 
         .filter((m): m is typeof m & { FunctionArn: string } => m.FunctionArn != null)
         .map((m): { targetId: string; edgeType: EdgeType } => ({
           targetId: m.FunctionArn,
-          edgeType: 'trigger',
+          edgeType: 'trigger'
         }))
 
       const msgs = attrRes.Attributes?.['ApproximateNumberOfMessages']
       const inFlight = attrRes.Attributes?.['ApproximateNumberOfMessagesNotVisible']
-      const hasDlq = !!(attrRes.Attributes?.['RedrivePolicy'])
+      const hasDlq = !!attrRes.Attributes?.['RedrivePolicy']
       const enrichedNode: CloudNode = {
         ...node,
         id: queueArn,
         metadata: {
           ...(msgs != null ? { messages: Number(msgs) } : {}),
           ...(inFlight != null ? { inFlight: Number(inFlight) } : {}),
-          hasDlq,
-        },
+          hasDlq
+        }
       }
       return integrations.length > 0 ? { ...enrichedNode, integrations } : enrichedNode
     })

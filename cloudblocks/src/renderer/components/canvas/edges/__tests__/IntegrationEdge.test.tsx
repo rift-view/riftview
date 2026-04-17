@@ -14,7 +14,7 @@ vi.mock('@xyflow/react', async (importOriginal) => {
     EdgeLabelRenderer: ({ children }: { children: React.ReactNode }) => (
       <div data-testid="edge-label-renderer">{children}</div>
     ),
-    getBezierPath: () => ['M 0 0 C 50 0 50 100 100 100', 50, 50] as [string, number, number],
+    getBezierPath: () => ['M 0 0 C 50 0 50 100 100 100', 50, 50] as [string, number, number]
   }
 })
 
@@ -32,46 +32,34 @@ const defaultProps = {
   animated: false,
   markerStart: undefined,
   markerEnd: undefined,
-  interactionWidth: 20,
+  interactionWidth: 20
 }
 
 describe('IntegrationEdge', () => {
   it('renders without crashing for trigger edge type', () => {
     const { getByTestId } = render(
-      <IntegrationEdge
-        {...defaultProps}
-        data={{ isIntegration: true, edgeType: 'trigger' }}
-      />
+      <IntegrationEdge {...defaultProps} data={{ isIntegration: true, edgeType: 'trigger' }} />
     )
     expect(getByTestId('base-edge')).toBeTruthy()
   })
 
   it('renders without crashing for subscription edge type', () => {
     const { getByTestId } = render(
-      <IntegrationEdge
-        {...defaultProps}
-        data={{ isIntegration: true, edgeType: 'subscription' }}
-      />
+      <IntegrationEdge {...defaultProps} data={{ isIntegration: true, edgeType: 'subscription' }} />
     )
     expect(getByTestId('base-edge')).toBeTruthy()
   })
 
   it('renders without crashing for origin edge type', () => {
     const { getByTestId } = render(
-      <IntegrationEdge
-        {...defaultProps}
-        data={{ isIntegration: true, edgeType: 'origin' }}
-      />
+      <IntegrationEdge {...defaultProps} data={{ isIntegration: true, edgeType: 'origin' }} />
     )
     expect(getByTestId('base-edge')).toBeTruthy()
   })
 
   it('renders edge label renderer with label text', () => {
     const { getByTestId, getByText } = render(
-      <IntegrationEdge
-        {...defaultProps}
-        data={{ isIntegration: true, edgeType: 'trigger' }}
-      />
+      <IntegrationEdge {...defaultProps} data={{ isIntegration: true, edgeType: 'trigger' }} />
     )
     expect(getByTestId('edge-label-renderer')).toBeTruthy()
     expect(getByText('triggers')).toBeTruthy()
@@ -79,30 +67,21 @@ describe('IntegrationEdge', () => {
 
   it('renders correct label for subscription', () => {
     const { getByText } = render(
-      <IntegrationEdge
-        {...defaultProps}
-        data={{ isIntegration: true, edgeType: 'subscription' }}
-      />
+      <IntegrationEdge {...defaultProps} data={{ isIntegration: true, edgeType: 'subscription' }} />
     )
     expect(getByText('subscribes to')).toBeTruthy()
   })
 
   it('renders correct label for origin', () => {
     const { getByText } = render(
-      <IntegrationEdge
-        {...defaultProps}
-        data={{ isIntegration: true, edgeType: 'origin' }}
-      />
+      <IntegrationEdge {...defaultProps} data={{ isIntegration: true, edgeType: 'origin' }} />
     )
     expect(getByText('serves')).toBeTruthy()
   })
 
   it('applies correct stroke color for trigger', () => {
     const { getByTestId } = render(
-      <IntegrationEdge
-        {...defaultProps}
-        data={{ isIntegration: true, edgeType: 'trigger' }}
-      />
+      <IntegrationEdge {...defaultProps} data={{ isIntegration: true, edgeType: 'trigger' }} />
     )
     const edge = getByTestId('base-edge')
     // Browser normalizes hex to rgb
@@ -111,10 +90,7 @@ describe('IntegrationEdge', () => {
 
   it('applies correct stroke color for subscription', () => {
     const { getByTestId } = render(
-      <IntegrationEdge
-        {...defaultProps}
-        data={{ isIntegration: true, edgeType: 'subscription' }}
-      />
+      <IntegrationEdge {...defaultProps} data={{ isIntegration: true, edgeType: 'subscription' }} />
     )
     const edge = getByTestId('base-edge')
     expect(edge.style.stroke).toMatch(/rgb\(20,\s*184,\s*166\)|#14b8a6/)
@@ -122,22 +98,14 @@ describe('IntegrationEdge', () => {
 
   it('applies correct stroke color for origin', () => {
     const { getByTestId } = render(
-      <IntegrationEdge
-        {...defaultProps}
-        data={{ isIntegration: true, edgeType: 'origin' }}
-      />
+      <IntegrationEdge {...defaultProps} data={{ isIntegration: true, edgeType: 'origin' }} />
     )
     const edge = getByTestId('base-edge')
     expect(edge.style.stroke).toMatch(/rgb\(99,\s*102,\s*241\)|#6366f1/)
   })
 
   it('falls back to trigger when data is undefined', () => {
-    const { getByTestId } = render(
-      <IntegrationEdge
-        {...defaultProps}
-        data={undefined}
-      />
-    )
+    const { getByTestId } = render(<IntegrationEdge {...defaultProps} data={undefined} />)
     const edge = getByTestId('base-edge')
     expect(edge.style.stroke).toMatch(/rgb\(245,\s*158,\s*11\)|#f59e0b/)
   })

@@ -15,23 +15,23 @@ import { useCloudStore } from '../../../../src/renderer/store/cloud'
 // ── ReactFlow mock that captures props ───────────────────────────────────────
 
 const reactFlowNodesSpy = vi.fn()
-const fitViewSpy        = vi.fn()
-const getViewportSpy    = vi.fn(() => ({ x: 10, y: 20, zoom: 1.5 }))
-const setViewportSpy    = vi.fn()
+const fitViewSpy = vi.fn()
+const getViewportSpy = vi.fn(() => ({ x: 10, y: 20, zoom: 1.5 }))
+const setViewportSpy = vi.fn()
 
 vi.mock('@xyflow/react', () => ({
   ReactFlow: (props: { nodes: unknown[] }): React.JSX.Element => {
     reactFlowNodesSpy(props.nodes)
     return <div data-testid="reactflow" />
   },
-  Background:  (): null => null,
-  MiniMap:     (): null => null,
+  Background: (): null => null,
+  MiniMap: (): null => null,
   useReactFlow: () => ({
-    fitView:     fitViewSpy,
-    setNodes:    vi.fn(),
+    fitView: fitViewSpy,
+    setNodes: vi.fn(),
     getViewport: getViewportSpy,
-    setViewport: setViewportSpy,
-  }),
+    setViewport: setViewportSpy
+  })
 }))
 
 vi.mock('../../../../src/renderer/utils/commandLayout', () => ({
@@ -40,24 +40,44 @@ vi.mock('../../../../src/renderer/utils/commandLayout', () => ({
       id: n.id,
       type: 'resource',
       position: { x: 0, y: 0 },
-      data: { label: n.label, nodeType: n.type, status: 'running', region: 'us-east-1', metadata: {} },
+      data: {
+        label: n.label,
+        nodeType: n.type,
+        status: 'running',
+        region: 'us-east-1',
+        metadata: {}
+      }
     })),
   getTierForNode: () => 0,
-  NODE_TIER:      {},
+  NODE_TIER: {}
 }))
 
 vi.mock('../../../../src/renderer/utils/resolveIntegrationTargetId', () => ({
-  resolveIntegrationTargetId: (_nodes: unknown, targetId: string) => targetId,
+  resolveIntegrationTargetId: (_nodes: unknown, targetId: string) => targetId
 }))
 
 import { CommandView } from '../../../../src/renderer/components/canvas/CommandView'
 import type { CloudNode } from '../../../../src/renderer/types/cloud'
 
-function n(id: string, type: CloudNode['type'] = 'lambda', integrations?: { targetId: string; edgeType: 'trigger' | 'origin' | 'subscription' }[]): CloudNode {
-  return { id, type, label: id, status: 'running', region: 'us-east-1', metadata: {}, integrations: integrations ?? [] }
+function n(
+  id: string,
+  type: CloudNode['type'] = 'lambda',
+  integrations?: { targetId: string; edgeType: 'trigger' | 'origin' | 'subscription' }[]
+): CloudNode {
+  return {
+    id,
+    type,
+    label: id,
+    status: 'running',
+    region: 'us-east-1',
+    metadata: {},
+    integrations: integrations ?? []
+  }
 }
 
-const noop = (): void => { /* noop */ }
+const noop = (): void => {
+  /* noop */
+}
 
 describe('CommandView blast radius integration', () => {
   beforeEach(() => {
@@ -69,8 +89,8 @@ describe('CommandView blast radius integration', () => {
       nodes: [
         n('A', 'lambda', [{ targetId: 'B', edgeType: 'trigger' }]),
         n('B', 'rds'),
-        n('C', 'ec2'), // unrelated — should be hidden
-      ],
+        n('C', 'ec2') // unrelated — should be hidden
+      ]
     })
     useUIStore.setState({ blastRadiusId: null, pathTraceId: null, savedViewport: null })
   })

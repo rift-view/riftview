@@ -3,7 +3,14 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import DeleteDialog from '../DeleteDialog'
 import type { CloudNode } from '../../../types/cloud'
 
-const node: CloudNode = { id: 'vpc-0abc1234', type: 'vpc', label: 'my-vpc', status: 'running', region: 'us-east-1', metadata: {} }
+const node: CloudNode = {
+  id: 'vpc-0abc1234',
+  type: 'vpc',
+  label: 'my-vpc',
+  status: 'running',
+  region: 'us-east-1',
+  metadata: {}
+}
 
 describe('DeleteDialog', () => {
   it('renders type-to-confirm input and disabled delete button initially', () => {

@@ -1,17 +1,17 @@
 import type { CloudNode } from '../types/cloud'
 
 export interface BlastRadiusNode {
-  nodeId:       string
-  hopDistance:  number          // 0 = source, 1 = direct neighbor, 2 = 2 hops, etc.
-  direction:    'source' | 'upstream' | 'downstream' | 'both'
-  edgeTypes:    string[]        // edge types connecting to source path
+  nodeId: string
+  hopDistance: number // 0 = source, 1 = direct neighbor, 2 = 2 hops, etc.
+  direction: 'source' | 'upstream' | 'downstream' | 'both'
+  edgeTypes: string[] // edge types connecting to source path
 }
 
 export interface BlastRadiusResult {
-  members:         Map<string, BlastRadiusNode>  // nodeId → BlastRadiusNode
-  upstreamCount:   number
+  members: Map<string, BlastRadiusNode> // nodeId → BlastRadiusNode
+  upstreamCount: number
   downstreamCount: number
-  maxHops:         number
+  maxHops: number
 }
 
 const HOP_LIMIT = 6
@@ -19,10 +19,10 @@ const HOP_LIMIT = 6
 export function buildBlastRadius(nodes: CloudNode[], sourceId: string): BlastRadiusResult {
   // Build adjacency maps from node.integrations
   const outboundMap = new Map<string, { targetId: string; edgeType: string }[]>()
-  const inboundMap  = new Map<string, { sourceId: string; edgeType: string }[]>()
+  const inboundMap = new Map<string, { sourceId: string; edgeType: string }[]>()
 
   for (const node of nodes) {
-    for (const { targetId, edgeType } of (node.integrations ?? [])) {
+    for (const { targetId, edgeType } of node.integrations ?? []) {
       // outbound: node.id → target
       if (!outboundMap.has(node.id)) outboundMap.set(node.id, [])
       outboundMap.get(node.id)!.push({ targetId, edgeType })
@@ -49,15 +49,15 @@ export function buildBlastRadius(nodes: CloudNode[], sourceId: string): BlastRad
       members.set(nodeId, {
         nodeId,
         hopDistance: hop,
-        direction:   hop === 0 ? 'source' : 'downstream',
-        edgeTypes:   [],
+        direction: hop === 0 ? 'source' : 'downstream',
+        edgeTypes: []
       })
     } else if (hop < existing.hopDistance) {
       existing.hopDistance = hop
     }
 
     if (hop >= HOP_LIMIT) continue
-    for (const { targetId, edgeType } of (outboundMap.get(nodeId) ?? [])) {
+    for (const { targetId, edgeType } of outboundMap.get(nodeId) ?? []) {
       if (!downVisited.has(targetId)) {
         downQueue.push({ nodeId: targetId, hop: hop + 1 })
         // Eagerly populate edgeTypes if member already registered
@@ -85,8 +85,8 @@ export function buildBlastRadius(nodes: CloudNode[], sourceId: string): BlastRad
         members.set(nodeId, {
           nodeId,
           hopDistance: hop,
-          direction:   'upstream',
-          edgeTypes:   [],
+          direction: 'upstream',
+          edgeTypes: []
         })
       } else {
         // Already in downstream set — mark as 'both' (unless source)
@@ -98,7 +98,7 @@ export function buildBlastRadius(nodes: CloudNode[], sourceId: string): BlastRad
     }
 
     if (hop >= HOP_LIMIT) continue
-    for (const { sourceId: srcId, edgeType } of (inboundMap.get(nodeId) ?? [])) {
+    for (const { sourceId: srcId, edgeType } of inboundMap.get(nodeId) ?? []) {
       if (!upVisited.has(srcId)) {
         upQueue.push({ nodeId: srcId, hop: hop + 1 })
         const existing2 = members.get(srcId)
@@ -110,12 +110,12 @@ export function buildBlastRadius(nodes: CloudNode[], sourceId: string): BlastRad
   }
 
   // Counters
-  let upstreamCount   = 0
+  let upstreamCount = 0
   let downstreamCount = 0
-  let maxHops         = 0
+  let maxHops = 0
 
   for (const m of members.values()) {
-    if (m.direction === 'upstream' || m.direction === 'both')   upstreamCount++
+    if (m.direction === 'upstream' || m.direction === 'both') upstreamCount++
     if (m.direction === 'downstream' || m.direction === 'both') downstreamCount++
     if (m.hopDistance > maxHops) maxHops = m.hopDistance
   }
@@ -133,8 +133,8 @@ export function hopRingStyle(hop: number): string {
 
 /** Direction badge symbol */
 export function directionSymbol(direction: BlastRadiusNode['direction']): string {
-  if (direction === 'source')     return '●'
-  if (direction === 'upstream')   return '↑'
+  if (direction === 'source') return '●'
+  if (direction === 'upstream') return '↑'
   if (direction === 'downstream') return '↓'
   return '↕'
 }

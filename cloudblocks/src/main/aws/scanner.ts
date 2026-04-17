@@ -9,18 +9,33 @@ import { pluginRegistry } from '../plugin/index'
 import { markStandaloneNodes } from './markStandalone'
 
 // --- Per-node change history ---
-interface FieldChange { field: string; before: string; after: string }
-interface HistoryEntry { timestamp: string; changes: FieldChange[] }
+interface FieldChange {
+  field: string
+  before: string
+  after: string
+}
+interface HistoryEntry {
+  timestamp: string
+  changes: FieldChange[]
+}
 
 export function historyFilePath(nodeId: string): string {
-  return path.join(app.getPath('userData'), 'history', `${nodeId.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`)
+  return path.join(
+    app.getPath('userData'),
+    'history',
+    `${nodeId.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`
+  )
 }
 
 async function appendHistory(nodeId: string, entry: HistoryEntry): Promise<void> {
   const p = historyFilePath(nodeId)
   await fsp.mkdir(path.dirname(p), { recursive: true })
   let entries: HistoryEntry[] = []
-  try { entries = JSON.parse(await fsp.readFile(p, 'utf8')) } catch { /* new file */ }
+  try {
+    entries = JSON.parse(await fsp.readFile(p, 'utf8'))
+  } catch {
+    /* new file */
+  }
   entries.unshift(entry)
   if (entries.length > 50) entries = entries.slice(0, 50)
   await fsp.writeFile(p, JSON.stringify(entries, null, 2))
@@ -39,9 +54,9 @@ export function computeDelta(prev: CloudNode[], next: CloudNode[]): ScanDelta {
   const prevMap = new Map(prev.map((n) => [n.id, n]))
   const nextMap = new Map(next.map((n) => [n.id, n]))
 
-  const added:   CloudNode[] = []
+  const added: CloudNode[] = []
   const changed: CloudNode[] = []
-  const removed: string[]    = []
+  const removed: string[] = []
 
   for (const [id, node] of nextMap) {
     if (!prevMap.has(id)) {
@@ -50,7 +65,7 @@ export function computeDelta(prev: CloudNode[], next: CloudNode[]): ScanDelta {
       const p = prevMap.get(id)!
       if (
         p.status !== node.status ||
-        p.label  !== node.label  ||
+        p.label !== node.label ||
         // NOTE: JSON.stringify is key-order-sensitive; service functions must
         // return stable object literals (not spread/merge) to avoid false positives.
         JSON.stringify(p.metadata) !== JSON.stringify(node.metadata)
@@ -78,7 +93,7 @@ export class ResourceScanner {
     private regions: string[],
     private endpoint: string | undefined,
     private window: BrowserWindow,
-    intervalMs: number | 'manual' = DEFAULT_POLL_INTERVAL_MS,
+    intervalMs: number | 'manual' = DEFAULT_POLL_INTERVAL_MS
   ) {
     this.intervalMs = intervalMs
   }
@@ -114,7 +129,7 @@ export class ResourceScanner {
     freshNodes: import('../../renderer/types/cloud').CloudNode[],
     serviceErrors: Array<{ service: string; region: string; message: string }>,
     existingScanErrors: Array<{ service: string; region: string; message: string }>,
-    serviceName: string,
+    serviceName: string
   ): void {
     // Compute which node IDs previously came from this service by intersecting
     // currentNodes with the IDs returned by the fresh scan plus any IDs that
@@ -136,7 +151,7 @@ export class ResourceScanner {
     // Build updated error list: remove stale entry for this service, add new ones
     const updatedErrors = [
       ...existingScanErrors.filter((e) => e.service !== serviceName),
-      ...serviceErrors,
+      ...serviceErrors
     ]
 
     this.currentScanErrors = updatedErrors
@@ -165,35 +180,49 @@ export class ResourceScanner {
       // Fan out across all selected regions in parallel.
       // Credentials were established by activateAll() before the scanner started.
       const regionResults = await Promise.all(
-        this.regions.map((region) => pluginRegistry.scanAll(region)),
+        this.regions.map((region) => pluginRegistry.scanAll(region))
       )
 
-      const nextNodes  = regionResults.flatMap((r) => r.nodes)
+      const nextNodes = regionResults.flatMap((r) => r.nodes)
       const scanErrors = regionResults.flatMap((r) => r.errors)
 
       markStandaloneNodes(nextNodes)
 
       const delta = computeDelta(this.currentNodes, nextNodes)
 
-      this.currentNodes      = nextNodes
+      this.currentNodes = nextNodes
       this.currentScanErrors = scanErrors
       this.window.webContents.send(IPC.SCAN_DELTA, { ...delta, scanErrors })
 
       // Record history for changed nodes
       for (const newNode of delta.changed ?? []) {
         const prev = nodeCache.get(newNode.id)
-        if (!prev) { nodeCache.set(newNode.id, newNode); continue }
+        if (!prev) {
+          nodeCache.set(newNode.id, newNode)
+          continue
+        }
         const changes: FieldChange[] = []
-        if (prev.status !== newNode.status) changes.push({ field: 'status', before: String(prev.status ?? ''), after: String(newNode.status ?? '') })
-        if (prev.label  !== newNode.label)  changes.push({ field: 'label',  before: prev.label, after: newNode.label })
-        const allKeys = new Set([...Object.keys(prev.metadata ?? {}), ...Object.keys(newNode.metadata ?? {})])
+        if (prev.status !== newNode.status)
+          changes.push({
+            field: 'status',
+            before: String(prev.status ?? ''),
+            after: String(newNode.status ?? '')
+          })
+        if (prev.label !== newNode.label)
+          changes.push({ field: 'label', before: prev.label, after: newNode.label })
+        const allKeys = new Set([
+          ...Object.keys(prev.metadata ?? {}),
+          ...Object.keys(newNode.metadata ?? {})
+        ])
         for (const key of allKeys) {
           const b = JSON.stringify((prev.metadata ?? {})[key] ?? null)
           const a = JSON.stringify((newNode.metadata ?? {})[key] ?? null)
           if (b !== a) changes.push({ field: key, before: b, after: a })
         }
         if (changes.length > 0) {
-          appendHistory(newNode.id, { timestamp: new Date().toISOString(), changes }).catch(() => {})
+          appendHistory(newNode.id, { timestamp: new Date().toISOString(), changes }).catch(
+            () => {}
+          )
         }
         nodeCache.set(newNode.id, newNode)
       }

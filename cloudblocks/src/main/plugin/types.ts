@@ -29,7 +29,7 @@ export interface NodeTypeMetadata {
 export interface PluginCommandHandlers {
   buildCreate?: (resource: string, params: Record<string, unknown>) => string[][]
   buildDelete?: (node: CloudNode, opts?: Record<string, unknown>) => string[][]
-  buildEdit?:   (node: CloudNode, params: Record<string, unknown>) => string[][]
+  buildEdit?: (node: CloudNode, params: Record<string, unknown>) => string[][]
 }
 
 export type PluginHclGenerator = (node: CloudNode) => string

@@ -4,12 +4,22 @@ import { useUIStore } from '../../../src/renderer/store/ui'
 import type { CloudNode } from '../../../src/renderer/types/cloud'
 
 const makeNode = (id: string): CloudNode => ({
-  id, type: 'ec2', label: id, status: 'running', region: 'us-east-1', metadata: {},
+  id,
+  type: 'ec2',
+  label: id,
+  status: 'running',
+  region: 'us-east-1',
+  metadata: {}
 })
 
 describe('useCloudStore', () => {
   beforeEach(() => {
-    useCloudStore.setState({ nodes: [], scanStatus: 'idle', profile: { name: 'default' }, region: 'us-east-1' })
+    useCloudStore.setState({
+      nodes: [],
+      scanStatus: 'idle',
+      profile: { name: 'default' },
+      region: 'us-east-1'
+    })
     useUIStore.setState({ selectedNodeId: null, view: 'topology' })
   })
 

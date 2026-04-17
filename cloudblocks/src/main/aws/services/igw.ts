@@ -9,18 +9,18 @@ export function listInternetGateways(client: EC2Client, region: string): Promise
       return res.InternetGateways ?? []
     },
     map: (item, region): CloudNode => {
-      const id    = item.InternetGatewayId ?? ''
-      const label = item.Tags?.find(t => t.Key === 'Name')?.Value ?? id
+      const id = item.InternetGatewayId ?? ''
+      const label = item.Tags?.find((t) => t.Key === 'Name')?.Value ?? id
       const state = item.Attachments?.[0]?.State as string | undefined
       return {
         id,
-        type:     'igw',
+        type: 'igw',
         label,
-        status:   state === 'available' ? 'running' : 'unknown',
+        status: state === 'available' ? 'running' : 'unknown',
         region,
         metadata: { state: state ?? '' },
-        parentId: item.Attachments?.[0]?.VpcId,
+        parentId: item.Attachments?.[0]?.VpcId
       }
-    },
+    }
   })
 }

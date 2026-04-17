@@ -10,7 +10,7 @@ const VPC_NODE: CloudNode = {
   label: 'main-vpc',
   status: 'running',
   region: 'us-east-1',
-  metadata: {},
+  metadata: {}
 }
 
 describe('SubnetCreateForm', () => {
@@ -33,11 +33,15 @@ describe('SubnetCreateForm', () => {
     const onChange = vi.fn()
     render(<SubnetCreateForm onChange={onChange} />)
 
-    fireEvent.change(screen.getByPlaceholderText('10.0.1.0/24'), { target: { value: '10.0.1.0/24' } })
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
-      resource: 'subnet',
-      cidrBlock: '10.0.1.0/24',
-    }))
+    fireEvent.change(screen.getByPlaceholderText('10.0.1.0/24'), {
+      target: { value: '10.0.1.0/24' }
+    })
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resource: 'subnet',
+        cidrBlock: '10.0.1.0/24'
+      })
+    )
   })
 
   it('does not include availabilityZone when AZ field is empty', () => {
@@ -45,7 +49,9 @@ describe('SubnetCreateForm', () => {
     const onChange = vi.fn()
     render(<SubnetCreateForm onChange={onChange} />)
 
-    fireEvent.change(screen.getByPlaceholderText('10.0.1.0/24'), { target: { value: '10.0.2.0/24' } })
+    fireEvent.change(screen.getByPlaceholderText('10.0.1.0/24'), {
+      target: { value: '10.0.2.0/24' }
+    })
     const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0]
     expect(lastCall.availabilityZone).toBeUndefined()
   })

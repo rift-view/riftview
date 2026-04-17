@@ -34,10 +34,12 @@ describe('listEventBuses', () => {
   it('stores ruleCount and hasDisabledRules in metadata', async () => {
     mockSend
       .mockResolvedValueOnce({ EventBuses: [{ Arn: BUS_ARN, Name: 'my-bus' }] })
-      .mockResolvedValueOnce({ Rules: [
-        { Name: 'rule-1', State: 'ENABLED' },
-        { Name: 'rule-2', State: 'DISABLED' },
-      ] })
+      .mockResolvedValueOnce({
+        Rules: [
+          { Name: 'rule-1', State: 'ENABLED' },
+          { Name: 'rule-2', State: 'DISABLED' }
+        ]
+      })
       .mockResolvedValueOnce({ Targets: [] }) // ListTargetsByRuleCommand for rule-1
       .mockResolvedValueOnce({ Targets: [] }) // ListTargetsByRuleCommand for rule-2
 
@@ -62,12 +64,9 @@ describe('listEventBuses', () => {
     mockSend
       .mockResolvedValueOnce({ EventBuses: [{ Arn: BUS_ARN, Name: 'my-bus' }] })
       .mockResolvedValueOnce({ Rules: [{ Name: 'rule-1', State: 'ENABLED' }] })
-      .mockResolvedValueOnce({ Targets: [
-        { Arn: LAMBDA_ARN },
-        { Arn: SQS_ARN },
-        { Arn: SFN_ARN },
-        { Arn: SNS_ARN },
-      ] })
+      .mockResolvedValueOnce({
+        Targets: [{ Arn: LAMBDA_ARN }, { Arn: SQS_ARN }, { Arn: SFN_ARN }, { Arn: SNS_ARN }]
+      })
 
     const nodes = await listEventBuses(mockClient, 'us-east-1')
 
@@ -77,7 +76,7 @@ describe('listEventBuses', () => {
       LAMBDA_ARN,
       SQS_ARN,
       SFN_ARN,
-      SNS_ARN,
+      SNS_ARN
     ])
   })
 
@@ -86,10 +85,7 @@ describe('listEventBuses', () => {
     mockSend
       .mockResolvedValueOnce({ EventBuses: [{ Arn: BUS_ARN, Name: 'my-bus' }] })
       .mockResolvedValueOnce({ Rules: [{ Name: 'rule-1', State: 'ENABLED' }] })
-      .mockResolvedValueOnce({ Targets: [
-        { Arn: LAMBDA_ARN },
-        { Arn: EC2_ARN },
-      ] })
+      .mockResolvedValueOnce({ Targets: [{ Arn: LAMBDA_ARN }, { Arn: EC2_ARN }] })
 
     const nodes = await listEventBuses(mockClient, 'us-east-1')
 
@@ -101,10 +97,7 @@ describe('listEventBuses', () => {
     mockSend
       .mockResolvedValueOnce({ EventBuses: [{ Arn: BUS_ARN, Name: 'my-bus' }] })
       .mockResolvedValueOnce({ Rules: [{ Name: 'rule-1', State: 'ENABLED' }] })
-      .mockResolvedValueOnce({ Targets: [
-        { Arn: LAMBDA_ARN },
-        { Arn: ECS_ARN },
-      ] })
+      .mockResolvedValueOnce({ Targets: [{ Arn: LAMBDA_ARN }, { Arn: ECS_ARN }] })
 
     const nodes = await listEventBuses(mockClient, 'us-east-1')
 

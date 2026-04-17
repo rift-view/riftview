@@ -12,21 +12,44 @@ function formatPermission(r: SgRule): string {
 export function buildEditCommands(node: CloudNode, params: EditParams): string[][] {
   switch (params.resource) {
     case 'vpc':
-      return [['ec2', 'create-tags', '--resources', node.id, '--tags', `Key=Name,Value=${params.name}`]]
+      return [
+        ['ec2', 'create-tags', '--resources', node.id, '--tags', `Key=Name,Value=${params.name}`]
+      ]
 
     case 'ec2': {
       const cmds: string[][] = []
       if (params.instanceType) {
         const isRunning = node.status === 'running'
         if (isRunning) cmds.push(['ec2', 'stop-instances', '--instance-ids', node.id])
-        cmds.push(['ec2', 'modify-instance-attribute', '--instance-id', node.id, '--instance-type', `Value=${params.instanceType}`])
+        cmds.push([
+          'ec2',
+          'modify-instance-attribute',
+          '--instance-id',
+          node.id,
+          '--instance-type',
+          `Value=${params.instanceType}`
+        ])
         if (isRunning) cmds.push(['ec2', 'start-instances', '--instance-ids', node.id])
       }
       if (params.name) {
-        cmds.push(['ec2', 'create-tags', '--resources', node.id, '--tags', `Key=Name,Value=${params.name}`])
+        cmds.push([
+          'ec2',
+          'create-tags',
+          '--resources',
+          node.id,
+          '--tags',
+          `Key=Name,Value=${params.name}`
+        ])
       }
       if (params.securityGroupIds && params.securityGroupIds.length > 0) {
-        cmds.push(['ec2', 'modify-instance-attribute', '--instance-id', node.id, '--groups', ...params.securityGroupIds])
+        cmds.push([
+          'ec2',
+          'modify-instance-attribute',
+          '--instance-id',
+          node.id,
+          '--groups',
+          ...params.securityGroupIds
+        ])
       }
       return cmds
     }
@@ -35,24 +58,44 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
       const existing: SgRule[] = (node.metadata.rules as SgRule[]) || []
       const existingKeys = new Set(existing.map(ruleKey))
       const newKeys = new Set(params.rules.map(ruleKey))
-      const toRevoke = existing.filter(r => !newKeys.has(ruleKey(r)))
-      const toAuthorize = params.rules.filter(r => !existingKeys.has(ruleKey(r)))
+      const toRevoke = existing.filter((r) => !newKeys.has(ruleKey(r)))
+      const toAuthorize = params.rules.filter((r) => !existingKeys.has(ruleKey(r)))
       const cmds: string[][] = []
       for (const r of toRevoke) {
-        cmds.push(['ec2', 'revoke-security-group-ingress', '--group-id', node.id, '--ip-permissions', formatPermission(r)])
+        cmds.push([
+          'ec2',
+          'revoke-security-group-ingress',
+          '--group-id',
+          node.id,
+          '--ip-permissions',
+          formatPermission(r)
+        ])
       }
       for (const r of toAuthorize) {
-        cmds.push(['ec2', 'authorize-security-group-ingress', '--group-id', node.id, '--ip-permissions', formatPermission(r)])
+        cmds.push([
+          'ec2',
+          'authorize-security-group-ingress',
+          '--group-id',
+          node.id,
+          '--ip-permissions',
+          formatPermission(r)
+        ])
       }
       return cmds
     }
 
     case 'rds': {
-      const args = ['rds', 'modify-db-instance', '--db-instance-identifier', node.id, '--apply-immediately']
+      const args = [
+        'rds',
+        'modify-db-instance',
+        '--db-instance-identifier',
+        node.id,
+        '--apply-immediately'
+      ]
       if (params.dbInstanceClass) args.push('--db-instance-class', params.dbInstanceClass)
-      if (params.multiAZ === true)  args.push('--multi-az')
+      if (params.multiAZ === true) args.push('--multi-az')
       if (params.multiAZ === false) args.push('--no-multi-az')
-      if (params.deletionProtection === true)  args.push('--deletion-protection')
+      if (params.deletionProtection === true) args.push('--deletion-protection')
       if (params.deletionProtection === false) args.push('--no-deletion-protection')
       return [args]
     }
@@ -60,14 +103,25 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
     case 's3': {
       const cmds: string[][] = []
       if (params.versioning !== undefined) {
-        cmds.push(['s3api', 'put-bucket-versioning', '--bucket', node.id,
-          '--versioning-configuration', `Status=${params.versioning ? 'Enabled' : 'Suspended'}`])
+        cmds.push([
+          's3api',
+          'put-bucket-versioning',
+          '--bucket',
+          node.id,
+          '--versioning-configuration',
+          `Status=${params.versioning ? 'Enabled' : 'Suspended'}`
+        ])
       }
       if (params.blockPublicAccess !== undefined) {
         const v = String(params.blockPublicAccess)
-        cmds.push(['s3api', 'put-public-access-block', '--bucket', node.id,
+        cmds.push([
+          's3api',
+          'put-public-access-block',
+          '--bucket',
+          node.id,
           '--public-access-block-configuration',
-          `BlockPublicAcls=${v},IgnorePublicAcls=${v},BlockPublicPolicy=${v},RestrictPublicBuckets=${v}`])
+          `BlockPublicAcls=${v},IgnorePublicAcls=${v},BlockPublicPolicy=${v},RestrictPublicBuckets=${v}`
+        ])
       }
       return cmds
     }
@@ -75,16 +129,20 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
     case 'lambda': {
       const args = ['lambda', 'update-function-configuration', '--function-name', node.id]
       if (params.memorySize) args.push('--memory-size', String(params.memorySize))
-      if (params.timeout)    args.push('--timeout', String(params.timeout))
+      if (params.timeout) args.push('--timeout', String(params.timeout))
       if (params.environment) {
-        const vars = Object.entries(params.environment).map(([k, v]) => `${k}=${v}`).join(',')
+        const vars = Object.entries(params.environment)
+          .map(([k, v]) => `${k}=${v}`)
+          .join(',')
         args.push('--environment', `Variables={${vars}}`)
       }
       return [args]
     }
 
     case 'alb':
-      return [['elbv2', 'add-tags', '--resource-arns', node.id, '--tags', `Key=Name,Value=${params.name}`]]
+      return [
+        ['elbv2', 'add-tags', '--resource-arns', node.id, '--tags', `Key=Name,Value=${params.name}`]
+      ]
 
     case 'cloudfront':
       // CloudFront edits use SDK via IPC (CF_UPDATE), not CLI
@@ -92,9 +150,13 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
 
     case 'apigw': {
       const p = params as ApigwEditParams
-      const corsArgs = p.corsOrigins.length > 0
-        ? ['--cors-configuration', `AllowOrigins=${p.corsOrigins.join(',')},AllowMethods=*,AllowHeaders=*`]
-        : ['--cors-configuration', '{}']
+      const corsArgs =
+        p.corsOrigins.length > 0
+          ? [
+              '--cors-configuration',
+              `AllowOrigins=${p.corsOrigins.join(',')},AllowMethods=*,AllowHeaders=*`
+            ]
+          : ['--cors-configuration', '{}']
       return [['apigatewayv2', 'update-api', '--api-id', p.apiId, '--name', p.name, ...corsArgs]]
     }
 
@@ -105,51 +167,110 @@ export function buildEditCommands(node: CloudNode, params: EditParams): string[]
     }
 
     case 'sqs':
-      return [['sqs', 'set-queue-attributes', '--queue-url', params.queueUrl,
-        '--attributes', `VisibilityTimeout=${params.visibilityTimeout},MessageRetentionPeriod=${params.messageRetentionPeriod}`]]
+      return [
+        [
+          'sqs',
+          'set-queue-attributes',
+          '--queue-url',
+          params.queueUrl,
+          '--attributes',
+          `VisibilityTimeout=${params.visibilityTimeout},MessageRetentionPeriod=${params.messageRetentionPeriod}`
+        ]
+      ]
 
     case 'sns':
-      return [['sns', 'set-topic-attributes', '--topic-arn', params.topicArn,
-        '--attribute-name', 'DisplayName', '--attribute-value', params.displayName]]
+      return [
+        [
+          'sns',
+          'set-topic-attributes',
+          '--topic-arn',
+          params.topicArn,
+          '--attribute-name',
+          'DisplayName',
+          '--attribute-value',
+          params.displayName
+        ]
+      ]
 
     case 'ecr-repo':
       return [
-        ['ecr', 'put-image-tag-mutability', '--repository-name', params.repositoryName,
-          '--image-tag-mutability', params.imageTagMutability],
-        ['ecr', 'put-image-scanning-configuration', '--repository-name', params.repositoryName,
-          '--image-scanning-configuration', `scanOnPush=${params.scanOnPush}`],
+        [
+          'ecr',
+          'put-image-tag-mutability',
+          '--repository-name',
+          params.repositoryName,
+          '--image-tag-mutability',
+          params.imageTagMutability
+        ],
+        [
+          'ecr',
+          'put-image-scanning-configuration',
+          '--repository-name',
+          params.repositoryName,
+          '--image-scanning-configuration',
+          `scanOnPush=${params.scanOnPush}`
+        ]
       ]
 
     case 'secret':
-      return [['secretsmanager', 'update-secret', '--secret-id', params.secretId,
-        '--description', params.description]]
+      return [
+        [
+          'secretsmanager',
+          'update-secret',
+          '--secret-id',
+          params.secretId,
+          '--description',
+          params.description
+        ]
+      ]
 
     case 'dynamo': {
-      const args = ['dynamodb', 'update-table', '--table-name', params.tableName,
-        '--billing-mode', params.billingMode]
-      if (params.billingMode === 'PROVISIONED' && params.readCapacityUnits && params.writeCapacityUnits) {
-        args.push('--provisioned-throughput',
-          `ReadCapacityUnits=${params.readCapacityUnits},WriteCapacityUnits=${params.writeCapacityUnits}`)
+      const args = [
+        'dynamodb',
+        'update-table',
+        '--table-name',
+        params.tableName,
+        '--billing-mode',
+        params.billingMode
+      ]
+      if (
+        params.billingMode === 'PROVISIONED' &&
+        params.readCapacityUnits &&
+        params.writeCapacityUnits
+      ) {
+        args.push(
+          '--provisioned-throughput',
+          `ReadCapacityUnits=${params.readCapacityUnits},WriteCapacityUnits=${params.writeCapacityUnits}`
+        )
       }
       return [args]
     }
 
     case 'ssm-param': {
       const args = [
-        'ssm', 'put-parameter',
-        '--name', params.paramName,
-        '--value', params.value,
-        '--type', params.paramType,
-        '--overwrite',
+        'ssm',
+        'put-parameter',
+        '--name',
+        params.paramName,
+        '--value',
+        params.value,
+        '--type',
+        params.paramType,
+        '--overwrite'
       ]
       if (params.description !== undefined) args.push('--description', params.description)
       return [args]
     }
 
     case 'sfn': {
-      const args = ['stepfunctions', 'update-state-machine', '--state-machine-arn', params.stateMachineArn]
+      const args = [
+        'stepfunctions',
+        'update-state-machine',
+        '--state-machine-arn',
+        params.stateMachineArn
+      ]
       if (params.definition) args.push('--definition', params.definition)
-      if (params.roleArn)    args.push('--role-arn', params.roleArn)
+      if (params.roleArn) args.push('--role-arn', params.roleArn)
       return [args]
     }
 

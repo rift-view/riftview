@@ -16,7 +16,7 @@ const inp = (err: boolean): React.CSSProperties => ({
   color: 'var(--cb-text-primary)',
   fontFamily: 'monospace',
   fontSize: 10,
-  boxSizing: 'border-box' as const,
+  boxSizing: 'border-box' as const
 })
 
 const lbl: React.CSSProperties = {
@@ -24,16 +24,16 @@ const lbl: React.CSSProperties = {
   color: 'var(--cb-text-muted)',
   textTransform: 'uppercase',
   marginBottom: 2,
-  marginTop: 8,
+  marginTop: 8
 }
 
 export function SubnetCreateForm({ onChange, showErrors }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
-  const vpcs  = nodes.filter((n) => n.type === 'vpc')
+  const vpcs = nodes.filter((n) => n.type === 'vpc')
 
-  const [vpcId,             setVpcId]             = useState('')
-  const [cidrBlock,         setCidrBlock]         = useState('')
-  const [availabilityZone,  setAvailabilityZone]  = useState('')
+  const [vpcId, setVpcId] = useState('')
+  const [cidrBlock, setCidrBlock] = useState('')
+  const [availabilityZone, setAvailabilityZone] = useState('')
 
   const err = showErrors ?? false
 
@@ -42,7 +42,7 @@ export function SubnetCreateForm({ onChange, showErrors }: Props): React.JSX.Ele
       resource: 'subnet',
       vpcId: v,
       cidrBlock: c,
-      availabilityZone: az || undefined,
+      availabilityZone: az || undefined
     })
   }
 
@@ -52,10 +52,17 @@ export function SubnetCreateForm({ onChange, showErrors }: Props): React.JSX.Ele
       <select
         style={inp(err && !vpcId)}
         value={vpcId}
-        onChange={(e) => { setVpcId(e.target.value); emit(e.target.value, cidrBlock, availabilityZone) }}
+        onChange={(e) => {
+          setVpcId(e.target.value)
+          emit(e.target.value, cidrBlock, availabilityZone)
+        }}
       >
         <option value="">— select VPC —</option>
-        {vpcs.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}
+        {vpcs.map((v) => (
+          <option key={v.id} value={v.id}>
+            {v.label}
+          </option>
+        ))}
       </select>
 
       <div style={lbl}>CIDR Block *</div>
@@ -63,7 +70,10 @@ export function SubnetCreateForm({ onChange, showErrors }: Props): React.JSX.Ele
         style={inp(err && !cidrBlock.trim())}
         value={cidrBlock}
         placeholder="10.0.1.0/24"
-        onChange={(e) => { setCidrBlock(e.target.value); emit(vpcId, e.target.value, availabilityZone) }}
+        onChange={(e) => {
+          setCidrBlock(e.target.value)
+          emit(vpcId, e.target.value, availabilityZone)
+        }}
       />
 
       <div style={lbl}>Availability Zone</div>
@@ -71,7 +81,10 @@ export function SubnetCreateForm({ onChange, showErrors }: Props): React.JSX.Ele
         style={inp(false)}
         value={availabilityZone}
         placeholder="us-east-1a"
-        onChange={(e) => { setAvailabilityZone(e.target.value); emit(vpcId, cidrBlock, e.target.value) }}
+        onChange={(e) => {
+          setAvailabilityZone(e.target.value)
+          emit(vpcId, cidrBlock, e.target.value)
+        }}
       />
     </div>
   )

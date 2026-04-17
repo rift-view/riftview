@@ -36,7 +36,7 @@ describe('useUIStore — customEdges', () => {
   it('sets all custom edges at once', () => {
     const edges: CustomEdge[] = [
       EDGE,
-      { id: 'e2', source: 'b', target: 'c', color: '#6366f1', label: 'lb' },
+      { id: 'e2', source: 'b', target: 'c', color: '#6366f1', label: 'lb' }
     ]
     useUIStore.getState().setCustomEdges(edges)
     expect(useUIStore.getState().customEdges).toHaveLength(2)

@@ -2,7 +2,7 @@ import {
   EventBridgeClient,
   ListEventBusesCommand,
   ListRulesCommand,
-  ListTargetsByRuleCommand,
+  ListTargetsByRuleCommand
 } from '@aws-sdk/client-eventbridge'
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
@@ -11,14 +11,17 @@ const ALLOWED_TARGET_PREFIXES = [
   'arn:aws:sqs:',
   'arn:aws:states:',
   'arn:aws:sns:',
-  'arn:aws:ecs:',
+  'arn:aws:ecs:'
 ]
 
 function isAllowedTarget(arn: string): boolean {
   return ALLOWED_TARGET_PREFIXES.some((prefix) => arn.startsWith(prefix))
 }
 
-export async function listEventBuses(client: EventBridgeClient, region: string): Promise<CloudNode[]> {
+export async function listEventBuses(
+  client: EventBridgeClient,
+  region: string
+): Promise<CloudNode[]> {
   try {
     const res = await client.send(new ListEventBusesCommand({}))
     const buses = res.EventBuses ?? []
@@ -59,8 +62,8 @@ export async function listEventBuses(client: EventBridgeClient, region: string):
           metadata: {
             policy: bus.Policy ? 'custom' : 'default',
             ruleCount,
-            hasDisabledRules,
-          },
+            hasDisabledRules
+          }
         }
 
         return integrations.length > 0 ? { ...node, integrations } : node

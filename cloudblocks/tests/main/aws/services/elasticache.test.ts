@@ -13,18 +13,23 @@ describe('listCacheClusters', () => {
   describe('Redis replication groups', () => {
     it('maps replication groups to CloudNodes', async () => {
       mockSend
-        .mockResolvedValueOnce({                                           // DescribeReplicationGroups
-          ReplicationGroups: [{
-            ReplicationGroupId: 'my-redis',
-            Description: 'My Redis Cache',
-            Status: 'available',
-            CacheNodeType: 'cache.r6g.large',
-            ClusterEnabled: false,
-            MemberClusters: ['my-redis-001', 'my-redis-002'],
-            NodeGroups: [{ PrimaryEndpoint: { Address: 'my-redis.abc.ng.0001.use1.cache.amazonaws.com' } }],
-          }],
+        .mockResolvedValueOnce({
+          // DescribeReplicationGroups
+          ReplicationGroups: [
+            {
+              ReplicationGroupId: 'my-redis',
+              Description: 'My Redis Cache',
+              Status: 'available',
+              CacheNodeType: 'cache.r6g.large',
+              ClusterEnabled: false,
+              MemberClusters: ['my-redis-001', 'my-redis-002'],
+              NodeGroups: [
+                { PrimaryEndpoint: { Address: 'my-redis.abc.ng.0001.use1.cache.amazonaws.com' } }
+              ]
+            }
+          ]
         })
-        .mockResolvedValueOnce({ CacheClusters: [] })                     // DescribeCacheClusters
+        .mockResolvedValueOnce({ CacheClusters: [] }) // DescribeCacheClusters
 
       const nodes = await listCacheClusters(mockClient, 'us-east-1')
 
@@ -38,15 +43,17 @@ describe('listCacheClusters', () => {
     it('stores engine, nodeType, numCaches, clusterMode, and endpoint in metadata', async () => {
       mockSend
         .mockResolvedValueOnce({
-          ReplicationGroups: [{
-            ReplicationGroupId: 'my-redis',
-            Description: 'redis',
-            Status: 'available',
-            CacheNodeType: 'cache.r6g.large',
-            ClusterEnabled: true,
-            MemberClusters: ['a', 'b', 'c'],
-            NodeGroups: [{ PrimaryEndpoint: { Address: 'redis.primary.endpoint.com' } }],
-          }],
+          ReplicationGroups: [
+            {
+              ReplicationGroupId: 'my-redis',
+              Description: 'redis',
+              Status: 'available',
+              CacheNodeType: 'cache.r6g.large',
+              ClusterEnabled: true,
+              MemberClusters: ['a', 'b', 'c'],
+              NodeGroups: [{ PrimaryEndpoint: { Address: 'redis.primary.endpoint.com' } }]
+            }
+          ]
         })
         .mockResolvedValueOnce({ CacheClusters: [] })
 
@@ -62,14 +69,16 @@ describe('listCacheClusters', () => {
     it('sets clusterMode to standalone when ClusterEnabled is false', async () => {
       mockSend
         .mockResolvedValueOnce({
-          ReplicationGroups: [{
-            ReplicationGroupId: 'my-redis',
-            Description: 'redis',
-            Status: 'available',
-            ClusterEnabled: false,
-            MemberClusters: [],
-            NodeGroups: [],
-          }],
+          ReplicationGroups: [
+            {
+              ReplicationGroupId: 'my-redis',
+              Description: 'redis',
+              Status: 'available',
+              ClusterEnabled: false,
+              MemberClusters: [],
+              NodeGroups: []
+            }
+          ]
         })
         .mockResolvedValueOnce({ CacheClusters: [] })
 
@@ -81,13 +90,15 @@ describe('listCacheClusters', () => {
     it('uses ReplicationGroupId as label when Description is empty', async () => {
       mockSend
         .mockResolvedValueOnce({
-          ReplicationGroups: [{
-            ReplicationGroupId: 'my-redis',
-            Description: '   ',
-            Status: 'available',
-            MemberClusters: [],
-            NodeGroups: [],
-          }],
+          ReplicationGroups: [
+            {
+              ReplicationGroupId: 'my-redis',
+              Description: '   ',
+              Status: 'available',
+              MemberClusters: [],
+              NodeGroups: []
+            }
+          ]
         })
         .mockResolvedValueOnce({ CacheClusters: [] })
 
@@ -100,15 +111,20 @@ describe('listCacheClusters', () => {
   describe('Memcached clusters', () => {
     it('maps standalone memcached clusters to CloudNodes', async () => {
       mockSend
-        .mockResolvedValueOnce({ ReplicationGroups: [] })                 // DescribeReplicationGroups
-        .mockResolvedValueOnce({                                           // DescribeCacheClusters
-          CacheClusters: [{
-            CacheClusterId: 'my-memcached',
-            CacheClusterStatus: 'available',
-            Engine: 'memcached',
-            CacheNodeType: 'cache.m6g.large',
-            CacheNodes: [{ Endpoint: { Address: 'my-memcached.abc.cfg.use1.cache.amazonaws.com' } }],
-          }],
+        .mockResolvedValueOnce({ ReplicationGroups: [] }) // DescribeReplicationGroups
+        .mockResolvedValueOnce({
+          // DescribeCacheClusters
+          CacheClusters: [
+            {
+              CacheClusterId: 'my-memcached',
+              CacheClusterStatus: 'available',
+              Engine: 'memcached',
+              CacheNodeType: 'cache.m6g.large',
+              CacheNodes: [
+                { Endpoint: { Address: 'my-memcached.abc.cfg.use1.cache.amazonaws.com' } }
+              ]
+            }
+          ]
         })
 
       const nodes = await listCacheClusters(mockClient, 'us-east-1')
@@ -122,16 +138,16 @@ describe('listCacheClusters', () => {
     })
 
     it('skips clusters that belong to a replication group', async () => {
-      mockSend
-        .mockResolvedValueOnce({ ReplicationGroups: [] })
-        .mockResolvedValueOnce({
-          CacheClusters: [{
+      mockSend.mockResolvedValueOnce({ ReplicationGroups: [] }).mockResolvedValueOnce({
+        CacheClusters: [
+          {
             CacheClusterId: 'redis-001',
             CacheClusterStatus: 'available',
             Engine: 'redis',
-            ReplicationGroupId: 'my-redis',             // part of RG — should be skipped
-          }],
-        })
+            ReplicationGroupId: 'my-redis' // part of RG — should be skipped
+          }
+        ]
+      })
 
       const nodes = await listCacheClusters(mockClient, 'us-east-1')
 
@@ -139,15 +155,15 @@ describe('listCacheClusters', () => {
     })
 
     it('skips non-memcached standalone clusters', async () => {
-      mockSend
-        .mockResolvedValueOnce({ ReplicationGroups: [] })
-        .mockResolvedValueOnce({
-          CacheClusters: [{
+      mockSend.mockResolvedValueOnce({ ReplicationGroups: [] }).mockResolvedValueOnce({
+        CacheClusters: [
+          {
             CacheClusterId: 'mystery-cache',
             CacheClusterStatus: 'available',
-            Engine: 'valkey',                            // not memcached — should be skipped
-          }],
-        })
+            Engine: 'valkey' // not memcached — should be skipped
+          }
+        ]
+      })
 
       const nodes = await listCacheClusters(mockClient, 'us-east-1')
 
@@ -158,27 +174,31 @@ describe('listCacheClusters', () => {
   it('returns both redis and memcached nodes together', async () => {
     mockSend
       .mockResolvedValueOnce({
-        ReplicationGroups: [{
-          ReplicationGroupId: 'redis-1',
-          Description: 'redis-1',
-          Status: 'available',
-          MemberClusters: [],
-          NodeGroups: [],
-        }],
+        ReplicationGroups: [
+          {
+            ReplicationGroupId: 'redis-1',
+            Description: 'redis-1',
+            Status: 'available',
+            MemberClusters: [],
+            NodeGroups: []
+          }
+        ]
       })
       .mockResolvedValueOnce({
-        CacheClusters: [{
-          CacheClusterId: 'memcached-1',
-          CacheClusterStatus: 'available',
-          Engine: 'memcached',
-          CacheNodes: [],
-        }],
+        CacheClusters: [
+          {
+            CacheClusterId: 'memcached-1',
+            CacheClusterStatus: 'available',
+            Engine: 'memcached',
+            CacheNodes: []
+          }
+        ]
       })
 
     const nodes = await listCacheClusters(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(2)
-    expect(nodes.map(n => n.id).sort()).toEqual(['memcached-1', 'redis-1'])
+    expect(nodes.map((n) => n.id).sort()).toEqual(['memcached-1', 'redis-1'])
   })
 
   it('returns empty array on top-level error', async () => {
@@ -191,14 +211,17 @@ describe('listCacheClusters', () => {
 
   it('continues with memcached scan if replication group fetch fails', async () => {
     mockSend
-      .mockRejectedValueOnce(new Error('RG fetch failed'))               // DescribeReplicationGroups
-      .mockResolvedValueOnce({                                            // DescribeCacheClusters
-        CacheClusters: [{
-          CacheClusterId: 'my-memcached',
-          CacheClusterStatus: 'available',
-          Engine: 'memcached',
-          CacheNodes: [],
-        }],
+      .mockRejectedValueOnce(new Error('RG fetch failed')) // DescribeReplicationGroups
+      .mockResolvedValueOnce({
+        // DescribeCacheClusters
+        CacheClusters: [
+          {
+            CacheClusterId: 'my-memcached',
+            CacheClusterStatus: 'available',
+            Engine: 'memcached',
+            CacheNodes: []
+          }
+        ]
       })
 
     const nodes = await listCacheClusters(mockClient, 'us-east-1')

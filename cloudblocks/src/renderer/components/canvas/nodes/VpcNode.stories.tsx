@@ -12,7 +12,7 @@ function makeVpcProps(label: string, cidr?: string, collapsed?: boolean): Record
     isConnectable: false,
     positionAbsoluteX: 0,
     positionAbsoluteY: 0,
-    data: { label, cidr, collapsed, childCount: 3 },
+    data: { label, cidr, collapsed, childCount: 3 }
   } as Parameters<typeof VpcNode>[0]
 }
 

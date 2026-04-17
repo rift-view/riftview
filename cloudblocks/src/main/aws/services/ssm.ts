@@ -8,12 +8,12 @@ export async function listParameters(client: SSMClient, region: string): Promise
     const res = await client.send(new DescribeParametersCommand({ NextToken: nextToken }))
     for (const p of res.Parameters ?? []) {
       nodes.push({
-        id:     p.ARN ?? p.Name ?? '',
-        type:   'ssm-param',
-        label:  p.Name ?? '',
+        id: p.ARN ?? p.Name ?? '',
+        type: 'ssm-param',
+        label: p.Name ?? '',
         status: 'running',
         region,
-        metadata: { type: p.Type ?? '', tier: p.Tier ?? '' },
+        metadata: { type: p.Type ?? '', tier: p.Tier ?? '' }
       })
     }
     nextToken = res.NextToken

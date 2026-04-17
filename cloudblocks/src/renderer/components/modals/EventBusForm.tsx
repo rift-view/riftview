@@ -1,14 +1,29 @@
 import React, { useState } from 'react'
 import type { EventBusParams } from '../../types/create'
 
-interface Props { onChange: (p: EventBusParams) => void; showErrors?: boolean }
+interface Props {
+  onChange: (p: EventBusParams) => void
+  showErrors?: boolean
+}
 
 const inp = (err: boolean): React.CSSProperties => ({
-  width: '100%', background: 'var(--cb-bg-panel)', border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`,
-  borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10,
-  boxSizing: 'border-box' as const,
+  width: '100%',
+  background: 'var(--cb-bg-panel)',
+  border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`,
+  borderRadius: 3,
+  padding: '3px 6px',
+  color: 'var(--cb-text-primary)',
+  fontFamily: 'monospace',
+  fontSize: 10,
+  boxSizing: 'border-box' as const
 })
-const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
+const lbl: React.CSSProperties = {
+  fontSize: 9,
+  color: 'var(--cb-text-muted)',
+  textTransform: 'uppercase',
+  marginBottom: 2,
+  marginTop: 8
+}
 
 export function EventBusForm({ onChange, showErrors }: Props): React.JSX.Element {
   const [name, setName] = useState('')
@@ -22,7 +37,10 @@ export function EventBusForm({ onChange, showErrors }: Props): React.JSX.Element
         style={inp(err && !name.trim())}
         value={name}
         placeholder="my-event-bus"
-        onChange={(e) => { setName(e.target.value); onChange({ resource: 'eventbridge-bus', name: e.target.value }) }}
+        onChange={(e) => {
+          setName(e.target.value)
+          onChange({ resource: 'eventbridge-bus', name: e.target.value })
+        }}
       />
     </div>
   )

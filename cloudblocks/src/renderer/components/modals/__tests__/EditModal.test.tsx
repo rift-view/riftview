@@ -3,7 +3,14 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import EditModal from '../EditModal'
 import type { CloudNode } from '../../../types/cloud'
 
-const vpcNode: CloudNode = { id: 'vpc-123', type: 'vpc', label: 'my-vpc', status: 'running', region: 'us-east-1', metadata: { name: 'my-vpc' } }
+const vpcNode: CloudNode = {
+  id: 'vpc-123',
+  type: 'vpc',
+  label: 'my-vpc',
+  status: 'running',
+  region: 'us-east-1',
+  metadata: { name: 'my-vpc' }
+}
 
 const acmNode: CloudNode = {
   id: 'arn:aws:acm:us-east-1:123456789:certificate/abc',
@@ -11,7 +18,7 @@ const acmNode: CloudNode = {
   label: 'example.com',
   status: 'running',
   region: 'us-east-1',
-  metadata: { domainName: 'example.com', validationMethod: 'DNS', inUseBy: [], cnameRecords: [] },
+  metadata: { domainName: 'example.com', validationMethod: 'DNS', inUseBy: [], cnameRecords: [] }
 }
 
 const eventBridgeNode: CloudNode = {
@@ -20,7 +27,7 @@ const eventBridgeNode: CloudNode = {
   label: 'my-bus',
   status: 'running',
   region: 'us-east-1',
-  metadata: { description: 'My existing description', policy: 'default' },
+  metadata: { description: 'My existing description', policy: 'default' }
 }
 
 beforeEach(() => {
@@ -29,7 +36,7 @@ beforeEach(() => {
     cancelCli: vi.fn(),
     onCliOutput: vi.fn().mockReturnValue(() => {}),
     onCliDone: vi.fn().mockReturnValue(() => {}),
-    startScan: vi.fn().mockResolvedValue(undefined),
+    startScan: vi.fn().mockResolvedValue(undefined)
   } as unknown as typeof window.terminus
 })
 
@@ -65,13 +72,15 @@ describe('EditModal', () => {
       label: 'my-queue',
       status: 'running',
       region: 'us-east-1',
-      metadata: { visibilityTimeout: 60, messageRetentionPeriod: 86400 },
+      metadata: { visibilityTimeout: 60, messageRetentionPeriod: 86400 }
     }
 
     it('renders the SQS edit modal with queue URL', () => {
       render(<EditModal node={sqsNode} onClose={vi.fn()} />)
       expect(screen.getByText(/edit sqs queue/i)).toBeInTheDocument()
-      expect(screen.getByDisplayValue('https://sqs.us-east-1.amazonaws.com/123/my-queue')).toBeInTheDocument()
+      expect(
+        screen.getByDisplayValue('https://sqs.us-east-1.amazonaws.com/123/my-queue')
+      ).toBeInTheDocument()
     })
 
     it('pre-fills visibility timeout and retention period from metadata', () => {
@@ -95,7 +104,7 @@ describe('EditModal', () => {
       label: 'my-topic',
       status: 'running',
       region: 'us-east-1',
-      metadata: { displayName: 'MySender' },
+      metadata: { displayName: 'MySender' }
     }
 
     it('renders the SNS edit modal with topic ARN', () => {
@@ -124,7 +133,11 @@ describe('EditModal', () => {
       label: 'my-repo',
       status: 'running',
       region: 'us-east-1',
-      metadata: { uri: 'https://123.dkr.ecr.us-east-1.amazonaws.com/my-repo', imageTagMutability: 'IMMUTABLE', scanOnPush: true },
+      metadata: {
+        uri: 'https://123.dkr.ecr.us-east-1.amazonaws.com/my-repo',
+        imageTagMutability: 'IMMUTABLE',
+        scanOnPush: true
+      }
     }
 
     it('renders the ECR edit modal with repository name', () => {
@@ -153,13 +166,15 @@ describe('EditModal', () => {
       label: 'my-secret',
       status: 'running',
       region: 'us-east-1',
-      metadata: { description: 'My secret description' },
+      metadata: { description: 'My secret description' }
     }
 
     it('renders the Secret edit modal with secret ID', () => {
       render(<EditModal node={secretNode} onClose={vi.fn()} />)
       expect(screen.getByText(/edit secret/i)).toBeInTheDocument()
-      expect(screen.getByDisplayValue('arn:aws:secretsmanager:us-east-1:123:secret/my-secret')).toBeInTheDocument()
+      expect(
+        screen.getByDisplayValue('arn:aws:secretsmanager:us-east-1:123:secret/my-secret')
+      ).toBeInTheDocument()
     })
 
     it('pre-fills description from metadata', () => {
@@ -182,7 +197,7 @@ describe('EditModal', () => {
       label: 'my-table',
       status: 'running',
       region: 'us-east-1',
-      metadata: { billingMode: 'PROVISIONED', readCapacity: 10, writeCapacity: 5 },
+      metadata: { billingMode: 'PROVISIONED', readCapacity: 10, writeCapacity: 5 }
     }
 
     it('renders the DynamoDB edit modal with table name', () => {
@@ -204,7 +219,10 @@ describe('EditModal', () => {
     })
 
     it('hides capacity inputs when billing mode is PAY_PER_REQUEST', () => {
-      const nodePayPerRequest: CloudNode = { ...dynamoNode, metadata: { billingMode: 'PAY_PER_REQUEST' } }
+      const nodePayPerRequest: CloudNode = {
+        ...dynamoNode,
+        metadata: { billingMode: 'PAY_PER_REQUEST' }
+      }
       render(<EditModal node={nodePayPerRequest} onClose={vi.fn()} />)
       expect(screen.queryByText(/read capacity units/i)).toBeNull()
       expect(screen.queryByText(/write capacity units/i)).toBeNull()
@@ -243,7 +261,7 @@ describe('EditModal', () => {
       label: '/my/key',
       status: 'running',
       region: 'us-east-1',
-      metadata: { type: 'String', tier: 'Standard' },
+      metadata: { type: 'String', tier: 'Standard' }
     }
 
     const ssmSecureNode: CloudNode = {
@@ -252,7 +270,7 @@ describe('EditModal', () => {
       label: '/my/secret',
       status: 'running',
       region: 'us-east-1',
-      metadata: { type: 'SecureString', tier: 'Standard' },
+      metadata: { type: 'SecureString', tier: 'Standard' }
     }
 
     it('renders the SSM edit modal title', () => {
@@ -267,7 +285,9 @@ describe('EditModal', () => {
 
     it('disables the value field for SecureString and shows security notice', () => {
       render(<EditModal node={ssmSecureNode} onClose={vi.fn()} />)
-      const valueInput = screen.getByPlaceholderText(/SecureString — cannot display/i) as HTMLInputElement
+      const valueInput = screen.getByPlaceholderText(
+        /SecureString — cannot display/i
+      ) as HTMLInputElement
       expect(valueInput.disabled).toBe(true)
       expect(screen.getByText(/SecureString values cannot be edited here/i)).toBeInTheDocument()
     })
@@ -278,5 +298,4 @@ describe('EditModal', () => {
       expect(valueInput.disabled).toBe(false)
     })
   })
-
 })

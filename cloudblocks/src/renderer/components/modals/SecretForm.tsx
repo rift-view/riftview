@@ -1,14 +1,29 @@
 import React, { useState } from 'react'
 import type { SecretParams } from '../../types/create'
 
-interface Props { onChange: (p: SecretParams) => void; showErrors?: boolean }
+interface Props {
+  onChange: (p: SecretParams) => void
+  showErrors?: boolean
+}
 
 const inp = (err: boolean): React.CSSProperties => ({
-  width: '100%', background: 'var(--cb-bg-panel)', border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`,
-  borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10,
-  boxSizing: 'border-box' as const,
+  width: '100%',
+  background: 'var(--cb-bg-panel)',
+  border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`,
+  borderRadius: 3,
+  padding: '3px 6px',
+  color: 'var(--cb-text-primary)',
+  fontFamily: 'monospace',
+  fontSize: 10,
+  boxSizing: 'border-box' as const
 })
-const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
+const lbl: React.CSSProperties = {
+  fontSize: 9,
+  color: 'var(--cb-text-muted)',
+  textTransform: 'uppercase',
+  marginBottom: 2,
+  marginTop: 8
+}
 
 export function SecretForm({ onChange, showErrors }: Props): React.JSX.Element {
   const [name, setName] = useState('')
@@ -27,7 +42,10 @@ export function SecretForm({ onChange, showErrors }: Props): React.JSX.Element {
         style={inp(err && !name.trim())}
         value={name}
         placeholder="my-app/db-password"
-        onChange={(e) => { setName(e.target.value); emit(e.target.value, value) }}
+        onChange={(e) => {
+          setName(e.target.value)
+          emit(e.target.value, value)
+        }}
       />
 
       <div style={lbl}>Secret Value *</div>
@@ -36,7 +54,10 @@ export function SecretForm({ onChange, showErrors }: Props): React.JSX.Element {
         type="password"
         value={value}
         placeholder="super-secret-value"
-        onChange={(e) => { setValue(e.target.value); emit(name, e.target.value) }}
+        onChange={(e) => {
+          setValue(e.target.value)
+          emit(name, e.target.value)
+        }}
       />
     </div>
   )

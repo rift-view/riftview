@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { useUIStore } from '../../../src/renderer/store/ui'
 import type { StickyNote } from '../../../src/renderer/store/ui'
 
-
 describe('useUIStore — annotations', () => {
   beforeEach(() => {
     useUIStore.setState({ annotations: {}, stickyNotes: [] })

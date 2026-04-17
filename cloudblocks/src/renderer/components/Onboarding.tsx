@@ -1,18 +1,44 @@
 export function Onboarding(): React.JSX.Element {
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-4 text-center" style={{ fontFamily: 'monospace' }}>
-      <div className="text-3xl font-bold tracking-tighter" style={{ color: 'var(--cb-accent)' }}>TERMINUS</div>
-      <p className="text-sm font-semibold" style={{ color: 'var(--cb-text-primary)' }}>The incident diagnostic layer AWS doesn&apos;t have.</p>
-      <p className="text-[11px] max-w-sm" style={{ color: 'var(--cb-text-muted)', lineHeight: 1.6 }}>
-        Connect your AWS account to see your infrastructure as a live,
-        connected graph — so you understand blast radius before the 3am page,
-        not during it.
+    <div
+      className="flex flex-col items-center justify-center h-full gap-4 text-center"
+      style={{ fontFamily: 'monospace' }}
+    >
+      <div className="text-3xl font-bold tracking-tighter" style={{ color: 'var(--cb-accent)' }}>
+        TERMINUS
+      </div>
+      <p className="text-sm font-semibold" style={{ color: 'var(--cb-text-primary)' }}>
+        The incident diagnostic layer AWS doesn&apos;t have.
       </p>
-      <div className="rounded p-4 text-left max-w-sm" style={{ background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border-strong)' }}>
-        <div className="text-[10px] mb-3" style={{ color: 'var(--cb-text-secondary)', fontSize: 13 }}>
+      <p
+        className="text-[11px] max-w-sm"
+        style={{ color: 'var(--cb-text-muted)', lineHeight: 1.6 }}
+      >
+        Connect your AWS account to see your infrastructure as a live, connected graph — so you
+        understand blast radius before the 3am page, not during it.
+      </p>
+      <div
+        className="rounded p-4 text-left max-w-sm"
+        style={{ background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border-strong)' }}
+      >
+        <div
+          className="text-[10px] mb-3"
+          style={{ color: 'var(--cb-text-secondary)', fontSize: 13 }}
+        >
           New to AWS CLI? Run this in your terminal first:
         </div>
-        <code style={{ fontFamily: 'monospace', background: 'var(--cb-bg-elevated)', padding: '4px 8px', borderRadius: 3, fontSize: 12, color: 'var(--cb-accent)', display: 'inline-block', marginBottom: 10 }}>
+        <code
+          style={{
+            fontFamily: 'monospace',
+            background: 'var(--cb-bg-elevated)',
+            padding: '4px 8px',
+            borderRadius: 3,
+            fontSize: 12,
+            color: 'var(--cb-accent)',
+            display: 'inline-block',
+            marginBottom: 10
+          }}
+        >
           aws configure
         </code>
         <div className="text-[10px]" style={{ color: 'var(--cb-text-secondary)', fontSize: 13 }}>
@@ -28,7 +54,13 @@ export function Onboarding(): React.JSX.Element {
       >
         <summary
           className="text-[10px] cursor-pointer select-none px-4 py-3"
-          style={{ color: 'var(--cb-text-secondary)', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+          style={{
+            color: 'var(--cb-text-secondary)',
+            listStyle: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6
+          }}
         >
           <span style={{ color: 'var(--cb-accent)', fontWeight: 700, fontSize: 10 }}>▶</span>
           Required AWS Permissions
@@ -37,7 +69,10 @@ export function Onboarding(): React.JSX.Element {
           <div className="text-[9px] mt-3 mb-2" style={{ color: 'var(--cb-text-muted)' }}>
             Attach these read-only actions to your IAM user or role:
           </div>
-          <ul className="text-[9px] leading-relaxed" style={{ color: 'var(--cb-text-secondary)', listStyle: 'none', padding: 0, margin: 0 }}>
+          <ul
+            className="text-[9px] leading-relaxed"
+            style={{ color: 'var(--cb-text-secondary)', listStyle: 'none', padding: 0, margin: 0 }}
+          >
             {[
               'ec2:Describe*',
               'elasticloadbalancing:Describe*',
@@ -64,7 +99,7 @@ export function Onboarding(): React.JSX.Element {
               'eks:ListClusters, eks:DescribeCluster',
               'es:ListDomainNames, es:DescribeElasticsearchDomains',
               'kafka:ListClusters, kafka:DescribeCluster',
-              'sts:GetCallerIdentity',
+              'sts:GetCallerIdentity'
             ].map((perm) => (
               <li key={perm} style={{ padding: '1px 0', color: 'var(--cb-accent)' }}>
                 {perm}

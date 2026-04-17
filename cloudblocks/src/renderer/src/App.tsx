@@ -53,11 +53,11 @@ function ResizeHandle({ onResize }: { onResize: (delta: number) => void }): Reac
     <div
       onMouseDown={onMouseDown}
       style={{
-        width:      4,
+        width: 4,
         flexShrink: 0,
-        cursor:     'col-resize',
+        cursor: 'col-resize',
         background: 'var(--cb-border)',
-        transition: 'background 0.15s',
+        transition: 'background 0.15s'
       }}
       onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--cb-accent)')}
       onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--cb-border)')}
@@ -72,28 +72,31 @@ export default function App(): React.JSX.Element | null {
   const [profiles, setProfiles] = useState<AwsProfile[] | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [fixCount, setFixCount] = useState(0)
-  const errorMessage      = useCloudStore((s) => s.errorMessage)
-  const setError          = useCloudStore((s) => s.setError)
-  const settings          = useCloudStore((s) => s.settings)
+  const errorMessage = useCloudStore((s) => s.errorMessage)
+  const setError = useCloudStore((s) => s.setError)
+  const settings = useCloudStore((s) => s.settings)
   const setCommandPreview = useCliStore((s) => s.setCommandPreview)
   const setPendingCommand = useCliStore((s) => s.setPendingCommand)
-  const selectNode        = useUIStore((s) => s.selectNode)
-  const showAbout         = useUIStore((s) => s.showAbout)
-  const setShowAbout      = useUIStore((s) => s.setShowAbout)
-  const showSettings      = useUIStore((s) => s.showSettings)
-  const setShowSettings   = useUIStore((s) => s.setShowSettings)
+  const selectNode = useUIStore((s) => s.selectNode)
+  const showAbout = useUIStore((s) => s.showAbout)
+  const setShowAbout = useUIStore((s) => s.setShowAbout)
+  const showSettings = useUIStore((s) => s.showSettings)
+  const setShowSettings = useUIStore((s) => s.setShowSettings)
 
   const [deleteTarget, setDeleteTarget] = useState<CloudNode | null>(null)
   const [nodeMenu, setNodeMenu] = useState<{ node: CloudNode; x: number; y: number } | null>(null)
-  const [editTarget, setEditTarget] = useState<CloudNode | null>(null)  // placeholder for Task 13
+  const [editTarget, setEditTarget] = useState<CloudNode | null>(null) // placeholder for Task 13
   const [sidebarWidth, setSidebarWidth] = useState(144)
   const [inspectorWidth, setInspectorWidth] = useState(192)
 
-  const handleSearchSelect = useCallback((nodeId: string) => {
-    selectNode(nodeId)
-    // fitView is called on the ReactFlow instance inside CanvasInner; we trigger it via a custom event
-    window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId } }))
-  }, [selectNode])
+  const handleSearchSelect = useCallback(
+    (nodeId: string) => {
+      selectNode(nodeId)
+      // fitView is called on the ReactFlow instance inside CanvasInner; we trigger it via a custom event
+      window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId } }))
+    },
+    [selectNode]
+  )
 
   useEffect(() => {
     window.terminus.listProfiles().then(setProfiles)
@@ -113,9 +116,9 @@ export default function App(): React.JSX.Element | null {
       const stickyNotes = Object.entries(saved)
         .filter(([k]) => k.startsWith('sticky:'))
         .map(([k, content], i) => ({
-          id:       k.slice('sticky:'.length),
+          id: k.slice('sticky:'.length),
           content,
-          position: { x: 40 + i * 220, y: 40 },
+          position: { x: 40 + i * 220, y: 40 }
         }))
       if (stickyNotes.length > 0) {
         useUIStore.setState({ stickyNotes })
@@ -126,7 +129,9 @@ export default function App(): React.JSX.Element | null {
       if (Object.keys(overrides).length === 0) return
       const el = document.getElementById('cb-theme-overrides') ?? document.createElement('style')
       el.id = 'cb-theme-overrides'
-      el.textContent = `:root { ${Object.entries(overrides).map(([k, v]) => `${k}: ${v}`).join('; ')} }`
+      el.textContent = `:root { ${Object.entries(overrides)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join('; ')} }`
       if (!el.parentElement) document.head.appendChild(el)
     })
 
@@ -174,7 +179,7 @@ export default function App(): React.JSX.Element | null {
 
   const handleDeleteConfirm = (node: CloudNode, opts: DeleteOptions): void => {
     const commands = resolveDeleteCommands(node, opts as Record<string, unknown>)
-    setCommandPreview(commands.map(argv => 'aws ' + argv.join(' ')))
+    setCommandPreview(commands.map((argv) => 'aws ' + argv.join(' ')))
     setPendingCommand(commands)
     setDeleteTarget(null)
   }
@@ -187,13 +192,17 @@ export default function App(): React.JSX.Element | null {
     }
   }
 
-  const handleQuickAction = (node: CloudNode, action: 'stop' | 'start' | 'reboot' | 'invalidate', meta?: { path?: string }): void => {
+  const handleQuickAction = (
+    node: CloudNode,
+    action: 'stop' | 'start' | 'reboot' | 'invalidate',
+    meta?: { path?: string }
+  ): void => {
     if (action === 'invalidate') {
       window.terminus.invalidateCloudFront(node.id, meta?.path ?? '/*')
       return
     }
     const cmds = buildQuickActionCommand(node, action)
-    setCommandPreview(cmds.map(a => 'aws ' + a.join(' ')))
+    setCommandPreview(cmds.map((a) => 'aws ' + a.join(' ')))
     setPendingCommand(cmds)
   }
 
@@ -220,22 +229,42 @@ export default function App(): React.JSX.Element | null {
   if (profiles.length === 0) return <Onboarding />
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden" style={{ background: 'var(--cb-bg-app)' }}>
+    <div
+      className="flex flex-col h-screen w-screen overflow-hidden"
+      style={{ background: 'var(--cb-bg-app)' }}
+    >
       <TitleBar onScan={triggerScan} fixCount={fixCount} />
       <RegionBar />
       {errorMessage && <ErrorBanner message={errorMessage} onDismiss={() => setError(null)} />}
       <div className="flex flex-1 overflow-hidden">
-        <div style={{ width: sidebarWidth, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div
+          style={{
+            width: sidebarWidth,
+            flexShrink: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}
+        >
           <Sidebar />
         </div>
-        <ResizeHandle onResize={(delta) => setSidebarWidth((w) => Math.max(80, Math.min(320, w + delta)))} />
+        <ResizeHandle
+          onResize={(delta) => setSidebarWidth((w) => Math.max(80, Math.min(320, w + delta)))}
+        />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <CloudCanvas onNodeContextMenu={handleNodeContextMenu} />
           <CommandDrawer />
         </div>
-        <ResizeHandle onResize={(delta) => setInspectorWidth((w) => Math.max(140, Math.min(400, w - delta)))} />
+        <ResizeHandle
+          onResize={(delta) => setInspectorWidth((w) => Math.max(140, Math.min(400, w - delta)))}
+        />
         <div style={{ width: inspectorWidth, flexShrink: 0, overflow: 'hidden' }}>
-          <Inspector onDelete={handleDeleteRequest} onEdit={node => setEditTarget(node)} onQuickAction={handleQuickAction} onRemediate={handleRemediate} />
+          <Inspector
+            onDelete={handleDeleteRequest}
+            onEdit={(node) => setEditTarget(node)}
+            onQuickAction={handleQuickAction}
+            onRemediate={handleRemediate}
+          />
         </div>
       </div>
       <CreateModal />
@@ -249,18 +278,24 @@ export default function App(): React.JSX.Element | null {
           node={nodeMenu.node}
           x={nodeMenu.x}
           y={nodeMenu.y}
-          onEdit={node => { setNodeMenu(null); setEditTarget(node) }}
-          onDelete={node => { setNodeMenu(null); handleDeleteRequest(node) }}
-          onStop={node => {
+          onEdit={(node) => {
+            setNodeMenu(null)
+            setEditTarget(node)
+          }}
+          onDelete={(node) => {
+            setNodeMenu(null)
+            handleDeleteRequest(node)
+          }}
+          onStop={(node) => {
             setNodeMenu(null)
             const cmds = buildQuickActionCommand(node, 'stop')
-            setCommandPreview(cmds.map(a => 'aws ' + a.join(' ')))
+            setCommandPreview(cmds.map((a) => 'aws ' + a.join(' ')))
             setPendingCommand(cmds)
           }}
-          onStart={node => {
+          onStart={(node) => {
             setNodeMenu(null)
             const cmds = buildQuickActionCommand(node, 'start')
-            setCommandPreview(cmds.map(a => 'aws ' + a.join(' ')))
+            setCommandPreview(cmds.map((a) => 'aws ' + a.join(' ')))
             setPendingCommand(cmds)
           }}
           onClose={() => setNodeMenu(null)}
@@ -270,7 +305,7 @@ export default function App(): React.JSX.Element | null {
         <DeleteDialog
           node={deleteTarget}
           onClose={() => setDeleteTarget(null)}
-          onConfirm={opts => handleDeleteConfirm(deleteTarget, opts)}
+          onConfirm={(opts) => handleDeleteConfirm(deleteTarget, opts)}
         />
       )}
       <EditModal node={editTarget} onClose={() => setEditTarget(null)} />

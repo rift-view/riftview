@@ -1,13 +1,10 @@
-import {
-  CloudFrontClient,
-  ListDistributionsCommand,
-} from '@aws-sdk/client-cloudfront'
+import { CloudFrontClient, ListDistributionsCommand } from '@aws-sdk/client-cloudfront'
 import type { CloudNode, EdgeType, NodeStatus } from '../../../renderer/types/cloud'
 
 function cfStatusToNodeStatus(status: string | undefined): NodeStatus {
-  if (status === 'Deployed')   return 'running'
+  if (status === 'Deployed') return 'running'
   if (status === 'InProgress') return 'pending'
-  if (status === 'Failed')     return 'error'
+  if (status === 'Failed') return 'error'
   return 'unknown'
 }
 
@@ -31,9 +28,9 @@ export async function listDistributions(client: CloudFrontClient): Promise<Cloud
 
     return items.map((dist): CloudNode => {
       const origins = (dist.Origins?.Items ?? []).map((o) => ({
-        id:         o.Id ?? '',
+        id: o.Id ?? '',
         domainName: o.DomainName ?? '',
-        type:       originType(o.DomainName ?? ''),
+        type: originType(o.DomainName ?? '')
       }))
 
       const certArn = dist.ViewerCertificate?.ACMCertificateArn
@@ -46,21 +43,21 @@ export async function listDistributions(client: CloudFrontClient): Promise<Cloud
           .filter((o) => o.type === 'ALB' || o.type === 'APIGW')
           .map((o) => ({ targetId: o.domainName, edgeType: 'origin' as EdgeType })),
         // ACM certificate used by this distribution
-        ...(certArn ? [{ targetId: certArn, edgeType: 'origin' as EdgeType }] : []),
+        ...(certArn ? [{ targetId: certArn, edgeType: 'origin' as EdgeType }] : [])
       ]
 
       const node: CloudNode = {
-        id:     dist.Id ?? 'unknown',
-        type:   'cloudfront',
-        label:  dist.Comment || dist.DomainName || dist.Id || 'CloudFront',
+        id: dist.Id ?? 'unknown',
+        type: 'cloudfront',
+        label: dist.Comment || dist.DomainName || dist.Id || 'CloudFront',
         status: cfStatusToNodeStatus(dist.Status),
         region: 'global',
         metadata: {
-          domainName:        dist.DomainName ?? '',
+          domainName: dist.DomainName ?? '',
           origins,
-          certArn:           certArn ?? undefined,
-          priceClass:        dist.PriceClass ?? 'PriceClass_All',
-        },
+          certArn: certArn ?? undefined,
+          priceClass: dist.PriceClass ?? 'PriceClass_All'
+        }
       }
 
       return integrations.length > 0 ? { ...node, integrations } : node

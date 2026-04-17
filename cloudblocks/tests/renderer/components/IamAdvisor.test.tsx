@@ -7,34 +7,38 @@ import type { IamAnalysisResult } from '../../../src/renderer/types/iam'
 // ---- Fixtures ---------------------------------------------------------------
 
 const EC2_NODE: CloudNode = {
-  id:       'i-001',
-  type:     'ec2',
-  label:    'web-server',
-  status:   'running',
-  region:   'us-east-1',
-  metadata: {},
+  id: 'i-001',
+  type: 'ec2',
+  label: 'web-server',
+  status: 'running',
+  region: 'us-east-1',
+  metadata: {}
 }
 
 const CLEAN_RESULT: IamAnalysisResult = {
-  nodeId:    'i-001',
-  findings:  [],
-  fetchedAt: 1000,
+  nodeId: 'i-001',
+  findings: [],
+  fetchedAt: 1000
 }
 
 const FINDING_RESULT: IamAnalysisResult = {
   nodeId: 'i-001',
   findings: [
-    { severity: 'critical', title: 'Wildcard action on all resources', detail: 'Action: * with Resource: *' },
-    { severity: 'warning',  title: 'S3 wildcard on all buckets',       detail: 's3:* with Resource: *' },
+    {
+      severity: 'critical',
+      title: 'Wildcard action on all resources',
+      detail: 'Action: * with Resource: *'
+    },
+    { severity: 'warning', title: 'S3 wildcard on all buckets', detail: 's3:* with Resource: *' }
   ],
-  fetchedAt: 2000,
+  fetchedAt: 2000
 }
 
 const ERROR_RESULT: IamAnalysisResult = {
-  nodeId:    'i-001',
-  findings:  [],
-  error:     'AccessDenied',
-  fetchedAt: 3000,
+  nodeId: 'i-001',
+  findings: [],
+  error: 'AccessDenied',
+  fetchedAt: 3000
 }
 
 // ---- Helpers ----------------------------------------------------------------
@@ -53,7 +57,7 @@ describe('IamAdvisor', () => {
     Object.defineProperty(window, 'terminus', {
       value: { analyzeIam: analyzeIamMock },
       writable: true,
-      configurable: true,
+      configurable: true
     })
   })
 
@@ -141,16 +145,17 @@ describe('IamAdvisor', () => {
 
   it('calls analyzeIam with correct node params', async () => {
     analyzeIamMock.mockResolvedValue(CLEAN_RESULT)
-    const nodeWithMeta: CloudNode = { ...EC2_NODE, metadata: { role: 'arn:aws:iam::123:role/MyRole' } }
+    const nodeWithMeta: CloudNode = {
+      ...EC2_NODE,
+      metadata: { role: 'arn:aws:iam::123:role/MyRole' }
+    }
     renderAdvisor(nodeWithMeta)
     fireEvent.click(screen.getByRole('button', { name: /IAM Permissions/i }))
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /analyze/i }))
     })
-    expect(analyzeIamMock).toHaveBeenCalledWith(
-      'i-001',
-      'ec2',
-      { role: 'arn:aws:iam::123:role/MyRole' }
-    )
+    expect(analyzeIamMock).toHaveBeenCalledWith('i-001', 'ec2', {
+      role: 'arn:aws:iam::123:role/MyRole'
+    })
   })
 })

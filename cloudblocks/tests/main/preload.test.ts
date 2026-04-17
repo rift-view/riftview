@@ -5,8 +5,8 @@ vi.mock('electron', () => ({
   ipcRenderer: {
     invoke: vi.fn(),
     on: vi.fn(),
-    removeAllListeners: vi.fn(),
-  },
+    removeAllListeners: vi.fn()
+  }
 }))
 
 import { contextBridge } from 'electron'
@@ -17,14 +17,14 @@ describe('preload bridge', () => {
     expect(contextBridge.exposeInMainWorld).toHaveBeenCalledWith(
       'terminus',
       expect.objectContaining({
-        listProfiles:   expect.any(Function),
-        selectProfile:  expect.any(Function),
-        selectRegion:   expect.any(Function),
-        startScan:      expect.any(Function),
-        onScanDelta:    expect.any(Function),
-        onScanStatus:   expect.any(Function),
-        onConnStatus:   expect.any(Function),
-      }),
+        listProfiles: expect.any(Function),
+        selectProfile: expect.any(Function),
+        selectRegion: expect.any(Function),
+        startScan: expect.any(Function),
+        onScanDelta: expect.any(Function),
+        onScanStatus: expect.any(Function),
+        onConnStatus: expect.any(Function)
+      })
     )
   })
 })

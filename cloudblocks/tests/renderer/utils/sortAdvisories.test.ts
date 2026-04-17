@@ -5,7 +5,7 @@ import type { Advisory } from '../../../src/renderer/types/cloud'
 function makeAdvisory(
   ruleId: Advisory['ruleId'],
   severity: Advisory['severity'],
-  title = 'Test Advisory',
+  title = 'Test Advisory'
 ): Advisory {
   return { ruleId, severity, title, detail: `Detail for ${ruleId}`, nodeId: 'node-1' }
 }
@@ -42,7 +42,7 @@ describe('sortAdvisories', () => {
   it('moves a trailing critical to the front', () => {
     const w1 = makeAdvisory('sqs-no-dlq', 'warning', 'W1')
     const w2 = makeAdvisory('rds-no-backup', 'warning', 'W2')
-    const c  = makeAdvisory('ec2-public-ssh', 'critical', 'C')
+    const c = makeAdvisory('ec2-public-ssh', 'critical', 'C')
     const result = sortAdvisories([w1, w2, c])
     expect(result[0]).toEqual(c)
     expect(result[1]).toEqual(w1)

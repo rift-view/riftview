@@ -2,9 +2,9 @@
 // Scoped to tsconfig.web.json — import.meta.env is only available in renderer context.
 
 export type FlagName =
-  | 'COMMAND_BOARD'      // Phase 1: always-on (kept for flags.test.ts)
-  | 'ACTION_RAIL'        // Phase 1: always-on (kept for ResourceNode.advisories.test.tsx)
-  | 'EXECUTION_ENGINE'   // Phase 2: always-on (kept for Inspector.remediate.test.tsx)
+  | 'COMMAND_BOARD' // Phase 1: always-on (kept for flags.test.ts)
+  | 'ACTION_RAIL' // Phase 1: always-on (kept for ResourceNode.advisories.test.tsx)
+  | 'EXECUTION_ENGINE' // Phase 2: always-on (kept for Inspector.remediate.test.tsx)
 
 const ENV_PREFIX = 'VITE_FLAG_'
 

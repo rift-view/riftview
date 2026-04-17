@@ -1,32 +1,32 @@
 import type { CloudNode } from '../types/cloud'
 
 export interface DriftResult {
-  matched:   string[]
+  matched: string[]
   unmanaged: string[]
-  missing:   string[]
+  missing: string[]
   /** Maps live node ID → matched imported node ID (only populated for fuzzy matches) */
   fuzzyMap: Map<string, string>
 }
 
 /** Normalise a label for fuzzy comparison: lowercase, collapse whitespace/separators */
 function normLabel(s: string): string {
-  return s.toLowerCase().replace(/[\s_\-./]+/g, '-').replace(/^-+|-+$/g, '')
+  return s
+    .toLowerCase()
+    .replace(/[\s_\-./]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
-export function compareDrift(
-  liveNodes:     CloudNode[],
-  importedNodes: CloudNode[],
-): DriftResult {
+export function compareDrift(liveNodes: CloudNode[], importedNodes: CloudNode[]): DriftResult {
   const eligible = importedNodes.filter((n) => n.type !== 'unknown')
-  const liveIds  = new Set(liveNodes.map((n) => n.id))
-  const impIds   = new Set(eligible.map((n) => n.id))
+  const liveIds = new Set(liveNodes.map((n) => n.id))
+  const impIds = new Set(eligible.map((n) => n.id))
 
   // Pass 1 — exact ID match
   const exactMatchedLive = new Set(liveNodes.filter((n) => impIds.has(n.id)).map((n) => n.id))
-  const exactMatchedImp  = new Set(eligible.filter((n) => liveIds.has(n.id)).map((n) => n.id))
+  const exactMatchedImp = new Set(eligible.filter((n) => liveIds.has(n.id)).map((n) => n.id))
 
   const unmatchedLive = liveNodes.filter((n) => !exactMatchedLive.has(n.id))
-  const unmatchedImp  = eligible.filter((n) => !exactMatchedImp.has(n.id))
+  const unmatchedImp = eligible.filter((n) => !exactMatchedImp.has(n.id))
 
   // Pass 2 — fuzzy label match within same NodeType
   // Build a per-type map of normalised label → imported node for unmatched importeds
@@ -52,24 +52,24 @@ export function compareDrift(
     }
   }
 
-  const matched   = [
+  const matched = [
     ...liveNodes.filter((n) => exactMatchedLive.has(n.id)).map((n) => n.id),
-    ...unmatchedLive.filter((n) => fuzzyMatchedLive.has(n.id)).map((n) => n.id),
+    ...unmatchedLive.filter((n) => fuzzyMatchedLive.has(n.id)).map((n) => n.id)
   ]
   const unmanaged = unmatchedLive.filter((n) => !fuzzyMatchedLive.has(n.id)).map((n) => n.id)
-  const missing   = unmatchedImp.filter((n) => !fuzzyMatchedImp.has(n.id)).map((n) => n.id)
+  const missing = unmatchedImp.filter((n) => !fuzzyMatchedImp.has(n.id)).map((n) => n.id)
 
   return { matched, unmanaged, missing, fuzzyMap }
 }
 
 export function applyDriftToState(
-  liveNodes:     CloudNode[],
-  importedNodes: CloudNode[],
+  liveNodes: CloudNode[],
+  importedNodes: CloudNode[]
 ): { nodes: CloudNode[]; importedNodes: CloudNode[] } {
   const { matched, unmanaged, missing, fuzzyMap } = compareDrift(liveNodes, importedNodes)
-  const matchedSet   = new Set(matched)
+  const matchedSet = new Set(matched)
   const unmanagedSet = new Set(unmanaged)
-  const missingSet   = new Set(missing)
+  const missingSet = new Set(missing)
 
   // Build import lookup by ID for exact matches, plus by fuzzy-mapped imported ID
   const importedMap = new Map(importedNodes.map((n) => [n.id, n]))
@@ -94,14 +94,16 @@ export function applyDriftToState(
   // Imported IDs consumed by any match (exact or fuzzy)
   const consumedImpIds = new Set([
     ...liveNodes.filter((n) => matchedSet.has(n.id) && importedMap.has(n.id)).map((n) => n.id),
-    ...fuzzyMap.values(),
+    ...fuzzyMap.values()
   ])
 
-  const newImportedNodes = importedNodes.map((n) => {
-    if (n.type === 'unknown') return n
-    if (missingSet.has(n.id)) return { ...n, driftStatus: 'missing' as const }
-    return n
-  }).filter((n) => !consumedImpIds.has(n.id))
+  const newImportedNodes = importedNodes
+    .map((n) => {
+      if (n.type === 'unknown') return n
+      if (missingSet.has(n.id)) return { ...n, driftStatus: 'missing' as const }
+      return n
+    })
+    .filter((n) => !consumedImpIds.has(n.id))
 
   return { nodes, importedNodes: newImportedNodes }
 }

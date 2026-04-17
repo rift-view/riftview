@@ -8,8 +8,10 @@ import { IPC } from '../main/ipc/channels'
 contextBridge.exposeInMainWorld('terminus', {
   listProfiles: () => ipcRenderer.invoke(IPC.PROFILES_LIST),
   selectProfile: (profile: AwsProfile) => ipcRenderer.invoke(IPC.PROFILE_SELECT, profile),
-  selectRegion: (region: string, endpoint?: string) => ipcRenderer.invoke(IPC.REGION_SELECT, { region, endpoint }),
-  startScan: (selectedRegions?: string[]) => ipcRenderer.invoke(IPC.SCAN_START, selectedRegions ? { selectedRegions } : undefined),
+  selectRegion: (region: string, endpoint?: string) =>
+    ipcRenderer.invoke(IPC.REGION_SELECT, { region, endpoint }),
+  startScan: (selectedRegions?: string[]) =>
+    ipcRenderer.invoke(IPC.SCAN_START, selectedRegions ? { selectedRegions } : undefined),
 
   onScanDelta: (cb: (delta: ScanDelta) => void): (() => void) => {
     const handler = (_e: Electron.IpcRendererEvent, delta: ScanDelta): void => cb(delta)
@@ -34,15 +36,21 @@ contextBridge.exposeInMainWorld('terminus', {
   },
 
   getSettings: () => ipcRenderer.invoke(IPC.SETTINGS_GET),
-  setSettings: (s: import('../renderer/types/cloud').Settings) => ipcRenderer.invoke(IPC.SETTINGS_SET, s),
+  setSettings: (s: import('../renderer/types/cloud').Settings) =>
+    ipcRenderer.invoke(IPC.SETTINGS_SET, s),
 
   getThemeOverrides: () => ipcRenderer.invoke(IPC.THEME_OVERRIDES),
 
   // CLI — renderer sends pre-built string[][] argv arrays
   runCli: (commands: string[][]) => ipcRenderer.invoke(IPC.CLI_RUN, commands),
   cancelCli: () => ipcRenderer.send(IPC.CLI_CANCEL),
-  onCliOutput: (cb: (data: { line: string; stream: 'stdout' | 'stderr' }) => void): (() => void) => {
-    const handler = (_e: Electron.IpcRendererEvent, data: { line: string; stream: 'stdout' | 'stderr' }): void => cb(data)
+  onCliOutput: (
+    cb: (data: { line: string; stream: 'stdout' | 'stderr' }) => void
+  ): (() => void) => {
+    const handler = (
+      _e: Electron.IpcRendererEvent,
+      data: { line: string; stream: 'stdout' | 'stderr' }
+    ): void => cb(data)
     ipcRenderer.on(IPC.CLI_OUTPUT, handler)
     return () => ipcRenderer.removeListener(IPC.CLI_OUTPUT, handler)
   },
@@ -53,25 +61,33 @@ contextBridge.exposeInMainWorld('terminus', {
   },
 
   // CloudFront SDK write operations
-  createCloudFront:    (params: CloudFrontParams)                  => ipcRenderer.invoke(IPC.CF_CREATE, params),
-  updateCloudFront:    (id: string, params: CloudFrontEditParams)  => ipcRenderer.invoke(IPC.CF_UPDATE, id, params),
-  deleteCloudFront:    (id: string)                                => ipcRenderer.invoke(IPC.CF_DELETE, id),
-  invalidateCloudFront:(id: string, cfPath: string)               => ipcRenderer.invoke(IPC.CF_INVALIDATE, id, cfPath),
+  createCloudFront: (params: CloudFrontParams) => ipcRenderer.invoke(IPC.CF_CREATE, params),
+  updateCloudFront: (id: string, params: CloudFrontEditParams) =>
+    ipcRenderer.invoke(IPC.CF_UPDATE, id, params),
+  deleteCloudFront: (id: string) => ipcRenderer.invoke(IPC.CF_DELETE, id),
+  invalidateCloudFront: (id: string, cfPath: string) =>
+    ipcRenderer.invoke(IPC.CF_INVALIDATE, id, cfPath),
 
   // ACM delete via CLI
-  deleteAcm: (arn: string) => ipcRenderer.invoke(IPC.CLI_RUN, [['acm', 'delete-certificate', '--certificate-arn', arn]]),
+  deleteAcm: (arn: string) =>
+    ipcRenderer.invoke(IPC.CLI_RUN, [['acm', 'delete-certificate', '--certificate-arn', arn]]),
 
   // Terraform HCL export
-  exportTerraform: (nodes: import('../renderer/types/cloud').CloudNode[]) => ipcRenderer.invoke(IPC.TERRAFORM_EXPORT, nodes),
+  exportTerraform: (nodes: import('../renderer/types/cloud').CloudNode[]) =>
+    ipcRenderer.invoke(IPC.TERRAFORM_EXPORT, nodes),
 
   // Terraform LocalStack deploy
   terraformDeploy: (hcl: string, region: string, endpoint?: string) =>
     ipcRenderer.invoke(IPC.TERRAFORM_DEPLOY, hcl, region, endpoint),
 
   // Canvas PNG export (legacy whole-window capture)
-  exportPng: (): Promise<{ success: boolean; filePath?: string }> => ipcRenderer.invoke(IPC.CANVAS_EXPORT_PNG),
+  exportPng: (): Promise<{ success: boolean; filePath?: string }> =>
+    ipcRenderer.invoke(IPC.CANVAS_EXPORT_PNG),
   // Canvas image export — renderer captures via html-to-image, main process shows save dialog
-  saveExportImage: (dataUrl: string, defaultName: string): Promise<{ success: boolean; filePath?: string }> =>
+  saveExportImage: (
+    dataUrl: string,
+    defaultName: string
+  ): Promise<{ success: boolean; filePath?: string }> =>
     ipcRenderer.invoke(IPC.CANVAS_SAVE_IMAGE, dataUrl, defaultName),
 
   // List AWS credential profile names from ~/.aws/credentials
@@ -86,7 +102,8 @@ contextBridge.exposeInMainWorld('terminus', {
 
   // Annotations — persisted to userData/annotations.json
   loadAnnotations: (): Promise<Record<string, string>> => ipcRenderer.invoke(IPC.ANNOTATIONS_LOAD),
-  saveAnnotations: (data: Record<string, string>): Promise<void> => ipcRenderer.invoke(IPC.ANNOTATIONS_SAVE, data),
+  saveAnnotations: (data: Record<string, string>): Promise<void> =>
+    ipcRenderer.invoke(IPC.ANNOTATIONS_SAVE, data),
 
   // Custom edges — persisted to userData/custom-edges.json
   loadCustomEdges: (): Promise<import('../renderer/types/cloud').CustomEdge[]> =>
@@ -96,7 +113,7 @@ contextBridge.exposeInMainWorld('terminus', {
 
   // Terraform state import
   importTfState: () => ipcRenderer.invoke(IPC.TFSTATE_IMPORT),
-  clearTfState:  () => ipcRenderer.invoke(IPC.TFSTATE_CLEAR),
+  clearTfState: () => ipcRenderer.invoke(IPC.TFSTATE_CLEAR),
   listTfStateModules: () => ipcRenderer.invoke(IPC.TFSTATE_LIST_MODULES),
 
   // IAM Least-Privilege Advisor
@@ -108,13 +125,20 @@ contextBridge.exposeInMainWorld('terminus', {
 
   // Plugin metadata — push: main → renderer
   onPluginMetadata: (cb: (meta: Record<string, NodeTypeMetadata>) => void): (() => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, meta: Record<string, NodeTypeMetadata>): void => cb(meta)
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      meta: Record<string, NodeTypeMetadata>
+    ): void => cb(meta)
     ipcRenderer.on(IPC.PLUGIN_METADATA, handler)
     return () => ipcRenderer.removeListener(IPC.PLUGIN_METADATA, handler)
   },
 
   // Save baseline for drift detection
-  saveBaseline: (nodes: import('../renderer/types/cloud').CloudNode[], profileName: string, region: string): Promise<{ ok: boolean }> =>
+  saveBaseline: (
+    nodes: import('../renderer/types/cloud').CloudNode[],
+    profileName: string,
+    region: string
+  ): Promise<{ ok: boolean }> =>
     ipcRenderer.invoke(IPC.TFSTATE_SAVE_BASELINE, { nodes, profileName, region }),
 
   // Retry a single scan service
@@ -122,12 +146,19 @@ contextBridge.exposeInMainWorld('terminus', {
     ipcRenderer.invoke(IPC.SCAN_RETRY_SERVICE, { service }),
 
   // Validate AWS credentials via STS before scanning
-  validateCredentials: (profile: AwsProfile): Promise<{ ok: true; account: string; arn: string } | { ok: false; error: string }> =>
+  validateCredentials: (
+    profile: AwsProfile
+  ): Promise<{ ok: true; account: string; arn: string } | { ok: false; error: string }> =>
     ipcRenderer.invoke(IPC.CREDENTIALS_VALIDATE, profile),
 
   // CloudWatch metrics
-  fetchMetrics: (params: { nodeId: string; nodeType: string; resourceId: string; region: string; profile: AwsProfile }) =>
-    ipcRenderer.invoke(IPC.METRICS_FETCH, params),
+  fetchMetrics: (params: {
+    nodeId: string
+    nodeType: string
+    resourceId: string
+    region: string
+    profile: AwsProfile
+  }) => ipcRenderer.invoke(IPC.METRICS_FETCH, params),
 
   // Per-node change history
   getNodeHistory: (nodeId: string) => ipcRenderer.invoke(IPC.HISTORY_GET, nodeId),
@@ -139,11 +170,11 @@ contextBridge.exposeInMainWorld('terminus', {
     ipcRenderer.invoke(IPC.TERMINAL_INPUT, sessionId, data),
   resizeTerminal: (sessionId: string, cols: number, rows: number) =>
     ipcRenderer.invoke(IPC.TERMINAL_RESIZE, sessionId, cols, rows),
-  closeTerminal: (sessionId: string) =>
-    ipcRenderer.invoke(IPC.TERMINAL_CLOSE, sessionId),
+  closeTerminal: (sessionId: string) => ipcRenderer.invoke(IPC.TERMINAL_CLOSE, sessionId),
   onTerminalOutput: (cb: (data: { sessionId: string; data: string }) => void): (() => void) => {
     const handler = (_: unknown, data: { sessionId: string; data: string }): void => cb(data)
     ipcRenderer.on(IPC.TERMINAL_OUTPUT, handler as Parameters<typeof ipcRenderer.on>[1])
-    return () => ipcRenderer.off(IPC.TERMINAL_OUTPUT, handler as Parameters<typeof ipcRenderer.off>[1])
-  },
+    return () =>
+      ipcRenderer.off(IPC.TERMINAL_OUTPUT, handler as Parameters<typeof ipcRenderer.off>[1])
+  }
 })

@@ -5,9 +5,9 @@ import { listRepositories } from '../../../../src/main/aws/services/ecr'
 const mockSend = vi.fn()
 const mockClient = { send: mockSend } as unknown as ECRClient
 
-const REPO_ARN  = 'arn:aws:ecr:us-east-1:123456789012:repository/my-app'
+const REPO_ARN = 'arn:aws:ecr:us-east-1:123456789012:repository/my-app'
 const REPO_ARN2 = 'arn:aws:ecr:us-east-1:123456789012:repository/my-app-2'
-const REPO_URI  = '123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app'
+const REPO_URI = '123456789012.dkr.ecr.us-east-1.amazonaws.com/my-app'
 
 describe('listRepositories', () => {
   beforeEach(() => {
@@ -16,11 +16,13 @@ describe('listRepositories', () => {
 
   it('maps a repository to a CloudNode', async () => {
     mockSend.mockResolvedValueOnce({
-      repositories: [{
-        repositoryArn:  REPO_ARN,
-        repositoryName: 'my-app',
-        repositoryUri:  REPO_URI,
-      }],
+      repositories: [
+        {
+          repositoryArn: REPO_ARN,
+          repositoryName: 'my-app',
+          repositoryUri: REPO_URI
+        }
+      ]
     })
 
     const nodes = await listRepositories(mockClient, 'us-east-1')
@@ -35,11 +37,13 @@ describe('listRepositories', () => {
 
   it('stores repository URI in metadata', async () => {
     mockSend.mockResolvedValueOnce({
-      repositories: [{
-        repositoryArn:  REPO_ARN,
-        repositoryName: 'my-app',
-        repositoryUri:  REPO_URI,
-      }],
+      repositories: [
+        {
+          repositoryArn: REPO_ARN,
+          repositoryName: 'my-app',
+          repositoryUri: REPO_URI
+        }
+      ]
     })
 
     const nodes = await listRepositories(mockClient, 'us-east-1')
@@ -49,11 +53,13 @@ describe('listRepositories', () => {
 
   it('falls back to empty string when ARN and name are missing', async () => {
     mockSend.mockResolvedValueOnce({
-      repositories: [{
-        repositoryArn:  undefined,
-        repositoryName: undefined,
-        repositoryUri:  undefined,
-      }],
+      repositories: [
+        {
+          repositoryArn: undefined,
+          repositoryName: undefined,
+          repositoryUri: undefined
+        }
+      ]
     })
 
     const nodes = await listRepositories(mockClient, 'us-east-1')
@@ -66,18 +72,20 @@ describe('listRepositories', () => {
   it('paginates across multiple pages', async () => {
     mockSend
       .mockResolvedValueOnce({
-        repositories: [{ repositoryArn: REPO_ARN,  repositoryName: 'my-app',   repositoryUri: REPO_URI }],
-        nextToken: 'tok1',
+        repositories: [
+          { repositoryArn: REPO_ARN, repositoryName: 'my-app', repositoryUri: REPO_URI }
+        ],
+        nextToken: 'tok1'
       })
       .mockResolvedValueOnce({
         repositories: [{ repositoryArn: REPO_ARN2, repositoryName: 'my-app-2', repositoryUri: '' }],
-        nextToken: undefined,
+        nextToken: undefined
       })
 
     const nodes = await listRepositories(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(2)
-    expect(nodes.map(n => n.id).sort()).toEqual([REPO_ARN, REPO_ARN2].sort())
+    expect(nodes.map((n) => n.id).sort()).toEqual([REPO_ARN, REPO_ARN2].sort())
   })
 
   it('returns empty array when no repositories exist', async () => {

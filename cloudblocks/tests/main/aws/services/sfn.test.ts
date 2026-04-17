@@ -6,13 +6,15 @@ const mockSend = vi.fn()
 const mockClient = { send: mockSend } as unknown as SFNClient
 
 const MACHINE_ARN = 'arn:aws:states:us-east-1:123456789:stateMachine:my-machine'
-const LAMBDA_ARN  = 'arn:aws:lambda:us-east-1:123456789:function:my-fn'
+const LAMBDA_ARN = 'arn:aws:lambda:us-east-1:123456789:function:my-fn'
 const LAMBDA_ARN2 = 'arn:aws:lambda:us-east-1:123456789:function:other-fn'
-const SQS_ARN     = 'arn:aws:sqs:us-east-1:123456789:my-queue'
-const SNS_ARN     = 'arn:aws:sns:us-east-1:123456789:my-topic'
+const SQS_ARN = 'arn:aws:sqs:us-east-1:123456789:my-queue'
+const SNS_ARN = 'arn:aws:sns:us-east-1:123456789:my-topic'
 const CHILD_SFN_ARN = 'arn:aws:states:us-east-1:123456789:stateMachine:child-machine'
 
-function listResponse(machines: { stateMachineArn: string; name: string }[]): { stateMachines: { stateMachineArn: string; name: string }[] } {
+function listResponse(machines: { stateMachineArn: string; name: string }[]): {
+  stateMachines: { stateMachineArn: string; name: string }[]
+} {
   return { stateMachines: machines }
 }
 
@@ -45,9 +47,9 @@ describe('listStateMachines', () => {
       States: {
         InvokeLambda: {
           Type: 'Task',
-          Resource: LAMBDA_ARN,
-        },
-      },
+          Resource: LAMBDA_ARN
+        }
+      }
     })
     mockSend
       .mockResolvedValueOnce(listResponse([{ stateMachineArn: MACHINE_ARN, name: 'my-machine' }]))
@@ -65,9 +67,9 @@ describe('listStateMachines', () => {
         InvokeSdk: {
           Type: 'Task',
           Resource: 'arn:aws:states:::lambda:invoke',
-          Parameters: { FunctionName: LAMBDA_ARN },
-        },
-      },
+          Parameters: { FunctionName: LAMBDA_ARN }
+        }
+      }
     })
     mockSend
       .mockResolvedValueOnce(listResponse([{ stateMachineArn: MACHINE_ARN, name: 'my-machine' }]))
@@ -84,8 +86,8 @@ describe('listStateMachines', () => {
       States: {
         Step1: { Type: 'Task', Resource: LAMBDA_ARN },
         Step2: { Type: 'Task', Resource: LAMBDA_ARN },
-        Step3: { Type: 'Task', Resource: LAMBDA_ARN2 },
-      },
+        Step3: { Type: 'Task', Resource: LAMBDA_ARN2 }
+      }
     })
     mockSend
       .mockResolvedValueOnce(listResponse([{ stateMachineArn: MACHINE_ARN, name: 'my-machine' }]))
@@ -103,8 +105,8 @@ describe('listStateMachines', () => {
     const definition = JSON.stringify({
       States: {
         SdkDynamo: { Type: 'Task', Resource: 'arn:aws:dynamodb:us-east-1:123:table/my-table' },
-        Wait: { Type: 'Wait', Seconds: 10 },
-      },
+        Wait: { Type: 'Wait', Seconds: 10 }
+      }
     })
     mockSend
       .mockResolvedValueOnce(listResponse([{ stateMachineArn: MACHINE_ARN, name: 'my-machine' }]))
@@ -119,8 +121,8 @@ describe('listStateMachines', () => {
     const definition = JSON.stringify({
       States: {
         SendMessage: { Type: 'Task', Resource: SQS_ARN },
-        PublishTopic: { Type: 'Task', Resource: SNS_ARN },
-      },
+        PublishTopic: { Type: 'Task', Resource: SNS_ARN }
+      }
     })
     mockSend
       .mockResolvedValueOnce(listResponse([{ stateMachineArn: MACHINE_ARN, name: 'my-machine' }]))
@@ -138,8 +140,8 @@ describe('listStateMachines', () => {
   it('emits trigger integration for nested SFN execution target', async () => {
     const definition = JSON.stringify({
       States: {
-        RunChild: { Type: 'Task', Resource: CHILD_SFN_ARN },
-      },
+        RunChild: { Type: 'Task', Resource: CHILD_SFN_ARN }
+      }
     })
     mockSend
       .mockResolvedValueOnce(listResponse([{ stateMachineArn: MACHINE_ARN, name: 'my-machine' }]))
@@ -156,8 +158,8 @@ describe('listStateMachines', () => {
       States: {
         Step1: { Type: 'Task', Resource: SQS_ARN },
         Step2: { Type: 'Task', Resource: SQS_ARN },
-        Step3: { Type: 'Task', Resource: LAMBDA_ARN },
-      },
+        Step3: { Type: 'Task', Resource: LAMBDA_ARN }
+      }
     })
     mockSend
       .mockResolvedValueOnce(listResponse([{ stateMachineArn: MACHINE_ARN, name: 'my-machine' }]))

@@ -2,7 +2,7 @@ import type { CloudNode } from '../types/cloud'
 
 export interface DeletableResult {
   deletable: boolean
-  reason?: string  // shown on hover in context menu when deletable: false
+  reason?: string // shown on hover in context menu when deletable: false
 }
 
 export function isNodeDeletable(node: CloudNode): DeletableResult {
@@ -11,7 +11,10 @@ export function isNodeDeletable(node: CloudNode): DeletableResult {
     return { deletable: false, reason: 'Cannot delete the default EventBridge bus' }
   }
   // RDS with deletion protection enabled
-  if (node.type === 'rds' && (node.metadata as { deletionProtection?: boolean }).deletionProtection === true) {
+  if (
+    node.type === 'rds' &&
+    (node.metadata as { deletionProtection?: boolean }).deletionProtection === true
+  ) {
     return { deletable: false, reason: 'RDS deletion protection is enabled — disable it first' }
   }
   // CloudFront without ETag — cannot issue the delete command

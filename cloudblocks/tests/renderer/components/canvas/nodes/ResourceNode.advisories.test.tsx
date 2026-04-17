@@ -6,11 +6,11 @@ import type { NodeProps } from '@xyflow/react'
 
 vi.mock('@xyflow/react', () => ({
   Handle: () => null,
-  Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' },
+  Position: { Top: 'top', Bottom: 'bottom', Left: 'left', Right: 'right' }
 }))
 
 vi.mock('../../../../../src/renderer/components/canvas/nodes/ActionRail', () => ({
-  ActionRail: () => null,
+  ActionRail: () => null
 }))
 
 function makeProps(nodeType = 'ec2', metadata: Record<string, unknown> = {}): NodeProps {
@@ -28,8 +28,8 @@ function makeProps(nodeType = 'ec2', metadata: Record<string, unknown> = {}): No
       nodeType,
       status: 'running',
       region: 'us-east-1',
-      metadata,
-    },
+      metadata
+    }
   } as unknown as NodeProps
 }
 

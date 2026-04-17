@@ -8,22 +8,40 @@ interface Props {
 }
 
 const inp = (err: boolean): React.CSSProperties => ({
-  width: '100%', background: 'var(--cb-bg-panel)', border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`,
-  borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10,
-  boxSizing: 'border-box' as const,
+  width: '100%',
+  background: 'var(--cb-bg-panel)',
+  border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`,
+  borderRadius: 3,
+  padding: '3px 6px',
+  color: 'var(--cb-text-primary)',
+  fontFamily: 'monospace',
+  fontSize: 10,
+  boxSizing: 'border-box' as const
 })
-const lbl: React.CSSProperties = { fontSize: 9, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: 2, marginTop: 8 }
+const lbl: React.CSSProperties = {
+  fontSize: 9,
+  color: 'var(--cb-text-muted)',
+  textTransform: 'uppercase',
+  marginBottom: 2,
+  marginTop: 8
+}
 const selStyle: React.CSSProperties = {
-  width: '100%', background: 'var(--cb-bg-panel)', border: '1px solid var(--cb-border)',
-  borderRadius: 3, padding: '3px 6px', color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: 10,
-  boxSizing: 'border-box' as const,
+  width: '100%',
+  background: 'var(--cb-bg-panel)',
+  border: '1px solid var(--cb-border)',
+  borderRadius: 3,
+  padding: '3px 6px',
+  color: 'var(--cb-text-primary)',
+  fontFamily: 'monospace',
+  fontSize: 10,
+  boxSizing: 'border-box' as const
 }
 
 const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'ANY'] as const
 
 export function ApigwRouteForm({ apiId, onChange, showErrors }: Props): React.JSX.Element {
   const [method, setMethod] = useState<string>('GET')
-  const [path, setPath]     = useState('')
+  const [path, setPath] = useState('')
 
   const err = showErrors ?? false
 
@@ -36,16 +54,30 @@ export function ApigwRouteForm({ apiId, onChange, showErrors }: Props): React.JS
   return (
     <div>
       <div style={lbl}>API ID</div>
-      <div style={{ fontSize: 10, color: 'var(--cb-text-muted)', fontFamily: 'monospace', padding: '2px 0' }}>{apiId}</div>
+      <div
+        style={{
+          fontSize: 10,
+          color: 'var(--cb-text-muted)',
+          fontFamily: 'monospace',
+          padding: '2px 0'
+        }}
+      >
+        {apiId}
+      </div>
 
       <div style={lbl}>Method</div>
       <select
         style={selStyle}
         value={method}
-        onChange={(e) => { setMethod(e.target.value); emit(e.target.value, path) }}
+        onChange={(e) => {
+          setMethod(e.target.value)
+          emit(e.target.value, path)
+        }}
       >
         {METHODS.map((m) => (
-          <option key={m} value={m}>{m}</option>
+          <option key={m} value={m}>
+            {m}
+          </option>
         ))}
       </select>
 
@@ -54,7 +86,10 @@ export function ApigwRouteForm({ apiId, onChange, showErrors }: Props): React.JS
         style={inp(pathError)}
         value={path}
         placeholder="/users"
-        onChange={(e) => { setPath(e.target.value); emit(method, e.target.value) }}
+        onChange={(e) => {
+          setPath(e.target.value)
+          emit(method, e.target.value)
+        }}
       />
       {pathError && (
         <div style={{ fontSize: 8, color: '#ff5f57', marginTop: 2 }}>Path must start with /</div>

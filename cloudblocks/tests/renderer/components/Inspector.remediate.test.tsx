@@ -8,15 +8,15 @@ import type { CloudNode } from '../../../src/renderer/types/cloud'
 // ---- Mocks (same pattern as Inspector.test.tsx) ----------------------------
 
 const saveAnnotationsMock = vi.fn().mockResolvedValue(undefined)
-const analyzeIamMock      = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
+const analyzeIamMock = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
 
 Object.defineProperty(window, 'terminus', {
   value: { saveAnnotations: saveAnnotationsMock, analyzeIam: analyzeIamMock },
-  writable: true,
+  writable: true
 })
 
 vi.mock('../../../src/renderer/components/IamAdvisor', () => ({
-  IamAdvisor: () => null,
+  IamAdvisor: () => null
 }))
 
 // ---------------------------------------------------------------------------
@@ -29,7 +29,7 @@ function baseNode(overrides: Partial<CloudNode> = {}): CloudNode {
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    ...overrides,
+    ...overrides
   } as CloudNode
 }
 
@@ -52,7 +52,12 @@ describe('Inspector REMEDIATE section', () => {
   beforeEach(() => {
     saveAnnotationsMock.mockClear()
     analyzeIamMock.mockClear()
-    useUIStore.setState({ selectedNodeId: null, annotations: {}, selectedEdgeId: null, selectedEdgeInfo: null })
+    useUIStore.setState({
+      selectedNodeId: null,
+      annotations: {},
+      selectedEdgeId: null,
+      selectedEdgeInfo: null
+    })
     useCloudStore.setState({ nodes: [], importedNodes: [] })
   })
 
@@ -72,20 +77,24 @@ describe('Inspector REMEDIATE section', () => {
   })
 
   it('shown for matched node with commands', () => {
-    setup(baseNode({
-      driftStatus: 'matched',
-      metadata: { runtime: 'python3.9' },
-      tfMetadata: { runtime: 'python3.11' },
-    }))
+    setup(
+      baseNode({
+        driftStatus: 'matched',
+        metadata: { runtime: 'python3.9' },
+        tfMetadata: { runtime: 'python3.11' }
+      })
+    )
     expect(screen.getByText('REMEDIATE')).toBeTruthy()
   })
 
   it('shows "Manual remediation required" when matched but no supported diff', () => {
-    setup(baseNode({
-      driftStatus: 'matched',
-      metadata: { tags: '{}' },
-      tfMetadata: { tags: '{"env":"prod"}' },
-    }))
+    setup(
+      baseNode({
+        driftStatus: 'matched',
+        metadata: { tags: '{}' },
+        tfMetadata: { tags: '{"env":"prod"}' }
+      })
+    )
     expect(screen.getByText(/Manual remediation required/)).toBeTruthy()
   })
 
@@ -101,7 +110,11 @@ describe('Inspector REMEDIATE section', () => {
 
   it('shows Executing… while running, then ✓ Done on success', async () => {
     let resolve!: (v: { code: number }) => void
-    const onRemediate = vi.fn<OnRemediate>().mockReturnValue(new Promise((r) => { resolve = r }))
+    const onRemediate = vi.fn<OnRemediate>().mockReturnValue(
+      new Promise((r) => {
+        resolve = r
+      })
+    )
     setup(baseNode({ driftStatus: 'unmanaged' }), onRemediate)
 
     fireEvent.click(screen.getByText('Execute'))

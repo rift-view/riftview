@@ -9,7 +9,8 @@ const mockDynamoClient = { send: mockDynamoSend } as unknown as DynamoDBClient
 const mockLambdaClient = { send: mockLambdaSend } as unknown as LambdaClient
 
 const TABLE_NAME = 'my-table'
-const STREAM_ARN = 'arn:aws:dynamodb:us-east-1:123456789:table/my-table/stream/2024-01-01T00:00:00.000'
+const STREAM_ARN =
+  'arn:aws:dynamodb:us-east-1:123456789:table/my-table/stream/2024-01-01T00:00:00.000'
 const FUNCTION_ARN = 'arn:aws:lambda:us-east-1:123456789:function:my-fn'
 
 describe('listTables', () => {
@@ -36,7 +37,7 @@ describe('listTables', () => {
       .mockResolvedValueOnce({ TableNames: [TABLE_NAME] })
       .mockResolvedValueOnce({ Table: { TableName: TABLE_NAME, LatestStreamArn: STREAM_ARN } })
     mockLambdaSend.mockResolvedValueOnce({
-      EventSourceMappings: [{ FunctionArn: FUNCTION_ARN }],
+      EventSourceMappings: [{ FunctionArn: FUNCTION_ARN }]
     })
 
     const nodes = await listTables(mockDynamoClient, mockLambdaClient, 'us-east-1')

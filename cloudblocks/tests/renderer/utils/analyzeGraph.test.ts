@@ -10,14 +10,14 @@ function makeApigw(id = 'apigw-1', integrations: CloudNode['integrations'] = [])
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    integrations,
+    integrations
   }
 }
 
 function makeLambda(
   id = 'lambda-1',
   timeout: number | undefined,
-  integrations: CloudNode['integrations'] = [],
+  integrations: CloudNode['integrations'] = []
 ): CloudNode {
   return {
     id,
@@ -26,11 +26,14 @@ function makeLambda(
     status: 'running',
     region: 'us-east-1',
     metadata: timeout !== undefined ? { timeout } : {},
-    integrations,
+    integrations
   }
 }
 
-function makeRds(id = 'rds-1', opts: { multiAZ?: boolean; readReplicaCount?: number } = {}): CloudNode {
+function makeRds(
+  id = 'rds-1',
+  opts: { multiAZ?: boolean; readReplicaCount?: number } = {}
+): CloudNode {
   return {
     id,
     type: 'rds',
@@ -39,8 +42,8 @@ function makeRds(id = 'rds-1', opts: { multiAZ?: boolean; readReplicaCount?: num
     region: 'us-east-1',
     metadata: {
       ...(opts.multiAZ !== undefined ? { multiAZ: opts.multiAZ } : {}),
-      ...(opts.readReplicaCount !== undefined ? { readReplicaCount: opts.readReplicaCount } : {}),
-    },
+      ...(opts.readReplicaCount !== undefined ? { readReplicaCount: opts.readReplicaCount } : {})
+    }
   }
 }
 
@@ -103,14 +106,20 @@ describe('analyzeGraph — apigw-lambda-rds-no-guardrails', () => {
   it('does not fire when there is no APIGW in the graph', () => {
     const rds = makeRds('rds-1')
     const lambda = makeLambda('lambda-1', undefined, [{ targetId: 'rds-1', edgeType: 'trigger' }])
-    expect(analyzeGraph([lambda, rds]).filter((a) => a.ruleId === 'apigw-lambda-rds-no-guardrails')).toHaveLength(0)
+    expect(
+      analyzeGraph([lambda, rds]).filter((a) => a.ruleId === 'apigw-lambda-rds-no-guardrails')
+    ).toHaveLength(0)
   })
 
   it('does not fire when APIGW has no integrations', () => {
     const rds = makeRds('rds-1')
     const lambda = makeLambda('lambda-1', undefined, [{ targetId: 'rds-1', edgeType: 'trigger' }])
     const apigw = makeApigw('apigw-1', [])
-    expect(analyzeGraph([apigw, lambda, rds]).filter((a) => a.ruleId === 'apigw-lambda-rds-no-guardrails')).toHaveLength(0)
+    expect(
+      analyzeGraph([apigw, lambda, rds]).filter(
+        (a) => a.ruleId === 'apigw-lambda-rds-no-guardrails'
+      )
+    ).toHaveLength(0)
   })
 
   it('advisory title mentions the chain', () => {
@@ -118,7 +127,9 @@ describe('analyzeGraph — apigw-lambda-rds-no-guardrails', () => {
     const lambda = makeLambda('lambda-1', undefined, [{ targetId: 'rds-1', edgeType: 'trigger' }])
     const apigw = makeApigw('apigw-1', [{ targetId: 'lambda-1', edgeType: 'trigger' }])
 
-    const advisory = analyzeGraph([apigw, lambda, rds]).find((a) => a.ruleId === 'apigw-lambda-rds-no-guardrails')
+    const advisory = analyzeGraph([apigw, lambda, rds]).find(
+      (a) => a.ruleId === 'apigw-lambda-rds-no-guardrails'
+    )
     expect(advisory).toBeDefined()
     expect(advisory!.title).toBe('Unguarded API→Lambda→RDS chain')
     expect(advisory!.detail).toContain('My API')
@@ -132,7 +143,7 @@ describe('analyzeGraph — apigw-lambda-rds-no-guardrails', () => {
 function makeApigwWithThrottling(
   id = 'apigw-1',
   throttlingBurstLimit: number | undefined,
-  integrations: CloudNode['integrations'] = [],
+  integrations: CloudNode['integrations'] = []
 ): CloudNode {
   return {
     id,
@@ -141,14 +152,14 @@ function makeApigwWithThrottling(
     status: 'running',
     region: 'us-east-1',
     metadata: throttlingBurstLimit !== undefined ? { throttlingBurstLimit } : {},
-    integrations,
+    integrations
   }
 }
 
 function makeLambdaWithConcurrency(
   id = 'lambda-1',
   reservedConcurrentExecutions: number | null | undefined,
-  integrations: CloudNode['integrations'] = [],
+  integrations: CloudNode['integrations'] = []
 ): CloudNode {
   return {
     id,
@@ -156,15 +167,16 @@ function makeLambdaWithConcurrency(
     label: 'My Function',
     status: 'running',
     region: 'us-east-1',
-    metadata:
-      reservedConcurrentExecutions !== undefined
-        ? { reservedConcurrentExecutions }
-        : {},
-    integrations,
+    metadata: reservedConcurrentExecutions !== undefined ? { reservedConcurrentExecutions } : {},
+    integrations
   }
 }
 
-function makeSqs(id = 'sqs-1', hasDlq = false, integrations: CloudNode['integrations'] = []): CloudNode {
+function makeSqs(
+  id = 'sqs-1',
+  hasDlq = false,
+  integrations: CloudNode['integrations'] = []
+): CloudNode {
   return {
     id,
     type: 'sqs',
@@ -172,7 +184,7 @@ function makeSqs(id = 'sqs-1', hasDlq = false, integrations: CloudNode['integrat
     status: 'running',
     region: 'us-east-1',
     metadata: { hasDlq },
-    integrations,
+    integrations
   }
 }
 
@@ -184,7 +196,7 @@ function makeSns(id = 'sns-1', integrations: CloudNode['integrations'] = []): Cl
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    integrations,
+    integrations
   }
 }
 
@@ -193,7 +205,9 @@ function makeSns(id = 'sns-1', integrations: CloudNode['integrations'] = []): Cl
 describe('analyzeGraph — apigw-lambda-no-concurrency-limit', () => {
   it('fires when APIGW has no throttlingBurstLimit and Lambda has reservedConcurrentExecutions=null (scanner fetched, no limit)', () => {
     const lambda = makeLambdaWithConcurrency('lambda-1', null)
-    const apigw = makeApigwWithThrottling('apigw-1', undefined, [{ targetId: 'lambda-1', edgeType: 'trigger' }])
+    const apigw = makeApigwWithThrottling('apigw-1', undefined, [
+      { targetId: 'lambda-1', edgeType: 'trigger' }
+    ])
 
     const result = analyzeGraph([apigw, lambda])
     const advisory = result.find((a) => a.ruleId === 'apigw-lambda-no-concurrency-limit')
@@ -204,7 +218,9 @@ describe('analyzeGraph — apigw-lambda-no-concurrency-limit', () => {
 
   it('does NOT fire when reservedConcurrentExecutions is undefined (scanner did not fetch)', () => {
     const lambda = makeLambdaWithConcurrency('lambda-1', undefined)
-    const apigw = makeApigwWithThrottling('apigw-1', undefined, [{ targetId: 'lambda-1', edgeType: 'trigger' }])
+    const apigw = makeApigwWithThrottling('apigw-1', undefined, [
+      { targetId: 'lambda-1', edgeType: 'trigger' }
+    ])
 
     const result = analyzeGraph([apigw, lambda])
     expect(result.filter((a) => a.ruleId === 'apigw-lambda-no-concurrency-limit')).toHaveLength(0)
@@ -212,7 +228,9 @@ describe('analyzeGraph — apigw-lambda-no-concurrency-limit', () => {
 
   it('does NOT fire when APIGW has throttlingBurstLimit set', () => {
     const lambda = makeLambdaWithConcurrency('lambda-1', null)
-    const apigw = makeApigwWithThrottling('apigw-1', 1000, [{ targetId: 'lambda-1', edgeType: 'trigger' }])
+    const apigw = makeApigwWithThrottling('apigw-1', 1000, [
+      { targetId: 'lambda-1', edgeType: 'trigger' }
+    ])
 
     const result = analyzeGraph([apigw, lambda])
     expect(result.filter((a) => a.ruleId === 'apigw-lambda-no-concurrency-limit')).toHaveLength(0)
@@ -220,7 +238,9 @@ describe('analyzeGraph — apigw-lambda-no-concurrency-limit', () => {
 
   it('does NOT fire when Lambda has reservedConcurrentExecutions set to a positive number', () => {
     const lambda = makeLambdaWithConcurrency('lambda-1', 100)
-    const apigw = makeApigwWithThrottling('apigw-1', undefined, [{ targetId: 'lambda-1', edgeType: 'trigger' }])
+    const apigw = makeApigwWithThrottling('apigw-1', undefined, [
+      { targetId: 'lambda-1', edgeType: 'trigger' }
+    ])
 
     const result = analyzeGraph([apigw, lambda])
     expect(result.filter((a) => a.ruleId === 'apigw-lambda-no-concurrency-limit')).toHaveLength(0)
@@ -228,7 +248,9 @@ describe('analyzeGraph — apigw-lambda-no-concurrency-limit', () => {
 
   it('does NOT fire when Lambda has reservedConcurrentExecutions = 0 (explicitly throttled to zero)', () => {
     const lambda = makeLambdaWithConcurrency('lambda-1', 0)
-    const apigw = makeApigwWithThrottling('apigw-1', undefined, [{ targetId: 'lambda-1', edgeType: 'trigger' }])
+    const apigw = makeApigwWithThrottling('apigw-1', undefined, [
+      { targetId: 'lambda-1', edgeType: 'trigger' }
+    ])
 
     const result = analyzeGraph([apigw, lambda])
     expect(result.filter((a) => a.ruleId === 'apigw-lambda-no-concurrency-limit')).toHaveLength(0)
@@ -247,7 +269,7 @@ describe('analyzeGraph — lambda-sqs-no-dlq', () => {
       status: 'running',
       region: 'us-east-1',
       metadata: {},
-      integrations: [{ targetId: 'sqs-1', edgeType: 'trigger' }],
+      integrations: [{ targetId: 'sqs-1', edgeType: 'trigger' }]
     }
 
     const result = analyzeGraph([lambda, sqs])
@@ -268,7 +290,7 @@ describe('analyzeGraph — lambda-sqs-no-dlq', () => {
       status: 'running',
       region: 'us-east-1',
       metadata: {},
-      integrations: [{ targetId: 'sqs-1', edgeType: 'trigger' }],
+      integrations: [{ targetId: 'sqs-1', edgeType: 'trigger' }]
     }
 
     const result = analyzeGraph([lambda, sqs])
@@ -286,7 +308,7 @@ describe('analyzeGraph — sns-sqs-lambda-no-dlq', () => {
       label: 'My Function',
       status: 'running',
       region: 'us-east-1',
-      metadata: {},
+      metadata: {}
     }
     const sqs = makeSqs('sqs-1', false, [{ targetId: 'lambda-1', edgeType: 'trigger' }])
     const sns = makeSns('sns-1', [{ targetId: 'sqs-1', edgeType: 'trigger' }])
@@ -308,7 +330,7 @@ describe('analyzeGraph — sns-sqs-lambda-no-dlq', () => {
       label: 'My Function',
       status: 'running',
       region: 'us-east-1',
-      metadata: {},
+      metadata: {}
     }
     const sqs = makeSqs('sqs-1', true, [{ targetId: 'lambda-1', edgeType: 'trigger' }])
     const sns = makeSns('sns-1', [{ targetId: 'sqs-1', edgeType: 'trigger' }])

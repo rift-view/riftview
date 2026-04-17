@@ -8,38 +8,32 @@ import type { CloudNode } from '../../../src/renderer/types/cloud'
 // ---- Mocks ----------------------------------------------------------------
 
 const saveAnnotationsMock = vi.fn().mockResolvedValue(undefined)
-const analyzeIamMock      = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
+const analyzeIamMock = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
 
 Object.defineProperty(window, 'terminus', {
   value: { saveAnnotations: saveAnnotationsMock, analyzeIam: analyzeIamMock },
-  writable: true,
+  writable: true
 })
 
 vi.mock('../../../src/renderer/components/IamAdvisor', () => ({
-  IamAdvisor: () => null,
+  IamAdvisor: () => null
 }))
 
 // ---- Helpers ---------------------------------------------------------------
 
 const EC2_NODE: CloudNode = {
-  id:       'i-001',
-  type:     'ec2',
-  label:    'web-server',
-  status:   'running',
-  region:   'us-east-1',
-  metadata: {},
+  id: 'i-001',
+  type: 'ec2',
+  label: 'web-server',
+  status: 'running',
+  region: 'us-east-1',
+  metadata: {}
 }
 
 const noop = (): void => {}
 
 function renderInspector(): ReturnType<typeof render> {
-  return render(
-    <Inspector
-      onDelete={noop}
-      onEdit={noop}
-      onQuickAction={noop}
-    />
-  )
+  return render(<Inspector onDelete={noop} onEdit={noop} onQuickAction={noop} />)
 }
 
 // ---- Tests -----------------------------------------------------------------
@@ -48,7 +42,12 @@ describe('Inspector — Notes section', () => {
   beforeEach(() => {
     saveAnnotationsMock.mockClear()
     useCloudStore.setState({ nodes: [EC2_NODE], importedNodes: [] })
-    useUIStore.setState({ selectedNodeId: 'i-001', annotations: {}, selectedEdgeId: null, selectedEdgeInfo: null })
+    useUIStore.setState({
+      selectedNodeId: 'i-001',
+      annotations: {},
+      selectedEdgeId: null,
+      selectedEdgeInfo: null
+    })
   })
 
   it('renders the Notes label when a node is selected', () => {

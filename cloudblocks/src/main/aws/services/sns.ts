@@ -15,13 +15,13 @@ export async function listTopics(client: SNSClient, region: string): Promise<Clo
       return topics
     },
     map: (item, region): CloudNode => ({
-      id:       item.TopicArn ?? '',
-      type:     'sns',
-      label:    item.TopicArn?.split(':').pop() ?? '',
-      status:   'running',
+      id: item.TopicArn ?? '',
+      type: 'sns',
+      label: item.TopicArn?.split(':').pop() ?? '',
+      status: 'running',
       region,
-      metadata: {},
-    }),
+      metadata: {}
+    })
   })
 
   const enrichedNodes = await Promise.all(
@@ -31,18 +31,21 @@ export async function listTopics(client: SNSClient, region: string): Promise<Clo
         .catch(() => ({ Subscriptions: [] }))
 
       const integrations: { targetId: string; edgeType: EdgeType }[] = (subs.Subscriptions ?? [])
-        .filter((s): s is typeof s & { Endpoint: string } => typeof s.Endpoint === 'string' && s.Endpoint.startsWith('arn:'))
+        .filter(
+          (s): s is typeof s & { Endpoint: string } =>
+            typeof s.Endpoint === 'string' && s.Endpoint.startsWith('arn:')
+        )
         .map((s) => ({
           targetId: s.Endpoint,
-          edgeType: 'subscription' as EdgeType,
+          edgeType: 'subscription' as EdgeType
         }))
 
       const enriched: CloudNode = {
         ...node,
-        metadata: { subscriptionCount: integrations.length },
+        metadata: { subscriptionCount: integrations.length }
       }
       return integrations.length > 0 ? { ...enriched, integrations } : enriched
-    }),
+    })
   )
 
   return enrichedNodes

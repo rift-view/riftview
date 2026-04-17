@@ -1,6 +1,11 @@
 // src/main/plugin/awsPlugin.ts
 import { createClients, type AwsClients } from '../aws/client'
-import { describeInstances, describeVpcs, describeSubnets, describeSecurityGroups } from '../aws/services/ec2'
+import {
+  describeInstances,
+  describeVpcs,
+  describeSubnets,
+  describeSecurityGroups
+} from '../aws/services/ec2'
 import { describeDBInstances } from '../aws/services/rds'
 import { listBuckets } from '../aws/services/s3'
 import { listFunctions } from '../aws/services/lambda'
@@ -42,71 +47,295 @@ type ServiceScanner = (clients: AwsClients, region: string) => Promise<CloudNode
 // Maps the service key used in catch_() calls to its scanner function.
 // Used by scanService() to scope a retry to a single named service.
 const SERVICE_SCANNERS: Record<string, ServiceScanner> = {
-  'ec2:instances':  (c, r) => describeInstances(c.ec2, r),
-  'ec2:vpcs':       (c, r) => describeVpcs(c.ec2, r),
-  'ec2:subnets':    (c, r) => describeSubnets(c.ec2, r),
+  'ec2:instances': (c, r) => describeInstances(c.ec2, r),
+  'ec2:vpcs': (c, r) => describeVpcs(c.ec2, r),
+  'ec2:subnets': (c, r) => describeSubnets(c.ec2, r),
   'security-group': (c, r) => describeSecurityGroups(c.ec2, r),
-  'rds':            (c, r) => describeDBInstances(c.rds, r),
-  's3':             (c, r) => listBuckets(c.s3, r),
-  'lambda':         (c, r) => listFunctions(c.lambda, r),
-  'alb':            (c, r) => describeLoadBalancers(c.alb, r),
-  'acm':            (c)    => listCertificates(c.acm),
-  'cloudfront':     (c)    => listDistributions(c.cloudfront),
-  'apigw':          (c, r) => listApis(c.apigw, r),
-  'igw':            (c, r) => listInternetGateways(c.ec2, r),
-  'nat-gateway':    (c, r) => listNatGateways(c.ec2, r),
-  'sqs':            (c, r) => listQueues(c.sqs, c.lambda, r),
-  'secret':         (c, r) => listSecrets(c.secrets, r),
-  'ecr-repo':       (c, r) => listRepositories(c.ecr, r),
-  'sns':            (c, r) => listTopics(c.sns, r),
-  'dynamo':         (c, r) => listTables(c.dynamo, c.lambda, r),
-  'ssm-param':      (c, r) => listParameters(c.ssm, r),
-  'r53-zone':       (c)    => listHostedZones(c.r53),
-  'sfn':            (c, r) => listStateMachines(c.sfn, r),
-  'eventbridge-bus':(c, r) => listEventBuses(c.eventbridge, r),
-  'ses':            (c, r) => listIdentities(c.ses, r),
-  'cognito':        (c, r) => listUserPools(c.cognito, r),
-  'kinesis':        (c, r) => listStreams(c.kinesis, c.lambda, r),
-  'ecs':            (c, r) => listEcsServices(c.ecs, r),
-  'elasticache':    (c, r) => listCacheClusters(c.elasticache, r),
-  'eks':            (c, r) => listEksClusters(c.eks, r),
-  'opensearch':     (c, r) => listOpenSearchDomains(c.opensearch, r),
-  'msk':            (c, r) => listMskClusters(c.msk, c.lambda, r),
+  rds: (c, r) => describeDBInstances(c.rds, r),
+  s3: (c, r) => listBuckets(c.s3, r),
+  lambda: (c, r) => listFunctions(c.lambda, r),
+  alb: (c, r) => describeLoadBalancers(c.alb, r),
+  acm: (c) => listCertificates(c.acm),
+  cloudfront: (c) => listDistributions(c.cloudfront),
+  apigw: (c, r) => listApis(c.apigw, r),
+  igw: (c, r) => listInternetGateways(c.ec2, r),
+  'nat-gateway': (c, r) => listNatGateways(c.ec2, r),
+  sqs: (c, r) => listQueues(c.sqs, c.lambda, r),
+  secret: (c, r) => listSecrets(c.secrets, r),
+  'ecr-repo': (c, r) => listRepositories(c.ecr, r),
+  sns: (c, r) => listTopics(c.sns, r),
+  dynamo: (c, r) => listTables(c.dynamo, c.lambda, r),
+  'ssm-param': (c, r) => listParameters(c.ssm, r),
+  'r53-zone': (c) => listHostedZones(c.r53),
+  sfn: (c, r) => listStateMachines(c.sfn, r),
+  'eventbridge-bus': (c, r) => listEventBuses(c.eventbridge, r),
+  ses: (c, r) => listIdentities(c.ses, r),
+  cognito: (c, r) => listUserPools(c.cognito, r),
+  kinesis: (c, r) => listStreams(c.kinesis, c.lambda, r),
+  ecs: (c, r) => listEcsServices(c.ecs, r),
+  elasticache: (c, r) => listCacheClusters(c.elasticache, r),
+  eks: (c, r) => listEksClusters(c.eks, r),
+  opensearch: (c, r) => listOpenSearchDomains(c.opensearch, r),
+  msk: (c, r) => listMskClusters(c.msk, c.lambda, r)
 }
 
 const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
-  ec2:               { label: 'EC2',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'EC2',    displayName: 'EC2 Instance',              hasCreate: true  },
-  vpc:               { label: 'VPC',    borderColor: '#1976D2', badgeColor: '#1976D2', shortLabel: 'VPC',    displayName: 'VPC',                       hasCreate: true  },
-  subnet:            { label: 'SUBNET', borderColor: '#4CAF50', badgeColor: '#4CAF50', shortLabel: 'SUBNET', displayName: 'Subnet',                    hasCreate: true  },
-  rds:               { label: 'RDS',    borderColor: '#4CAF50', badgeColor: '#4CAF50', shortLabel: 'RDS',    displayName: 'RDS Instance',              hasCreate: true  },
-  s3:                { label: 'S3',     borderColor: '#64b5f6', badgeColor: '#64b5f6', shortLabel: 'S3',     displayName: 'S3 Bucket',                 hasCreate: true  },
-  lambda:            { label: 'λ',      borderColor: '#64b5f6', badgeColor: '#64b5f6', shortLabel: 'λ',      displayName: 'Lambda Function',           hasCreate: true  },
-  alb:               { label: 'ALB',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'ALB',    displayName: 'Load Balancer',             hasCreate: true  },
-  'security-group':  { label: 'SG',     borderColor: '#9c27b0', badgeColor: '#9c27b0', shortLabel: 'SG',     displayName: 'Security Group',            hasCreate: true  },
-  igw:               { label: 'IGW',    borderColor: '#4CAF50', badgeColor: '#4CAF50', shortLabel: 'IGW',    displayName: 'Internet Gateway',          hasCreate: false },
-  acm:               { label: 'ACM',    borderColor: '#64b5f6', badgeColor: '#64b5f6', shortLabel: 'ACM',    displayName: 'ACM Certificate',           hasCreate: true  },
-  cloudfront:        { label: 'CF',     borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'CF',     displayName: 'CloudFront Distribution',   hasCreate: true  },
-  apigw:             { label: 'APIGW',  borderColor: '#8b5cf6', badgeColor: '#8b5cf6', shortLabel: 'APIGW',  displayName: 'API Gateway',               hasCreate: true  },
-  'apigw-route':     { label: 'ROUTE',  borderColor: '#22c55e', badgeColor: '#22c55e', shortLabel: 'ROUTE',  displayName: 'API Gateway Route',         hasCreate: true  },
-  sqs:               { label: 'SQS',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'SQS',    displayName: 'SQS Queue',                 hasCreate: true  },
-  secret:            { label: 'SECRET', borderColor: '#22c55e', badgeColor: '#22c55e', shortLabel: 'SECRET', displayName: 'Secrets Manager Secret',    hasCreate: true  },
-  'ecr-repo':        { label: 'ECR',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'ECR',    displayName: 'ECR Repository',            hasCreate: true  },
-  sns:               { label: 'SNS',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'SNS',    displayName: 'SNS Topic',                 hasCreate: true  },
-  dynamo:            { label: 'DDB',    borderColor: '#64b5f6', badgeColor: '#64b5f6', shortLabel: 'DDB',    displayName: 'DynamoDB Table',            hasCreate: true  },
-  'ssm-param':       { label: 'SSM',    borderColor: '#22c55e', badgeColor: '#22c55e', shortLabel: 'SSM',    displayName: 'SSM Parameter',             hasCreate: true  },
-  'nat-gateway':     { label: 'NAT',    borderColor: '#4CAF50', badgeColor: '#4CAF50', shortLabel: 'NAT',    displayName: 'NAT Gateway',               hasCreate: false },
-  'r53-zone':        { label: 'R53',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'R53',    displayName: 'Route 53 Hosted Zone',      hasCreate: true  },
-  sfn:               { label: 'SFN',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'SFN',    displayName: 'Step Functions State Machine', hasCreate: true },
-  'eventbridge-bus': { label: 'EB',     borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'EB',     displayName: 'EventBridge Bus',           hasCreate: true  },
-  ses:               { label: 'SES',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'SES',    displayName: 'SES Identity',               hasCreate: false },
-  cognito:           { label: 'COGNITO',borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'COGNITO',displayName: 'Cognito User Pool',           hasCreate: false },
-  kinesis:           { label: 'KDS',    borderColor: '#8b5cf6', badgeColor: '#8b5cf6', shortLabel: 'KDS',    displayName: 'Kinesis Data Stream',         hasCreate: false },
-  ecs:               { label: 'ECS',   borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'ECS',   displayName: 'ECS Service',                 hasCreate: false },
-  elasticache:       { label: 'REDIS', borderColor: '#22c55e', badgeColor: '#22c55e', shortLabel: 'REDIS', displayName: 'ElastiCache Cluster',          hasCreate: false },
-  eks:               { label: 'EKS',   borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'EKS',   displayName: 'EKS Cluster',                 hasCreate: false },
-  opensearch:        { label: 'OS',    borderColor: '#005EB8', badgeColor: '#005EB8', shortLabel: 'OS',    displayName: 'OpenSearch Domain',           hasCreate: false },
-  msk:               { label: 'MSK',   borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'MSK',   displayName: 'MSK Cluster',                 hasCreate: false },
-  unknown:           { label: '?',      borderColor: '#6b7280', badgeColor: '#6b7280', shortLabel: '?',      displayName: 'Unknown',                   hasCreate: false },
+  ec2: {
+    label: 'EC2',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'EC2',
+    displayName: 'EC2 Instance',
+    hasCreate: true
+  },
+  vpc: {
+    label: 'VPC',
+    borderColor: '#1976D2',
+    badgeColor: '#1976D2',
+    shortLabel: 'VPC',
+    displayName: 'VPC',
+    hasCreate: true
+  },
+  subnet: {
+    label: 'SUBNET',
+    borderColor: '#4CAF50',
+    badgeColor: '#4CAF50',
+    shortLabel: 'SUBNET',
+    displayName: 'Subnet',
+    hasCreate: true
+  },
+  rds: {
+    label: 'RDS',
+    borderColor: '#4CAF50',
+    badgeColor: '#4CAF50',
+    shortLabel: 'RDS',
+    displayName: 'RDS Instance',
+    hasCreate: true
+  },
+  s3: {
+    label: 'S3',
+    borderColor: '#64b5f6',
+    badgeColor: '#64b5f6',
+    shortLabel: 'S3',
+    displayName: 'S3 Bucket',
+    hasCreate: true
+  },
+  lambda: {
+    label: 'λ',
+    borderColor: '#64b5f6',
+    badgeColor: '#64b5f6',
+    shortLabel: 'λ',
+    displayName: 'Lambda Function',
+    hasCreate: true
+  },
+  alb: {
+    label: 'ALB',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'ALB',
+    displayName: 'Load Balancer',
+    hasCreate: true
+  },
+  'security-group': {
+    label: 'SG',
+    borderColor: '#9c27b0',
+    badgeColor: '#9c27b0',
+    shortLabel: 'SG',
+    displayName: 'Security Group',
+    hasCreate: true
+  },
+  igw: {
+    label: 'IGW',
+    borderColor: '#4CAF50',
+    badgeColor: '#4CAF50',
+    shortLabel: 'IGW',
+    displayName: 'Internet Gateway',
+    hasCreate: false
+  },
+  acm: {
+    label: 'ACM',
+    borderColor: '#64b5f6',
+    badgeColor: '#64b5f6',
+    shortLabel: 'ACM',
+    displayName: 'ACM Certificate',
+    hasCreate: true
+  },
+  cloudfront: {
+    label: 'CF',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'CF',
+    displayName: 'CloudFront Distribution',
+    hasCreate: true
+  },
+  apigw: {
+    label: 'APIGW',
+    borderColor: '#8b5cf6',
+    badgeColor: '#8b5cf6',
+    shortLabel: 'APIGW',
+    displayName: 'API Gateway',
+    hasCreate: true
+  },
+  'apigw-route': {
+    label: 'ROUTE',
+    borderColor: '#22c55e',
+    badgeColor: '#22c55e',
+    shortLabel: 'ROUTE',
+    displayName: 'API Gateway Route',
+    hasCreate: true
+  },
+  sqs: {
+    label: 'SQS',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'SQS',
+    displayName: 'SQS Queue',
+    hasCreate: true
+  },
+  secret: {
+    label: 'SECRET',
+    borderColor: '#22c55e',
+    badgeColor: '#22c55e',
+    shortLabel: 'SECRET',
+    displayName: 'Secrets Manager Secret',
+    hasCreate: true
+  },
+  'ecr-repo': {
+    label: 'ECR',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'ECR',
+    displayName: 'ECR Repository',
+    hasCreate: true
+  },
+  sns: {
+    label: 'SNS',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'SNS',
+    displayName: 'SNS Topic',
+    hasCreate: true
+  },
+  dynamo: {
+    label: 'DDB',
+    borderColor: '#64b5f6',
+    badgeColor: '#64b5f6',
+    shortLabel: 'DDB',
+    displayName: 'DynamoDB Table',
+    hasCreate: true
+  },
+  'ssm-param': {
+    label: 'SSM',
+    borderColor: '#22c55e',
+    badgeColor: '#22c55e',
+    shortLabel: 'SSM',
+    displayName: 'SSM Parameter',
+    hasCreate: true
+  },
+  'nat-gateway': {
+    label: 'NAT',
+    borderColor: '#4CAF50',
+    badgeColor: '#4CAF50',
+    shortLabel: 'NAT',
+    displayName: 'NAT Gateway',
+    hasCreate: false
+  },
+  'r53-zone': {
+    label: 'R53',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'R53',
+    displayName: 'Route 53 Hosted Zone',
+    hasCreate: true
+  },
+  sfn: {
+    label: 'SFN',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'SFN',
+    displayName: 'Step Functions State Machine',
+    hasCreate: true
+  },
+  'eventbridge-bus': {
+    label: 'EB',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'EB',
+    displayName: 'EventBridge Bus',
+    hasCreate: true
+  },
+  ses: {
+    label: 'SES',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'SES',
+    displayName: 'SES Identity',
+    hasCreate: false
+  },
+  cognito: {
+    label: 'COGNITO',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'COGNITO',
+    displayName: 'Cognito User Pool',
+    hasCreate: false
+  },
+  kinesis: {
+    label: 'KDS',
+    borderColor: '#8b5cf6',
+    badgeColor: '#8b5cf6',
+    shortLabel: 'KDS',
+    displayName: 'Kinesis Data Stream',
+    hasCreate: false
+  },
+  ecs: {
+    label: 'ECS',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'ECS',
+    displayName: 'ECS Service',
+    hasCreate: false
+  },
+  elasticache: {
+    label: 'REDIS',
+    borderColor: '#22c55e',
+    badgeColor: '#22c55e',
+    shortLabel: 'REDIS',
+    displayName: 'ElastiCache Cluster',
+    hasCreate: false
+  },
+  eks: {
+    label: 'EKS',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'EKS',
+    displayName: 'EKS Cluster',
+    hasCreate: false
+  },
+  opensearch: {
+    label: 'OS',
+    borderColor: '#005EB8',
+    badgeColor: '#005EB8',
+    shortLabel: 'OS',
+    displayName: 'OpenSearch Domain',
+    hasCreate: false
+  },
+  msk: {
+    label: 'MSK',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'MSK',
+    displayName: 'MSK Cluster',
+    hasCreate: false
+  },
+  unknown: {
+    label: '?',
+    borderColor: '#6b7280',
+    badgeColor: '#6b7280',
+    shortLabel: '?',
+    displayName: 'Unknown',
+    hasCreate: false
+  }
 }
 
 export const awsPlugin: TerminusPlugin = {
@@ -114,11 +343,38 @@ export const awsPlugin: TerminusPlugin = {
   displayName: 'Amazon Web Services',
 
   nodeTypes: [
-    'ec2', 'vpc', 'subnet', 'rds', 's3', 'lambda', 'alb', 'security-group',
-    'igw', 'acm', 'cloudfront', 'apigw', 'apigw-route', 'sqs', 'secret',
-    'ecr-repo', 'sns', 'dynamo', 'ssm-param', 'nat-gateway', 'r53-zone',
-    'sfn', 'eventbridge-bus', 'ses', 'cognito', 'kinesis', 'ecs', 'elasticache',
-    'eks', 'opensearch', 'msk', 'unknown',
+    'ec2',
+    'vpc',
+    'subnet',
+    'rds',
+    's3',
+    'lambda',
+    'alb',
+    'security-group',
+    'igw',
+    'acm',
+    'cloudfront',
+    'apigw',
+    'apigw-route',
+    'sqs',
+    'secret',
+    'ecr-repo',
+    'sns',
+    'dynamo',
+    'ssm-param',
+    'nat-gateway',
+    'r53-zone',
+    'sfn',
+    'eventbridge-bus',
+    'ses',
+    'cognito',
+    'kinesis',
+    'ecs',
+    'elasticache',
+    'eks',
+    'opensearch',
+    'msk',
+    'unknown'
   ],
 
   nodeTypeMetadata: NODE_TYPE_METADATA,
@@ -127,7 +383,10 @@ export const awsPlugin: TerminusPlugin = {
     return createClients(profile, region, endpoint)
   },
 
-  async scanService(serviceName: string, context: ScanContext): Promise<PluginScanResult | undefined> {
+  async scanService(
+    serviceName: string,
+    context: ScanContext
+  ): Promise<PluginScanResult | undefined> {
     const scanner = SERVICE_SCANNERS[serviceName]
     if (!scanner) return undefined
     const clients = context.credentials as AwsClients
@@ -147,7 +406,8 @@ export const awsPlugin: TerminusPlugin = {
     const clients = context.credentials as AwsClients
     const region = context.region
     const errors: PluginScanResult['errors'] = []
-    const catch_ = (service: string): ((e: unknown) => CloudNode[]) => errCatch(service, region, errors)
+    const catch_ = (service: string): ((e: unknown) => CloudNode[]) =>
+      errCatch(service, region, errors)
 
     const results = await Promise.all([
       describeInstances(clients.ec2, region).catch(catch_('ec2:instances')),
@@ -179,10 +439,10 @@ export const awsPlugin: TerminusPlugin = {
       listCacheClusters(clients.elasticache, region).catch(catch_('elasticache')),
       listEksClusters(clients.eks, region).catch(catch_('eks')),
       listOpenSearchDomains(clients.opensearch, region).catch(catch_('opensearch')),
-      listMskClusters(clients.msk, clients.lambda, region).catch(catch_('msk')),
+      listMskClusters(clients.msk, clients.lambda, region).catch(catch_('msk'))
     ])
 
     const nodes = results.flat().map((node) => ({ ...node, region: node.region ?? region }))
     return { nodes, errors }
-  },
+  }
 }

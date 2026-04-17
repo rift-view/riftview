@@ -1,18 +1,21 @@
-import {
-  KinesisClient,
-  ListStreamsCommand,
-} from '@aws-sdk/client-kinesis'
+import { KinesisClient, ListStreamsCommand } from '@aws-sdk/client-kinesis'
 import { LambdaClient, ListEventSourceMappingsCommand } from '@aws-sdk/client-lambda'
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
-function kinesisStatusToNodeStatus(status: string | undefined): import('../../../renderer/types/cloud').NodeStatus {
+function kinesisStatusToNodeStatus(
+  status: string | undefined
+): import('../../../renderer/types/cloud').NodeStatus {
   if (status === 'ACTIVE') return 'running'
   if (status === 'CREATING') return 'pending'
   if (status === 'DELETING') return 'pending'
   return 'unknown'
 }
 
-export async function listStreams(client: KinesisClient, lambdaClient: LambdaClient, region: string): Promise<CloudNode[]> {
+export async function listStreams(
+  client: KinesisClient,
+  lambdaClient: LambdaClient,
+  region: string
+): Promise<CloudNode[]> {
   try {
     const rawNodes: Omit<CloudNode, 'integrations'>[] = []
     let nextToken: string | undefined
@@ -21,12 +24,16 @@ export async function listStreams(client: KinesisClient, lambdaClient: LambdaCli
       for (const summary of res.StreamSummaries ?? []) {
         if (!summary.StreamARN) continue
         rawNodes.push({
-          id:       summary.StreamARN,
-          type:     'kinesis',
-          label:    summary.StreamName ?? summary.StreamARN,
-          status:   kinesisStatusToNodeStatus(summary.StreamStatus),
+          id: summary.StreamARN,
+          type: 'kinesis',
+          label: summary.StreamName ?? summary.StreamARN,
+          status: kinesisStatusToNodeStatus(summary.StreamStatus),
           region,
-          metadata: { streamName: summary.StreamName, streamArn: summary.StreamARN, streamMode: summary.StreamModeDetails?.StreamMode ?? 'PROVISIONED' },
+          metadata: {
+            streamName: summary.StreamName,
+            streamArn: summary.StreamARN,
+            streamMode: summary.StreamModeDetails?.StreamMode ?? 'PROVISIONED'
+          }
         })
       }
       nextToken = res.NextToken

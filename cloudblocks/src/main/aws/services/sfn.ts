@@ -1,4 +1,8 @@
-import { SFNClient, ListStateMachinesCommand, DescribeStateMachineCommand } from '@aws-sdk/client-sfn'
+import {
+  SFNClient,
+  ListStateMachinesCommand,
+  DescribeStateMachineCommand
+} from '@aws-sdk/client-sfn'
 import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
 
 function isKnownTarget(resource: string): boolean {
@@ -18,16 +22,19 @@ const DYNAMO_RESOURCES = new Set([
   'arn:aws:states:::dynamodb:updateItem',
   'arn:aws:states:::dynamodb:deleteItem',
   'arn:aws:states:::dynamodb:query',
-  'arn:aws:states:::dynamodb:scan',
+  'arn:aws:states:::dynamodb:scan'
 ])
 
 function extractTargetArns(definition: string): { targetId: string; edgeType: EdgeType }[] {
   try {
     const parsed = JSON.parse(definition) as {
-      States?: Record<string, {
-        Resource?: unknown
-        Parameters?: Record<string, unknown>
-      }>
+      States?: Record<
+        string,
+        {
+          Resource?: unknown
+          Parameters?: Record<string, unknown>
+        }
+      >
     }
     const seen = new Map<string, EdgeType>()
     for (const state of Object.values(parsed.States ?? {})) {
@@ -61,7 +68,12 @@ function extractTargetArns(definition: string): { targetId: string; edgeType: Ed
 
 export async function listStateMachines(client: SFNClient, region: string): Promise<CloudNode[]> {
   try {
-    const machines: { stateMachineArn?: string; name?: string; type?: string; creationDate?: Date }[] = []
+    const machines: {
+      stateMachineArn?: string
+      name?: string
+      type?: string
+      creationDate?: Date
+    }[] = []
     let nextToken: string | undefined
     do {
       const res = await client.send(new ListStateMachinesCommand({ nextToken }))
@@ -72,12 +84,12 @@ export async function listStateMachines(client: SFNClient, region: string): Prom
     return Promise.all(
       machines.map(async (item): Promise<CloudNode> => {
         const base: CloudNode = {
-          id:       item.stateMachineArn ?? '',
-          type:     'sfn',
-          label:    item.name ?? '',
-          status:   'running',
+          id: item.stateMachineArn ?? '',
+          type: 'sfn',
+          label: item.name ?? '',
+          status: 'running',
           region,
-          metadata: { type: item.type ?? '', createdAt: item.creationDate?.toISOString() ?? '' },
+          metadata: { type: item.type ?? '', createdAt: item.creationDate?.toISOString() ?? '' }
         }
 
         const described = await client
@@ -86,11 +98,13 @@ export async function listStateMachines(client: SFNClient, region: string): Prom
 
         if (!described.definition) return base
 
-        const integrations: { targetId: string; edgeType: EdgeType }[] = extractTargetArns(described.definition)
+        const integrations: { targetId: string; edgeType: EdgeType }[] = extractTargetArns(
+          described.definition
+        )
         if (integrations.length === 0) return base
 
         return { ...base, integrations }
-      }),
+      })
     )
   } catch {
     return []

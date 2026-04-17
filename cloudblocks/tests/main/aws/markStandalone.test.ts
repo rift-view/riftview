@@ -2,7 +2,11 @@ import { describe, it, expect } from 'vitest'
 import { markStandaloneNodes } from '../../../src/main/aws/markStandalone'
 import type { CloudNode } from '../../../src/renderer/types/cloud'
 
-function n(id: string, type: CloudNode['type'] = 'lambda', integrations?: { targetId: string; edgeType: 'trigger' | 'origin' | 'subscription' }[]): CloudNode {
+function n(
+  id: string,
+  type: CloudNode['type'] = 'lambda',
+  integrations?: { targetId: string; edgeType: 'trigger' | 'origin' | 'subscription' }[]
+): CloudNode {
   return {
     id,
     label: id,
@@ -10,7 +14,7 @@ function n(id: string, type: CloudNode['type'] = 'lambda', integrations?: { targ
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    integrations: integrations ?? [],
+    integrations: integrations ?? []
   }
 }
 
@@ -37,7 +41,7 @@ describe('markStandaloneNodes', () => {
     const nodes: CloudNode[] = [
       n('vpc-1', 'vpc'),
       n('subnet-1', 'subnet'),
-      n('sg-1', 'security-group'),
+      n('sg-1', 'security-group')
     ]
     markStandaloneNodes(nodes)
     for (const node of nodes) {

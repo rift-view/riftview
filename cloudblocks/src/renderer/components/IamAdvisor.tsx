@@ -8,28 +8,49 @@ interface IamAdvisorProps {
 
 const SEVERITY_COLOR: Record<IamSeverity, string> = {
   critical: '#ef4444',
-  warning:  '#f59e0b',
-  info:     '#3b82f6',
+  warning: '#f59e0b',
+  info: '#3b82f6'
 }
 
 const SEVERITY_LABEL: Record<IamSeverity, string> = {
   critical: 'CRITICAL',
-  warning:  'WARNING',
-  info:     'INFO',
+  warning: 'WARNING',
+  info: 'INFO'
 }
 
 function FindingRow({ finding }: { finding: IamFinding }): React.JSX.Element {
   const [expanded, setExpanded] = useState(false)
   return (
-    <div style={{ borderLeft: `3px solid ${SEVERITY_COLOR[finding.severity]}`, paddingLeft: 8, marginBottom: 6 }}>
+    <div
+      style={{
+        borderLeft: `3px solid ${SEVERITY_COLOR[finding.severity]}`,
+        paddingLeft: 8,
+        marginBottom: 6
+      }}
+    >
       <div
-        style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: finding.statement ? 'pointer' : 'default' }}
-        onClick={() => finding.statement && setExpanded(e => !e)}
+        style={{
+          display: 'flex',
+          gap: 8,
+          alignItems: 'center',
+          cursor: finding.statement ? 'pointer' : 'default'
+        }}
+        onClick={() => finding.statement && setExpanded((e) => !e)}
       >
-        <span style={{ fontSize: 9, fontWeight: 700, color: SEVERITY_COLOR[finding.severity], letterSpacing: '0.05em', minWidth: 50 }}>
+        <span
+          style={{
+            fontSize: 9,
+            fontWeight: 700,
+            color: SEVERITY_COLOR[finding.severity],
+            letterSpacing: '0.05em',
+            minWidth: 50
+          }}
+        >
           {SEVERITY_LABEL[finding.severity]}
         </span>
-        <span style={{ fontSize: 11, color: 'var(--cb-text-primary)', flex: 1 }}>{finding.title}</span>
+        <span style={{ fontSize: 11, color: 'var(--cb-text-primary)', flex: 1 }}>
+          {finding.title}
+        </span>
         {finding.statement && (
           <span style={{ fontSize: 9, color: 'var(--cb-text-muted)' }}>{expanded ? '▲' : '▼'}</span>
         )}
@@ -40,10 +61,23 @@ function FindingRow({ finding }: { finding: IamFinding }): React.JSX.Element {
         </div>
       )}
       {finding.detail && (
-        <div style={{ fontSize: 10, color: 'var(--cb-text-muted)', marginTop: 2 }}>{finding.detail}</div>
+        <div style={{ fontSize: 10, color: 'var(--cb-text-muted)', marginTop: 2 }}>
+          {finding.detail}
+        </div>
       )}
       {expanded && finding.statement && (
-        <pre style={{ fontSize: 9, background: 'var(--cb-bg-secondary)', padding: '6px 8px', borderRadius: 4, marginTop: 4, overflowX: 'auto', maxHeight: 200, color: 'var(--cb-text-muted)' }}>
+        <pre
+          style={{
+            fontSize: 9,
+            background: 'var(--cb-bg-secondary)',
+            padding: '6px 8px',
+            borderRadius: 4,
+            marginTop: 4,
+            overflowX: 'auto',
+            maxHeight: 200,
+            color: 'var(--cb-text-muted)'
+          }}
+        >
           {JSON.stringify(JSON.parse(finding.statement), null, 2)}
         </pre>
       )}
@@ -76,7 +110,7 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
     <div style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}>
       {/* Section header with toggle */}
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
         style={{
           width: '100%',
           display: 'flex',
@@ -86,12 +120,20 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
           border: 'none',
           padding: 0,
           cursor: 'pointer',
-          marginBottom: open ? 8 : 0,
+          marginBottom: open ? 8 : 0
         }}
         aria-expanded={open}
       >
         <span style={{ fontSize: 9, color: 'var(--cb-text-muted)' }}>{open ? '▼' : '▶'}</span>
-        <span style={{ fontSize: 8, fontWeight: 700, color: 'var(--cb-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <span
+          style={{
+            fontSize: 8,
+            fontWeight: 700,
+            color: 'var(--cb-text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em'
+          }}
+        >
           IAM Permissions
         </span>
       </button>
@@ -111,7 +153,7 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
                 color: 'var(--cb-accent)',
                 fontFamily: 'monospace',
                 fontSize: 9,
-                cursor: 'pointer',
+                cursor: 'pointer'
               }}
             >
               Analyze
@@ -120,12 +162,24 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
 
           {/* Loading state */}
           {loading && (
-            <div style={{ fontSize: 11, color: 'var(--cb-text-muted)' }}>Analyzing IAM policies...</div>
+            <div style={{ fontSize: 11, color: 'var(--cb-text-muted)' }}>
+              Analyzing IAM policies...
+            </div>
           )}
 
           {/* Error state */}
           {!loading && result?.error && (
-            <div style={{ fontSize: 11, color: '#f59e0b', padding: '6px 8px', borderRadius: 4, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', marginBottom: 6 }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: '#f59e0b',
+                padding: '6px 8px',
+                borderRadius: 4,
+                background: 'rgba(245,158,11,0.1)',
+                border: '1px solid rgba(245,158,11,0.3)',
+                marginBottom: 6
+              }}
+            >
               Analysis failed — check permissions
             </div>
           )}
@@ -157,7 +211,7 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
                 fontFamily: 'monospace',
                 fontSize: 9,
                 cursor: 'pointer',
-                padding: 0,
+                padding: 0
               }}
             >
               Re-analyze

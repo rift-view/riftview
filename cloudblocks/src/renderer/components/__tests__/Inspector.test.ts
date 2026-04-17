@@ -19,19 +19,27 @@ describe('edgeTypeLabel', () => {
   })
 
   it('returns "Integration: trigger" for integration edge with edgeType trigger', () => {
-    expect(edgeTypeLabel('integration-sqs-fn', { isIntegration: true, edgeType: 'trigger' })).toBe('Integration: trigger')
+    expect(edgeTypeLabel('integration-sqs-fn', { isIntegration: true, edgeType: 'trigger' })).toBe(
+      'Integration: trigger'
+    )
   })
 
   it('returns "Integration: subscription" for integration edge with edgeType subscription', () => {
-    expect(edgeTypeLabel('integration-sns-fn', { isIntegration: true, edgeType: 'subscription' })).toBe('Integration: subscription')
+    expect(
+      edgeTypeLabel('integration-sns-fn', { isIntegration: true, edgeType: 'subscription' })
+    ).toBe('Integration: subscription')
   })
 
   it('returns "Integration: origin" for integration edge with edgeType origin', () => {
-    expect(edgeTypeLabel('integration-cf-s3', { isIntegration: true, edgeType: 'origin' })).toBe('Integration: origin')
+    expect(edgeTypeLabel('integration-cf-s3', { isIntegration: true, edgeType: 'origin' })).toBe(
+      'Integration: origin'
+    )
   })
 
   it('returns "Integration" for integration edge with unknown edgeType', () => {
-    expect(edgeTypeLabel('integration-foo', { isIntegration: true, edgeType: 'unknown' })).toBe('Integration')
+    expect(edgeTypeLabel('integration-foo', { isIntegration: true, edgeType: 'unknown' })).toBe(
+      'Integration'
+    )
   })
 
   it('returns "Integration" for integration edge with no edgeType', () => {

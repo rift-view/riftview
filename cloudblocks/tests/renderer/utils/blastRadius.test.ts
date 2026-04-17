@@ -2,24 +2,24 @@ import { describe, it, expect } from 'vitest'
 import { buildBlastRadius } from '../../../src/renderer/utils/blastRadius'
 import type { CloudNode } from '../../../src/renderer/types/cloud'
 
-function makeNode(id: string, integrations?: { targetId: string; edgeType: 'trigger' | 'origin' | 'subscription' }[]): CloudNode {
+function makeNode(
+  id: string,
+  integrations?: { targetId: string; edgeType: 'trigger' | 'origin' | 'subscription' }[]
+): CloudNode {
   return {
     id,
-    type:         'lambda',
-    label:        id,
-    status:       'running',
-    region:       'us-east-1',
-    metadata:     {},
-    integrations: integrations ?? [],
+    type: 'lambda',
+    label: id,
+    status: 'running',
+    region: 'us-east-1',
+    metadata: {},
+    integrations: integrations ?? []
   }
 }
 
 describe('buildBlastRadius', () => {
   it('direct neighbor — source with 1 integration target → target is hop 1 downstream', () => {
-    const nodes = [
-      makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]),
-      makeNode('B'),
-    ]
+    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
     const result = buildBlastRadius(nodes, 'A')
     expect(result.members.get('A')?.hopDistance).toBe(0)
     expect(result.members.get('A')?.direction).toBe('source')
@@ -31,7 +31,7 @@ describe('buildBlastRadius', () => {
     const nodes = [
       makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]),
       makeNode('B', [{ targetId: 'C', edgeType: 'trigger' }]),
-      makeNode('C'),
+      makeNode('C')
     ]
     const result = buildBlastRadius(nodes, 'A')
     expect(result.members.get('B')?.hopDistance).toBe(1)
@@ -40,10 +40,7 @@ describe('buildBlastRadius', () => {
   })
 
   it('backward traversal — A→B, click B → A is hop 1 upstream', () => {
-    const nodes = [
-      makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]),
-      makeNode('B'),
-    ]
+    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
     const result = buildBlastRadius(nodes, 'B')
     expect(result.members.get('A')?.direction).toBe('upstream')
     expect(result.members.get('A')?.hopDistance).toBe(1)
@@ -53,7 +50,7 @@ describe('buildBlastRadius', () => {
   it('cycle detection — A→B→A, no infinite loop, both in result', () => {
     const nodes = [
       makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]),
-      makeNode('B', [{ targetId: 'A', edgeType: 'trigger' }]),
+      makeNode('B', [{ targetId: 'A', edgeType: 'trigger' }])
     ]
     // Should not throw or hang
     const result = buildBlastRadius(nodes, 'A')
@@ -62,10 +59,7 @@ describe('buildBlastRadius', () => {
   })
 
   it('no integrations — node with empty integrations → only source in result', () => {
-    const nodes = [
-      makeNode('A'),
-      makeNode('B'),
-    ]
+    const nodes = [makeNode('A'), makeNode('B')]
     const result = buildBlastRadius(nodes, 'A')
     expect(result.members.size).toBe(1)
     expect(result.members.get('A')?.direction).toBe('source')
@@ -79,7 +73,7 @@ describe('buildBlastRadius', () => {
     const nodes = [
       makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]),
       makeNode('B', [{ targetId: 'C', edgeType: 'trigger' }]),
-      makeNode('C', [{ targetId: 'B', edgeType: 'trigger' }]),
+      makeNode('C', [{ targetId: 'B', edgeType: 'trigger' }])
     ]
     const result = buildBlastRadius(nodes, 'B')
     // A only points TO B — upstream
@@ -94,13 +88,13 @@ describe('buildBlastRadius', () => {
       makeNode('X', [{ targetId: 'A', edgeType: 'trigger' }]),
       makeNode('A', [
         { targetId: 'Y', edgeType: 'trigger' },
-        { targetId: 'Z', edgeType: 'trigger' },
+        { targetId: 'Z', edgeType: 'trigger' }
       ]),
       makeNode('Y'),
-      makeNode('Z'),
+      makeNode('Z')
     ]
     const result = buildBlastRadius(nodes, 'A')
-    expect(result.upstreamCount).toBe(1)    // X
-    expect(result.downstreamCount).toBe(2)  // Y + Z
+    expect(result.upstreamCount).toBe(1) // X
+    expect(result.downstreamCount).toBe(2) // Y + Z
   })
 })
