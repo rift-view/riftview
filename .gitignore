@@ -14,6 +14,8 @@ Thumbs.db
 
 # Claude Code local state
 .claude/
+
+# Planning docs (lives in private riftview-docs repo)
 docs/
 
 # Superpowers / brainstorm runtime state
