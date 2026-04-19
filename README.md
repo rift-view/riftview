@@ -1,8 +1,8 @@
-# Terminus
+# RiftView
 
 **The incident diagnostic layer AWS doesn't have.**
 
-The AWS console is organized by service silo. When something breaks, you open 4 tabs to answer one question: *what else is connected to this?* Terminus answers it in 10 seconds.
+The AWS console is organized by service silo. When something breaks, you open 4 tabs to answer one question: *what else is connected to this?* RiftView answers it in 10 seconds.
 
 ## What it does
 
@@ -14,12 +14,12 @@ The AWS console is organized by service silo. When something breaks, you open 4 
 
 ## Why not just use the AWS console?
 
-The console is a service browser. It cannot show you cross-service relationships. It cannot tell you what breaks if an SQS queue goes down. It cannot compare your live infra to your IaC. Terminus does all three — and the graph is always live, so you can trust the answers.
+The console is a service browser. It cannot show you cross-service relationships. It cannot tell you what breaks if an SQS queue goes down. It cannot compare your live infra to your IaC. RiftView does all three — and the graph is always live, so you can trust the answers.
 
 ## Quick start
 
 1. Install: download the latest release
-2. Open Terminus and select your AWS profile
+2. Open RiftView and select your AWS profile
 3. Hit Scan — your infrastructure appears as a connected graph in seconds
 4. Click any node to see blast radius. Check the Top Risks panel for chain-of-failure advisories.
 
@@ -67,7 +67,7 @@ npm run build:linux
 
 ## Legal
 
-Terminus is not affiliated with, endorsed by, or sponsored by Amazon Web
+RiftView is not affiliated with, endorsed by, or sponsored by Amazon Web
 Services, Inc. AWS, Amazon EC2, and all related marks are trademarks of
 Amazon.com, Inc. or its affiliates.
 

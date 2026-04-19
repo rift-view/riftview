@@ -152,7 +152,7 @@
   | M5.5 | ✅ Done | 11 new services (SQS, Secrets, ECR, SNS, DynamoDB, SSM, NAT, R53, SFN, EventBridge, IGW); store split; CloudProvider interface; drag-to-create |
   | Canvas QoL | ✅ Done | Panning fixes; persistent node positions; saved view slots 1–4 |
   | LocalStack & Polish | ✅ Done | Local emulator support; static creds injection; generic endpoint routing; CRT animation; snap-to-grid; blueprint gridlines; collapsible SSM groups; Terraform HCL export (vpc/subnet/ec2/s3/lambda); integration edges (SNS→SQS via ARN node ID); EC2 form local hints |
-  | Phase 0 | ✅ Done | Terminus rename (window.riftview, all 25 renderer files); feature flag system (VITE_FLAG_* + flag() util); Ladle component dev environment (port 61000, standalone vite config) |
+  | Phase 0 | ✅ Done | Product rename to window.riftview (all 25 renderer files); feature flag system (VITE_FLAG_* + flag() util); Ladle component dev environment (port 61000, standalone vite config) |
   | Phase 1 | ✅ Done | STATUS_LANGUAGE (error pulse, pending shimmer, stopped dim, deleting fade-pulse); ACTION_RAIL (Copy ARN + Open Console hover strip); COMMAND_BOARD (swim-lane view, 7-tier NODE_TIER, TierLabelNode, integration edges); all three now always-on |
   | Phase 2 | ✅ Done | EXECUTION_ENGINE: guided remediation in Inspector (REMEDIATE section, buildRemediateCommands, drift diff table); now always-on |
   | Phase 3 | ✅ Done | OP_INTELLIGENCE: `analyzeNode()` pure fn, advisory system (critical/warning/info), scan metadata additions (multiAZ, publicAccessEnabled, hasPublicSsh); always-on |
