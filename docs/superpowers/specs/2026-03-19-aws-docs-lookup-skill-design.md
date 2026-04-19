@@ -17,14 +17,14 @@ The RDS `InvalidClientTokenId` miss (LocalStack Community doesn't support RDS, C
 
 The skill covers:
 - LocalStack Community vs Pro service coverage and behavioral divergences from real AWS
-- AWS error codes — meaning, likely cause in a Cloudblocks context, fix pattern
+- AWS error codes — meaning, likely cause in a RiftView context, fix pattern
 - IAM permission requirements per service operation (create, list, delete)
 - AWS service limits and quotas
 - AWS CLI command syntax and flags
 - SDK vs CLI behavioral differences
 - Region and availability zone constraints
 
-Services covered: all 24 Cloudblocks `NodeType` services (EC2, VPC, Subnet, SG, RDS, S3, Lambda, ALB, IGW, ACM, CloudFront, API Gateway, API Gateway Route, SQS, Secrets Manager, ECR, SNS, DynamoDB, SSM Parameter, NAT Gateway, Route53, SFN, EventBridge, ECS).
+Services covered: all 24 RiftView `NodeType` services (EC2, VPC, Subnet, SG, RDS, S3, Lambda, ALB, IGW, ACM, CloudFront, API Gateway, API Gateway Route, SQS, Secrets Manager, ECR, SNS, DynamoDB, SSM Parameter, NAT Gateway, Route53, SFN, EventBridge, ECS).
 
 ---
 
@@ -73,8 +73,8 @@ During team meetings, the skill surfaces lookups inline — Cloud Architect or B
 Read the relevant sub-file and answer from it:
 
 - **`localstack-coverage.md`**: Community/Pro matrix for all 24 services; known divergences from real AWS (AMI registration requirements, S3 path-style URLs, CloudFront not in Community, RDS not in Community, etc.)
-- **`error-codes.md`**: ~20 error codes with meaning, most likely cause in Cloudblocks context, and fix pattern
-- **`iam-patterns.md`**: Per-service IAM action requirements for every operation Cloudblocks performs
+- **`error-codes.md`**: ~20 error codes with meaning, most likely cause in RiftView context, and fix pattern
+- **`iam-patterns.md`**: Per-service IAM action requirements for every operation RiftView performs
 
 If Tier 1 covers the question, stop here.
 
@@ -92,7 +92,7 @@ Construct a canonical URL from known patterns and fetch:
 
 The skill includes a service-name namespace mapping:
 
-| Cloudblocks type | AWS doc namespace | CLI service name |
+| RiftView type | AWS doc namespace | CLI service name |
 |---|---|---|
 | ec2, vpc, subnet, sg | `AWSEC2` | `ec2` |
 | rds | `AmazonRDS` | `rds` |
@@ -145,7 +145,7 @@ Three files are pushed to a public GitHub repository for sharing:
 
 ---
 
-## 7. Integration with Cloudblocks Team
+## 7. Integration with RiftView Team
 
 The skill description is written so the `using-superpowers` system recognizes it during:
 - Team meetings (proactive lookup when agents make service/coverage claims)
@@ -161,7 +161,7 @@ The skill does not replace team agent judgment — it provides a fast reference 
 - [ ] Write `SKILL.md` with trigger rules, Tier 2 URL patterns, Tier 3 instructions, sub-file loading instructions
 - [ ] Write `localstack-coverage.md` — full 24-service Community/Pro matrix with divergence notes
 - [ ] Write `error-codes.md` — ~20 error codes with meaning, cause, fix
-- [ ] Write `iam-patterns.md` — per-service IAM action requirements for all Cloudblocks operations
+- [ ] Write `iam-patterns.md` — per-service IAM action requirements for all RiftView operations
 - [ ] Test skill activation: error code trigger, LocalStack coverage question, IAM question
 - [ ] Create GitHub repository for the skill
 - [ ] Push `SKILL.md`, `error-codes.md`, `iam-patterns.md` to GitHub

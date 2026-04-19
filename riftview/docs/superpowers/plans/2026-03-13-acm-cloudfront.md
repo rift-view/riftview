@@ -8,7 +8,7 @@
 
 **Tech Stack:** AWS SDK v3 (`@aws-sdk/client-acm`, `@aws-sdk/client-cloudfront`), React 18, TypeScript, Electron 32, Zustand 5, Vitest
 
-**Spec:** `docs/superpowers/specs/2026-03-13-cloudblocks-acm-cloudfront-design.md`
+**Spec:** `docs/superpowers/specs/2026-03-13-riftview-acm-cloudfront-design.md`
 
 ---
 
@@ -717,7 +717,7 @@ ipcMain.handle(IPC.CF_INVALIDATE, async (_e, id: string, path: string) => {
 
 - [ ] **Step 5: Extend preload at `src/preload/index.ts`**
 
-Add to the `contextBridge.exposeInMainWorld('cloudblocks', { ... })` object:
+Add to the `contextBridge.exposeInMainWorld('riftview', { ... })` object:
 ```ts
 createCloudFront:    (params: import('../renderer/types/create').CloudFrontParams) =>
   ipcRenderer.invoke(IPC.CF_CREATE, params),
@@ -731,7 +731,7 @@ invalidateCloudFront: (id: string, path: string) =>
 
 - [ ] **Step 6: Update preload type declarations `src/preload/index.d.ts`**
 
-Read the existing file first. Then add the four new methods to the `cloudblocks` interface inside `interface Window { cloudblocks: { ... } }`:
+Read the existing file first. Then add the four new methods to the `riftview` interface inside `interface Window { riftview: { ... } }`:
 
 ```ts
 createCloudFront(params: import('../renderer/types/create').CloudFrontParams): Promise<{ code: number; error?: string }>
@@ -1202,7 +1202,7 @@ export function CloudFrontForm({ onChange, showErrors }: Props) {
 
 - [ ] **Step 3: Register CloudFrontForm in CreateModal.tsx**
 
-`CreateModal.tsx` currently calls `buildCommands(paramsRef.current!)` then `window.cloudblocks.runCli(commands)` inside `handleRun`. CloudFront bypasses this path and calls `window.cloudblocks.createCloudFront(params)` via SDK.
+`CreateModal.tsx` currently calls `buildCommands(paramsRef.current!)` then `window.riftview.runCli(commands)` inside `handleRun`. CloudFront bypasses this path and calls `window.riftview.createCloudFront(params)` via SDK.
 
 **Import** (alongside other form imports):
 ```ts
@@ -1251,14 +1251,14 @@ function handleChange(params: CreateParams): void {
 ```ts
 // CloudFront uses SDK, not CLI
 if (paramsRef.current.resource === 'cloudfront') {
-  window.cloudblocks.createCloudFront(paramsRef.current as CloudFrontParams)
+  window.riftview.createCloudFront(paramsRef.current as CloudFrontParams)
     .then((result) => {
       if (pendingIdRef.current) removePendingNode(pendingIdRef.current)
       pendingIdRef.current = null
       if (result.code === 0) {
         setCommandPreview([])
         setActiveCreate(null)
-        window.cloudblocks.startScan()
+        window.riftview.startScan()
       }
     })
     .catch(() => {
@@ -1305,7 +1305,7 @@ Read `EditModal.tsx`, `src/renderer/types/edit.ts`, `Inspector.tsx`, `App.tsx`.
 
 - [ ] **Step 2: Add `CloudFrontEditParams` to `src/renderer/types/edit.ts`**
 
-Note: `CloudFrontEditParams` is already defined in `create.ts`. Rather than duplicating, import it from there in edit.ts, OR just reference it from `create.ts` at usage sites. The cleaner approach: leave `CloudFrontEditParams` in `create.ts` (it's defined there already from Task 5) and don't add it to `edit.ts` — CloudFront edit goes through `window.cloudblocks.updateCloudFront()` not `buildEditCommands()`. So no change needed to `edit.ts`.
+Note: `CloudFrontEditParams` is already defined in `create.ts`. Rather than duplicating, import it from there in edit.ts, OR just reference it from `create.ts` at usage sites. The cleaner approach: leave `CloudFrontEditParams` in `create.ts` (it's defined there already from Task 5) and don't add it to `edit.ts` — CloudFront edit goes through `window.riftview.updateCloudFront()` not `buildEditCommands()`. So no change needed to `edit.ts`.
 
 - [ ] **Step 3: Create `src/renderer/components/modals/CloudFrontEditForm.tsx`**
 
@@ -1405,14 +1405,14 @@ const handleRun = async () => {
   if (node.type === 'cloudfront') {
     setIsRunning(true)
     try {
-      const result = await window.cloudblocks.updateCloudFront(
+      const result = await window.riftview.updateCloudFront(
         node.id,
         paramsRef.current as unknown as CloudFrontEditParams,
       )
       if (result.code === 0) {
         setCommandPreview([])
         onClose()
-        await window.cloudblocks.startScan()
+        await window.riftview.startScan()
       }
     } finally {
       setIsRunning(false)
@@ -1453,8 +1453,8 @@ const handleDeleteConfirm = (node: CloudNode, opts: DeleteOptions) => {
   // CloudFront delete uses SDK (disable → poll → delete ETag cycle in main process)
   if (node.type === 'cloudfront') {
     setDeleteTarget(null)
-    window.cloudblocks.deleteCloudFront(node.id).then(() => {
-      window.cloudblocks.startScan()
+    window.riftview.deleteCloudFront(node.id).then(() => {
+      window.riftview.startScan()
     })
     return
   }
@@ -1534,8 +1534,8 @@ In `App.tsx`:
   ```ts
   const handleQuickAction = (node: CloudNode, action: 'stop' | 'start' | 'reboot' | 'invalidate', meta?: { path?: string }) => {
     if (action === 'invalidate') {
-      window.cloudblocks.invalidateCloudFront(node.id, meta?.path ?? '/*').then(() => {
-        window.cloudblocks.startScan()
+      window.riftview.invalidateCloudFront(node.id, meta?.path ?? '/*').then(() => {
+        window.riftview.startScan()
       })
       return
     }

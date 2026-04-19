@@ -13,11 +13,11 @@
 ## Task 1: Types — IamFinding, IamAnalysisResult
 
 **Files:**
-- Create: `cloudblocks/src/renderer/types/iam.ts`
+- Create: `riftview/src/renderer/types/iam.ts`
 
 - [ ] **Step 1: Write failing test for types**
 
-Create `cloudblocks/tests/renderer/types/iam.test.ts`:
+Create `riftview/tests/renderer/types/iam.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest'
@@ -41,12 +41,12 @@ describe('IAM types', () => {
 })
 ```
 
-Run: `cd cloudblocks && npm test -- iam.test.ts`
+Run: `cd riftview && npm test -- iam.test.ts`
 Expected: FAIL (no iam.ts file yet)
 
 - [ ] **Step 2: Create iam.ts**
 
-Create `cloudblocks/src/renderer/types/iam.ts`:
+Create `riftview/src/renderer/types/iam.ts`:
 
 ```typescript
 export type IamSeverity = 'critical' | 'warning' | 'info'
@@ -76,7 +76,7 @@ npm test -- iam.test.ts
 - [ ] **Step 4: Commit**
 
 ```bash
-git add cloudblocks/src/renderer/types/iam.ts cloudblocks/tests/renderer/types/iam.test.ts
+git add riftview/src/renderer/types/iam.ts riftview/tests/renderer/types/iam.test.ts
 git commit -m "feat(types): IamFinding, IamSeverity, IamAnalysisResult"
 ```
 
@@ -85,7 +85,7 @@ git commit -m "feat(types): IamFinding, IamSeverity, IamAnalysisResult"
 ## Task 2: IAM Client in AwsClients
 
 **Files:**
-- Modify: `cloudblocks/src/main/aws/client.ts`
+- Modify: `riftview/src/main/aws/client.ts`
 
 - [ ] **Step 1: Add IAMClient to AwsClients interface**
 
@@ -104,7 +104,7 @@ iam: new IAMClient({ region, credentials, endpoint: endpointConfig }),
 Note: IAM is a global service but SDK calls work with any region — use the region passed in. No additional package needed if `@aws-sdk/client-iam` is already a dependency; if not, install it first:
 
 ```bash
-cd cloudblocks && npm install @aws-sdk/client-iam
+cd riftview && npm install @aws-sdk/client-iam
 ```
 
 - [ ] **Step 2: Run typecheck — check for cascading errors**
@@ -130,7 +130,7 @@ npm test 2>&1 | tail -5
 - [ ] **Step 4: Commit**
 
 ```bash
-git add cloudblocks/src/main/aws/client.ts cloudblocks/package.json cloudblocks/package-lock.json
+git add riftview/src/main/aws/client.ts riftview/package.json riftview/package-lock.json
 git commit -m "feat(client): add IAMClient to AwsClients interface + createClients factory"
 ```
 
@@ -139,12 +139,12 @@ git commit -m "feat(client): add IAMClient to AwsClients interface + createClien
 ## Task 3: Policy Evaluator — evaluatePolicy()
 
 **Files:**
-- Create: `cloudblocks/src/main/aws/iam/evaluator.ts`
-- Create: `cloudblocks/tests/main/aws/iam/evaluator.test.ts`
+- Create: `riftview/src/main/aws/iam/evaluator.ts`
+- Create: `riftview/tests/main/aws/iam/evaluator.test.ts`
 
 - [ ] **Step 1: Write failing tests (all ruleset rules)**
 
-Create `cloudblocks/tests/main/aws/iam/evaluator.test.ts`:
+Create `riftview/tests/main/aws/iam/evaluator.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest'
@@ -231,12 +231,12 @@ describe('evaluatePolicy', () => {
 })
 ```
 
-Run: `cd cloudblocks && npm test -- evaluator.test.ts`
+Run: `cd riftview && npm test -- evaluator.test.ts`
 Expected: FAIL (no evaluator file)
 
 - [ ] **Step 2: Create evaluator.ts**
 
-Create `cloudblocks/src/main/aws/iam/evaluator.ts`:
+Create `riftview/src/main/aws/iam/evaluator.ts`:
 
 ```typescript
 import type { IamFinding } from '../../../renderer/types/iam'
@@ -412,7 +412,7 @@ npm run typecheck 2>&1 | head -10
 - [ ] **Step 5: Commit**
 
 ```bash
-git add cloudblocks/src/main/aws/iam/evaluator.ts cloudblocks/tests/main/aws/iam/evaluator.test.ts
+git add riftview/src/main/aws/iam/evaluator.ts riftview/tests/main/aws/iam/evaluator.test.ts
 git commit -m "feat(iam): evaluatePolicy — CRITICAL/WARNING/INFO ruleset, fully unit-tested"
 ```
 
@@ -421,12 +421,12 @@ git commit -m "feat(iam): evaluatePolicy — CRITICAL/WARNING/INFO ruleset, full
 ## Task 4: IAM Fetchers — fetchEc2IamData, fetchLambdaIamData, fetchS3IamData
 
 **Files:**
-- Create: `cloudblocks/src/main/aws/iam/fetcher.ts`
-- Create: `cloudblocks/tests/main/aws/iam/fetcher.test.ts`
+- Create: `riftview/src/main/aws/iam/fetcher.ts`
+- Create: `riftview/tests/main/aws/iam/fetcher.test.ts`
 
 - [ ] **Step 1: Write failing tests**
 
-Create `cloudblocks/tests/main/aws/iam/fetcher.test.ts`:
+Create `riftview/tests/main/aws/iam/fetcher.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest'
@@ -446,12 +446,12 @@ describe('urlDecodePolicy', () => {
 })
 ```
 
-Run: `cd cloudblocks && npm test -- fetcher.test.ts`
+Run: `cd riftview && npm test -- fetcher.test.ts`
 Expected: FAIL
 
 - [ ] **Step 2: Create fetcher.ts**
 
-Create `cloudblocks/src/main/aws/iam/fetcher.ts`:
+Create `riftview/src/main/aws/iam/fetcher.ts`:
 
 ```typescript
 import {
@@ -587,7 +587,7 @@ npm run typecheck 2>&1 | head -10
 - [ ] **Step 5: Commit**
 
 ```bash
-git add cloudblocks/src/main/aws/iam/fetcher.ts cloudblocks/tests/main/aws/iam/fetcher.test.ts
+git add riftview/src/main/aws/iam/fetcher.ts riftview/tests/main/aws/iam/fetcher.test.ts
 git commit -m "feat(iam): fetchEc2IamData, fetchLambdaIamData, fetchS3IamData + URL-decode pipeline"
 ```
 
@@ -596,10 +596,10 @@ git commit -m "feat(iam): fetchEc2IamData, fetchLambdaIamData, fetchS3IamData + 
 ## Task 5: IPC Channel — IAM_ANALYZE
 
 **Files:**
-- Modify: `cloudblocks/src/main/ipc/channels.ts`
-- Modify: `cloudblocks/src/main/ipc/handlers.ts`
-- Modify: `cloudblocks/src/preload/index.ts`
-- Modify: `cloudblocks/src/preload/index.d.ts`
+- Modify: `riftview/src/main/ipc/channels.ts`
+- Modify: `riftview/src/main/ipc/handlers.ts`
+- Modify: `riftview/src/preload/index.ts`
+- Modify: `riftview/src/preload/index.d.ts`
 
 - [ ] **Step 1: Add channel constant**
 
@@ -677,7 +677,7 @@ npm run typecheck 2>&1 | head -10
 - [ ] **Step 5: Commit**
 
 ```bash
-git add cloudblocks/src/main/ipc/channels.ts cloudblocks/src/main/ipc/handlers.ts cloudblocks/src/preload/index.ts cloudblocks/src/preload/index.d.ts
+git add riftview/src/main/ipc/channels.ts riftview/src/main/ipc/handlers.ts riftview/src/preload/index.ts riftview/src/preload/index.d.ts
 git commit -m "feat(ipc): IAM_ANALYZE channel with 10s timeout"
 ```
 
@@ -686,12 +686,12 @@ git commit -m "feat(ipc): IAM_ANALYZE channel with 10s timeout"
 ## Task 6: IamAdvisor Component
 
 **Files:**
-- Create: `cloudblocks/src/renderer/components/IamAdvisor.tsx`
+- Create: `riftview/src/renderer/components/IamAdvisor.tsx`
 
 - [ ] **Step 1: Create IamAdvisor.tsx**
 
 ```tsx
-// cloudblocks/src/renderer/components/IamAdvisor.tsx
+// riftview/src/renderer/components/IamAdvisor.tsx
 import React, { useState } from 'react'
 import type { IamAnalysisResult, IamFinding, IamSeverity } from '../types/iam'
 
@@ -801,7 +801,7 @@ npm run typecheck 2>&1 | head -10
 - [ ] **Step 3: Commit**
 
 ```bash
-git add cloudblocks/src/renderer/components/IamAdvisor.tsx
+git add riftview/src/renderer/components/IamAdvisor.tsx
 git commit -m "feat(ui): IamAdvisor component — findings list with severity, expand, re-check"
 ```
 
@@ -810,7 +810,7 @@ git commit -m "feat(ui): IamAdvisor component — findings list with severity, e
 ## Task 7: Wire IamAdvisor into Inspector
 
 **Files:**
-- Modify: `cloudblocks/src/renderer/components/Inspector.tsx`
+- Modify: `riftview/src/renderer/components/Inspector.tsx`
 
 - [ ] **Step 1: Add IAM state to Inspector**
 
@@ -837,7 +837,7 @@ useEffect(() => {
   }
   // Start fetch
   setIamResult(null)
-  window.cloudblocks
+  window.riftview
     .analyzeIam(selectedNode.id, selectedNode.type as NodeType, selectedNode.metadata ?? {})
     .then(setIamResult)
     .catch((err) => setIamResult({ nodeId: selectedNode.id, findings: [], error: String(err), fetchedAt: Date.now() }))
@@ -846,7 +846,7 @@ useEffect(() => {
 function handleRecheck(): void {
   if (!selectedNode) return
   setIamResult(null)
-  window.cloudblocks
+  window.riftview
     .analyzeIam(selectedNode.id, selectedNode.type as NodeType, selectedNode.metadata ?? {})
     .then(setIamResult)
     .catch((err) => setIamResult({ nodeId: selectedNode.id, findings: [], error: String(err), fetchedAt: Date.now() }))
@@ -869,13 +869,13 @@ function handleRecheck(): void {
 - [ ] **Step 4: Run typecheck + all tests**
 
 ```bash
-cd cloudblocks && npm run typecheck && npm test 2>&1 | tail -5
+cd riftview && npm run typecheck && npm test 2>&1 | tail -5
 ```
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add cloudblocks/src/renderer/components/Inspector.tsx
+git add riftview/src/renderer/components/Inspector.tsx
 git commit -m "feat(inspector): IAM Advisor section — on-demand analysis for EC2/Lambda/S3"
 ```
 
@@ -886,7 +886,7 @@ git commit -m "feat(inspector): IAM Advisor section — on-demand analysis for E
 - [ ] **Lint passes**
 
 ```bash
-cd cloudblocks && npm run lint 2>&1 | grep -c "error" || echo "0 errors"
+cd riftview && npm run lint 2>&1 | grep -c "error" || echo "0 errors"
 ```
 
 - [ ] **Typecheck passes**
@@ -907,6 +907,6 @@ Expected: all tests pass (evaluator + fetcher + iam types tests new)
 
 ```bash
 git status
-git add cloudblocks/
+git add riftview/
 git commit -m "feat: IAM least-privilege advisor — on-demand policy analysis for EC2/Lambda/S3"
 ```

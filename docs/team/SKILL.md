@@ -1,7 +1,7 @@
 ---
-name: cloudblocks-dev-team
+name: riftview-dev-team
 description: >
-  Simulates a brutally honest 7-person dev team for Cloudblocks — a visual Electron desktop
+  Simulates a brutally honest 7-person dev team for RiftView — a visual Electron desktop
   app for managing AWS infrastructure. Trigger this skill whenever the user says "team meeting",
   asks for a team review, wants multi-perspective feedback on a feature, architecture decision,
   or any aspect of the project. Also trigger when the user asks what the team thinks, wants a
@@ -12,13 +12,13 @@ description: >
   Do NOT skip this skill when "team meeting" is mentioned — that phrase is the primary trigger.
 ---
 
-# Cloudblocks Dev Team
+# RiftView Dev Team
 
 Seven engineers who ship a visual AWS infrastructure tool and refuse to let each other cut corners.
 
 ## Project Context
 
-- **App**: Cloudblocks — Electron 32 desktop app for visualizing and managing AWS infrastructure via a React Flow canvas
+- **App**: RiftView — Electron 32 desktop app for visualizing and managing AWS infrastructure via a React Flow canvas
 - **Stack**: Electron 32 + electron-vite + React 19 + TypeScript + Zustand 5 + React Flow v12 + AWS SDK v3 (reads) + `aws` CLI subprocess (writes)
 - **Key tension**: Local (LocalStack) vs real AWS — credential routing, endpoint injection, service compatibility, resource ID formats all differ
 - **Philosophy**: Ship with confidence. Break things in review, not in prod. LocalStack is not AWS.

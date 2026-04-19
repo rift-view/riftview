@@ -1,4 +1,4 @@
-# Cloudblocks M4 — Design Spec
+# RiftView M4 — Design Spec
 **Date:** 2026-03-13
 **Status:** Approved
 
@@ -109,7 +109,7 @@ export function applyTheme(theme: Theme): void {
 ```
 
 Called in two places:
-1. **`loadSettings`** in `src/renderer/store/cloud.ts` — modify the action to call `applyTheme(s.theme)` between the `await window.cloudblocks.getSettings()` and `set({ settings: s })`. Do not call `applyTheme` from outside the store at startup.
+1. **`loadSettings`** in `src/renderer/store/cloud.ts` — modify the action to call `applyTheme(s.theme)` between the `await window.riftview.getSettings()` and `set({ settings: s })`. Do not call `applyTheme` from outside the store at startup.
 2. **`SettingsPanel`** — after `await saveSettings(newSettings)` resolves, the component calls `applyTheme(newSettings.theme)`. The store action itself does NOT call `applyTheme` on save, only on load.
 
 `themes.css` is imported once at the renderer entry point (`src/renderer/src/main.tsx`).
@@ -158,7 +158,7 @@ In `src/preload/index.ts`, add inside `contextBridge.exposeInMainWorld`:
 getThemeOverrides: () => ipcRenderer.invoke(IPC.THEME_OVERRIDES)
 ```
 
-In `src/preload/index.d.ts`, add to the `Window.cloudblocks` interface:
+In `src/preload/index.d.ts`, add to the `Window.riftview` interface:
 ```ts
 getThemeOverrides(): Promise<Record<string, string>>
 ```

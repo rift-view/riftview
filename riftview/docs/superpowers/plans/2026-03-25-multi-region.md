@@ -76,7 +76,7 @@ regionColors: {},
 - [ ] **Step 4: Run typecheck**
 
 ```bash
-cd cloudblocks && npm run typecheck
+cd riftview && npm run typecheck
 ```
 
 Expected: no errors. If `Settings` is spread anywhere without the new fields, add them.
@@ -141,7 +141,7 @@ export function buildRegionColorMap(
 - [ ] **Step 2: Run typecheck**
 
 ```bash
-cd cloudblocks && npm run typecheck
+cd riftview && npm run typecheck
 ```
 
 Expected: no errors.
@@ -189,13 +189,13 @@ export function RegionBar(): React.JSX.Element {
     if (selectedRegions.length <= 1) return
     const next = selectedRegions.filter((x) => x !== r)
     setSelectedRegions(next)
-    window.cloudblocks.startScan(next)
+    window.riftview.startScan(next)
   }
 
   function addRegion(r: string): void {
     const next = [...selectedRegions, r]
     setSelectedRegions(next)
-    window.cloudblocks.startScan(next)
+    window.riftview.startScan(next)
     setAddOpen(false)
   }
 
@@ -339,7 +339,7 @@ Wrap the `<div style={{ position: 'relative' }}>` around the add button in a `<d
 - [ ] **Step 3: Run typecheck**
 
 ```bash
-cd cloudblocks && npm run typecheck
+cd riftview && npm run typecheck
 ```
 
 - [ ] **Step 4: Commit**
@@ -389,7 +389,7 @@ Keep `setRegion` import in `useScanner` — it's still used there.
 - [ ] **Step 3: Run typecheck and tests**
 
 ```bash
-cd cloudblocks && npm run typecheck && npm test
+cd riftview && npm run typecheck && npm test
 ```
 
 Expected: all pass. If any test references the region select in TitleBar, update it.
@@ -451,7 +451,7 @@ The strip needs to be clipped. The node wrapper likely already has these — ver
 - [ ] **Step 4: Run typecheck**
 
 ```bash
-cd cloudblocks && npm run typecheck
+cd riftview && npm run typecheck
 ```
 
 - [ ] **Step 5: Commit**
@@ -601,7 +601,7 @@ Add `selectedRegions`, `showRegionIndicators`, `regionColorMap` to the main `flo
 - [ ] **Step 7: Run typecheck and tests**
 
 ```bash
-cd cloudblocks && npm run typecheck && npm test
+cd riftview && npm run typecheck && npm test
 ```
 
 Expected: all pass.
@@ -689,7 +689,7 @@ import { getRegionColor } from '../utils/regionColors'
 - [ ] **Step 3: Run typecheck and tests**
 
 ```bash
-cd cloudblocks && npm run typecheck && npm test
+cd riftview && npm run typecheck && npm test
 ```
 
 - [ ] **Step 4: Commit**
@@ -727,7 +727,7 @@ setSelectedRegions([first.region])   // reset to single region on profile change
 - [ ] **Step 3: Run typecheck and tests**
 
 ```bash
-cd cloudblocks && npm run typecheck && npm test
+cd riftview && npm run typecheck && npm test
 ```
 
 Expected: all 347 tests pass.
@@ -735,7 +735,7 @@ Expected: all 347 tests pass.
 - [ ] **Step 4: Final check — run full CI suite**
 
 ```bash
-cd cloudblocks && npm run lint && npm run typecheck && npm test
+cd riftview && npm run lint && npm run typecheck && npm test
 ```
 
 Expected: all three pass clean.

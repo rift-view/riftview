@@ -1,4 +1,4 @@
-# Cloudblocks M2 — Design Spec
+# RiftView M2 — Design Spec
 **Date:** 2026-03-11
 **Status:** Approved
 

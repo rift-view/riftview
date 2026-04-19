@@ -6,7 +6,7 @@
 
 **Architecture:** Two new files (`buildRemediateCommands.ts` + test), two modified files (`Inspector.tsx` + `App.tsx`), and one new test file for the Inspector section. The pure function is built and tested first; the UI wires in second. No new IPC channels.
 
-**Tech Stack:** TypeScript, React, Vitest + RTL, existing `window.terminus.runCli(commands: string[][])` IPC
+**Tech Stack:** TypeScript, React, Vitest + RTL, existing `window.riftview.runCli(commands: string[][])` IPC
 
 ---
 
@@ -202,7 +202,7 @@ describe('buildRemediateCommands', () => {
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/renderer/utils/buildRemediateCommands.test.ts 2>&1 | tail -20
 ```
 
@@ -282,7 +282,7 @@ function buildMatchedCommands(node: CloudNode): string[][] {
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/renderer/utils/buildRemediateCommands.test.ts 2>&1 | tail -20
 ```
 
@@ -291,7 +291,7 @@ Expected: 11 tests PASS
 - [ ] **Step 5: Typecheck**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm run typecheck 2>&1 | tail -20
 ```
 
@@ -300,7 +300,7 @@ Expected: exit 0
 - [ ] **Step 6: Full test suite**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm test 2>&1 | tail -10
 ```
 
@@ -309,7 +309,7 @@ Expected: 874 + 11 = 885 passing
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 git add src/renderer/utils/buildRemediateCommands.ts tests/renderer/utils/buildRemediateCommands.test.ts
 git commit -m "feat(phase2): buildRemediateCommands pure function + tests"
 ```
@@ -337,7 +337,7 @@ State resets to `'idle'` whenever `selectedNodeId` changes — use a `useEffect`
 
 **Execute button:** calls `onRemediate!(node, commands)` — the prop is optional; button is disabled (and REMEDIATE section still shown) when `onRemediate` is undefined.
 
-**App.tsx:** `handleRemediate` is a plain async function — `return window.terminus.runCli(commands)` — passed to `<Inspector onRemediate={handleRemediate} />`.
+**App.tsx:** `handleRemediate` is a plain async function — `return window.riftview.runCli(commands)` — passed to `<Inspector onRemediate={handleRemediate} />`.
 
 **Command display:** Each `string[]` rendered as one `<div>`: `` `aws ${argv.join(' ')}` ``. Truncate at 200 chars with `…`; full command in `title` attribute.
 
@@ -361,7 +361,7 @@ import type { CloudNode } from '../../../src/renderer/types/cloud'
 const saveAnnotationsMock = vi.fn().mockResolvedValue(undefined)
 const analyzeIamMock      = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
 
-Object.defineProperty(window, 'terminus', {
+Object.defineProperty(window, 'riftview', {
   value: { saveAnnotations: saveAnnotationsMock, analyzeIam: analyzeIamMock },
   writable: true,
 })
@@ -486,7 +486,7 @@ describe('Inspector REMEDIATE section', () => {
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/renderer/components/Inspector.remediate.test.tsx 2>&1 | tail -20
 ```
 
@@ -633,7 +633,7 @@ In `src/renderer/src/App.tsx`:
 **5a. Add `handleRemediate` function** (after `handleQuickAction`, around line 187):
 ```ts
 async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{ code: number }> {
-  return window.terminus.runCli(commands)
+  return window.riftview.runCli(commands)
 }
 ```
 
@@ -645,7 +645,7 @@ async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{
 - [ ] **Step 6: Run the Inspector tests**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/renderer/components/Inspector.remediate.test.tsx 2>&1 | tail -20
 ```
 
@@ -654,7 +654,7 @@ Expected: all 8 tests PASS
 - [ ] **Step 7: Typecheck**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm run typecheck 2>&1 | tail -20
 ```
 
@@ -663,7 +663,7 @@ Expected: exit 0
 - [ ] **Step 8: Full test suite**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm test 2>&1 | tail -10
 ```
 
@@ -672,7 +672,7 @@ Expected: 885 + 9 = 894 passing (or close — counts match baseline + new tests)
 - [ ] **Step 9: Verify flag=false test passes (smoke check)**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/renderer/components/Inspector.remediate.test.tsx --reporter=verbose 2>&1 | grep -E "(PASS|FAIL|flag)"
 ```
 
@@ -681,7 +681,7 @@ Expected: `hidden when EXECUTION_ENGINE flag is false` test listed as PASS
 - [ ] **Step 10: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 git add src/renderer/components/Inspector.tsx src/renderer/src/App.tsx tests/renderer/components/Inspector.remediate.test.tsx
 git commit -m "feat(phase2): Inspector REMEDIATE section + App.tsx handleRemediate wiring"
 ```
@@ -691,7 +691,7 @@ git commit -m "feat(phase2): Inspector REMEDIATE section + App.tsx handleRemedia
 ## Completion Verification
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm run typecheck && npm test
 ```
 
@@ -701,4 +701,4 @@ Expected outcome:
 - `flag('EXECUTION_ENGINE') = false` → Inspector renders identically to today (covered by test)
 - `flag('EXECUTION_ENGINE') = true` + unmanaged Lambda → REMEDIATE shows delete command
 - `flag('EXECUTION_ENGINE') = true` + matched Lambda runtime diff → REMEDIATE shows update command
-- Execute button calls `window.terminus.runCli` with correct argv arrays
+- Execute button calls `window.riftview.runCli` with correct argv arrays

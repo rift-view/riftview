@@ -69,7 +69,7 @@ Every method falls into one of four privilege classes. Classes with
 | `onCliDone(cb)` | `cli:done` (push) | Exit code |
 
 > **Security note:** `runCli` is the most dangerous surface. All write
-> actions in Cloudblocks flow through it. Input (argv arrays) comes from
+> actions in RiftView flow through it. Input (argv arrays) comes from
 > renderer-side pure builders (`buildCommands`, `buildDeleteCommands`,
 > `buildEditCommands`, `buildRemediateCommands`, `buildAdvisoryRemediations`).
 > Any new write path MUST go through a pure builder with tests.

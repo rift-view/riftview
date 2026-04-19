@@ -1,4 +1,4 @@
-# Cloudblocks — ACM + CloudFront Design Spec
+# RiftView — ACM + CloudFront Design Spec
 **Date:** 2026-03-13
 **Status:** Approved
 
@@ -262,7 +262,7 @@ The existing `Inspector` prop `onQuickAction: (node: CloudNode, action: 'stop' |
 ```ts
 onQuickAction: (node: CloudNode, action: 'stop' | 'start' | 'reboot' | 'invalidate', meta?: { path?: string }) => void
 ```
-`App.tsx` handles `'invalidate'` by calling `window.cloudblocks.invalidateCloudFront(node.id, meta?.path ?? '/*')`.
+`App.tsx` handles `'invalidate'` by calling `window.riftview.invalidateCloudFront(node.id, meta?.path ?? '/*')`.
 
 ---
 
@@ -332,7 +332,7 @@ CF_INVALIDATE: 'cloudfront:invalidate', // invoke → { code: number }
 
 **cloudfront:invalidate** — calls `CreateInvalidationCommand` with `{ Paths: { Quantity: 1, Items: [path] }, CallerReference: Date.now().toString() }`.
 
-**Renderer side:** `CloudFrontForm` and `CloudFrontEditForm` call `window.cloudblocks.createCloudFront(params)` / `window.cloudblocks.updateCloudFront(params)` instead of `window.cloudblocks.runCli()`. The `window.cloudblocks` preload API is extended accordingly.
+**Renderer side:** `CloudFrontForm` and `CloudFrontEditForm` call `window.riftview.createCloudFront(params)` / `window.riftview.updateCloudFront(params)` instead of `window.riftview.runCli()`. The `window.riftview` preload API is extended accordingly.
 
 **handlers.ts wiring:** The existing `handlers.ts` does not expose `clients` at module scope — they are recreated inside `restartScanner()`. Add a module-level `let clients: AwsClients | null = null` variable; set it in `restartScanner()` alongside `scanner`. CloudFront IPC handlers read `clients?.cloudfront` to get the live `CloudFrontClient`.
 
@@ -359,7 +359,7 @@ CF_INVALIDATE: 'cloudfront:invalidate', // invoke → { code: number }
 | `src/main/aws/scanner.ts` | Add ACM + CloudFront to `Promise.all` scan |
 | `src/main/ipc/channels.ts` | Add `CF_CREATE`, `CF_UPDATE`, `CF_DELETE`, `CF_INVALIDATE` channels |
 | `src/main/ipc/handlers.ts` | Add CloudFront SDK write handlers |
-| `src/preload/index.ts` | Expose `createCloudFront`, `updateCloudFront`, `deleteCloudFront`, `invalidateCloudFront` on `window.cloudblocks` |
+| `src/preload/index.ts` | Expose `createCloudFront`, `updateCloudFront`, `deleteCloudFront`, `invalidateCloudFront` on `window.riftview` |
 | `src/renderer/types/cloud.ts` | Add `'acm'`, `'cloudfront'` to `NodeType` |
 | `src/renderer/types/create.ts` | Add `AcmParams`, `CloudFrontParams`, extend `CreateParams` |
 | `src/renderer/types/edit.ts` | Add `CloudFrontEditParams`, extend `EditParams` |

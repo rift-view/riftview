@@ -9,7 +9,7 @@
 
 ## 1. Motivation and Scope
 
-Cloudblocks is currently a single-provider desktop app. Every service, node type, scan function, CRUD command builder, and HCL generator is hardcoded to AWS. The code is structured cleanly — `awsProvider` behind the `CloudProvider` interface, scan functions in `services/`, command builders in `renderer/utils/` — but none of these seams allow a second cloud provider to be added without forking or touching AWS-specific files.
+RiftView is currently a single-provider desktop app. Every service, node type, scan function, CRUD command builder, and HCL generator is hardcoded to AWS. The code is structured cleanly — `awsProvider` behind the `CloudProvider` interface, scan functions in `services/`, command builders in `renderer/utils/` — but none of these seams allow a second cloud provider to be added without forking or touching AWS-specific files.
 
 M6's goal is to introduce a plugin architecture that makes provider addition a self-contained operation. A plugin should be able to declare the node types it introduces, wire in its own scan functions, register its own CRUD command builders, HCL generators, and canvas rendering metadata, all without editing any AWS-specific file.
 
@@ -40,7 +40,7 @@ This means:
 
 ## 3. Plugin Interface
 
-A plugin is a TypeScript object satisfying the `CloudblocksPlugin` interface. This interface lives in a new file: `src/main/plugin/types.ts`.
+A plugin is a TypeScript object satisfying the `RiftViewPlugin` interface. This interface lives in a new file: `src/main/plugin/types.ts`.
 
 ```ts
 // src/main/plugin/types.ts
@@ -109,10 +109,10 @@ export type PluginHclGenerator = (node: CloudNode) => string
 /**
  * The full plugin contract.
  */
-export interface CloudblocksPlugin {
+export interface RiftViewPlugin {
   /**
-   * Unique plugin identifier. Reverse-domain recommended: "com.cloudblocks.aws",
-   * "com.cloudblocks.azure", "io.example.vercel".
+   * Unique plugin identifier. Reverse-domain recommended: "com.riftview.aws",
+   * "com.riftview.azure", "io.example.vercel".
    */
   readonly id: string
 
@@ -209,7 +209,7 @@ Registration happens at app startup in `src/main/index.ts` (or wherever `registe
 ```ts
 interface PluginRegistry {
   /** Register a plugin. Call before registerHandlers. */
-  register(plugin: CloudblocksPlugin): void
+  register(plugin: RiftViewPlugin): void
 
   /** Activate all registered plugins for the given profile/region. */
   activateAll(profile: string, region: string, endpoint?: string): Promise<void>
@@ -236,13 +236,13 @@ interface PluginRegistry {
   getNodeTypeMetadata(nodeType: string): NodeTypeMetadata | undefined
 
   /** All registered plugins, in registration order. */
-  readonly plugins: readonly CloudblocksPlugin[]
+  readonly plugins: readonly RiftViewPlugin[]
 }
 ```
 
 ### 4.3 Ownership Model
 
-The registry maintains a `Map<string, CloudblocksPlugin>` from NodeType string to owning plugin. A NodeType can only be owned by one plugin. If two plugins claim the same NodeType string, `register()` throws at startup — fail fast, not silently.
+The registry maintains a `Map<string, RiftViewPlugin>` from NodeType string to owning plugin. A NodeType can only be owned by one plugin. If two plugins claim the same NodeType string, `register()` throws at startup — fail fast, not silently.
 
 For built-in AWS NodeTypes (the compile-time union), the AWS plugin claims ownership at registration time, but the built-in CRUD functions in `buildCommand.ts`, `buildDeleteCommands.ts`, `buildEditCommands.ts` remain authoritative for those types. The registry delegates to these built-in functions for built-in types, and to plugin command handlers for plugin-owned types. This allows the AWS plugin to be refactored gradually — see Migration Path in section 10.
 
@@ -297,7 +297,7 @@ When a plugin is promoted to "bundled built-in" (e.g. after Azure reaches produc
 
 The `ResourceScanner` constructor stops accepting `profile` and `endpoint` directly for client creation (these are now the concern of each plugin's `createCredentials()`). The scanner's job is reduced to: run the poll loop, call `pluginRegistry.scanAll(region)`, compute delta, push IPC events.
 
-The key-pair lookup (`describeKeyPairs`) is AWS-specific. It moves inside the AWS plugin via an optional `scanExtras?(region: string): Promise<void>` hook on `CloudblocksPlugin`. The scanner calls `plugin.scanExtras?.(region)` after `scanAll()` for each plugin that implements it.
+The key-pair lookup (`describeKeyPairs`) is AWS-specific. It moves inside the AWS plugin via an optional `scanExtras?(region: string): Promise<void>` hook on `RiftViewPlugin`. The scanner calls `plugin.scanExtras?.(region)` after `scanAll()` for each plugin that implements it.
 
 ### 6.3 Multi-Region
 
@@ -414,7 +414,7 @@ The existing `awsProvider` and `createClients()` become the AWS plugin. This is 
 
 ### Phase 1: Create the plugin skeleton (no behavior change)
 
-Create `src/main/plugin/awsPlugin.ts` exporting a `CloudblocksPlugin` object. Its `createCredentials()` calls `createClients()`. Its `scan()` calls all existing service scan functions exactly as `awsProvider.scan()` does today. `nodeTypes` enumerates all 22 current `NodeType` values.
+Create `src/main/plugin/awsPlugin.ts` exporting a `RiftViewPlugin` object. Its `createCredentials()` calls `createClients()`. Its `scan()` calls all existing service scan functions exactly as `awsProvider.scan()` does today. `nodeTypes` enumerates all 22 current `NodeType` values.
 
 Create `src/main/plugin/registry.ts` with the `PluginRegistry` implementation. Register `awsPlugin` — but `ResourceScanner` still calls `awsProvider.scan()` directly. The registry exists but nothing routes through it yet.
 
@@ -442,9 +442,9 @@ At this point the full system is live: an Azure plugin can be added by creating 
 
 ```
 src/main/plugin/
-  types.ts          — CloudblocksPlugin interface, NodeTypeMetadata, PluginScanResult
+  types.ts          — RiftViewPlugin interface, NodeTypeMetadata, PluginScanResult
   registry.ts       — PluginRegistry implementation
-  awsPlugin.ts      — AWS CloudblocksPlugin (wraps existing awsProvider / services)
+  awsPlugin.ts      — AWS RiftViewPlugin (wraps existing awsProvider / services)
   index.ts          — exports pluginRegistry singleton, called from main/index.ts
 
 src/renderer/plugin/
@@ -492,7 +492,7 @@ onPluginMetadata: (cb: (meta: Record<string, NodeTypeMetadata>) => void) => () =
 
 ## 14. TypeScript Strictness
 
-The `CloudblocksPlugin` interface uses `unknown` for credentials rather than a type parameter on the interface itself, to allow the registry to store heterogeneous plugins in a `CloudblocksPlugin[]` array without generics variance issues. Each plugin casts `context.credentials` to its own SDK client type internally.
+The `RiftViewPlugin` interface uses `unknown` for credentials rather than a type parameter on the interface itself, to allow the registry to store heterogeneous plugins in a `RiftViewPlugin[]` array without generics variance issues. Each plugin casts `context.credentials` to its own SDK client type internally.
 
 The `Record<NodeType, ...>` exhaustive maps in `ResourceNode.tsx`, `SearchPalette.tsx`, and `generators.ts` are not changed. The `satisfies` checks remain. Adding a new built-in NodeType still requires updating all four maps, as documented in CLAUDE.md.
 
@@ -524,7 +524,7 @@ Plugin NodeType strings are typed as `string`, not `NodeType`. The union is not 
 Recommendation: `awsPlugin.ts` wraps the existing service functions directly. Keep `awsProvider.ts` in place during migration and delete it in a later cleanup commit once `scanner.ts` no longer imports it.
 
 **Q2: Where does the AWS plugin's key-pair scan go?**
-The key-pair scan feeds the EC2 create form, not the topology. Add an optional `scanExtras?(region: string): Promise<void>` to `CloudblocksPlugin`. The AWS plugin implements it to fetch key pairs and push `IPC.SCAN_KEYPAIRS`.
+The key-pair scan feeds the EC2 create form, not the topology. Add an optional `scanExtras?(region: string): Promise<void>` to `RiftViewPlugin`. The AWS plugin implements it to fetch key pairs and push `IPC.SCAN_KEYPAIRS`.
 
 **Q3: Should renderer-side command routing live in `pluginCommands.ts` or inline at each call site?**
 Recommendation: centralize in `pluginCommands.ts` with three exported functions: `resolveCreateCommands`, `resolveDeleteCommands`, `resolveEditCommands`. Call sites import from `pluginCommands.ts`.
@@ -536,7 +536,7 @@ Only plugin-introduced types need to cross IPC. Built-in type metadata is alread
 
 ## 17. Acceptance Criteria for M6
 
-- [ ] `CloudblocksPlugin` interface defined in `src/main/plugin/types.ts`
+- [ ] `RiftViewPlugin` interface defined in `src/main/plugin/types.ts`
 - [ ] `PluginRegistry` implementation in `src/main/plugin/registry.ts`
 - [ ] `awsPlugin.ts` exists and wraps all existing scan service functions
 - [ ] `ResourceScanner` calls `pluginRegistry.scanAll()`, not `awsProvider.scan()` directly

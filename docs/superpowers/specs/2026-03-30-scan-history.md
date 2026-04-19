@@ -8,7 +8,7 @@
 
 ## 1. Goal
 
-Cloudblocks currently shows only the live state of AWS infrastructure — each scan overwrites the previous result with no record of what changed. Users cannot answer questions like:
+RiftView currently shows only the live state of AWS infrastructure — each scan overwrites the previous result with no record of what changed. Users cannot answer questions like:
 
 - "What resources were added or removed in the last 24 hours?"
 - "Which EC2 instance disappeared after the deploy yesterday?"

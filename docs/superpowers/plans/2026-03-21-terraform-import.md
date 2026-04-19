@@ -13,11 +13,11 @@
 ## Task 1: Add 'imported' NodeStatus + Type Groundwork
 
 **Files:**
-- Modify: `cloudblocks/src/renderer/types/cloud.ts`
+- Modify: `riftview/src/renderer/types/cloud.ts`
 
 - [ ] **Step 1: Write failing test for new NodeStatus**
 
-Create `cloudblocks/tests/renderer/types/cloud.test.ts` (or add to existing):
+Create `riftview/tests/renderer/types/cloud.test.ts` (or add to existing):
 
 ```typescript
 import { describe, it, expect } from 'vitest'
@@ -31,7 +31,7 @@ describe('NodeStatus includes imported', () => {
 })
 ```
 
-Run: `cd cloudblocks && npm test -- cloud.test.ts`
+Run: `cd riftview && npm test -- cloud.test.ts`
 Expected: FAIL (type error — 'imported' not in union yet)
 
 - [ ] **Step 2: Add 'imported' to NodeStatus union**
@@ -59,7 +59,7 @@ npm test -- cloud.test.ts
 - [ ] **Step 5: Commit**
 
 ```bash
-git add cloudblocks/src/renderer/types/cloud.ts cloudblocks/tests/renderer/types/cloud.test.ts
+git add riftview/src/renderer/types/cloud.ts riftview/tests/renderer/types/cloud.test.ts
 git commit -m "feat(types): add 'imported' to NodeStatus union"
 ```
 
@@ -68,12 +68,12 @@ git commit -m "feat(types): add 'imported' to NodeStatus union"
 ## Task 2: Parser — parseTfState()
 
 **Files:**
-- Create: `cloudblocks/src/main/aws/tfstate/parser.ts`
-- Create: `cloudblocks/tests/main/aws/tfstate/parser.test.ts`
+- Create: `riftview/src/main/aws/tfstate/parser.ts`
+- Create: `riftview/tests/main/aws/tfstate/parser.test.ts`
 
 - [ ] **Step 1: Write failing tests**
 
-Create `cloudblocks/tests/main/aws/tfstate/parser.test.ts`:
+Create `riftview/tests/main/aws/tfstate/parser.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest'
@@ -188,12 +188,12 @@ describe('parseTfState', () => {
 })
 ```
 
-Run: `cd cloudblocks && npm test -- parser.test.ts`
+Run: `cd riftview && npm test -- parser.test.ts`
 Expected: FAIL (no parser file yet)
 
 - [ ] **Step 2: Create the parser**
 
-Create `cloudblocks/src/main/aws/tfstate/parser.ts`:
+Create `riftview/src/main/aws/tfstate/parser.ts`:
 
 ```typescript
 import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
@@ -286,7 +286,7 @@ npm run typecheck 2>&1 | head -10
 - [ ] **Step 5: Commit**
 
 ```bash
-git add cloudblocks/src/main/aws/tfstate/parser.ts cloudblocks/tests/main/aws/tfstate/parser.test.ts
+git add riftview/src/main/aws/tfstate/parser.ts riftview/tests/main/aws/tfstate/parser.test.ts
 git commit -m "feat(tfstate): parseTfState — 10-type mapping, sensitive-key sanitization"
 ```
 
@@ -295,10 +295,10 @@ git commit -m "feat(tfstate): parseTfState — 10-type mapping, sensitive-key sa
 ## Task 3: IPC Channels — TFSTATE_IMPORT + TFSTATE_CLEAR
 
 **Files:**
-- Modify: `cloudblocks/src/main/ipc/channels.ts`
-- Modify: `cloudblocks/src/main/ipc/handlers.ts`
-- Modify: `cloudblocks/src/preload/index.ts`
-- Modify: `cloudblocks/src/preload/index.d.ts`
+- Modify: `riftview/src/main/ipc/channels.ts`
+- Modify: `riftview/src/main/ipc/handlers.ts`
+- Modify: `riftview/src/preload/index.ts`
+- Modify: `riftview/src/preload/index.d.ts`
 
 - [ ] **Step 1: Add channel constants**
 
@@ -357,7 +357,7 @@ npm run typecheck 2>&1 | head -10
 - [ ] **Step 5: Commit**
 
 ```bash
-git add cloudblocks/src/main/ipc/channels.ts cloudblocks/src/main/ipc/handlers.ts cloudblocks/src/preload/index.ts cloudblocks/src/preload/index.d.ts
+git add riftview/src/main/ipc/channels.ts riftview/src/main/ipc/handlers.ts riftview/src/preload/index.ts riftview/src/preload/index.d.ts
 git commit -m "feat(ipc): TFSTATE_IMPORT + TFSTATE_CLEAR channels"
 ```
 
@@ -366,7 +366,7 @@ git commit -m "feat(ipc): TFSTATE_IMPORT + TFSTATE_CLEAR channels"
 ## Task 4: Store — importedNodes Slice
 
 **Files:**
-- Modify: `cloudblocks/src/renderer/store/cloud.ts`
+- Modify: `riftview/src/renderer/store/cloud.ts`
 
 - [ ] **Step 1: Add importedNodes state + actions**
 
@@ -407,7 +407,7 @@ npm run typecheck && npm test 2>&1 | tail -5
 - [ ] **Step 4: Commit**
 
 ```bash
-git add cloudblocks/src/renderer/store/cloud.ts
+git add riftview/src/renderer/store/cloud.ts
 git commit -m "feat(store): importedNodes slice — isolated from applyDelta, separate from live scan"
 ```
 
@@ -416,9 +416,9 @@ git commit -m "feat(store): importedNodes slice — isolated from applyDelta, se
 ## Task 5: Canvas Visual Treatment + flowNodes Merge
 
 **Files:**
-- Modify: `cloudblocks/src/renderer/components/canvas/nodes/ResourceNode.tsx`
-- Modify: `cloudblocks/src/renderer/components/canvas/TopologyView.tsx`
-- Modify: `cloudblocks/src/renderer/components/canvas/GraphView.tsx`
+- Modify: `riftview/src/renderer/components/canvas/nodes/ResourceNode.tsx`
+- Modify: `riftview/src/renderer/components/canvas/TopologyView.tsx`
+- Modify: `riftview/src/renderer/components/canvas/GraphView.tsx`
 
 - [ ] **Step 1: Add imported visual treatment to ResourceNode**
 
@@ -492,7 +492,7 @@ npm run typecheck 2>&1 | head -10
 - [ ] **Step 5: Commit**
 
 ```bash
-git add cloudblocks/src/renderer/components/canvas/nodes/ResourceNode.tsx cloudblocks/src/renderer/components/canvas/TopologyView.tsx cloudblocks/src/renderer/components/canvas/GraphView.tsx
+git add riftview/src/renderer/components/canvas/nodes/ResourceNode.tsx riftview/src/renderer/components/canvas/TopologyView.tsx riftview/src/renderer/components/canvas/GraphView.tsx
 git commit -m "feat(canvas): imported node visual treatment (dashed border, TF badge) + importedNodes merge in flowNodes"
 ```
 
@@ -501,9 +501,9 @@ git commit -m "feat(canvas): imported node visual treatment (dashed border, TF b
 ## Task 6: Inspector + UI Entry Points
 
 **Files:**
-- Modify: `cloudblocks/src/renderer/components/Inspector.tsx`
-- Modify: `cloudblocks/src/renderer/components/TitleBar.tsx`
-- Modify: `cloudblocks/src/renderer/components/canvas/CloudCanvas.tsx`
+- Modify: `riftview/src/renderer/components/Inspector.tsx`
+- Modify: `riftview/src/renderer/components/TitleBar.tsx`
+- Modify: `riftview/src/renderer/components/canvas/CloudCanvas.tsx`
 
 - [ ] **Step 1: Inspector — hide actions for imported nodes + read-only banner**
 
@@ -538,7 +538,7 @@ In `TitleBar.tsx`, add a button in the toolbar:
 
 ```tsx
 async function handleImportTfState(): Promise<void> {
-  const { nodes } = await window.cloudblocks.importTfState()
+  const { nodes } = await window.riftview.importTfState()
   if (nodes.length > 0) {
     useCloudStore.getState().setImportedNodes(nodes)
     useUIStore.getState().showToast(`Imported ${nodes.length} resources from Terraform state`, 'success')
@@ -559,7 +559,7 @@ In `CloudCanvas.tsx`, add:
 const importedNodes = useCloudStore(s => s.importedNodes)
 
 async function handleClearImport(): Promise<void> {
-  await window.cloudblocks.clearTfState()
+  await window.riftview.clearTfState()
   useCloudStore.getState().clearImportedNodes()
 }
 ```
@@ -575,13 +575,13 @@ async function handleClearImport(): Promise<void> {
 - [ ] **Step 4: Run typecheck + all tests**
 
 ```bash
-cd cloudblocks && npm run typecheck && npm test 2>&1 | tail -5
+cd riftview && npm run typecheck && npm test 2>&1 | tail -5
 ```
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add cloudblocks/src/renderer/components/Inspector.tsx cloudblocks/src/renderer/components/TitleBar.tsx cloudblocks/src/renderer/components/canvas/CloudCanvas.tsx
+git add riftview/src/renderer/components/Inspector.tsx riftview/src/renderer/components/TitleBar.tsx riftview/src/renderer/components/canvas/CloudCanvas.tsx
 git commit -m "feat(ui): tfstate import button in TitleBar, read-only banner in Inspector, clear button in CloudCanvas"
 ```
 
@@ -592,7 +592,7 @@ git commit -m "feat(ui): tfstate import button in TitleBar, read-only banner in 
 - [ ] **Lint passes**
 
 ```bash
-cd cloudblocks && npm run lint 2>&1 | grep -c "error" || echo "0 errors"
+cd riftview && npm run lint 2>&1 | grep -c "error" || echo "0 errors"
 ```
 
 - [ ] **Typecheck passes**
@@ -614,6 +614,6 @@ Expected: all tests pass (13+ new parser tests)
 ```bash
 git status
 # If any untracked changes remain:
-git add cloudblocks/
+git add riftview/
 git commit -m "feat: Terraform state import — parseTfState, importedNodes store slice, canvas visual treatment"
 ```

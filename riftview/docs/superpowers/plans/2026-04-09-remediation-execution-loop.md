@@ -4,7 +4,7 @@
 
 **Goal:** Complete the drift → remediation loop: optimistic status update when execution starts, toast feedback on result, and rescan after success.
 
-**Architecture:** The Execute button in the Inspector REMEDIATE section already calls `onRemediate(node, commands)`, which calls `window.terminus.runCli(commands)` in App.tsx. What's missing: (1) `patchNodeStatus` store action to set a node to 'pending' optimistically, (2) wiring this into `handleRemediate` with rescan + toast. No new components needed.
+**Architecture:** The Execute button in the Inspector REMEDIATE section already calls `onRemediate(node, commands)`, which calls `window.riftview.runCli(commands)` in App.tsx. What's missing: (1) `patchNodeStatus` store action to set a node to 'pending' optimistically, (2) wiring this into `handleRemediate` with rescan + toast. No new components needed.
 
 **Tech Stack:** TypeScript · Zustand 5 · Vitest + RTL · React 19
 
@@ -109,7 +109,7 @@ git commit -m "feat(store): add patchNodeStatus action for optimistic status upd
 **Files:**
 - Modify: `src/renderer/src/App.tsx:189-191`
 
-Background: `handleRemediate` currently just calls `window.terminus.runCli(commands)` and returns. It needs to: (1) set the node to 'pending' before running, (2) show a toast on success/error, (3) call `triggerScan()` on success so the canvas reflects the remediated state. Pattern: mirrors `CommandDrawer.handleRun()` which does `window.terminus.startScan()` after success, but we use `triggerScan()` (from `useScanner`) because it also saves previous counts for the delta badge.
+Background: `handleRemediate` currently just calls `window.riftview.runCli(commands)` and returns. It needs to: (1) set the node to 'pending' before running, (2) show a toast on success/error, (3) call `triggerScan()` on success so the canvas reflects the remediated state. Pattern: mirrors `CommandDrawer.handleRun()` which does `window.riftview.startScan()` after success, but we use `triggerScan()` (from `useScanner`) because it also saves previous counts for the delta badge.
 
 Note: No separate test is written for this function — the Inspector.remediate.test.tsx tests the component (onRemediate is a mock prop there), and the store behavior is covered by Task 1. The integration is verified by running all tests and manual smoke test.
 
@@ -118,7 +118,7 @@ Note: No separate test is written for this function — the Inspector.remediate.
 Find (around line 189):
 ```typescript
   async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{ code: number }> {
-    return window.terminus.runCli(commands)
+    return window.riftview.runCli(commands)
   }
 ```
 
@@ -126,7 +126,7 @@ Replace with:
 ```typescript
   async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{ code: number }> {
     useCloudStore.getState().patchNodeStatus(node.id, 'pending')
-    const result = await window.terminus.runCli(commands)
+    const result = await window.riftview.runCli(commands)
     if (result.code === 0) {
       useUIStore.getState().showToast('Remediation complete')
       triggerScan()

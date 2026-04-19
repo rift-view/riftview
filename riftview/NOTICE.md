@@ -5,7 +5,7 @@
 Amazon Web Services, AWS, and all AWS service names (EC2, S3, Lambda, RDS, ACM,
 CloudFront, API Gateway, DynamoDB, ECR, ELB, EventBridge, Route 53, Secrets
 Manager, SNS, SQS, SSM, Step Functions, and others) are trademarks of
-Amazon.com, Inc. or its affiliates. Cloudblocks is not affiliated with,
+Amazon.com, Inc. or its affiliates. RiftView is not affiliated with,
 endorsed by, or sponsored by Amazon Web Services.
 
 ## AWS Architecture Icons
@@ -16,13 +16,13 @@ of use.
 
 ## LocalStack
 
-LocalStack is a product of Localstack GmbH. Cloudblocks integrates with
-LocalStack as an optional local AWS emulator. Cloudblocks is not affiliated
+LocalStack is a product of Localstack GmbH. RiftView integrates with
+LocalStack as an optional local AWS emulator. RiftView is not affiliated
 with Localstack GmbH.
 
 ## Third-Party Dependencies
 
-Cloudblocks is built with the following open-source libraries. Full license
+RiftView is built with the following open-source libraries. Full license
 texts are available in each package's source repository or in
 `node_modules/<package>/LICENSE`.
 

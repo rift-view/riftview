@@ -8,7 +8,7 @@
 
 ## Goal
 
-Allow users to drop a Terraform `.tfstate` file into Cloudblocks and visualize the infrastructure on the canvas — with no live AWS credentials required. Provides a zero-friction onramp for teams with existing Terraform-managed infrastructure.
+Allow users to drop a Terraform `.tfstate` file into RiftView and visualize the infrastructure on the canvas — with no live AWS credentials required. Provides a zero-friction onramp for teams with existing Terraform-managed infrastructure.
 
 ---
 
@@ -178,7 +178,7 @@ ipcMain.handle(IPC.TFSTATE_IMPORT, async () => {
 ipcMain.handle(IPC.TFSTATE_CLEAR, () => ({ ok: true }))
 ```
 
-### `window.cloudblocks` additions
+### `window.riftview` additions
 ```typescript
 importTfState(): Promise<{ nodes: CloudNode[]; error?: string }>
 clearTfState(): Promise<{ ok: boolean }>

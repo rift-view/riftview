@@ -8,7 +8,7 @@
 
 ## Goal
 
-Allow Cloudblocks to scan and visualize AWS resources across multiple accounts in an AWS Organization simultaneously. Each account appears as a collapsible container on the topology canvas, nested above VPCs in the existing hierarchy.
+Allow RiftView to scan and visualize AWS resources across multiple accounts in an AWS Organization simultaneously. Each account appears as a collapsible container on the topology canvas, nested above VPCs in the existing hierarchy.
 
 ---
 
@@ -76,7 +76,7 @@ All 4 files must be updated: `channels.ts` → `handlers.ts` → `preload/index.
 | `ACCOUNTS_DISCOVER` | renderer→main | `void` | Call `organizations:ListAccounts`, return `AccountConfig[]` |
 | `ACCOUNTS_SELECT` | renderer→main | `AccountConfig[]` | Update scanner's account list, trigger re-scan |
 
-### `window.cloudblocks` additions
+### `window.riftview` additions
 ```typescript
 discoverAccounts(): Promise<AccountConfig[]>
 selectAccounts(accounts: AccountConfig[]): Promise<void>

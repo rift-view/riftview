@@ -1,4 +1,4 @@
-# Cloudblocks Product Roadmap
+# RiftView Product Roadmap
 
 **Last updated:** 2026-03-26 (Wave 5 complete)
 **Status:** Active — sequenced into waves, each wave independently shippable and revertable.
@@ -57,7 +57,7 @@ Expands what users can actually do with the canvas.
 | ID | Item | Detail | Effort |
 |----|------|--------|--------|
 | P1 | **Filter composition model** | Sidebar filter, scan error badges, and region zones are three independent visibility systems. A fourth (e.g., "show only drifted nodes") will break without a unified filter model. Design before shipping the next filter type. | M (design-first) |
-| P2 | **Background scan + drift notifications** | Scan is currently user-triggered or timer-based with no notification on change. Tray notification or in-app alert when a scan detects drift. Makes Cloudblocks feel like active monitoring. | M |
+| P2 | **Background scan + drift notifications** | Scan is currently user-triggered or timer-based with no notification on change. Tray notification or in-app alert when a scan detects drift. Makes RiftView feel like active monitoring. | M |
 | P3 | **M6 multi-cloud plugin architecture** | Azure, GCP, Vercel. `CloudProvider` interface already designed for this. Core question: how do plugins register NodeTypes, scan handlers, and CRUD commands without forking the codebase? Design-first sprint. | L–XL |
 
 ---

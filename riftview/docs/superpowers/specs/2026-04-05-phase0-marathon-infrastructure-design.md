@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Establish the foundational infrastructure required for the command board marathon — rename the product to Terminus, add a compile-time feature flag system, set up Ladle for isolated component development, and put the marathon process infrastructure in place.
+**Goal:** Establish the foundational infrastructure required for the command board marathon — rename the product to RiftView, add a compile-time feature flag system, set up Ladle for isolated component development, and put the marathon process infrastructure in place.
 
-**Architecture:** Four independent workstreams executed in sequence: (1) atomic Terminus rename, (2) Vite compile-time feature flags with type-safe accessor, (3) Ladle component dev environment with initial node stories, (4) process infrastructure (Foreman review gates, token pause protocol, Obsidian changelog, scripts directory).
+**Architecture:** Four independent workstreams executed in sequence: (1) atomic RiftView rename, (2) Vite compile-time feature flags with type-safe accessor, (3) Ladle component dev environment with initial node stories, (4) process infrastructure (Foreman review gates, token pause protocol, Obsidian changelog, scripts directory).
 
 **Tech Stack:** Electron 32 + electron-vite · React 19 · TypeScript · Vite env vars · `@ladle/react` · Obsidian MCP · Vitest
 
@@ -12,21 +12,21 @@
 
 ## Context
 
-This is Phase 0 of the Terminus command board marathon — a revolutionary redesign of the product from a resource browser into a real-time operational interface for AWS. Phase 0 establishes the infrastructure that all future phases depend on. Nothing from Phase 1 (Visual Command Board), Phase 2 (Execution Engine), or Phase 3 (Operational Intelligence) begins until Phase 0 is complete and CI is green.
+This is Phase 0 of the RiftView command board marathon — a revolutionary redesign of the product from a resource browser into a real-time operational interface for AWS. Phase 0 establishes the infrastructure that all future phases depend on. Nothing from Phase 1 (Visual Command Board), Phase 2 (Execution Engine), or Phase 3 (Operational Intelligence) begins until Phase 0 is complete and CI is green.
 
-**Product direction (locked):** The product is now called **Terminus**. It is an operational tool, not a diagram tool. The IPC boundary (credentials never cross to renderer) is sacred and unchanged.
+**Product direction (locked):** The product is now called **RiftView**. It is an operational tool, not a diagram tool. The IPC boundary (credentials never cross to renderer) is sacred and unchanged.
 
 **Process rules for this marathon:**
 - Foreman must sign off on every task before it is marked complete
 - At ~90% context usage, commit in-progress work, write `RESUME.md` at project root, stop cleanly
 - All new tools/scripts go into `scripts/` and are committed
-- Scribe appends to `Cloudblocks/Changelog/CHANGELOG.md` in Obsidian after each task
+- Scribe appends to `RiftView/Changelog/CHANGELOG.md` in Obsidian after each task
 
 ---
 
 ## File Map
 
-### Task 1 — Terminus Rename
+### Task 1 — RiftView Rename
 **Source files:**
 - Modify: `package.json`
 - Modify: `electron-builder.yml`
@@ -69,41 +69,41 @@ This is Phase 0 of the Terminus command board marathon — a revolutionary redes
 ### Task 4 — Process Infrastructure
 - Create: `scripts/README.md`
 - Create: `RESUME.md` (template at project root)
-- Scribe: Initialize `Cloudblocks/Changelog/CHANGELOG.md` in Obsidian
+- Scribe: Initialize `RiftView/Changelog/CHANGELOG.md` in Obsidian
 
 ---
 
-## Task 1: Terminus Rename
+## Task 1: RiftView Rename
 
-**Completion criteria:** `npm run typecheck` passes, `npm test` passes (all 852+ tests), `window.terminus` is defined, `window.cloudblocks` is undefined. Zero remaining occurrences of `window.cloudblocks` in source.
+**Completion criteria:** `npm run typecheck` passes, `npm test` passes (all 852+ tests), `window.riftview` is defined, `window.riftview` is undefined. Zero remaining occurrences of `window.riftview` in source.
 
 ### Complete Rename Targets
 
 #### Build & Config
 | File | Change |
 |---|---|
-| `package.json` | `"name": "cloudblocks"` → `"terminus"` |
-| `electron-builder.yml` | `productName: cloudblocks` → `Terminus` |
-| `electron-builder.yml` | `appId: com.cloudblocks.desktop` → `com.terminus.desktop` |
-| `electron-builder.yml` | `win.executableName: cloudblocks` → `terminus` |
-| `electron-builder.yml` | `publish.repo: cloudblocks` → `terminus` |
+| `package.json` | `"name": "riftview"` → `"riftview"` |
+| `electron-builder.yml` | `productName: riftview` → `RiftView` |
+| `electron-builder.yml` | `appId: com.riftview.desktop` → `com.riftview.desktop` |
+| `electron-builder.yml` | `win.executableName: riftview` → `riftview` |
+| `electron-builder.yml` | `publish.repo: riftview` → `riftview` |
 
 #### Preload Bridge (the canonical rename point)
 | File | Change |
 |---|---|
-| `src/preload/index.ts` | `contextBridge.exposeInMainWorld('cloudblocks', …)` → `'terminus'` |
-| `src/preload/index.d.ts` | `interface Window { cloudblocks: … }` → `terminus` |
+| `src/preload/index.ts` | `contextBridge.exposeInMainWorld('riftview', …)` → `'riftview'` |
+| `src/preload/index.d.ts` | `interface Window { riftview: … }` → `riftview` |
 
 #### Main Process — Plugin Interface & ID
 | File | Change |
 |---|---|
-| `src/main/plugin/types.ts` | `export interface CloudblocksPlugin` → `TerminusPlugin` |
-| `src/main/plugin/registry.ts` | All 4 occurrences of `CloudblocksPlugin` → `TerminusPlugin` |
-| `src/main/plugin/awsPlugin.ts` | `CloudblocksPlugin` → `TerminusPlugin` (import + type) |
-| `src/main/plugin/awsPlugin.ts` | `id: 'com.cloudblocks.aws'` → `'com.terminus.aws'` |
+| `src/main/plugin/types.ts` | `export interface RiftViewPlugin` → `RiftViewPlugin` |
+| `src/main/plugin/registry.ts` | All 4 occurrences of `RiftViewPlugin` → `RiftViewPlugin` |
+| `src/main/plugin/awsPlugin.ts` | `RiftViewPlugin` → `RiftViewPlugin` (import + type) |
+| `src/main/plugin/awsPlugin.ts` | `id: 'com.riftview.aws'` → `'com.riftview.aws'` |
 
-#### Renderer — `window.cloudblocks.*` Callsites (26 files)
-Every `window.cloudblocks.` → `window.terminus.` in:
+#### Renderer — `window.riftview.*` Callsites (26 files)
+Every `window.riftview.` → `window.riftview.` in:
 - `src/renderer/src/App.tsx`
 - `src/renderer/hooks/useIpc.ts`
 - `src/renderer/hooks/useScanner.ts`
@@ -131,18 +131,18 @@ Every `window.cloudblocks.` → `window.terminus.` in:
 - `src/renderer/components/modals/EditModal.tsx`
 
 #### Renderer — CustomEvent Name Strings
-All `'cloudblocks:*'` event strings → `'terminus:*'`. These are used in pairs (dispatchEvent + addEventListener) within the renderer. They are NOT IPC channel strings and are being renamed for consistency.
+All `'riftview:*'` event strings → `'riftview:*'`. These are used in pairs (dispatchEvent + addEventListener) within the renderer. They are NOT IPC channel strings and are being renamed for consistency.
 
 Full list of event string replacements:
 | Old | New |
 |---|---|
-| `'cloudblocks:fitnode'` | `'terminus:fitnode'` |
-| `'cloudblocks:fitview'` | `'terminus:fitview'` |
-| `'cloudblocks:export-canvas'` | `'terminus:export-canvas'` |
-| `'cloudblocks:add-sticky-note'` | `'terminus:add-sticky-note'` |
-| `'cloudblocks:show-templates'` | `'terminus:show-templates'` |
-| `'cloudblocks:show-settings'` | `'terminus:show-settings'` |
-| `'cloudblocks:show-about'` | `'terminus:show-about'` |
+| `'riftview:fitnode'` | `'riftview:fitnode'` |
+| `'riftview:fitview'` | `'riftview:fitview'` |
+| `'riftview:export-canvas'` | `'riftview:export-canvas'` |
+| `'riftview:add-sticky-note'` | `'riftview:add-sticky-note'` |
+| `'riftview:show-templates'` | `'riftview:show-templates'` |
+| `'riftview:show-settings'` | `'riftview:show-settings'` |
+| `'riftview:show-about'` | `'riftview:show-about'` |
 
 Files containing these event strings:
 - `src/renderer/components/TitleBar.tsx`
@@ -152,47 +152,47 @@ Files containing these event strings:
 - `src/renderer/components/canvas/EmptyCanvasState.tsx`
 - `src/renderer/src/App.tsx`
 
-**Note:** `commanddrawer:run` and other non-cloudblocks event strings are NOT renamed — they are already correctly prefixed.
+**Note:** `commanddrawer:run` and other non-riftview event strings are NOT renamed — they are already correctly prefixed.
 
 **Note:** IPC channel string values in `src/main/ipc/channels.ts` (e.g. `'canvas:save-image'`) are NOT renamed — they are internal transport strings, not product-facing identifiers.
 
 #### Test Files
 | File | Change |
 |---|---|
-| `tests/main/preload.test.ts` | `'cloudblocks'` string literal → `'terminus'` |
-| `tests/main/plugin/awsPlugin.test.ts` | `'com.cloudblocks.aws'` → `'com.terminus.aws'` |
-| `tests/renderer/components/DriftModeStrip.test.tsx` | `window.cloudblocks` → `window.terminus` (all occurrences) |
-| `tests/renderer/components/Inspector.test.tsx` | `Object.defineProperty(window, 'cloudblocks', …)` → `'terminus'` |
-| `tests/renderer/components/IamAdvisor.test.tsx` | `Object.defineProperty(window, 'cloudblocks', …)` → `'terminus'` |
-| `tests/renderer/components/canvas/nodes/StickyNoteNode.test.tsx` | `Object.defineProperty(window, 'cloudblocks', …)` → `'terminus'` |
-| `tests/renderer/components/canvas/BulkActionToolbar.test.tsx` | `Object.defineProperty(window, 'cloudblocks', …)` → `'terminus'` |
-| `tests/renderer/components/TemplatesModal.deploy.test.tsx` | `window.cloudblocks` → `window.terminus`; `makeCloudblocks` → `makeTerminus`; `typeof window.cloudblocks` → `typeof window.terminus` |
-| `tests/renderer/hooks/useScanner.test.ts` | `window.cloudblocks` → `window.terminus` |
-| `tests/renderer/hooks/useIpc.test.ts` | `window.cloudblocks` → `window.terminus` |
+| `tests/main/preload.test.ts` | `'riftview'` string literal → `'riftview'` |
+| `tests/main/plugin/awsPlugin.test.ts` | `'com.riftview.aws'` → `'com.riftview.aws'` |
+| `tests/renderer/components/DriftModeStrip.test.tsx` | `window.riftview` → `window.riftview` (all occurrences) |
+| `tests/renderer/components/Inspector.test.tsx` | `Object.defineProperty(window, 'riftview', …)` → `'riftview'` |
+| `tests/renderer/components/IamAdvisor.test.tsx` | `Object.defineProperty(window, 'riftview', …)` → `'riftview'` |
+| `tests/renderer/components/canvas/nodes/StickyNoteNode.test.tsx` | `Object.defineProperty(window, 'riftview', …)` → `'riftview'` |
+| `tests/renderer/components/canvas/BulkActionToolbar.test.tsx` | `Object.defineProperty(window, 'riftview', …)` → `'riftview'` |
+| `tests/renderer/components/TemplatesModal.deploy.test.tsx` | `window.riftview` → `window.riftview`; `makeRiftView` → `makeRiftView`; `typeof window.riftview` → `typeof window.riftview` |
+| `tests/renderer/hooks/useScanner.test.ts` | `window.riftview` → `window.riftview` |
+| `tests/renderer/hooks/useIpc.test.ts` | `window.riftview` → `window.riftview` |
 
-#### UI String Literals ("Cloudblocks" display text)
+#### UI String Literals ("RiftView" display text)
 | File | Change |
 |---|---|
-| `src/main/index.ts` | `title: 'Cloudblocks'` → `'Terminus'` (window title bar) |
-| `src/main/ipc/handlers.ts` | `'Cloudblocks — Drift Detected'` → `'Terminus — Drift Detected'` (OS notification) |
-| `src/renderer/components/AboutModal.tsx` | Brand name display string → `Terminus` |
-| `src/renderer/components/TitleBar.tsx` | `title="About Cloudblocks"` tooltip → `"About Terminus"` |
-| `src/renderer/components/Onboarding.tsx` | `restart Cloudblocks` → `restart Terminus` |
-| `src/renderer/components/TemplatesModal.tsx` | `restart Cloudblocks` → `restart Terminus` |
+| `src/main/index.ts` | `title: 'RiftView'` → `'RiftView'` (window title bar) |
+| `src/main/ipc/handlers.ts` | `'RiftView — Drift Detected'` → `'RiftView — Drift Detected'` (OS notification) |
+| `src/renderer/components/AboutModal.tsx` | Brand name display string → `RiftView` |
+| `src/renderer/components/TitleBar.tsx` | `title="About RiftView"` tooltip → `"About RiftView"` |
+| `src/renderer/components/Onboarding.tsx` | `restart RiftView` → `restart RiftView` |
+| `src/renderer/components/TemplatesModal.tsx` | `restart RiftView` → `restart RiftView` |
 
 #### electron-builder.yml — `repo:` field
-**Do NOT change `repo: cloudblocks`** until the GitHub repository is renamed on GitHub. `electron-updater` uses this field to construct the auto-update download URL — changing it without renaming the repo will silently break auto-updates in production builds. This field stays as-is for now.
+**Do NOT change `repo: riftview`** until the GitHub repository is renamed on GitHub. `electron-updater` uses this field to construct the auto-update download URL — changing it without renaming the repo will silently break auto-updates in production builds. This field stays as-is for now.
 
 #### CLAUDE.md
-Update all product-name occurrences of "Cloudblocks"/"cloudblocks" to "Terminus"/"terminus" where they refer to the product name. Keep structural identifiers (file paths, store names, CSS class names) unchanged — only update the product name references.
+Update all product-name occurrences of "RiftView"/"riftview" to "RiftView"/"riftview" where they refer to the product name. Keep structural identifiers (file paths, store names, CSS class names) unchanged — only update the product name references.
 
 ### Steps
 
 - [ ] **Step 1: Audit — record the current count**
 
 ```bash
-grep -r "window\.cloudblocks" src tests --include="*.ts" --include="*.tsx" | wc -l
-grep -r "cloudblocks:" src --include="*.ts" --include="*.tsx" | grep "addEventListener\|removeEventListener\|dispatchEvent\|CustomEvent" | wc -l
+grep -r "window\.riftview" src tests --include="*.ts" --include="*.tsx" | wc -l
+grep -r "riftview:" src --include="*.ts" --include="*.tsx" | grep "addEventListener\|removeEventListener\|dispatchEvent\|CustomEvent" | wc -l
 ```
 
 Record the numbers. After the rename, both must be zero.
@@ -203,22 +203,22 @@ Update `package.json` name, `electron-builder.yml` productName/appId/executableN
 
 - [ ] **Step 3: Update preload bridge**
 
-`src/preload/index.ts`: change `'cloudblocks'` → `'terminus'` in `exposeInMainWorld`.
-`src/preload/index.d.ts`: change `cloudblocks:` → `terminus:` in the Window interface.
+`src/preload/index.ts`: change `'riftview'` → `'riftview'` in `exposeInMainWorld`.
+`src/preload/index.d.ts`: change `riftview:` → `riftview:` in the Window interface.
 
 - [ ] **Step 4: Update plugin interface and ID**
 
-`src/main/plugin/types.ts`: `CloudblocksPlugin` → `TerminusPlugin`.
+`src/main/plugin/types.ts`: `RiftViewPlugin` → `RiftViewPlugin`.
 `src/main/plugin/registry.ts`: all 4 occurrences.
-`src/main/plugin/awsPlugin.ts`: type reference + `id: 'com.cloudblocks.aws'` → `'com.terminus.aws'`.
+`src/main/plugin/awsPlugin.ts`: type reference + `id: 'com.riftview.aws'` → `'com.riftview.aws'`.
 
-- [ ] **Step 5: Update all renderer `window.cloudblocks.*` callsites**
+- [ ] **Step 5: Update all renderer `window.riftview.*` callsites**
 
-Global replace `window.cloudblocks.` → `window.terminus.` across all 26 renderer files listed above.
+Global replace `window.riftview.` → `window.riftview.` across all 26 renderer files listed above.
 
 - [ ] **Step 6: Update CustomEvent name strings**
 
-Replace all 7 `cloudblocks:*` event strings → `terminus:*` across the 6 files listed above.
+Replace all 7 `riftview:*` event strings → `riftview:*` across the 6 files listed above.
 
 - [ ] **Step 7: Update all test files**
 
@@ -231,10 +231,10 @@ Update product-name references.
 - [ ] **Step 9: Verify — zero remaining occurrences**
 
 ```bash
-grep -r "window\.cloudblocks" src tests --include="*.ts" --include="*.tsx"
+grep -r "window\.riftview" src tests --include="*.ts" --include="*.tsx"
 # Must return zero results
 
-grep -r "'cloudblocks'" src tests --include="*.ts" --include="*.tsx"
+grep -r "'riftview'" src tests --include="*.ts" --include="*.tsx"
 # Must return zero results (excluding comments)
 
 npm run typecheck
@@ -247,7 +247,7 @@ Expected: zero occurrences, typecheck passes, all 852+ tests pass.
 
 ```bash
 git add -A
-git commit -m "feat: rename product to Terminus — window.terminus, TerminusPlugin, terminus: events"
+git commit -m "feat: rename product to RiftView — window.riftview, RiftViewPlugin, riftview: events"
 ```
 
 ---
@@ -517,7 +517,7 @@ git commit -m "feat: Ladle component dev environment with ResourceNode/VpcNode/S
 ```markdown
 # scripts/
 
-Automation and tooling scripts for the Terminus marathon.
+Automation and tooling scripts for the RiftView marathon.
 
 ## Contents
 
@@ -566,14 +566,14 @@ Last commit: (populated at pause time — git log --oneline -1)
 
 - [ ] **Step 3: Initialize Obsidian changelog**
 
-Scribe creates `Cloudblocks/Changelog/CHANGELOG.md` with:
+Scribe creates `RiftView/Changelog/CHANGELOG.md` with:
 
 ```markdown
-# Terminus — Changelog
+# RiftView — Changelog
 
 ## Phase 0: Marathon Infrastructure
 
-### 2026-04-05 — Task 1: Terminus Rename
+### 2026-04-05 — Task 1: RiftView Rename
 (populated by Scribe after Task 1 completes)
 
 ### 2026-04-05 — Task 2: Feature Flag System
@@ -599,15 +599,15 @@ git commit -m "chore: marathon process infrastructure — scripts dir and RESUME
 
 All of the following must be true before Phase 0 is signed off:
 
-- [ ] `window.terminus` defined in DevTools, `window.cloudblocks` undefined
-- [ ] Zero occurrences of `window.cloudblocks` or `'cloudblocks'` string literals in source
+- [ ] `window.riftview` defined in DevTools, `window.riftview` undefined
+- [ ] Zero occurrences of `window.riftview` or `'riftview'` string literals in source
 - [ ] `npm run typecheck` — zero errors (both node and web configs)
 - [ ] `npm test` — all 852+ tests pass
 - [ ] `flag('COMMAND_BOARD')` returns `false` by default
 - [ ] `npm run stories` — Ladle launches, ResourceNode stories render without errors
 - [ ] `scripts/README.md` exists
 - [ ] `RESUME.md` template at project root
-- [ ] Obsidian changelog initialized at `Cloudblocks/Changelog/CHANGELOG.md`
+- [ ] Obsidian changelog initialized at `RiftView/Changelog/CHANGELOG.md`
 
 ---
 

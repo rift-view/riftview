@@ -69,7 +69,7 @@ expect(nodes[0].metadata.multiAZ).toBe(false) // or true — match the fixture
 - [ ] **Step 3: Run tests**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/main/aws/services/rds.test.ts 2>&1 | tail -15
 ```
 
@@ -78,7 +78,7 @@ Expected: PASS
 - [ ] **Step 4: Typecheck**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm run typecheck 2>&1 | tail -10
 ```
 
@@ -87,7 +87,7 @@ Expected: exit 0
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 git add src/main/aws/services/rds.ts tests/main/aws/services/rds.test.ts
 git commit -m "feat(phase3): add multiAZ to RDS scan metadata"
 ```
@@ -212,7 +212,7 @@ Add a second test case where the mock throws (simulating no public access block)
 - [ ] **Step 4: Run tests**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/main/aws/services/s3.test.ts 2>&1 | tail -15
 ```
 
@@ -221,7 +221,7 @@ Expected: PASS
 - [ ] **Step 5: Typecheck**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm run typecheck 2>&1 | tail -10
 ```
 
@@ -230,7 +230,7 @@ Expected: exit 0
 - [ ] **Step 6: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 git add src/main/aws/services/s3.ts tests/main/aws/services/s3.test.ts
 git commit -m "feat(phase3): add publicAccessEnabled to S3 scan metadata"
 ```
@@ -331,7 +331,7 @@ In `tests/main/aws/services/ec2.test.ts`, add a mock response for `DescribeSecur
 - [ ] **Step 5: Run tests**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/main/aws/services/ec2.test.ts 2>&1 | tail -15
 ```
 
@@ -340,7 +340,7 @@ Expected: PASS
 - [ ] **Step 6: Full suite smoke check**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm test 2>&1 | tail -5
 ```
 
@@ -349,7 +349,7 @@ Expected: all pass (895 + new tests)
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 git add src/main/aws/services/ec2.ts tests/main/aws/services/ec2.test.ts
 git commit -m "feat(phase3): add hasPublicSsh to EC2 scan metadata via SG rule check"
 ```
@@ -395,7 +395,7 @@ export interface Advisory {
 - [ ] **Step 2: Typecheck**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm run typecheck 2>&1 | tail -10
 ```
 
@@ -404,7 +404,7 @@ Expected: exit 0
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 git add src/renderer/types/cloud.ts
 git commit -m "feat(phase3): add Advisory, AdvisoryRuleId, AdvisorySeverity types"
 ```
@@ -558,7 +558,7 @@ describe('analyzeNode', () => {
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/renderer/utils/analyzeNode.test.ts 2>&1 | tail -10
 ```
 
@@ -640,7 +640,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
 - [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/renderer/utils/analyzeNode.test.ts 2>&1 | tail -10
 ```
 
@@ -649,7 +649,7 @@ Expected: all 15 tests PASS
 - [ ] **Step 5: Typecheck**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm run typecheck 2>&1 | tail -10
 ```
 
@@ -658,7 +658,7 @@ Expected: exit 0
 - [ ] **Step 6: Full test suite**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm test 2>&1 | tail -5
 ```
 
@@ -667,7 +667,7 @@ Expected: all pass
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 git add src/renderer/utils/analyzeNode.ts tests/renderer/utils/analyzeNode.test.ts
 git commit -m "feat(phase3): analyzeNode pure function + 5-rule advisory set"
 ```
@@ -723,7 +723,7 @@ import type { CloudNode } from '../../../src/renderer/types/cloud'
 const saveAnnotationsMock = vi.fn().mockResolvedValue(undefined)
 const analyzeIamMock = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
 
-Object.defineProperty(window, 'terminus', {
+Object.defineProperty(window, 'riftview', {
   value: { saveAnnotations: saveAnnotationsMock, analyzeIam: analyzeIamMock },
   writable: true,
 })
@@ -819,7 +819,7 @@ describe('Inspector ADVISORIES section', () => {
 - [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/renderer/components/Inspector.advisories.test.tsx 2>&1 | tail -15
 ```
 
@@ -901,7 +901,7 @@ In `src/renderer/components/Inspector.tsx`, insert after the closing `})()}` of 
 - [ ] **Step 5: Run the Inspector tests**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/renderer/components/Inspector.advisories.test.tsx 2>&1 | tail -15
 ```
 
@@ -910,7 +910,7 @@ Expected: all 8 tests PASS
 - [ ] **Step 6: Typecheck**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm run typecheck 2>&1 | tail -10
 ```
 
@@ -919,7 +919,7 @@ Expected: exit 0
 - [ ] **Step 7: Full test suite**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm test 2>&1 | tail -5
 ```
 
@@ -928,7 +928,7 @@ Expected: all pass (895 baseline + ~35 new = ~930 total)
 - [ ] **Step 8: Verify flag=false test (smoke check)**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npx vitest run tests/renderer/components/Inspector.advisories.test.tsx --reporter=verbose 2>&1 | grep -E "(PASS|FAIL|flag)"
 ```
 
@@ -937,7 +937,7 @@ Expected: `hidden when OP_INTELLIGENCE flag is false` listed as PASS
 - [ ] **Step 9: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 git add src/renderer/components/Inspector.tsx tests/renderer/components/Inspector.advisories.test.tsx
 git commit -m "feat(phase3): Inspector ADVISORIES section — flag-gated OP_INTELLIGENCE"
 ```
@@ -947,7 +947,7 @@ git commit -m "feat(phase3): Inspector ADVISORIES section — flag-gated OP_INTE
 ## Completion Verification
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm run typecheck && npm test
 ```
 

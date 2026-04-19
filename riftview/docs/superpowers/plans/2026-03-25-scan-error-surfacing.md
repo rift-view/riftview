@@ -49,7 +49,7 @@ it('DEFAULT_SETTINGS includes showScanErrorBadges: true', () => {
 - [ ] **Step 2: Run to confirm it fails**
 
 ```bash
-cd cloudblocks && npx vitest run src/renderer/store/__tests__/cloud.test.ts 2>&1 | tail -20
+cd riftview && npx vitest run src/renderer/store/__tests__/cloud.test.ts 2>&1 | tail -20
 ```
 Expected: FAIL — property `showScanErrorBadges` is undefined
 
@@ -101,21 +101,21 @@ const DEFAULT_SETTINGS = {
 - [ ] **Step 6: Run test to confirm it passes**
 
 ```bash
-cd cloudblocks && npx vitest run src/renderer/store/__tests__/cloud.test.ts 2>&1 | tail -10
+cd riftview && npx vitest run src/renderer/store/__tests__/cloud.test.ts 2>&1 | tail -10
 ```
 Expected: all tests pass
 
 - [ ] **Step 7: Run typecheck**
 
 ```bash
-cd cloudblocks && npm run typecheck 2>&1 | tail -20
+cd riftview && npm run typecheck 2>&1 | tail -20
 ```
 Expected: no errors
 
 - [ ] **Step 8: Commit**
 
 ```bash
-cd cloudblocks && git add src/renderer/types/cloud.ts src/renderer/store/cloud.ts src/main/ipc/handlers.ts src/renderer/store/__tests__/cloud.test.ts
+cd riftview && git add src/renderer/types/cloud.ts src/renderer/store/cloud.ts src/main/ipc/handlers.ts src/renderer/store/__tests__/cloud.test.ts
 git commit -m "feat(scan-errors): add showScanErrorBadges to Settings"
 ```
 
@@ -258,7 +258,7 @@ describe('Sidebar scan error badges', () => {
 - [ ] **Step 2: Run to confirm tests fail**
 
 ```bash
-cd cloudblocks && npx vitest run src/renderer/components/__tests__/Sidebar.test.tsx 2>&1 | tail -30
+cd riftview && npx vitest run src/renderer/components/__tests__/Sidebar.test.tsx 2>&1 | tail -30
 ```
 Expected: FAIL — `⚠` elements not found
 
@@ -425,21 +425,21 @@ Everything after `{ssmGroups.map(...` through the closing `</>` and `)}` is unch
 - [ ] **Step 8: Run tests to confirm they pass**
 
 ```bash
-cd cloudblocks && npx vitest run src/renderer/components/__tests__/Sidebar.test.tsx 2>&1 | tail -20
+cd riftview && npx vitest run src/renderer/components/__tests__/Sidebar.test.tsx 2>&1 | tail -20
 ```
 Expected: all 5 tests pass
 
 - [ ] **Step 9: Run full test suite + typecheck**
 
 ```bash
-cd cloudblocks && npm run typecheck && npm test 2>&1 | tail -20
+cd riftview && npm run typecheck && npm test 2>&1 | tail -20
 ```
 Expected: all pass
 
 - [ ] **Step 10: Commit**
 
 ```bash
-cd cloudblocks && git add src/renderer/components/Sidebar.tsx src/renderer/components/__tests__/Sidebar.test.tsx
+cd riftview && git add src/renderer/components/Sidebar.tsx src/renderer/components/__tests__/Sidebar.test.tsx
 git commit -m "feat(scan-errors): add per-service error badges to Sidebar"
 ```
 
@@ -500,13 +500,13 @@ with:
 - [ ] **Step 2: Run typecheck and full test suite**
 
 ```bash
-cd cloudblocks && npm run typecheck && npm test 2>&1 | tail -20
+cd riftview && npm run typecheck && npm test 2>&1 | tail -20
 ```
 Expected: all pass
 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd cloudblocks && git add src/renderer/components/SettingsModal.tsx
+cd riftview && git add src/renderer/components/SettingsModal.tsx
 git commit -m "feat(scan-errors): add showScanErrorBadges toggle to Settings modal"
 ```

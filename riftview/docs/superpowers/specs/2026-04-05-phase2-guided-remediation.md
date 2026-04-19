@@ -24,7 +24,7 @@ This is the second half of the loop: **read → diff → write**.
 
 - One-at-a-time only. Single node per execution.
 - Flag-gated: `EXECUTION_ENGINE`. Off by default.
-- No new IPC channels. Reuses `window.terminus.runCli(commands: string[][])`.
+- No new IPC channels. Reuses `window.riftview.runCli(commands: string[][])`.
 - No dependency-order graphs. Single-node operations only.
 
 ---
@@ -151,9 +151,9 @@ Each `string[]` in the commands array is rendered as one monospace line: `aws {a
 
 Execute button calls `onRemediate(node, commands)` prop — Inspector does not call IPC directly.
 
-`App.tsx` handles `onRemediate` by calling `window.terminus.runCli(commands)`. Output streams to CommandDrawer via existing `onCliOutput`/`onCliDone` listeners. Inspector's local state transitions to `running` on click, `done-ok` or `done-err` on completion.
+`App.tsx` handles `onRemediate` by calling `window.riftview.runCli(commands)`. Output streams to CommandDrawer via existing `onCliOutput`/`onCliDone` listeners. Inspector's local state transitions to `running` on click, `done-ok` or `done-err` on completion.
 
-The completion signal comes from a `Promise` — `window.terminus.runCli` already returns `Promise<{ code: number }>`. Inspector awaits this directly via the `onRemediate` callback returning a Promise:
+The completion signal comes from a `Promise` — `window.riftview.runCli` already returns `Promise<{ code: number }>`. Inspector awaits this directly via the `onRemediate` callback returning a Promise:
 
 ```ts
 // Inspector.tsx
@@ -195,7 +195,7 @@ interface InspectorProps {
 
 ```ts
 async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{ code: number }> {
-  return window.terminus.runCli(commands)
+  return window.riftview.runCli(commands)
 }
 ```
 
@@ -260,4 +260,4 @@ Passed to `<Inspector ... onRemediate={handleRemediate} />`
 - `flag('EXECUTION_ENGINE') = false` → Inspector renders identically to today
 - `flag('EXECUTION_ENGINE') = true` + unmanaged node selected → REMEDIATE section shows delete commands
 - `flag('EXECUTION_ENGINE') = true` + matched Lambda with runtime diff → REMEDIATE section shows update command
-- Execute button calls `window.terminus.runCli` with the correct argv arrays
+- Execute button calls `window.riftview.runCli` with the correct argv arrays

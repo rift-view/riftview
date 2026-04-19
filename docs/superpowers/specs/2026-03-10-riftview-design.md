@@ -1,10 +1,10 @@
-# Cloudblocks — Design Spec
+# RiftView — Design Spec
 **Date:** 2026-03-10
 **Status:** Approved
 
 ## Overview
 
-Cloudblocks is a desktop application that provides a visual GUI for building, managing, and visualizing cloud infrastructure on AWS (with Azure, GCP, and Vercel planned). It is not a cloud service — it is a developer tool that wraps existing cloud CLIs and SDKs, making infrastructure work accessible to junior, senior, and principal architects alike.
+RiftView is a desktop application that provides a visual GUI for building, managing, and visualizing cloud infrastructure on AWS (with Azure, GCP, and Vercel planned). It is not a cloud service — it is a developer tool that wraps existing cloud CLIs and SDKs, making infrastructure work accessible to junior, senior, and principal architects alike.
 
 The core mechanic: read operations use the AWS SDK directly for speed and reliability; write operations generate and execute real `aws` CLI commands, which are shown to the user for review before execution.
 
@@ -99,7 +99,7 @@ Edges are **derived**, not stored — the scanner infers relationships from SDK 
 
 ## Credential & Auth Flow
 
-- Credentials sourced exclusively from `~/.aws/credentials` and `~/.aws/config` — Cloudblocks does not store or manage credentials.
+- Credentials sourced exclusively from `~/.aws/credentials` and `~/.aws/config` — RiftView does not store or manage credentials.
 - On startup, main process reads available profiles and populates the title bar profile selector.
 - Selecting a profile + region instantiates a new SDK client and triggers a full scan.
 - Profile or region switch: tears down current client, re-instantiates, triggers fresh scan.
@@ -147,7 +147,7 @@ No silent failures — every error surfaces somewhere visible.
 
 ## Out of Scope
 
-- Cloudblocks is not a cloud service and does not host any infrastructure.
+- RiftView is not a cloud service and does not host any infrastructure.
 - No custom credential storage — delegates entirely to `aws configure`.
 - No Terraform/CDK integration in M1–M3.
 - No team collaboration features in M1–M3.

@@ -12,7 +12,7 @@
 
 ## Working Directory
 
-All commands run from `cloudblocks/` (the directory containing `package.json`).
+All commands run from `riftview/` (the directory containing `package.json`).
 
 ## Critical Constraints
 
@@ -1119,8 +1119,8 @@ echo "=== Full test suite ==="
 npm test
 # Must pass all tests (860+ expected)
 
-echo "=== No cloudblocks remainders ==="
-grep -r "window\.cloudblocks" src tests --include="*.ts" --include="*.tsx" | wc -l
+echo "=== No riftview remainders ==="
+grep -r "window\.riftview" src tests --include="*.ts" --include="*.tsx" | wc -l
 # Must be 0
 
 echo "=== Feature flags default off ==="

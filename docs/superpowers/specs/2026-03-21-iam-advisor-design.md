@@ -8,7 +8,7 @@
 
 ## Goal
 
-When a user selects an EC2, Lambda, or S3 resource in the Inspector, Cloudblocks fetches the attached IAM policies on-demand and evaluates them against a severity ruleset. Findings are displayed in a new "IAM Advisor" section with critical/warning/info badges and expandable policy statement details.
+When a user selects an EC2, Lambda, or S3 resource in the Inspector, RiftView fetches the attached IAM policies on-demand and evaluates them against a severity ruleset. Findings are displayed in a new "IAM Advisor" section with critical/warning/info badges and expandable policy statement details.
 
 ---
 
@@ -32,7 +32,7 @@ When a user selects an EC2, Lambda, or S3 resource in the Inspector, Cloudblocks
 User selects node in Inspector
   → Inspector detects node.type in ['ec2', 'lambda', 's3']
   → IAM section renders with loading state
-  → window.cloudblocks.analyzeIam(nodeId, nodeType) IPC call
+  → window.riftview.analyzeIam(nodeId, nodeType) IPC call
     → main process: fetchIamData(node) → raw policy documents
     → sanitize: URL-decode encoded policy strings
     → evaluatePolicy(policyDoc): IamFinding[]
@@ -174,7 +174,7 @@ Effect: only statements with `"Effect": "Allow"` are evaluated. Deny statements 
 ### Handler timeout
 Handler wraps the fetch in a `Promise.race` against a 10-second timeout. On timeout: returns `{ nodeId, findings: [], error: 'IAM analysis timed out after 10s' }`.
 
-### `window.cloudblocks` addition
+### `window.riftview` addition
 ```typescript
 analyzeIam(nodeId: string, nodeType: NodeType, metadata: Record<string, unknown>): Promise<IamAnalysisResult>
 ```

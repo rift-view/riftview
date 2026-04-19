@@ -8,7 +8,7 @@
 
 ## The Question
 
-If Terminus adds Azure or GCP plugins (M6), where does the advisory rule system need to change so it accommodates provider-specific rules without a painful refactor?
+If RiftView adds Azure or GCP plugins (M6), where does the advisory rule system need to change so it accommodates provider-specific rules without a painful refactor?
 
 ---
 
@@ -16,14 +16,14 @@ If Terminus adds Azure or GCP plugins (M6), where does the advisory rule system 
 
 - `AdvisoryRuleId` in `src/renderer/types/cloud.ts` — a flat string union of all known AWS rule IDs
 - `analyzeNode(node: CloudNode): Advisory[]` in `src/renderer/utils/analyzeNode.ts` — a single function that switches on `node.type`
-- `TerminusPlugin` interface in `src/main/plugin/types.ts` — has `id`, `nodeTypes`, `scan()`, etc., but **no advisory hook**
+- `RiftViewPlugin` interface in `src/main/plugin/types.ts` — has `id`, `nodeTypes`, `scan()`, etc., but **no advisory hook**
 
 ## The Seam
 
-**One addition to `TerminusPlugin` is all that's needed:**
+**One addition to `RiftViewPlugin` is all that's needed:**
 
 ```typescript
-// In src/main/plugin/types.ts — add to TerminusPlugin interface
+// In src/main/plugin/types.ts — add to RiftViewPlugin interface
 analyzeNode?(node: CloudNode): Advisory[]
 ```
 
@@ -48,11 +48,11 @@ export function analyzeNode(node: CloudNode, pluginAdvisoryFn?: (n: CloudNode) =
 ## What NOT to Do Now
 
 - Do not refactor `analyzeNode.ts` today — the seam is clear, the refactor is one hour of work when M6 arrives
-- Do not add `analyzeNode?` to `TerminusPlugin` until there is a real second provider — premature abstraction
+- Do not add `analyzeNode?` to `RiftViewPlugin` until there is a real second provider — premature abstraction
 - Do not namespace `AdvisoryRuleId` (e.g. `'aws:lambda-no-timeout'`) — breaking change for no gain; prefix convention is sufficient
 
 ---
 
 ## Decision
 
-The advisory system is **ready for M6 without changes**. The seam is: add `analyzeNode?` to `TerminusPlugin` and a thin dispatcher in the renderer utility. Record this doc, revisit when a second provider plugin is being built.
+The advisory system is **ready for M6 without changes**. The seam is: add `analyzeNode?` to `RiftViewPlugin` and a thin dispatcher in the renderer utility. Record this doc, revisit when a second provider plugin is being built.

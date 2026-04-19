@@ -8,7 +8,7 @@
 
 **Tech Stack:** AWS SDK v3 (`@aws-sdk/client-apigatewayv2`), React 18, TypeScript, Electron 32, Zustand 5, Vitest
 
-**Spec:** `docs/superpowers/specs/2026-03-18-cloudblocks-m5b-design.md`
+**Spec:** `docs/superpowers/specs/2026-03-18-riftview-m5b-design.md`
 
 ---
 

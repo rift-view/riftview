@@ -44,9 +44,9 @@ const baseNode = (id: string, driftStatus: CloudNode['driftStatus']): CloudNode 
   ({ id, type: 'ec2', label: id, region: 'us-east-1', metadata: {}, driftStatus } as CloudNode)
 
 beforeEach(() => {
-  window.cloudblocks = {
+  window.riftview = {
     clearTfState: vi.fn().mockResolvedValue({ ok: true }),
-  } as unknown as typeof window.cloudblocks
+  } as unknown as typeof window.riftview
   useCloudStore.setState({
     nodes: [
       baseNode('n1', 'matched'),
@@ -79,7 +79,7 @@ describe('DriftModeStrip', () => {
   it('clear button calls clearTfState IPC and clearImportedNodes', async () => {
     render(<DriftModeStrip />)
     fireEvent.click(screen.getByText(/clear/i))
-    await vi.waitFor(() => expect(window.cloudblocks.clearTfState).toHaveBeenCalled())
+    await vi.waitFor(() => expect(window.riftview.clearTfState).toHaveBeenCalled())
   })
 })
 ```
@@ -87,7 +87,7 @@ describe('DriftModeStrip', () => {
 - [ ] **Step 2: Run tests — expect FAIL (module not found)**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- --reporter=verbose tests/renderer/components/DriftModeStrip.test.tsx 2>&1 | tail -20
+cd /Users/julius/AI/riftview/riftview && npm test -- --reporter=verbose tests/renderer/components/DriftModeStrip.test.tsx 2>&1 | tail -20
 ```
 
 - [ ] **Step 3: Implement DriftModeStrip**
@@ -111,7 +111,7 @@ export function DriftModeStrip(): React.JSX.Element | null {
 
   async function handleClear(): Promise<void> {
     try {
-      await window.cloudblocks.clearTfState()
+      await window.riftview.clearTfState()
       useCloudStore.getState().clearImportedNodes()
     } catch {
       useUIStore.getState().showToast('Failed to clear Terraform import', 'error')
@@ -161,13 +161,13 @@ export function DriftModeStrip(): React.JSX.Element | null {
 - [ ] **Step 4: Run tests — expect PASS**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/renderer/components/DriftModeStrip.test.tsx 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/renderer/components/DriftModeStrip.test.tsx 2>&1 | tail -10
 ```
 
 - [ ] **Step 5: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/components/canvas/DriftModeStrip.tsx tests/renderer/components/DriftModeStrip.test.tsx && git commit -m "feat: add DriftModeStrip — persistent drift controls strip"
+cd /Users/julius/AI/riftview/riftview && git add src/renderer/components/canvas/DriftModeStrip.tsx tests/renderer/components/DriftModeStrip.test.tsx && git commit -m "feat: add DriftModeStrip — persistent drift controls strip"
 ```
 
 ---
@@ -177,7 +177,7 @@ cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/components/c
 **Files:**
 - Modify: `src/renderer/components/TitleBar.tsx`
 
-The TitleBar gains: `onScan` prop, Scan button + "scanned N ago" timestamp + cost pill after the connection status separator, Import ▾ dropdown (Terraform → calls existing `handleImportTfState`; Templates → dispatches `cloudblocks:show-templates`; SAM → shows toast "coming soon"), `relativeTime` helper (moved from CloudCanvas), `forceUpdate` timer.
+The TitleBar gains: `onScan` prop, Scan button + "scanned N ago" timestamp + cost pill after the connection status separator, Import ▾ dropdown (Terraform → calls existing `handleImportTfState`; Templates → dispatches `riftview:show-templates`; SAM → shows toast "coming soon"), `relativeTime` helper (moved from CloudCanvas), `forceUpdate` timer.
 
 Removes: Tidy button, standalone TF Import button, standalone Templates button, drift summary pill.
 
@@ -230,8 +230,8 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
   }, 0)
 
   useEffect(() => {
-    window.cloudblocks.listProfiles().then(setProfiles)
-    const unsub = window.cloudblocks.onConnStatus((status) => {
+    window.riftview.listProfiles().then(setProfiles)
+    const unsub = window.riftview.onConnStatus((status) => {
       setConnStatus(status === 'connected' ? 'connected' : 'error')
     })
     return unsub
@@ -246,8 +246,8 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
 
   useEffect(() => {
     const handler = (): void => setShowTemplates(true)
-    window.addEventListener('cloudblocks:show-templates', handler)
-    return () => window.removeEventListener('cloudblocks:show-templates', handler)
+    window.addEventListener('riftview:show-templates', handler)
+    return () => window.removeEventListener('riftview:show-templates', handler)
   }, [])
 
   // Close dropdowns on outside click
@@ -265,11 +265,11 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
     if (name === LOCAL_PROFILE_NAME) {
       const newProfile: AwsProfile = { name: LOCAL_PROFILE_NAME, endpoint: LOCAL_ENDPOINT_DEFAULT }
       setProfile(newProfile); setEndpointInput(LOCAL_ENDPOINT_DEFAULT); setConnStatus('unknown')
-      window.cloudblocks.selectProfile(newProfile)
+      window.riftview.selectProfile(newProfile)
     } else {
       const newProfile: AwsProfile = { name }
       setProfile(newProfile); setEndpointInput(''); setConnStatus('unknown')
-      window.cloudblocks.selectProfile(newProfile)
+      window.riftview.selectProfile(newProfile)
     }
   }
 
@@ -278,13 +278,13 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
     if (!trimmed) return
     const newProfile: AwsProfile = { name: profile.name, endpoint: trimmed }
     setProfile(newProfile); setConnStatus('unknown')
-    window.cloudblocks.selectProfile(newProfile)
+    window.riftview.selectProfile(newProfile)
   }
 
   async function handleImportTfState(): Promise<void> {
     setImportOpen(false)
     try {
-      const result = await window.cloudblocks.importTfState()
+      const result = await window.riftview.importTfState()
       if (result.error) { useUIStore.getState().showToast(result.error, 'error'); return }
       if (result.nodes.length > 0) {
         useCloudStore.getState().setImportedNodes(result.nodes)
@@ -317,7 +317,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
       </div>
 
       <span className="text-[11px] font-bold tracking-widest font-mono" style={{ color: 'var(--cb-accent)' }}>
-        CLOUDBLOCKS
+        RIFTVIEW
       </span>
 
       <div className="flex-1" />
@@ -384,7 +384,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
             <button style={dropdownItem} onClick={() => { void handleImportTfState() }}>
               <span>⬡</span><span style={{ flex: 1 }}>Terraform</span><span style={{ fontSize: 9, color: 'var(--cb-text-muted)' }}>.tfstate</span>
             </button>
-            <button style={dropdownItem} onClick={() => { setImportOpen(false); window.dispatchEvent(new CustomEvent('cloudblocks:show-templates')) }}>
+            <button style={dropdownItem} onClick={() => { setImportOpen(false); window.dispatchEvent(new CustomEvent('riftview:show-templates')) }}>
               <span>⊞</span><span style={{ flex: 1 }}>Templates</span>
             </button>
             <button style={{ ...dropdownItem, borderBottom: 'none' }} onClick={() => { setImportOpen(false); useUIStore.getState().showToast('SAM import coming soon', 'error') }}>
@@ -402,7 +402,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
             <button
               onClick={() => {
                 setExportOpen(false)
-                window.cloudblocks.exportTerraform(nodes).then((res) => {
+                window.riftview.exportTerraform(nodes).then((res) => {
                   if (res.success) {
                     if (res.skippedTypes && res.skippedTypes.length > 0) {
                       useUIStore.getState().showToast(`Exported. Skipped: ${res.skippedTypes.join(', ')}`, 'error')
@@ -420,7 +420,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
             <button
               onClick={() => {
                 setExportOpen(false)
-                window.cloudblocks.exportPng().then((res) => {
+                window.riftview.exportPng().then((res) => {
                   if (res.success) useUIStore.getState().showToast('PNG exported', 'success')
                   else useUIStore.getState().showToast('Export cancelled', 'error')
                 }).catch(() => useUIStore.getState().showToast('Export failed', 'error'))
@@ -435,8 +435,8 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
 
       <div className="w-px h-4 flex-shrink-0" style={{ background: 'var(--cb-border-strong)' }} />
 
-      <button onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-settings'))} style={btnBase} title="Settings">⚙</button>
-      <button onClick={() => window.dispatchEvent(new CustomEvent('cloudblocks:show-about'))} style={btnBase} title="About">?</button>
+      <button onClick={() => window.dispatchEvent(new CustomEvent('riftview:show-settings'))} style={btnBase} title="Settings">⚙</button>
+      <button onClick={() => window.dispatchEvent(new CustomEvent('riftview:show-about'))} style={btnBase} title="About">?</button>
 
       {showTemplates && <TemplatesModal onClose={() => setShowTemplates(false)} />}
     </div>
@@ -447,7 +447,7 @@ export function TitleBar({ onScan }: Props): React.JSX.Element {
 - [ ] **Step 2: Run typecheck**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | grep -E "error TS|TitleBar" | head -20
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | grep -E "error TS|TitleBar" | head -20
 ```
 
 Expected: errors about `onScan` not yet passed from App.tsx (fixed in Task 4) and CloudCanvas not yet updated (fixed in Task 3).
@@ -455,7 +455,7 @@ Expected: errors about `onScan` not yet passed from App.tsx (fixed in Task 4) an
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/components/TitleBar.tsx && git commit -m "feat: titlebar — scan/cost/timestamp + Import dropdown (Terraform/Templates/SAM)"
+cd /Users/julius/AI/riftview/riftview && git add src/renderer/components/TitleBar.tsx && git commit -m "feat: titlebar — scan/cost/timestamp + Import dropdown (Terraform/Templates/SAM)"
 ```
 
 ---
@@ -469,7 +469,7 @@ Remove from CloudCanvas: `onScan` prop, scan button, scan metadata, cost, Note b
 
 Add: `DriftModeStrip` in layout flow. Restructure outer div to `flex flex-col` to accommodate the strip.
 
-The `cloudblocks:add-sticky-note` event listener and its handler **stay** in CloudCanvas (keyboard shortcut still needs it).
+The `riftview:add-sticky-note` event listener and its handler **stay** in CloudCanvas (keyboard shortcut still needs it).
 
 - [ ] **Step 1: Rewrite CloudCanvas.tsx**
 
@@ -521,14 +521,14 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
       const { nodeId } = (e as CustomEvent<{ nodeId: string }>).detail
       fitView({ nodes: [{ id: nodeId }], duration: 400, padding: 0.5 })
     }
-    window.addEventListener('cloudblocks:fitnode', onFitNode)
-    return () => window.removeEventListener('cloudblocks:fitnode', onFitNode)
+    window.addEventListener('riftview:fitnode', onFitNode)
+    return () => window.removeEventListener('riftview:fitnode', onFitNode)
   }, [fitView])
 
   useEffect(() => {
     const handler = (): void => { void fitView({ duration: 300 }) }
-    window.addEventListener('cloudblocks:fitview', handler)
-    return () => window.removeEventListener('cloudblocks:fitview', handler)
+    window.addEventListener('riftview:fitview', handler)
+    return () => window.removeEventListener('riftview:fitview', handler)
   }, [fitView])
 
   useEffect(() => {
@@ -537,10 +537,10 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
       const note: StickyNote = { id, content: '', position: { x: 120, y: 120 } }
       addStickyNote(note)
       setAnnotation(`sticky:${id}`, '')
-      void window.cloudblocks.saveAnnotations({ ...useUIStore.getState().annotations, [`sticky:${id}`]: '' })
+      void window.riftview.saveAnnotations({ ...useUIStore.getState().annotations, [`sticky:${id}`]: '' })
     }
-    window.addEventListener('cloudblocks:add-sticky-note', onAddStickyNote)
-    return () => window.removeEventListener('cloudblocks:add-sticky-note', onAddStickyNote)
+    window.addEventListener('riftview:add-sticky-note', onAddStickyNote)
+    return () => window.removeEventListener('riftview:add-sticky-note', onAddStickyNote)
   }, [addStickyNote, setAnnotation])
 
   const btnBase = { fontFamily: 'monospace', fontSize: '9px', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer' }
@@ -679,7 +679,7 @@ export function CloudCanvas(props: Props): React.JSX.Element {
 - [ ] **Step 2: Run typecheck**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | grep "error TS" | head -20
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | grep "error TS" | head -20
 ```
 
 Expected: errors only about TitleBar missing `onScan` prop in App.tsx (fixed in Task 4).
@@ -687,7 +687,7 @@ Expected: errors only about TitleBar missing `onScan` prop in App.tsx (fixed in 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/components/canvas/CloudCanvas.tsx && git commit -m "feat: canvas toolbar — viewport-only; DriftModeStrip in layout"
+cd /Users/julius/AI/riftview/riftview && git add src/renderer/components/canvas/CloudCanvas.tsx && git commit -m "feat: canvas toolbar — viewport-only; DriftModeStrip in layout"
 ```
 
 ---
@@ -717,7 +717,7 @@ to:
 - [ ] **Step 2: Run typecheck — expect clean**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | grep "error TS" | head -20
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | grep "error TS" | head -20
 ```
 
 Expected: 0 errors.
@@ -725,7 +725,7 @@ Expected: 0 errors.
 - [ ] **Step 3: Run full test suite**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test 2>&1 | tail -15
 ```
 
 Expected: all tests pass.
@@ -733,7 +733,7 @@ Expected: all tests pass.
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/src/App.tsx && git commit -m "fix: pass onScan to TitleBar; remove from CloudCanvas"
+cd /Users/julius/AI/riftview/riftview && git add src/renderer/src/App.tsx && git commit -m "fix: pass onScan to TitleBar; remove from CloudCanvas"
 ```
 
 ---
@@ -744,8 +744,8 @@ cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/src/App.tsx 
 - Modify: `src/renderer/components/canvas/CanvasContextMenu.tsx`
 
 Add a "Canvas" section at the top of the context menu (before "Create Resource") with:
-- ✎ Add Note — dispatches `cloudblocks:add-sticky-note`
-- ⊞ Tidy Layout — calls `computeTidyLayout` + `applyTidyLayout` + dispatches `cloudblocks:fitview`
+- ✎ Add Note — dispatches `riftview:add-sticky-note`
+- ⊞ Tidy Layout — calls `computeTidyLayout` + `applyTidyLayout` + dispatches `riftview:fitview`
 
 - [ ] **Step 1: Rewrite CanvasContextMenu.tsx**
 
@@ -804,7 +804,7 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
     const viewKey = view === 'topology' ? 'topology' : 'graph'
     const positions = computeTidyLayout(nodes, viewKey)
     applyTidyLayout(viewKey, positions)
-    window.dispatchEvent(new CustomEvent('cloudblocks:fitview'))
+    window.dispatchEvent(new CustomEvent('riftview:fitview'))
     onClose()
   }
 
@@ -826,7 +826,7 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
           <>
             {/* Canvas section */}
             <div style={sectionLabel}>Canvas</div>
-            <div style={itemStyle} onClick={() => { window.dispatchEvent(new CustomEvent('cloudblocks:add-sticky-note')); onClose() }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
+            <div style={itemStyle} onClick={() => { window.dispatchEvent(new CustomEvent('riftview:add-sticky-note')); onClose() }} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
               ✎ &nbsp;Add Note
             </div>
             <div style={{ ...itemStyle, borderBottom: '1px solid var(--cb-border-strong)' }} onClick={handleTidy} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
@@ -863,13 +863,13 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
 - [ ] **Step 2: Run typecheck + tests**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | grep "error TS" | head -10 && npm test 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | grep "error TS" | head -10 && npm test 2>&1 | tail -10
 ```
 
 - [ ] **Step 3: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/components/canvas/CanvasContextMenu.tsx && git commit -m "feat: context menu — Canvas section with Note + Tidy"
+cd /Users/julius/AI/riftview/riftview && git add src/renderer/components/canvas/CanvasContextMenu.tsx && git commit -m "feat: context menu — Canvas section with Note + Tidy"
 ```
 
 ---
@@ -1080,7 +1080,7 @@ const label = getTypeLabel(filterTarget)
 - [ ] **Step 2: Run typecheck**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | grep "error TS" | head -20
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | grep "error TS" | head -20
 ```
 
 Expected: 0 errors.
@@ -1088,7 +1088,7 @@ Expected: 0 errors.
 - [ ] **Step 3: Run full test suite**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test 2>&1 | tail -15
 ```
 
 Expected: all tests pass.
@@ -1096,7 +1096,7 @@ Expected: all tests pass.
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/components/Sidebar.tsx && git commit -m "feat: sidebar — 12 collapsible service categories"
+cd /Users/julius/AI/riftview/riftview && git add src/renderer/components/Sidebar.tsx && git commit -m "feat: sidebar — 12 collapsible service categories"
 ```
 
 ---
@@ -1106,7 +1106,7 @@ cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/components/S
 - [ ] **Run full CI checks**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run lint && npm run typecheck && npm test 2>&1 | tail -20
+cd /Users/julius/AI/riftview/riftview && npm run lint && npm run typecheck && npm test 2>&1 | tail -20
 ```
 
 Expected: lint clean, 0 type errors, all tests pass.

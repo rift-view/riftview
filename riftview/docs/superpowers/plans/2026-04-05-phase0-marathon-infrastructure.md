@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Rename the product to Terminus, add a compile-time feature flag system, set up Ladle for isolated component development, and create marathon process infrastructure.
+**Goal:** Rename the product to RiftView, add a compile-time feature flag system, set up Ladle for isolated component development, and create marathon process infrastructure.
 
 **Architecture:** Four sequential tasks. Task 1 (rename) is a mechanical find-and-replace across ~200 occurrences in source + test files, executed atomically. Tasks 2–4 are independent additions that do not touch renamed code. All tasks verified with `npm run typecheck && npm test` before commit.
 
@@ -12,25 +12,25 @@
 
 ## Working Directory
 
-All commands run from `cloudblocks/` (the directory containing `package.json`).
+All commands run from `riftview/` (the directory containing `package.json`).
 
 ## Critical Constraints
 
 - **IPC channel strings** (`src/main/ipc/channels.ts`) are NOT renamed — they are internal transport strings
-- **`commanddrawer:run`** event string is NOT renamed — it is not a `cloudblocks:` prefix
-- **`repo: cloudblocks`** in `electron-builder.yml` is NOT renamed — it must stay in sync with the GitHub repo name
+- **`commanddrawer:run`** event string is NOT renamed — it is not a `riftview:` prefix
+- **`repo: riftview`** in `electron-builder.yml` is NOT renamed — it must stay in sync with the GitHub repo name
 - **`flags.ts`** is renderer-only — never import from `src/main/` or `src/preload/`
 - **`vite.ladle.config.ts`** must import `defineConfig` from `'vite'`, NOT from `'electron-vite'`
 
 ---
 
-## Task 1: Terminus Rename
+## Task 1: RiftView Rename
 
 **Files modified:** 37 files total — see complete list below.
 
 **Completion criteria:**
-- `grep -r "window\.cloudblocks" src tests --include="*.ts" --include="*.tsx"` → zero results
-- `grep -r "'cloudblocks'" src tests --include="*.ts" --include="*.tsx"` → zero results
+- `grep -r "window\.riftview" src tests --include="*.ts" --include="*.tsx"` → zero results
+- `grep -r "'riftview'" src tests --include="*.ts" --include="*.tsx"` → zero results
 - `npm run typecheck` → zero errors
 - `npm test` → all 852+ tests pass
 
@@ -39,11 +39,11 @@ All commands run from `cloudblocks/` (the directory containing `package.json`).
 - [ ] **Step 1: Record current occurrence counts (baseline)**
 
 ```bash
-echo "=== window.cloudblocks occurrences ==="
-grep -r "window\.cloudblocks" src tests --include="*.ts" --include="*.tsx" | wc -l
+echo "=== window.riftview occurrences ==="
+grep -r "window\.riftview" src tests --include="*.ts" --include="*.tsx" | wc -l
 
-echo "=== cloudblocks: event strings ==="
-grep -r "cloudblocks:" src --include="*.ts" --include="*.tsx" | grep "addEventListener\|removeEventListener\|dispatchEvent\|CustomEvent" | wc -l
+echo "=== riftview: event strings ==="
+grep -r "riftview:" src --include="*.ts" --include="*.tsx" | grep "addEventListener\|removeEventListener\|dispatchEvent\|CustomEvent" | wc -l
 ```
 
 Record both numbers. After the rename both must be 0.
@@ -54,11 +54,11 @@ Record both numbers. After the rename both must be 0.
 
 In `package.json`, change:
 ```json
-"name": "cloudblocks"
+"name": "riftview"
 ```
 to:
 ```json
-"name": "terminus"
+"name": "riftview"
 ```
 
 ---
@@ -69,29 +69,29 @@ Make these three changes in `electron-builder.yml`:
 
 ```yaml
 # Change productName:
-productName: Terminus
+productName: RiftView
 
 # Change appId:
-appId: com.terminus.desktop
+appId: com.riftview.desktop
 
 # Change win.executableName:
-executableName: terminus
+executableName: riftview
 ```
 
-**Do NOT change `repo: cloudblocks`** — it must match the GitHub repository name.
+**Do NOT change `repo: riftview`** — it must match the GitHub repository name.
 
 ---
 
 - [ ] **Step 4: Update `src/preload/index.ts` — contextBridge**
 
-Find line with `contextBridge.exposeInMainWorld('cloudblocks',` and change `'cloudblocks'` to `'terminus'`:
+Find line with `contextBridge.exposeInMainWorld('riftview',` and change `'riftview'` to `'riftview'`:
 
 ```ts
 // Before
-contextBridge.exposeInMainWorld('cloudblocks', {
+contextBridge.exposeInMainWorld('riftview', {
 
 // After
-contextBridge.exposeInMainWorld('terminus', {
+contextBridge.exposeInMainWorld('riftview', {
 ```
 
 ---
@@ -101,11 +101,11 @@ contextBridge.exposeInMainWorld('terminus', {
 ```ts
 // Before
 interface Window {
-  cloudblocks: {
+  riftview: {
 
 // After
 interface Window {
-  terminus: {
+  riftview: {
 ```
 
 ---
@@ -114,22 +114,22 @@ interface Window {
 
 ```ts
 // Before
-export interface CloudblocksPlugin {
+export interface RiftViewPlugin {
 
 // After
-export interface TerminusPlugin {
+export interface RiftViewPlugin {
 ```
 
 ---
 
 - [ ] **Step 7: Update `src/main/plugin/registry.ts` — 5 occurrences**
 
-Replace all 5 occurrences of `CloudblocksPlugin` with `TerminusPlugin`:
+Replace all 5 occurrences of `RiftViewPlugin` with `RiftViewPlugin`:
 - Import statement
-- `private _plugins: CloudblocksPlugin[]`
-- `private _ownerByType = new Map<string, CloudblocksPlugin>`
-- `get plugins(): readonly CloudblocksPlugin[]`
-- `register(plugin: CloudblocksPlugin)`
+- `private _plugins: RiftViewPlugin[]`
+- `private _ownerByType = new Map<string, RiftViewPlugin>`
+- `get plugins(): readonly RiftViewPlugin[]`
+- `register(plugin: RiftViewPlugin)`
 
 (Use find-and-replace all in the file.)
 
@@ -140,17 +140,17 @@ Replace all 5 occurrences of `CloudblocksPlugin` with `TerminusPlugin`:
 Two changes:
 ```ts
 // Import line:
-// Before: import type { CloudblocksPlugin, ... } from './types'
-// After:  import type { TerminusPlugin, ... } from './types'
+// Before: import type { RiftViewPlugin, ... } from './types'
+// After:  import type { RiftViewPlugin, ... } from './types'
 
 // Plugin definition:
 // Before:
-export const awsPlugin: CloudblocksPlugin = {
-  id: 'com.cloudblocks.aws',
+export const awsPlugin: RiftViewPlugin = {
+  id: 'com.riftview.aws',
 
 // After:
-export const awsPlugin: TerminusPlugin = {
-  id: 'com.terminus.aws',
+export const awsPlugin: RiftViewPlugin = {
+  id: 'com.riftview.aws',
 ```
 
 ---
@@ -159,10 +159,10 @@ export const awsPlugin: TerminusPlugin = {
 
 ```ts
 // Before
-title: 'Cloudblocks',
+title: 'RiftView',
 
 // After
-title: 'Terminus',
+title: 'RiftView',
 ```
 
 ---
@@ -171,24 +171,24 @@ title: 'Terminus',
 
 ```ts
 // Before
-title: 'Cloudblocks — Drift Detected',
+title: 'RiftView — Drift Detected',
 
 // After
-title: 'Terminus — Drift Detected',
+title: 'RiftView — Drift Detected',
 ```
 
 ---
 
-- [ ] **Step 11: Replace `window.cloudblocks.` → `window.terminus.` in all 25 renderer source files**
+- [ ] **Step 11: Replace `window.riftview.` → `window.riftview.` in all 25 renderer source files**
 
 Run this replacement across every file in `src/renderer/`:
 
 ```bash
 # Dry run first — verify count matches baseline
-grep -r "window\.cloudblocks\." src/renderer --include="*.ts" --include="*.tsx" | wc -l
+grep -r "window\.riftview\." src/renderer --include="*.ts" --include="*.tsx" | wc -l
 
 # Apply replacement
-find src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/window\.cloudblocks\./window\.terminus\./g'
+find src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/window\.riftview\./window\.riftview\./g'
 ```
 
 Files that will be changed (verify all are touched):
@@ -220,40 +220,40 @@ Files that will be changed (verify all are touched):
 
 ---
 
-- [ ] **Step 12: Replace `cloudblocks:` event strings → `terminus:` in 6 renderer files**
+- [ ] **Step 12: Replace `riftview:` event strings → `riftview:` in 6 renderer files**
 
 ```bash
 # Dry run
-grep -r "cloudblocks:" src/renderer --include="*.ts" --include="*.tsx" | grep "addEventListener\|removeEventListener\|dispatchEvent\|CustomEvent" | wc -l
+grep -r "riftview:" src/renderer --include="*.ts" --include="*.tsx" | grep "addEventListener\|removeEventListener\|dispatchEvent\|CustomEvent" | wc -l
 
-# Apply (only event-string prefixes, not window.cloudblocks.)
-find src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' "s/'cloudblocks:/'terminus:/g"
+# Apply (only event-string prefixes, not window.riftview.)
+find src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' "s/'riftview:/'riftview:/g"
 ```
 
 This replaces these 7 event name strings:
-- `'cloudblocks:fitnode'` → `'terminus:fitnode'`
-- `'cloudblocks:fitview'` → `'terminus:fitview'`
-- `'cloudblocks:export-canvas'` → `'terminus:export-canvas'`
-- `'cloudblocks:add-sticky-note'` → `'terminus:add-sticky-note'`
-- `'cloudblocks:show-templates'` → `'terminus:show-templates'`
-- `'cloudblocks:show-settings'` → `'terminus:show-settings'`
-- `'cloudblocks:show-about'` → `'terminus:show-about'`
+- `'riftview:fitnode'` → `'riftview:fitnode'`
+- `'riftview:fitview'` → `'riftview:fitview'`
+- `'riftview:export-canvas'` → `'riftview:export-canvas'`
+- `'riftview:add-sticky-note'` → `'riftview:add-sticky-note'`
+- `'riftview:show-templates'` → `'riftview:show-templates'`
+- `'riftview:show-settings'` → `'riftview:show-settings'`
+- `'riftview:show-about'` → `'riftview:show-about'`
 
-**After running:** verify `commanddrawer:run` was NOT changed (it has no `cloudblocks:` prefix so it is safe).
+**After running:** verify `commanddrawer:run` was NOT changed (it has no `riftview:` prefix so it is safe).
 
 ---
 
 - [ ] **Step 13: Update UI display strings in renderer components**
 
-Three files with "Cloudblocks" brand text:
+Three files with "RiftView" brand text:
 
-**`src/renderer/components/AboutModal.tsx`** — find the JSX text `Cloudblocks` and change to `Terminus`.
+**`src/renderer/components/AboutModal.tsx`** — find the JSX text `RiftView` and change to `RiftView`.
 
-**`src/renderer/components/TitleBar.tsx`** — find `title="About Cloudblocks"` and change to `title="About Terminus"`.
+**`src/renderer/components/TitleBar.tsx`** — find `title="About RiftView"` and change to `title="About RiftView"`.
 
-**`src/renderer/components/Onboarding.tsx`** — find `restart Cloudblocks` and change to `restart Terminus`.
+**`src/renderer/components/Onboarding.tsx`** — find `restart RiftView` and change to `restart RiftView`.
 
-**`src/renderer/components/TemplatesModal.tsx`** — find `restart Cloudblocks` and change to `restart Terminus`.
+**`src/renderer/components/TemplatesModal.tsx`** — find `restart RiftView` and change to `restart RiftView`.
 
 ---
 
@@ -262,20 +262,20 @@ Three files with "Cloudblocks" brand text:
 ```ts
 // Before
 expect(contextBridge.exposeInMainWorld).toHaveBeenCalledWith(
-  'cloudblocks',
+  'riftview',
 
 // After
 expect(contextBridge.exposeInMainWorld).toHaveBeenCalledWith(
-  'terminus',
+  'riftview',
 ```
 
 ---
 
 - [ ] **Step 15: Update test files — `tests/main/plugin/awsPlugin.test.ts`**
 
-Find the assertion `expect(awsPlugin.id).toBe('com.cloudblocks.aws')` and change to:
+Find the assertion `expect(awsPlugin.id).toBe('com.riftview.aws')` and change to:
 ```ts
-expect(awsPlugin.id).toBe('com.terminus.aws')
+expect(awsPlugin.id).toBe('com.riftview.aws')
 ```
 
 ---
@@ -285,17 +285,17 @@ expect(awsPlugin.id).toBe('com.terminus.aws')
 Run this across all test files:
 
 ```bash
-# Replace window.cloudblocks assignments in tests (includes src/renderer/__tests__ files)
-find tests src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/window\.cloudblocks/window.terminus/g'
+# Replace window.riftview assignments in tests (includes src/renderer/__tests__ files)
+find tests src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/window\.riftview/window.riftview/g'
 
-# Replace Object.defineProperty(window, 'cloudblocks' → 'terminus'
-find tests src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' "s/defineProperty(window, 'cloudblocks'/defineProperty(window, 'terminus'/g"
+# Replace Object.defineProperty(window, 'riftview' → 'riftview'
+find tests src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' "s/defineProperty(window, 'riftview'/defineProperty(window, 'riftview'/g"
 
-# Replace makeCloudblocks → makeTerminus in TemplatesModal.deploy.test.tsx
-sed -i '' 's/makeCloudblocks/makeTerminus/g' tests/renderer/components/TemplatesModal.deploy.test.tsx
+# Replace makeRiftView → makeRiftView in TemplatesModal.deploy.test.tsx
+sed -i '' 's/makeRiftView/makeRiftView/g' tests/renderer/components/TemplatesModal.deploy.test.tsx
 
-# Replace typeof window.cloudblocks → typeof window.terminus
-find tests src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/typeof window\.cloudblocks/typeof window.terminus/g'
+# Replace typeof window.riftview → typeof window.riftview
+find tests src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/typeof window\.riftview/typeof window.riftview/g'
 ```
 
 Files touched:
@@ -312,13 +312,13 @@ Files touched:
 
 - [ ] **Step 17: Update `CLAUDE.md` — product name references**
 
-In `CLAUDE.md` (at the project root, not inside `cloudblocks/`), update product-name occurrences:
-- `"Cloudblocks"` → `"Terminus"` (product name in prose)
-- `cloudblocks` → `terminus` where it refers to the product name (not file paths or store names)
+In `CLAUDE.md` (at the project root, not inside `riftview/`), update product-name occurrences:
+- `"RiftView"` → `"RiftView"` (product name in prose)
+- `riftview` → `riftview` where it refers to the product name (not file paths or store names)
 
 Keep unchanged:
 - `useCloudStore`, `useUIStore`, `useCliStore` (store names)
-- File paths like `cloudblocks/src/`
+- File paths like `riftview/src/`
 - CSS prefix `--cb-`
 
 ---
@@ -326,14 +326,14 @@ Keep unchanged:
 - [ ] **Step 18: Run verification — zero occurrences**
 
 ```bash
-echo "=== Remaining window.cloudblocks (must be 0) ==="
-grep -r "window\.cloudblocks" src tests --include="*.ts" --include="*.tsx"
+echo "=== Remaining window.riftview (must be 0) ==="
+grep -r "window\.riftview" src tests --include="*.ts" --include="*.tsx"
 
-echo "=== Remaining 'cloudblocks' string literals (must be 0) ==="
-grep -r "'cloudblocks'" src tests --include="*.ts" --include="*.tsx"
+echo "=== Remaining 'riftview' string literals (must be 0) ==="
+grep -r "'riftview'" src tests --include="*.ts" --include="*.tsx"
 
-echo "=== Remaining cloudblocks: event strings (must be 0) ==="
-grep -r "cloudblocks:" src --include="*.ts" --include="*.tsx"
+echo "=== Remaining riftview: event strings (must be 0) ==="
+grep -r "riftview:" src --include="*.ts" --include="*.tsx"
 ```
 
 All three must return zero results.
@@ -348,7 +348,7 @@ npm run typecheck
 
 Expected: exits with code 0, zero errors.
 
-If errors appear — they will be in files that still reference `CloudblocksPlugin` (check registry.ts/awsPlugin.ts) or `window.cloudblocks` (check any missed renderer file).
+If errors appear — they will be in files that still reference `RiftViewPlugin` (check registry.ts/awsPlugin.ts) or `window.riftview` (check any missed renderer file).
 
 ---
 
@@ -360,7 +360,7 @@ npm test
 
 Expected: all 852+ tests pass, zero failures.
 
-If failures appear — they will be in test files that still have `window.cloudblocks` mock assignments or `'cloudblocks'` string assertions. Fix the specific file and re-run.
+If failures appear — they will be in test files that still have `window.riftview` mock assignments or `'riftview'` string assertions. Fix the specific file and re-run.
 
 ---
 
@@ -368,7 +368,7 @@ If failures appear — they will be in test files that still have `window.cloudb
 
 ```bash
 git add -A
-git commit -m "feat: rename product to Terminus — window.terminus, TerminusPlugin, terminus: events, UI strings"
+git commit -m "feat: rename product to RiftView — window.riftview, RiftViewPlugin, riftview: events, UI strings"
 ```
 
 ---
@@ -467,7 +467,7 @@ Expected: 3 tests pass.
 
 - [ ] **Step 5: Create `.env.local.example`**
 
-Create at project root (`cloudblocks/.env.local.example`):
+Create at project root (`riftview/.env.local.example`):
 
 ```bash
 # Copy this file to .env.local to enable in-progress features during development.
@@ -850,7 +850,7 @@ Create `scripts/README.md`:
 ```markdown
 # scripts/
 
-Automation and tooling scripts for the Terminus marathon.
+Automation and tooling scripts for the RiftView marathon.
 
 ## Contents
 
@@ -905,16 +905,16 @@ Last commit: (populated at pause time — git log --oneline -1)
 
 - [ ] **Step 3: Initialize Obsidian changelog via Scribe**
 
-Scribe creates `Cloudblocks/Changelog/CHANGELOG.md` in Obsidian with initial structure. If Obsidian MCP is unavailable, create the file manually with this content:
+Scribe creates `RiftView/Changelog/CHANGELOG.md` in Obsidian with initial structure. If Obsidian MCP is unavailable, create the file manually with this content:
 
 ```markdown
-# Terminus — Changelog
+# RiftView — Changelog
 
 ## Phase 0: Marathon Infrastructure
 
-### 2026-04-05 — Task 1: Terminus Rename
+### 2026-04-05 — Task 1: RiftView Rename
 Status: complete
-Changes: window.terminus, TerminusPlugin, terminus: events, UI strings, build config
+Changes: window.riftview, RiftViewPlugin, riftview: events, UI strings, build config
 
 ### 2026-04-05 — Task 2: Feature Flag System
 Status: complete
@@ -945,8 +945,8 @@ git commit -m "chore: marathon process infrastructure — scripts dir and RESUME
 Run this block after all 4 tasks are complete:
 
 ```bash
-echo "=== Zero cloudblocks occurrences ==="
-grep -r "window\.cloudblocks" src tests --include="*.ts" --include="*.tsx" | wc -l
+echo "=== Zero riftview occurrences ==="
+grep -r "window\.riftview" src tests --include="*.ts" --include="*.tsx" | wc -l
 # Must be 0
 
 echo "=== Typecheck ==="

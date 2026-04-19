@@ -7,7 +7,7 @@
 
 ## Overview
 
-Enable Cloudblocks to scan and display resources from multiple AWS regions simultaneously. The backend scanner already supports parallel multi-region scans; this spec covers the UI for selecting regions, the canvas treatment for multi-region nodes, and the settings knobs for customization.
+Enable RiftView to scan and display resources from multiple AWS regions simultaneously. The backend scanner already supports parallel multi-region scans; this spec covers the UI for selecting regions, the canvas treatment for multi-region nodes, and the settings knobs for customization.
 
 ---
 
@@ -18,7 +18,7 @@ Enable Cloudblocks to scan and display resources from multiple AWS regions simul
 - Displays active regions as dismissible chips: `us-east-1 ×`
 - A `+ add` chip opens a small dropdown listing standard AWS regions (minus already-active ones)
 - Removing all chips is prevented — at least one region must remain active
-- Changing the active region set calls `setSelectedRegions(regions)` on the store, then `window.cloudblocks.startScan(regions)` (array argument — the preload signature is `startScan(selectedRegions?: string[])`). Nodes are not explicitly cleared; the next scan delta will converge the canvas to the new region set naturally
+- Changing the active region set calls `setSelectedRegions(regions)` on the store, then `window.riftview.startScan(regions)` (array argument — the preload signature is `startScan(selectedRegions?: string[])`). Nodes are not explicitly cleared; the next scan delta will converge the canvas to the new region set naturally
 - The existing single-region `<select>` in TitleBar is **removed**; the chips sub-bar replaces it entirely
 - Persisted to `useCloudStore.selectedRegions` (already exists in the store)
 

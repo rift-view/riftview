@@ -1,4 +1,4 @@
-# Cloudblocks M3 — Design Spec
+# RiftView M3 — Design Spec
 **Date:** 2026-03-12
 **Status:** Approved
 
@@ -166,7 +166,7 @@ Generates: `aws elbv2 create-load-balancer ...`
 
 Accessible via a gear icon in the TitleBar. Renders as a full-panel overlay.
 
-Persisted to `<app.getPath('userData')>/settings.json` (resolves to `~/Library/Application Support/cloudblocks/settings.json` on macOS) via new IPC channels (`settings:get` / `settings:set`). Two new entries will be added inside the `IPC` const object in `src/main/ipc/channels.ts`: `SETTINGS_GET: 'settings:get'` and `SETTINGS_SET: 'settings:set'`. Adding them inside `IPC` ensures they are included in the `IpcChannel` union type that is derived from that const. Main process reads/writes the file; renderer never touches the filesystem directly.
+Persisted to `<app.getPath('userData')>/settings.json` (resolves to `~/Library/Application Support/riftview/settings.json` on macOS) via new IPC channels (`settings:get` / `settings:set`). Two new entries will be added inside the `IPC` const object in `src/main/ipc/channels.ts`: `SETTINGS_GET: 'settings:get'` and `SETTINGS_SET: 'settings:set'`. Adding them inside `IPC` ensures they are included in the `IpcChannel` union type that is derived from that const. Main process reads/writes the file; renderer never touches the filesystem directly.
 
 The Zustand store gains a `settings` object (deleteConfirmStyle: `'type-to-confirm' | 'command-drawer'`, scanInterval: `15 | 30 | 60 | 'manual'`) with `loadSettings` and `saveSettings` actions that go through IPC.
 

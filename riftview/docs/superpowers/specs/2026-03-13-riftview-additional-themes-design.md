@@ -1,4 +1,4 @@
-# Cloudblocks — Additional Themes Design Spec
+# RiftView — Additional Themes Design Spec
 **Date:** 2026-03-13
 **Status:** Approved
 

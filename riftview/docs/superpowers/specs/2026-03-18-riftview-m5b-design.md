@@ -1,4 +1,4 @@
-# Cloudblocks — API Gateway v2 (M5b) Design Spec
+# RiftView — API Gateway v2 (M5b) Design Spec
 **Date:** 2026-03-18
 **Status:** Approved
 

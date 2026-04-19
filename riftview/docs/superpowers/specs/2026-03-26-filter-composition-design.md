@@ -7,7 +7,7 @@
 
 ## Problem
 
-Cloudblocks currently has three independent visibility systems that affect how nodes appear on the canvas:
+RiftView currently has three independent visibility systems that affect how nodes appear on the canvas:
 
 1. **Sidebar filter** (`useUIStore.sidebarFilter: NodeType | null`) — dims non-matching nodes to opacity 0.2
 2. **Scan error badges** (`useCloudStore.scanErrors`) — shows ⚠ in sidebar and a dismissible `ScanErrorStrip` banner; does not affect canvas opacity

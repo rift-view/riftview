@@ -1,4 +1,4 @@
-# Terminus Demo Clip — 20-Second Script
+# RiftView Demo Clip — 20-Second Script
 Date: 2026-04-13
 
 ## Goal
@@ -7,7 +7,7 @@ Target: DevOps lead, platform engineer, startup CTO.
 
 ## Setup
 - LocalStack running with localstack-seed.sh applied
-- Terminus open, dark theme, Command Board view
+- RiftView open, dark theme, Command Board view
 - Window: 1280×800, no menu bar visible
 
 ## The Sequence
@@ -40,7 +40,7 @@ Hold 2 seconds.
 
 **0:17–0:20 — End card**
 Click to clear. Canvas returns to normal.
-Cut to: Terminus wordmark on dark background.
+Cut to: RiftView wordmark on dark background.
 Tagline: "The incident diagnostic layer AWS doesn't have."
 
 ## Recording Notes

@@ -63,7 +63,7 @@ description: >
   (3) IAM or permission questions ("what permissions", "IAM role for", "requires access to"),
   (4) Quota or limit questions ("service limit", "quota", "throttling", "max X per"),
   (5) SDK vs CLI questions ("SDK vs CLI", "CLI flag for", "API reference for"),
-  (6) Any Cloudblocks service name (ec2, rds, s3, lambda, vpc, subnet, security-group,
+  (6) Any RiftView service name (ec2, rds, s3, lambda, vpc, subnet, security-group,
   alb, igw, acm, cloudfront, apigw, sqs, sns, dynamodb, secretsmanager, ecr, ssm,
   nat-gateway, route53, stepfunctions, eventbridge) paired with uncertainty words
   (error, fails, doesn't work, required, supported, invalid, missing).
@@ -174,7 +174,7 @@ Create `~/.claude/skills/aws-docs-lookup/error-codes.md`:
 ```markdown
 # AWS Error Code Reference
 
-Quick-reference for the most common AWS errors in Cloudblocks operations.
+Quick-reference for the most common AWS errors in RiftView operations.
 Format: **Code** — meaning | most likely cause | fix pattern.
 
 ---
@@ -183,7 +183,7 @@ Format: **Code** — meaning | most likely cause | fix pattern.
 
 **InvalidClientTokenId**
 Meaning: The AWS Access Key ID does not exist or is malformed.
-Cause in Cloudblocks: Running a CLI command against real AWS with `AWS_ACCESS_KEY_ID=test`
+Cause in RiftView: Running a CLI command against real AWS with `AWS_ACCESS_KEY_ID=test`
 (LocalStack dummy creds leaked to real endpoint). Happens when LocalStack Community doesn't
 support the service (e.g., RDS) and the CLI falls through to the real AWS endpoint.
 Fix: Use a real AWS profile, or switch to LocalStack Pro for the service.
@@ -214,7 +214,7 @@ Fix: Run `aws configure`, set `AWS_PROFILE`, or attach an instance role.
 
 **InvalidAMIID.NotFound**
 Meaning: The specified AMI does not exist in this region.
-Cause in Cloudblocks: Using placeholder `ami-12345678` which is not registered in LocalStack
+Cause in RiftView: Using placeholder `ami-12345678` which is not registered in LocalStack
 or does not exist in the target region. LocalStack may wrap the ID in brackets in its error.
 Fix: On LocalStack, use a pre-registered AMI or run `aws ec2 register-image` first.
 On real AWS, look up a current AMI ID for the region from the EC2 console or SSM parameter store.
@@ -318,7 +318,7 @@ Expected: 80–120 lines.
 Create `~/.claude/skills/aws-docs-lookup/iam-patterns.md`:
 
 ```markdown
-# IAM Permission Patterns for Cloudblocks Operations
+# IAM Permission Patterns for RiftView Operations
 
 Required IAM actions per service operation. "Minimum required" means the operation
 will fail with AccessDenied without these. Additional actions may be needed for
@@ -530,7 +530,7 @@ tagging, logging, or cross-service integrations.
 
 ---
 
-## Minimum Cloudblocks Read-Only Scan Policy
+## Minimum RiftView Read-Only Scan Policy
 
 ```json
 {
@@ -594,7 +594,7 @@ Last verified: 2026-03-19. Check docs.localstack.cloud for updates.
 
 ---
 
-## Coverage by Cloudblocks Service
+## Coverage by RiftView Service
 
 | NodeType | Community | Pro | Key Divergences from Real AWS |
 |---|---|---|---|

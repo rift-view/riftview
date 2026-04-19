@@ -4,7 +4,7 @@
 
 **Goal:** Introduce a plugin architecture so new cloud providers (Azure, GCP, Vercel) can be added as self-contained TypeScript modules without touching any AWS-specific file. Migrate the existing AWS provider into the first plugin as proof-of-concept.
 
-**Architecture:** Five-phase migration from the design spec. Create `CloudblocksPlugin` interface and `PluginRegistry` in `src/main/plugin/`. Wrap existing AWS services in `awsPlugin.ts`. Wire `ResourceScanner` through `pluginRegistry.scanAll()`. Push plugin metadata over a new IPC channel so the renderer can render plugin node types at runtime without widening the compile-time `NodeType` union.
+**Architecture:** Five-phase migration from the design spec. Create `RiftViewPlugin` interface and `PluginRegistry` in `src/main/plugin/`. Wrap existing AWS services in `awsPlugin.ts`. Wire `ResourceScanner` through `pluginRegistry.scanAll()`. Push plugin metadata over a new IPC channel so the renderer can render plugin node types at runtime without widening the compile-time `NodeType` union.
 
 **Tech Stack:** Electron 32 + React 19 + TypeScript, Zustand 5, React Flow v12 (@xyflow/react), Vitest + RTL
 
@@ -20,7 +20,7 @@
 
 | File | Action | Responsibility |
 |------|--------|----------------|
-| `src/main/plugin/types.ts` | **Create** | `ScanContext`, `PluginScanResult`, `NodeTypeMetadata`, `PluginCommandHandlers`, `PluginHclGenerator`, `CloudblocksPlugin` interface |
+| `src/main/plugin/types.ts` | **Create** | `ScanContext`, `PluginScanResult`, `NodeTypeMetadata`, `PluginCommandHandlers`, `PluginHclGenerator`, `RiftViewPlugin` interface |
 | `src/main/plugin/registry.ts` | **Create** | `PluginRegistry` class + `pluginRegistry` singleton |
 | `src/main/plugin/awsPlugin.ts` | **Create** | `awsPlugin` — wraps all existing AWS service scan functions |
 | `src/main/plugin/index.ts` | **Create** | Re-exports `pluginRegistry`, calls `pluginRegistry.register(awsPlugin)` |
@@ -32,7 +32,7 @@
 | `src/main/ipc/channels.ts` | Modify | Add `PLUGIN_METADATA: 'plugin:metadata'` |
 | `src/main/ipc/handlers.ts` | Modify | Push `PLUGIN_METADATA` after `restartScanner`; call `pluginRegistry.activateAll()` |
 | `src/preload/index.ts` | Modify | Expose `onPluginMetadata` listener |
-| `src/preload/index.d.ts` | Modify | Declare `onPluginMetadata` on `Window.cloudblocks` |
+| `src/preload/index.d.ts` | Modify | Declare `onPluginMetadata` on `Window.riftview` |
 | `src/renderer/store/ui.ts` | Modify | Add `pluginNodeTypes` slice + `setPluginNodeTypes` action |
 | `src/renderer/src/App.tsx` | Modify | Handle `onPluginMetadata` IPC event; import `renderer/plugin/index.ts` |
 | `src/renderer/components/canvas/nodes/ResourceNode.tsx` | Modify | Runtime fallback for `TYPE_BORDER` and `TYPE_LABEL` using `pluginNodeTypes` |
@@ -42,7 +42,7 @@
 
 ---
 
-## Task 1: Define `CloudblocksPlugin` interface and types
+## Task 1: Define `RiftViewPlugin` interface and types
 
 **Files:**
 - Create: `src/main/plugin/types.ts`
@@ -55,9 +55,9 @@
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import type { CloudblocksPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from '../../../src/main/plugin/types'
+import type { RiftViewPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from '../../../src/main/plugin/types'
 
-describe('CloudblocksPlugin interface — structural shape', () => {
+describe('RiftViewPlugin interface — structural shape', () => {
   it('NodeTypeMetadata has all required fields', () => {
     const meta: NodeTypeMetadata = {
       label:       'EC2',
@@ -82,8 +82,8 @@ describe('CloudblocksPlugin interface — structural shape', () => {
     expect(ctx.region).toBe('us-east-1')
   })
 
-  it('CloudblocksPlugin duck-type: minimal plugin object satisfies required fields', () => {
-    const plugin: CloudblocksPlugin = {
+  it('RiftViewPlugin duck-type: minimal plugin object satisfies required fields', () => {
+    const plugin: RiftViewPlugin = {
       id:              'com.test.plugin',
       displayName:     'Test Plugin',
       nodeTypes:       ['test-node'],
@@ -105,14 +105,14 @@ describe('CloudblocksPlugin interface — structural shape', () => {
 - [ ] Run — expect failure (module not found):
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/plugin/types.test.ts 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/plugin/types.test.ts 2>&1 | tail -15
 ```
 
 Expected: `Cannot find module '../../../src/main/plugin/types'`
 
 ### Step 2: Create `src/main/plugin/types.ts`
 
-- [ ] Create the file with the exact interface from the design spec (section 3). The `CloudblocksPlugin` interface includes an optional `scanExtras?(region: string): Promise<void>` field to accommodate the AWS key-pair fetch (not in the spec interface block but required per section 6.2 open question Q2):
+- [ ] Create the file with the exact interface from the design spec (section 3). The `RiftViewPlugin` interface includes an optional `scanExtras?(region: string): Promise<void>` field to accommodate the AWS key-pair fetch (not in the spec interface block but required per section 6.2 open question Q2):
 
 ```ts
 // src/main/plugin/types.ts
@@ -151,7 +151,7 @@ export interface PluginCommandHandlers {
 
 export type PluginHclGenerator = (node: CloudNode) => string
 
-export interface CloudblocksPlugin {
+export interface RiftViewPlugin {
   readonly id: string
   readonly displayName: string
   readonly nodeTypes: readonly string[]
@@ -181,7 +181,7 @@ export type { NodeTypeMetadata } from '../../main/plugin/types'
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/plugin/types.test.ts 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/plugin/types.test.ts 2>&1 | tail -10
 ```
 
 Expected: `4 passed`
@@ -191,7 +191,7 @@ Expected: `4 passed`
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | tail -10
 ```
 
 Expected: no errors.
@@ -201,7 +201,7 @@ Expected: no errors.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/main/plugin/types.ts src/renderer/types/plugin.ts tests/main/plugin/types.test.ts && git commit -m "feat(M6): define CloudblocksPlugin interface and NodeTypeMetadata types"
+cd /Users/julius/AI/riftview/riftview && git add src/main/plugin/types.ts src/renderer/types/plugin.ts tests/main/plugin/types.test.ts && git commit -m "feat(M6): define RiftViewPlugin interface and NodeTypeMetadata types"
 ```
 
 ---
@@ -219,11 +219,11 @@ cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/main/plugin/types.ts 
 ```ts
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PluginRegistry } from '../../../src/main/plugin/registry'
-import type { CloudblocksPlugin } from '../../../src/main/plugin/types'
+import type { RiftViewPlugin } from '../../../src/main/plugin/types'
 
 vi.mock('electron', () => ({ BrowserWindow: vi.fn() }))
 
-function makePlugin(id: string, nodeTypes: string[] = ['test-node']): CloudblocksPlugin {
+function makePlugin(id: string, nodeTypes: string[] = ['test-node']): RiftViewPlugin {
   return {
     id,
     displayName: `Plugin ${id}`,
@@ -314,7 +314,7 @@ describe('PluginRegistry', () => {
 - [ ] Run — expect failure (module not found):
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/plugin/registry.test.ts 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/plugin/registry.test.ts 2>&1 | tail -15
 ```
 
 Expected: `Cannot find module '../../../src/main/plugin/registry'`
@@ -325,19 +325,19 @@ Expected: `Cannot find module '../../../src/main/plugin/registry'`
 
 ```ts
 // src/main/plugin/registry.ts
-import type { CloudblocksPlugin, NodeTypeMetadata, PluginHclGenerator, PluginScanResult } from './types'
+import type { RiftViewPlugin, NodeTypeMetadata, PluginHclGenerator, PluginScanResult } from './types'
 import type { CloudNode } from '../../renderer/types/cloud'
 
 export class PluginRegistry {
-  private _plugins: CloudblocksPlugin[] = []
-  private _ownerByType = new Map<string, CloudblocksPlugin>()
+  private _plugins: RiftViewPlugin[] = []
+  private _ownerByType = new Map<string, RiftViewPlugin>()
   private _credentials = new Map<string, unknown>()
 
-  get plugins(): readonly CloudblocksPlugin[] {
+  get plugins(): readonly RiftViewPlugin[] {
     return this._plugins
   }
 
-  register(plugin: CloudblocksPlugin): void {
+  register(plugin: RiftViewPlugin): void {
     for (const nodeType of plugin.nodeTypes) {
       if (this._ownerByType.has(nodeType)) {
         const owner = this._ownerByType.get(nodeType)!
@@ -447,7 +447,7 @@ export const pluginRegistry = new PluginRegistry()
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/plugin/registry.test.ts 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/plugin/registry.test.ts 2>&1 | tail -10
 ```
 
 Expected: `8 passed`
@@ -457,7 +457,7 @@ Expected: `8 passed`
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | tail -10
 ```
 
 Expected: no errors.
@@ -467,7 +467,7 @@ Expected: no errors.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/main/plugin/registry.ts tests/main/plugin/registry.test.ts && git commit -m "feat(M6): implement PluginRegistry with register/scan/activate/metadata"
+cd /Users/julius/AI/riftview/riftview && git add src/main/plugin/registry.ts tests/main/plugin/registry.test.ts && git commit -m "feat(M6): implement PluginRegistry with register/scan/activate/metadata"
 ```
 
 ---
@@ -519,7 +519,7 @@ vi.mock('../../../src/main/aws/services/sfn', () => ({ listStateMachines: vi.fn(
 vi.mock('../../../src/main/aws/services/eventbridge', () => ({ listEventBuses: vi.fn().mockResolvedValue([]) }))
 
 describe('awsPlugin', () => {
-  let awsPlugin: import('../../../src/main/plugin/awsPlugin').CloudblocksPlugin
+  let awsPlugin: import('../../../src/main/plugin/awsPlugin').RiftViewPlugin
 
   beforeEach(async () => {
     vi.resetModules()
@@ -528,7 +528,7 @@ describe('awsPlugin', () => {
   })
 
   it('has the correct plugin id', () => {
-    expect(awsPlugin.id).toBe('com.cloudblocks.aws')
+    expect(awsPlugin.id).toBe('com.riftview.aws')
   })
 
   it('declares all 24 NodeTypes (22 + unknown)', () => {
@@ -562,14 +562,14 @@ describe('awsPlugin', () => {
 - [ ] Run — expect failure (module not found):
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/plugin/awsPlugin.test.ts 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/plugin/awsPlugin.test.ts 2>&1 | tail -15
 ```
 
 Expected: `Cannot find module '../../../src/main/plugin/awsPlugin'`
 
 ### Step 2: Create `src/main/plugin/awsPlugin.ts`
 
-- [ ] The `nodeTypeMetadata` values are copied from `ResourceNode.tsx`'s `TYPE_BORDER` and `TYPE_LABEL` maps. The `scanExtras` hook handles the key-pair IPC push (the scanner will call it). Since `scanExtras` needs to push over IPC, `awsPlugin.ts` will need a reference to the BrowserWindow — pass it via a factory pattern or store it during `activate`. Use a module-level `_win` variable set by a separate `setWindow()` call from the registry/scanner. Actually, the simpler approach aligned with the current scanner pattern: `scanExtras` is called by `ResourceScanner` after `scanAll`, and the scanner already holds `this.window`. So the scanner passes `win` to `scanExtras` via a different signature. To keep `CloudblocksPlugin.scanExtras` simple (no `win` parameter), the AWS plugin uses an internal weak ref. However, the cleanest approach for M6 is for the scanner itself to call `describeKeyPairs` + `win.webContents.send` directly for the AWS plugin only — consistent with the TODO comment already in `scanner.ts`. Leave `scanExtras` on the interface but the AWS plugin does NOT implement it in M6 (the scanner keeps the key-pair send as an inline guard). This avoids adding `win` to the plugin interface for M6.
+- [ ] The `nodeTypeMetadata` values are copied from `ResourceNode.tsx`'s `TYPE_BORDER` and `TYPE_LABEL` maps. The `scanExtras` hook handles the key-pair IPC push (the scanner will call it). Since `scanExtras` needs to push over IPC, `awsPlugin.ts` will need a reference to the BrowserWindow — pass it via a factory pattern or store it during `activate`. Use a module-level `_win` variable set by a separate `setWindow()` call from the registry/scanner. Actually, the simpler approach aligned with the current scanner pattern: `scanExtras` is called by `ResourceScanner` after `scanAll`, and the scanner already holds `this.window`. So the scanner passes `win` to `scanExtras` via a different signature. To keep `RiftViewPlugin.scanExtras` simple (no `win` parameter), the AWS plugin uses an internal weak ref. However, the cleanest approach for M6 is for the scanner itself to call `describeKeyPairs` + `win.webContents.send` directly for the AWS plugin only — consistent with the TODO comment already in `scanner.ts`. Leave `scanExtras` on the interface but the AWS plugin does NOT implement it in M6 (the scanner keeps the key-pair send as an inline guard). This avoids adding `win` to the plugin interface for M6.
 
 Accordingly, `awsPlugin.ts` does NOT implement `scanExtras`. The scanner Task 4 will preserve the key-pair send inline (guarded by plugin.id check) until a future cleanup.
 
@@ -597,7 +597,7 @@ import { listParameters } from '../aws/services/ssm'
 import { listHostedZones } from '../aws/services/r53'
 import { listStateMachines } from '../aws/services/sfn'
 import { listEventBuses } from '../aws/services/eventbridge'
-import type { CloudblocksPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from './types'
+import type { RiftViewPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from './types'
 import type { CloudNode } from '../../renderer/types/cloud'
 
 // Metadata copied from ResourceNode.tsx TYPE_BORDER + TYPE_LABEL + Sidebar.tsx SERVICES
@@ -635,8 +635,8 @@ function errCatch(service: string, region: string, errors: PluginScanResult['err
   }
 }
 
-export const awsPlugin: CloudblocksPlugin = {
-  id: 'com.cloudblocks.aws',
+export const awsPlugin: RiftViewPlugin = {
+  id: 'com.riftview.aws',
   displayName: 'Amazon Web Services',
   nodeTypes: Object.keys(AWS_NODE_TYPE_METADATA),
   nodeTypeMetadata: AWS_NODE_TYPE_METADATA,
@@ -695,7 +695,7 @@ import { listNatGateways } from '../aws/services/nat'
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/plugin/awsPlugin.test.ts 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/plugin/awsPlugin.test.ts 2>&1 | tail -10
 ```
 
 Expected: `5 passed`
@@ -705,7 +705,7 @@ Expected: `5 passed`
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | tail -10
 ```
 
 Expected: no errors.
@@ -729,7 +729,7 @@ pluginRegistry.register(awsPlugin)
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/main/plugin/awsPlugin.ts src/main/plugin/index.ts tests/main/plugin/awsPlugin.test.ts && git commit -m "feat(M6): awsPlugin wraps all AWS service scans; plugin/index registers it"
+cd /Users/julius/AI/riftview/riftview && git add src/main/plugin/awsPlugin.ts src/main/plugin/index.ts tests/main/plugin/awsPlugin.test.ts && git commit -m "feat(M6): awsPlugin wraps all AWS service scans; plugin/index registers it"
 ```
 
 ---
@@ -745,7 +745,7 @@ cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/main/plugin/awsPlugin
 - [ ] Run:
 
 ```bash
-ls /Users/julius/AI/cloudblocks/cloudblocks/tests/main/aws/scanner.test.ts 2>/dev/null && echo "exists" || echo "missing"
+ls /Users/julius/AI/riftview/riftview/tests/main/aws/scanner.test.ts 2>/dev/null && echo "exists" || echo "missing"
 ```
 
 If missing, write one. If exists, read it to understand the current mock setup.
@@ -824,7 +824,7 @@ describe('ResourceScanner wires through pluginRegistry', () => {
 - [ ] Run — the last describe block should pass (scanner can be imported) but this verifies `pluginRegistry` is in scope when scanner runs:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/aws/scanner.test.ts 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/aws/scanner.test.ts 2>&1 | tail -15
 ```
 
 ### Step 3: Modify `src/main/aws/scanner.ts`
@@ -879,7 +879,7 @@ private async scan(): Promise<void> {
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/aws/scanner.test.ts 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/aws/scanner.test.ts 2>&1 | tail -10
 ```
 
 Expected: all pass.
@@ -887,7 +887,7 @@ Expected: all pass.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | tail -10
 ```
 
 Expected: no errors. If `PluginScanResult.errors` type doesn't match `ScanError[]`, cast: `r.errors as ScanError[]` (they have the same shape).
@@ -897,7 +897,7 @@ Expected: no errors. If `PluginScanResult.errors` type doesn't match `ScanError[
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -20
+cd /Users/julius/AI/riftview/riftview && npm test 2>&1 | tail -20
 ```
 
 Expected: all existing tests pass. The existing `awsProvider` tests in `tests/main/aws/provider.test.ts` still pass because `awsProvider` itself is not deleted.
@@ -907,7 +907,7 @@ Expected: all existing tests pass. The existing `awsProvider` tests in `tests/ma
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/main/aws/scanner.ts tests/main/aws/scanner.test.ts && git commit -m "feat(M6): ResourceScanner routes through pluginRegistry.scanAll()"
+cd /Users/julius/AI/riftview/riftview && git add src/main/aws/scanner.ts tests/main/aws/scanner.test.ts && git commit -m "feat(M6): ResourceScanner routes through pluginRegistry.scanAll()"
 ```
 
 ---
@@ -934,7 +934,7 @@ it('defines PLUGIN_METADATA channel', () => {
 - [ ] Run — expect failure:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/ipc/channels.test.ts 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/ipc/channels.test.ts 2>&1 | tail -10
 ```
 
 Expected: `IPC.PLUGIN_METADATA is not a string` or similar.
@@ -952,7 +952,7 @@ PLUGIN_METADATA: 'plugin:metadata',  // push: main → renderer; payload: Record
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/ipc/channels.test.ts 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/ipc/channels.test.ts 2>&1 | tail -10
 ```
 
 Expected: all pass.
@@ -997,7 +997,7 @@ Note: `restartScanner` becomes `async`. Update the two call sites (`PROFILE_SELE
 import type { NodeTypeMetadata } from '../main/plugin/types'
 ```
 
-Add inside the `contextBridge.exposeInMainWorld('cloudblocks', { ... })` block:
+Add inside the `contextBridge.exposeInMainWorld('riftview', { ... })` block:
 
 ```ts
 onPluginMetadata: (cb: (meta: Record<string, NodeTypeMetadata>) => void): (() => void) => {
@@ -1009,7 +1009,7 @@ onPluginMetadata: (cb: (meta: Record<string, NodeTypeMetadata>) => void): (() =>
 
 ### Step 6: Declare `onPluginMetadata` in `preload/index.d.ts`
 
-- [ ] In `src/preload/index.d.ts`, add inside the `cloudblocks` object type:
+- [ ] In `src/preload/index.d.ts`, add inside the `riftview` object type:
 
 ```ts
 onPluginMetadata(cb: (meta: Record<string, import('../main/plugin/types').NodeTypeMetadata>) => void): () => void
@@ -1020,7 +1020,7 @@ onPluginMetadata(cb: (meta: Record<string, import('../main/plugin/types').NodeTy
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | tail -10
 ```
 
 Expected: no errors.
@@ -1030,7 +1030,7 @@ Expected: no errors.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -20
+cd /Users/julius/AI/riftview/riftview && npm test 2>&1 | tail -20
 ```
 
 Expected: all pass.
@@ -1040,7 +1040,7 @@ Expected: all pass.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/main/ipc/channels.ts src/main/ipc/handlers.ts src/preload/index.ts src/preload/index.d.ts tests/main/ipc/channels.test.ts && git commit -m "feat(M6): add PLUGIN_METADATA IPC channel; push metadata after activateAll"
+cd /Users/julius/AI/riftview/riftview && git add src/main/ipc/channels.ts src/main/ipc/handlers.ts src/preload/index.ts src/preload/index.d.ts tests/main/ipc/channels.test.ts && git commit -m "feat(M6): add PLUGIN_METADATA IPC channel; push metadata after activateAll"
 ```
 
 ---
@@ -1095,7 +1095,7 @@ describe('useUIStore — pluginNodeTypes slice', () => {
 - [ ] Run — expect failure:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/renderer/store/ui-plugin-nodetypes.test.ts 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/renderer/store/ui-plugin-nodetypes.test.ts 2>&1 | tail -15
 ```
 
 Expected: `pluginNodeTypes is not a property of UIState` or similar type error.
@@ -1126,7 +1126,7 @@ setPluginNodeTypes: (meta) => set({ pluginNodeTypes: meta }),
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/renderer/store/ui-plugin-nodetypes.test.ts 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/renderer/store/ui-plugin-nodetypes.test.ts 2>&1 | tail -10
 ```
 
 Expected: `3 passed`
@@ -1135,7 +1135,7 @@ Expected: `3 passed`
 
 - [ ] In `src/renderer/src/App.tsx`, import `renderer/plugin/index.ts` (side-effect import for renderer plugin registration) and add a `useEffect` that listens for the `PLUGIN_METADATA` push:
 
-Find the existing `useEffect` blocks that call `window.cloudblocks.onScanDelta(...)` etc. Add adjacent:
+Find the existing `useEffect` blocks that call `window.riftview.onScanDelta(...)` etc. Add adjacent:
 
 ```ts
 import '../plugin/index'   // renderer-side plugin registrations (empty for M6)
@@ -1145,7 +1145,7 @@ Inside the component (near other `useEffect` IPC listeners):
 
 ```ts
 useEffect(() => {
-  return window.cloudblocks.onPluginMetadata((meta) => {
+  return window.riftview.onPluginMetadata((meta) => {
     useUIStore.getState().setPluginNodeTypes(meta)
   })
 }, [])
@@ -1156,11 +1156,11 @@ useEffect(() => {
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | tail -10
 ```
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -20
+cd /Users/julius/AI/riftview/riftview && npm test 2>&1 | tail -20
 ```
 
 Expected: no errors, all pass.
@@ -1170,7 +1170,7 @@ Expected: no errors, all pass.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/store/ui.ts src/renderer/src/App.tsx tests/renderer/store/ui-plugin-nodetypes.test.ts && git commit -m "feat(M6): add pluginNodeTypes slice to useUIStore; handle onPluginMetadata in App"
+cd /Users/julius/AI/riftview/riftview && git add src/renderer/store/ui.ts src/renderer/src/App.tsx tests/renderer/store/ui-plugin-nodetypes.test.ts && git commit -m "feat(M6): add pluginNodeTypes slice to useUIStore; handle onPluginMetadata in App"
 ```
 
 ---
@@ -1221,7 +1221,7 @@ describe('ResourceNode — plugin type fallback', () => {
 - [ ] Run — expect failure (border is `#555`, not `#0078D4`):
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/renderer/components/canvas/nodes/ResourceNode.test.tsx 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/renderer/components/canvas/nodes/ResourceNode.test.tsx 2>&1 | tail -15
 ```
 
 ### Step 2: Modify `ResourceNode.tsx` to use runtime fallback
@@ -1256,7 +1256,7 @@ Note: `d.nodeType` is typed as `NodeType` in `ResourceNodeData`. The `TYPE_BORDE
 - [ ] Find `SearchPalette.tsx`:
 
 ```bash
-find /Users/julius/AI/cloudblocks/cloudblocks/src -name "SearchPalette.tsx" | head -5
+find /Users/julius/AI/riftview/riftview/src -name "SearchPalette.tsx" | head -5
 ```
 
 - [ ] Add `import { useUIStore } from '../store/ui'` (adjust path based on file location).
@@ -1274,7 +1274,7 @@ const shortLabel = TYPE_SHORT[type] ?? pluginNodeTypes[type]?.shortLabel ?? type
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/renderer/components/canvas/nodes/ResourceNode.test.tsx 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/renderer/components/canvas/nodes/ResourceNode.test.tsx 2>&1 | tail -10
 ```
 
 Expected: all pass including the new plugin fallback test.
@@ -1284,11 +1284,11 @@ Expected: all pass including the new plugin fallback test.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | tail -10
 ```
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -20
+cd /Users/julius/AI/riftview/riftview && npm test 2>&1 | tail -20
 ```
 
 Expected: no errors, all pass.
@@ -1298,7 +1298,7 @@ Expected: no errors, all pass.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/components/canvas/nodes/ResourceNode.tsx src/renderer/components/SearchPalette.tsx tests/renderer/components/canvas/nodes/ResourceNode.test.tsx && git commit -m "feat(M6): ResourceNode and SearchPalette fall back to pluginNodeTypes for unknown types"
+cd /Users/julius/AI/riftview/riftview && git add src/renderer/components/canvas/nodes/ResourceNode.tsx src/renderer/components/SearchPalette.tsx tests/renderer/components/canvas/nodes/ResourceNode.test.tsx && git commit -m "feat(M6): ResourceNode and SearchPalette fall back to pluginNodeTypes for unknown types"
 ```
 
 ---
@@ -1314,7 +1314,7 @@ cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/components/c
 - [ ] Check if Sidebar test exists:
 
 ```bash
-ls /Users/julius/AI/cloudblocks/cloudblocks/tests/renderer/components/Sidebar.test.tsx 2>/dev/null || echo "missing"
+ls /Users/julius/AI/riftview/riftview/tests/renderer/components/Sidebar.test.tsx 2>/dev/null || echo "missing"
 ```
 
 - [ ] Add (or create) `tests/renderer/components/Sidebar.test.tsx` with the plugin type test. (If the file already has other tests, append this describe block.) Adapt the test wrapper to match existing patterns (mock `useCloudStore`, `useUIStore`, etc.):
@@ -1381,7 +1381,7 @@ describe('Sidebar — plugin type entries', () => {
 - [ ] Run — expect failure (plugin type not rendered):
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/renderer/components/Sidebar.test.tsx 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/renderer/components/Sidebar.test.tsx 2>&1 | tail -15
 ```
 
 ### Step 2: Modify `Sidebar.tsx` to append plugin types
@@ -1404,7 +1404,7 @@ Then in the render section where the `SERVICES` array is mapped, after the stati
       draggable
       className="flex items-center justify-between px-3 py-1.5 cursor-grab rounded hover:bg-white/5"
       onDragStart={(e) => {
-        e.dataTransfer.setData('application/cloudblocks-resource', type)
+        e.dataTransfer.setData('application/riftview-resource', type)
       }}
     >
       <span className="text-xs" style={{ color: meta.borderColor }}>
@@ -1421,7 +1421,7 @@ The drag-start handler should match whatever pattern the existing static entries
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/renderer/components/Sidebar.test.tsx 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/renderer/components/Sidebar.test.tsx 2>&1 | tail -10
 ```
 
 Expected: `3 passed`
@@ -1431,7 +1431,7 @@ Expected: `3 passed`
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -20
+cd /Users/julius/AI/riftview/riftview && npm test 2>&1 | tail -20
 ```
 
 Expected: all pass.
@@ -1441,7 +1441,7 @@ Expected: all pass.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/components/Sidebar.tsx tests/renderer/components/Sidebar.test.tsx && git commit -m "feat(M6): Sidebar appends plugin types with hasCreate: true from pluginNodeTypes"
+cd /Users/julius/AI/riftview/riftview && git add src/renderer/components/Sidebar.tsx tests/renderer/components/Sidebar.test.tsx && git commit -m "feat(M6): Sidebar appends plugin types with hasCreate: true from pluginNodeTypes"
 ```
 
 ---
@@ -1458,7 +1458,7 @@ cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/components/S
 
 ```ts
 import { pluginRegistry } from '../../../src/main/plugin/registry'
-import type { CloudblocksPlugin } from '../../../src/main/plugin/types'
+import type { RiftViewPlugin } from '../../../src/main/plugin/types'
 
 describe('generateTerraformFile — plugin HCL generator fallback', () => {
   afterEach(() => {
@@ -1469,7 +1469,7 @@ describe('generateTerraformFile — plugin HCL generator fallback', () => {
 
   it('returns plugin HCL for a node type registered in pluginRegistry', () => {
     // Register a mock plugin with an HCL generator
-    const mockPlugin: CloudblocksPlugin = {
+    const mockPlugin: RiftViewPlugin = {
       id: 'com.test.hcl',
       displayName: 'HCL Test Plugin',
       nodeTypes: ['mock-service'],
@@ -1502,7 +1502,7 @@ describe('generateTerraformFile — plugin HCL generator fallback', () => {
 - [ ] Run — expect failure (plugin type is skipped, no HCL produced):
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/terraform/generators.test.ts 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/terraform/generators.test.ts 2>&1 | tail -15
 ```
 
 ### Step 2: Modify `src/main/terraform/index.ts`
@@ -1544,7 +1544,7 @@ Or simply keep the existing `terraformGenerators[node.type](node)` call and add 
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/terraform/generators.test.ts 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/terraform/generators.test.ts 2>&1 | tail -10
 ```
 
 Expected: all pass.
@@ -1554,11 +1554,11 @@ Expected: all pass.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | tail -10
 ```
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -20
+cd /Users/julius/AI/riftview/riftview && npm test 2>&1 | tail -20
 ```
 
 ### Step 5: Commit
@@ -1566,7 +1566,7 @@ cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -20
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/main/terraform/index.ts tests/main/terraform/generators.test.ts && git commit -m "feat(M6): terraform export falls back to pluginRegistry.getHclGenerator for non-built-in types"
+cd /Users/julius/AI/riftview/riftview && git add src/main/terraform/index.ts tests/main/terraform/generators.test.ts && git commit -m "feat(M6): terraform export falls back to pluginRegistry.getHclGenerator for non-built-in types"
 ```
 
 ---
@@ -1634,7 +1634,7 @@ describe('pluginCommands routing', () => {
 - [ ] Run — expect failure:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/renderer/utils/pluginCommands.test.ts 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/renderer/utils/pluginCommands.test.ts 2>&1 | tail -15
 ```
 
 ### Step 2: Create `src/renderer/plugin/rendererRegistry.ts`
@@ -1718,7 +1718,7 @@ export function resolveEditCommands(node: CloudNode, params: Record<string, unkn
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/renderer/utils/pluginCommands.test.ts 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/renderer/utils/pluginCommands.test.ts 2>&1 | tail -10
 ```
 
 Expected: `3 passed`
@@ -1728,11 +1728,11 @@ Expected: `3 passed`
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | tail -10
 ```
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -20
+cd /Users/julius/AI/riftview/riftview && npm test 2>&1 | tail -20
 ```
 
 ### Step 7: Commit
@@ -1740,7 +1740,7 @@ cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -20
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/plugin/rendererRegistry.ts src/renderer/plugin/pluginCommands.ts src/renderer/plugin/index.ts tests/renderer/utils/pluginCommands.test.ts && git commit -m "feat(M6): renderer plugin command routing; rendererRegistry for custom node components"
+cd /Users/julius/AI/riftview/riftview && git add src/renderer/plugin/rendererRegistry.ts src/renderer/plugin/pluginCommands.ts src/renderer/plugin/index.ts tests/renderer/utils/pluginCommands.test.ts && git commit -m "feat(M6): renderer plugin command routing; rendererRegistry for custom node components"
 ```
 
 ---
@@ -1768,11 +1768,11 @@ cd /Users/julius/AI/cloudblocks/cloudblocks && git add src/renderer/plugin/rende
  */
 import { describe, it, expect } from 'vitest'
 import { PluginRegistry } from '../../../src/main/plugin/registry'
-import type { CloudblocksPlugin } from '../../../src/main/plugin/types'
+import type { RiftViewPlugin } from '../../../src/main/plugin/types'
 
 vi.mock('electron', () => ({ BrowserWindow: vi.fn() }))
 
-const mockPlugin: CloudblocksPlugin = {
+const mockPlugin: RiftViewPlugin = {
   id: 'com.test.mock',
   displayName: 'Mock Cloud Plugin',
   nodeTypes: ['mock-service'],
@@ -1848,7 +1848,7 @@ describe('M6 plugin integration smoke test', () => {
   })
 
   it('plugin scan errors are isolated — a failing plugin does not throw', async () => {
-    const failingPlugin: CloudblocksPlugin = {
+    const failingPlugin: RiftViewPlugin = {
       id: 'com.test.failing',
       displayName: 'Failing Plugin',
       nodeTypes: ['fail-type'],
@@ -1880,7 +1880,7 @@ describe('M6 plugin integration smoke test', () => {
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test -- tests/main/plugin/integration.test.ts 2>&1 | tail -15
+cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/plugin/integration.test.ts 2>&1 | tail -15
 ```
 
 Expected: `5 passed`
@@ -1890,7 +1890,7 @@ Expected: `5 passed`
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm test 2>&1 | tail -20
+cd /Users/julius/AI/riftview/riftview && npm test 2>&1 | tail -20
 ```
 
 Expected: all existing tests pass plus the new integration test suite.
@@ -1900,11 +1900,11 @@ Expected: all existing tests pass plus the new integration test suite.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run lint 2>&1 | tail -20
+cd /Users/julius/AI/riftview/riftview && npm run lint 2>&1 | tail -20
 ```
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && npm run typecheck 2>&1 | tail -10
+cd /Users/julius/AI/riftview/riftview && npm run typecheck 2>&1 | tail -10
 ```
 
 Expected: no errors.
@@ -1914,7 +1914,7 @@ Expected: no errors.
 - [ ] Run:
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks && git add tests/main/plugin/integration.test.ts && git commit -m "test(M6): integration smoke test — mock plugin emits node, metadata, HCL via registry"
+cd /Users/julius/AI/riftview/riftview && git add tests/main/plugin/integration.test.ts && git commit -m "test(M6): integration smoke test — mock plugin emits node, metadata, HCL via registry"
 ```
 
 ---
@@ -1923,7 +1923,7 @@ cd /Users/julius/AI/cloudblocks/cloudblocks && git add tests/main/plugin/integra
 
 Verify each item before marking M6 complete:
 
-- [ ] `src/main/plugin/types.ts` defines `CloudblocksPlugin`, `NodeTypeMetadata`, `PluginScanResult`, `ScanContext`
+- [ ] `src/main/plugin/types.ts` defines `RiftViewPlugin`, `NodeTypeMetadata`, `PluginScanResult`, `ScanContext`
 - [ ] `src/main/plugin/registry.ts` exports `PluginRegistry` class and `pluginRegistry` singleton
 - [ ] `src/main/plugin/awsPlugin.ts` wraps all 22 existing AWS service scan functions
 - [ ] `src/main/aws/scanner.ts` calls `pluginRegistry.scanAll()`, not `awsProvider.scan()` directly

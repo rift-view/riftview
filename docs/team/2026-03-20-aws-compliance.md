@@ -23,11 +23,11 @@
 ### Trademark Disclaimer
 Add to: About screen + README.md
 
-> "Cloudblocks is not affiliated with, endorsed by, or sponsored by Amazon Web Services.
+> "RiftView is not affiliated with, endorsed by, or sponsored by Amazon Web Services.
 > AWS, Amazon EC2, and all related marks are trademarks of Amazon.com, Inc."
 
 ### NOTICE.md
-Create `cloudblocks/NOTICE.md` with:
+Create `riftview/NOTICE.md` with:
 - AWS trademark acknowledgment
 - Third-party OSS license attributions (from package.json)
 - LocalStack relationship note

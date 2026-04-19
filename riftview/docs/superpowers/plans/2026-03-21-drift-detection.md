@@ -60,7 +60,7 @@ export interface CloudNode {
 - [ ] **Step 2: Verify typecheck passes**
 
 ```bash
-cd /Users/julius/AI/cloudblocks/cloudblocks
+cd /Users/julius/AI/riftview/riftview
 npm run typecheck 2>&1 | tail -5
 ```
 

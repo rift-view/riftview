@@ -13,13 +13,13 @@
 ## Task 1: Install SDK + Add Types
 
 **Files:**
-- Modify: `cloudblocks/package.json`
-- Modify: `cloudblocks/src/renderer/types/cloud.ts`
+- Modify: `riftview/package.json`
+- Modify: `riftview/src/renderer/types/cloud.ts`
 
 - [ ] **Step 1: Install @aws-sdk/client-organizations and @aws-sdk/client-sts**
 
 ```bash
-cd cloudblocks && npm install @aws-sdk/client-organizations @aws-sdk/client-sts
+cd riftview && npm install @aws-sdk/client-organizations @aws-sdk/client-sts
 ```
 
 - [ ] **Step 2: Add 'account' to NodeType union**
@@ -49,7 +49,7 @@ orgRoleName: string  // default: 'OrganizationAccountAccessRole'
 
 - [ ] **Step 5: Write failing type test**
 
-In `cloudblocks/tests/main/aws/services/organizations.test.ts` (create file):
+In `riftview/tests/main/aws/services/organizations.test.ts` (create file):
 
 ```typescript
 import { describe, it, expect } from 'vitest'
@@ -74,7 +74,7 @@ Expected: errors in ResourceNode.tsx, SearchPalette.tsx, buildHclCommands.ts —
 - [ ] **Step 7: Commit**
 
 ```bash
-git add cloudblocks/package.json cloudblocks/package-lock.json cloudblocks/src/renderer/types/cloud.ts cloudblocks/tests/main/aws/services/organizations.test.ts
+git add riftview/package.json riftview/package-lock.json riftview/src/renderer/types/cloud.ts riftview/tests/main/aws/services/organizations.test.ts
 git commit -m "feat(types): add 'account' NodeType, AccountConfig, accountId to CloudNode"
 ```
 
@@ -83,13 +83,13 @@ git commit -m "feat(types): add 'account' NodeType, AccountConfig, accountId to 
 ## Task 2: Organizations Service + CloudProvider Update
 
 **Files:**
-- Create: `cloudblocks/src/main/aws/services/organizations.ts`
-- Modify: `cloudblocks/src/main/aws/provider.ts`
+- Create: `riftview/src/main/aws/services/organizations.ts`
+- Modify: `riftview/src/main/aws/provider.ts`
 
 - [ ] **Step 1: Create organizations.ts**
 
 ```typescript
-// cloudblocks/src/main/aws/services/organizations.ts
+// riftview/src/main/aws/services/organizations.ts
 import {
   OrganizationsClient,
   ListAccountsCommand,
@@ -134,7 +134,7 @@ export async function discoverOrganization(
 
 - [ ] **Step 2: Write failing test**
 
-In `cloudblocks/tests/main/aws/services/organizations.test.ts`:
+In `riftview/tests/main/aws/services/organizations.test.ts`:
 
 ```typescript
 import { describe, it, expect, vi } from 'vitest'
@@ -193,7 +193,7 @@ Expected: 0 errors on provider.ts
 - [ ] **Step 6: Commit**
 
 ```bash
-git add cloudblocks/src/main/aws/services/organizations.ts cloudblocks/src/main/aws/provider.ts cloudblocks/tests/main/aws/services/organizations.test.ts
+git add riftview/src/main/aws/services/organizations.ts riftview/src/main/aws/provider.ts riftview/tests/main/aws/services/organizations.test.ts
 git commit -m "feat(scanner): add organizations discovery service + accountId stamp on CloudProvider.scan()"
 ```
 
@@ -202,11 +202,11 @@ git commit -m "feat(scanner): add organizations discovery service + accountId st
 ## Task 3: IPC Channels + Scanner Fan-Out
 
 **Files:**
-- Modify: `cloudblocks/src/main/ipc/channels.ts`
-- Modify: `cloudblocks/src/main/ipc/handlers.ts`
-- Modify: `cloudblocks/src/preload/index.ts`
-- Modify: `cloudblocks/src/preload/index.d.ts`
-- Modify: `cloudblocks/src/main/aws/scanner.ts`
+- Modify: `riftview/src/main/ipc/channels.ts`
+- Modify: `riftview/src/main/ipc/handlers.ts`
+- Modify: `riftview/src/preload/index.ts`
+- Modify: `riftview/src/preload/index.d.ts`
+- Modify: `riftview/src/main/aws/scanner.ts`
 
 - [ ] **Step 1: Add channels**
 
@@ -286,7 +286,7 @@ private async scan(): Promise<void> {
         const roleArn = `arn:aws:iam::${account.accountId}:role/${this.orgRoleName}`
         const assumed = await sts.send(new AssumeRoleCommand({
           RoleArn: roleArn,
-          RoleSessionName: 'cloudblocks-scan',
+          RoleSessionName: 'riftview-scan',
         }))
         creds = {
           accessKeyId: assumed.Credentials!.AccessKeyId!,
@@ -343,7 +343,7 @@ npm test 2>&1 | tail -10
 - [ ] **Step 8: Commit**
 
 ```bash
-git add cloudblocks/src/main/ipc/channels.ts cloudblocks/src/main/ipc/handlers.ts cloudblocks/src/preload/index.ts cloudblocks/src/preload/index.d.ts cloudblocks/src/main/aws/scanner.ts cloudblocks/src/main/aws/client.ts
+git add riftview/src/main/ipc/channels.ts riftview/src/main/ipc/handlers.ts riftview/src/preload/index.ts riftview/src/preload/index.d.ts riftview/src/main/aws/scanner.ts riftview/src/main/aws/client.ts
 git commit -m "feat(ipc): ACCOUNTS_DISCOVER + ACCOUNTS_SELECT channels + scanner multi-account fan-out"
 ```
 
@@ -352,10 +352,10 @@ git commit -m "feat(ipc): ACCOUNTS_DISCOVER + ACCOUNTS_SELECT channels + scanner
 ## Task 4: Store + NodeType Completeness
 
 **Files:**
-- Modify: `cloudblocks/src/renderer/store/cloud.ts`
-- Modify: `cloudblocks/src/renderer/components/canvas/nodes/ResourceNode.tsx`
-- Modify: `cloudblocks/src/renderer/components/canvas/nodes/SearchPalette.tsx`
-- Modify: `cloudblocks/src/renderer/utils/buildHclCommands.ts`
+- Modify: `riftview/src/renderer/store/cloud.ts`
+- Modify: `riftview/src/renderer/components/canvas/nodes/ResourceNode.tsx`
+- Modify: `riftview/src/renderer/components/canvas/nodes/SearchPalette.tsx`
+- Modify: `riftview/src/renderer/utils/buildHclCommands.ts`
 
 - [ ] **Step 1: Add account state to useCloudStore**
 
@@ -406,7 +406,7 @@ npm test 2>&1 | tail -5
 - [ ] **Step 7: Commit**
 
 ```bash
-git add cloudblocks/src/renderer/store/cloud.ts cloudblocks/src/renderer/components/canvas/nodes/ResourceNode.tsx cloudblocks/src/renderer/components/canvas/nodes/SearchPalette.tsx cloudblocks/src/renderer/utils/buildHclCommands.ts
+git add riftview/src/renderer/store/cloud.ts riftview/src/renderer/components/canvas/nodes/ResourceNode.tsx riftview/src/renderer/components/canvas/nodes/SearchPalette.tsx riftview/src/renderer/utils/buildHclCommands.ts
 git commit -m "feat(store): account state + NodeType completeness for 'account'"
 ```
 
@@ -415,8 +415,8 @@ git commit -m "feat(store): account state + NodeType completeness for 'account'"
 ## Task 5: AccountNode Component + TopologyView Layout
 
 **Files:**
-- Create: `cloudblocks/src/renderer/components/canvas/nodes/AccountNode.tsx`
-- Modify: `cloudblocks/src/renderer/components/canvas/TopologyView.tsx`
+- Create: `riftview/src/renderer/components/canvas/nodes/AccountNode.tsx`
+- Modify: `riftview/src/renderer/components/canvas/TopologyView.tsx`
 
 - [ ] **Step 1: Create AccountNode.tsx following VpcNode pattern**
 
@@ -492,7 +492,7 @@ npm run typecheck
 - [ ] **Step 5: Commit**
 
 ```bash
-git add cloudblocks/src/renderer/components/canvas/nodes/AccountNode.tsx cloudblocks/src/renderer/components/canvas/TopologyView.tsx
+git add riftview/src/renderer/components/canvas/nodes/AccountNode.tsx riftview/src/renderer/components/canvas/TopologyView.tsx
 git commit -m "feat(canvas): AccountNode component + account container layout layer in TopologyView"
 ```
 
@@ -501,7 +501,7 @@ git commit -m "feat(canvas): AccountNode component + account container layout la
 ## Task 6: Settings — Accounts Tab
 
 **Files:**
-- Modify: `cloudblocks/src/renderer/components/SettingsModal.tsx`
+- Modify: `riftview/src/renderer/components/SettingsModal.tsx`
 
 - [ ] **Step 1: Add 'accounts' to TabKey union and TABS array**
 
@@ -564,7 +564,7 @@ type TabKey = 'profile' | 'accounts' | 'regions' | 'appearance' | 'localstack'
 async function handleDiscover(): Promise<void> {
   setDiscovering(true)
   setDiscoverError(null)
-  const res = await window.cloudblocks.discoverAccounts()
+  const res = await window.riftview.discoverAccounts()
   setDiscovering(false)
   if (res.error) {
     setDiscoverError(`Discovery failed: ${res.error}`)
@@ -580,7 +580,7 @@ function toggleAccount(acct: AccountConfig): void {
     : [...selectedAccounts, acct]
   setSelectedAccounts(next)
   useCloudStore.getState().setSelectedAccounts(next)
-  window.cloudblocks.selectAccounts(next).catch(() => {/*best-effort*/})
+  window.riftview.selectAccounts(next).catch(() => {/*best-effort*/})
 }
 ```
 
@@ -593,7 +593,7 @@ npm run typecheck && npm test 2>&1 | tail -5
 - [ ] **Step 5: Commit**
 
 ```bash
-git add cloudblocks/src/renderer/components/SettingsModal.tsx
+git add riftview/src/renderer/components/SettingsModal.tsx
 git commit -m "feat(settings): add Accounts tab — org discovery, role name config, account selection"
 ```
 
@@ -604,7 +604,7 @@ git commit -m "feat(settings): add Accounts tab — org discovery, role name con
 - [ ] **Typecheck passes**
 
 ```bash
-cd cloudblocks && npm run typecheck
+cd riftview && npm run typecheck
 ```
 Expected: 0 errors
 
