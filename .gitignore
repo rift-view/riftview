@@ -13,8 +13,8 @@ Thumbs.db
 !.env.local.example
 
 # Claude Code local state
-.claude/settings.local.json
-.claude/worktrees/
+.claude/
+docs/
 
 # Superpowers / brainstorm runtime state
 .superpowers/
