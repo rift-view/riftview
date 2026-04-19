@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RiftView">
+  <title>RiftView — cloud over infra stack</title>
+  <path d="M 148 224
+           C 88 224, 72 152, 132 130
+           C 120 72, 204 48, 244 92
+           C 266 52, 348 56, 360 112
+           C 420 108, 440 184, 380 216
+           L 148 224 Z"
+        fill="currentColor"/>
+  <line x1="256" y1="224" x2="256" y2="272" stroke="currentColor" stroke-width="16" stroke-linecap="round"/>
+  <g fill="none" stroke="currentColor" stroke-width="18" stroke-linejoin="round">
+    <rect x="80"  y="280" width="352" height="56" rx="8"/>
+    <rect x="112" y="348" width="288" height="52" rx="8"/>
+    <rect x="152" y="412" width="208" height="48" rx="8"/>
+  </g>
+</svg>

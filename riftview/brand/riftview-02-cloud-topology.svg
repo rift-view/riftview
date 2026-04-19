@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="RiftView">
+  <title>RiftView — cloud as topology</title>
+  <circle cx="176" cy="288" r="72"/>
+  <circle cx="256" cy="224" r="88"/>
+  <circle cx="336" cy="288" r="72"/>
+  <line x1="112" y1="360" x2="400" y2="360"/>
+  <g fill="currentColor" stroke="none">
+    <circle cx="112" cy="360" r="12"/>
+    <circle cx="400" cy="360" r="12"/>
+  </g>
+</svg>

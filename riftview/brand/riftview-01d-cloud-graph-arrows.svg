@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RiftView">
+  <title>RiftView — cloud graph, directed flow</title>
+  <defs>
+    <marker id="arr" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="5" markerHeight="5" orient="auto-start-reverse" fill="currentColor">
+      <path d="M 0 0 L 12 6 L 0 12 Z"/>
+    </marker>
+  </defs>
+  <path d="M 152 360
+           C 88 360, 72 284, 136 260
+           C 124 196, 212 168, 252 212
+           C 272 168, 356 172, 368 232
+           C 432 228, 452 316, 384 344
+           C 384 368, 344 372, 324 360
+           L 152 360 Z"
+        fill="none" stroke="currentColor" stroke-width="22" stroke-linejoin="round"/>
+  <g stroke="currentColor" stroke-width="10" fill="none" stroke-linecap="round">
+    <line x1="196" y1="276" x2="244" y2="248" marker-end="url(#arr)"/>
+    <line x1="276" y1="248" x2="324" y2="284" marker-end="url(#arr)"/>
+    <line x1="336" y1="308" x2="228" y2="300" marker-end="url(#arr)"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="196" cy="284" r="18"/>
+    <circle cx="264" cy="240" r="18"/>
+    <circle cx="340" cy="300" r="18"/>
+  </g>
+</svg>

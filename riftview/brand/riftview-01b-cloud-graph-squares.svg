@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RiftView">
+  <title>RiftView — cloud graph, service tiles</title>
+  <path d="M 152 360
+           C 88 360, 72 284, 136 260
+           C 124 196, 212 168, 252 212
+           C 272 168, 356 172, 368 232
+           C 432 228, 452 316, 384 344
+           C 384 368, 344 372, 324 360
+           L 152 360 Z"
+        fill="none" stroke="currentColor" stroke-width="22" stroke-linejoin="round"/>
+  <g stroke="currentColor" stroke-width="10" stroke-linecap="round">
+    <line x1="256" y1="228" x2="200" y2="308"/>
+    <line x1="256" y1="228" x2="320" y2="308"/>
+    <line x1="200" y1="308" x2="320" y2="308"/>
+  </g>
+  <g fill="currentColor">
+    <rect x="232" y="204" width="48" height="48" rx="6"/>
+    <rect x="172" y="284" width="48" height="48" rx="6"/>
+    <rect x="292" y="284" width="48" height="48" rx="6"/>
+  </g>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RiftView">
+  <title>RiftView — cloud graph, hub &amp; spokes</title>
+  <path d="M 152 360
+           C 88 360, 72 284, 136 260
+           C 124 196, 212 168, 252 212
+           C 272 168, 356 172, 368 232
+           C 432 228, 452 316, 384 344
+           C 384 368, 344 372, 324 360
+           L 152 360 Z"
+        fill="none" stroke="currentColor" stroke-width="22" stroke-linejoin="round"/>
+  <g stroke="currentColor" stroke-width="10" stroke-linecap="round">
+    <line x1="256" y1="276" x2="188" y2="224"/>
+    <line x1="256" y1="276" x2="324" y2="224"/>
+    <line x1="256" y1="276" x2="256" y2="336"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="256" cy="276" r="24"/>
+    <circle cx="188" cy="224" r="14"/>
+    <circle cx="324" cy="224" r="14"/>
+    <circle cx="256" cy="336" r="14"/>
+  </g>
+</svg>

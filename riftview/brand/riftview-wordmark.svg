@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 256" role="img" aria-label="riftview">
+  <title>RiftView — wordmark</title>
+  <style>
+    .wm { font: 700 168px "JetBrains Mono","Fira Code","IBM Plex Mono",Menlo,Monaco,Consolas,monospace; letter-spacing: -2px; }
+  </style>
+  <g fill="currentColor">
+    <text class="wm" x="32" y="190">riftview</text>
+    <rect x="904" y="76" width="76" height="132"/>
+  </g>
+</svg>

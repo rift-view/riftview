@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="RiftView">
+  <title>RiftView</title>
+  <path d="M 88 400
+           C 40 400, 16 344, 64 320
+           C 24 272, 72 200, 136 208
+           C 140 136, 248 104, 288 168
+           C 304 112, 400 120, 408 192
+           C 472 184, 504 272, 448 312
+           C 488 352, 448 400, 408 400
+           L 88 400 Z"/>
+  <line x1="232" y1="237" x2="200" y2="283"/>
+  <line x1="280" y1="237" x2="312" y2="283"/>
+  <line x1="220" y1="320" x2="292" y2="320"/>
+  <circle cx="256" cy="200" r="28"/>
+  <circle cx="176" cy="320" r="28"/>
+  <circle cx="336" cy="320" r="28"/>
+</svg>

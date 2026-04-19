@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RiftView">
+  <title>RiftView — cloud with ingress/egress ports</title>
+  <path d="M 152 360
+           C 88 360, 72 284, 136 260
+           C 124 196, 212 168, 252 212
+           C 272 168, 356 172, 368 232
+           C 432 228, 452 316, 384 344
+           C 384 368, 344 372, 324 360
+           L 152 360 Z"
+        fill="none" stroke="currentColor" stroke-width="22" stroke-linejoin="round"/>
+  <g stroke="currentColor" stroke-width="10" stroke-linecap="round">
+    <line x1="56"  y1="260" x2="212" y2="260"/>
+    <line x1="300" y1="304" x2="456" y2="304"/>
+    <line x1="216" y1="264" x2="300" y2="300"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="56"  cy="260" r="18"/>
+    <circle cx="456" cy="304" r="18"/>
+    <circle cx="216" cy="260" r="16"/>
+    <circle cx="300" cy="304" r="16"/>
+  </g>
+</svg>

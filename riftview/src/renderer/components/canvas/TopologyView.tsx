@@ -1,0 +1,1427 @@
+import React, {
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+  useState,
+  type MouseEvent as ReactMouseEvent
+} from 'react'
+import {
+  ReactFlow,
+  Background,
+  BackgroundVariant,
+  MiniMap,
+  useReactFlow,
+  type Node,
+  type Edge,
+  type NodeChange,
+  type OnSelectionChangeParams,
+  type Connection
+} from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
+import { useCloudStore } from '../../store/cloud'
+import { useUIStore } from '../../store/ui'
+import type { NodeType } from '../../types/cloud'
+import { ResourceNode } from './nodes/ResourceNode'
+import { VpcNode } from './nodes/VpcNode'
+import { SubnetNode } from './nodes/SubnetNode'
+import { GlobalZoneNode } from './nodes/GlobalZoneNode'
+import { RegionZoneNode } from './nodes/RegionZoneNode'
+import { buildRegionColorMap } from '../../utils/regionColors'
+import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
+import { AcmNode } from './nodes/AcmNode'
+import { CloudFrontNode } from './nodes/CloudFrontNode'
+import { ApigwNode } from './nodes/ApigwNode'
+import { ApigwRouteNode } from './nodes/ApigwRouteNode'
+import { StickyNoteNode } from './nodes/StickyNoteNode'
+import { ResourceGroupNode } from './nodes/ResourceGroupNode'
+import { useStickyNoteCallbacks } from './nodes/useStickyNoteCallbacks'
+import type { CloudNode, EdgeType, IntegrationEdgeData, CustomEdge } from '../../types/cloud'
+import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
+import IntegrationEdge from './edges/IntegrationEdge'
+import UserEdge from './edges/UserEdge'
+import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../utils/filterToHide'
+import IntegrationLegend from './IntegrationLegend'
+import {
+  buildBlastRadius,
+  hopRingStyle,
+  directionSymbol,
+  applyBlastRadiusToEdges
+} from '../../utils/blastRadius'
+
+const SNAP_GRID_SIZE = 20
+
+const EDGE_TYPES = {
+  integration: IntegrationEdge,
+  user: UserEdge
+}
+
+const NODE_TYPES = {
+  resource: ResourceNode,
+  vpc: VpcNode,
+  subnet: SubnetNode,
+  globalZone: GlobalZoneNode,
+  regionZone: RegionZoneNode,
+  acm: AcmNode,
+  cloudfront: CloudFrontNode,
+  apigw: ApigwNode,
+  'apigw-route': ApigwRouteNode,
+  'sticky-note': StickyNoteNode,
+  'resource-group': ResourceGroupNode,
+  // Plugin-registered custom node renderers (populated at startup before first render)
+  ...getPluginNodeComponents()
+}
+
+const CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw'])
+
+// Node types that are structural chrome — always full opacity during blast radius / path trace
+const OPACITY_CONTAINER_TYPES = new Set([
+  'vpc',
+  'subnet',
+  'security-group',
+  'nat-gateway',
+  'globalZone',
+  'regionZone',
+  'apigw'
+])
+
+// Internet-facing source node types for path trace
+const INTERNET_SOURCE_TYPES = new Set(['igw', 'cloudfront', 'apigw'])
+
+const RES_W = 150
+const RES_H = 66
+const RES_COLS = 2
+const RES_GAP_X = 12
+const RES_GAP_Y = 12
+const SUB_PAD_X = 12
+const SUB_PAD_Y = 38
+const SUB_GAP = 16
+const VPC_PAD = 16
+const VPC_GAP = 48
+const VPC_LABEL = 32
+
+// Global zone constants
+const GLOBAL_PAD = 16
+const GLOBAL_LABEL = 32
+
+// API Gateway container constants
+const APIGW_PAD = 16
+const APIGW_HEADER = 32
+const APIGW_ROUTE_H = 36
+const APIGW_ROUTE_GAP = 8
+const APIGW_MIN_W = 240
+
+function subnetSize(resourceCount: number): { w: number; h: number } {
+  const cols = Math.min(resourceCount || 1, RES_COLS)
+  const rows = Math.max(1, Math.ceil(resourceCount / RES_COLS))
+  return {
+    w: Math.max(200, SUB_PAD_X * 2 + cols * RES_W + (cols - 1) * RES_GAP_X),
+    h: Math.max(120, SUB_PAD_Y + rows * (RES_H + RES_GAP_Y) + RES_GAP_Y)
+  }
+}
+
+const SUBNET_COLLAPSED_H = 32
+
+const GROUP_THRESHOLD = 3
+
+// Returns the number of visual items after aggregating same-type groups.
+// expandedGroups: group IDs (format: `group-{subnetId}-{nodeType}`) that are currently expanded.
+function effectiveItemCount(
+  resources: CloudNode[],
+  subnetId: string,
+  expandedGroups: Set<string>
+): number {
+  const typeCounts = new Map<string, number>()
+  for (const r of resources) {
+    typeCounts.set(r.type, (typeCounts.get(r.type) ?? 0) + 1)
+  }
+  let count = 0
+  for (const [type, c] of typeCounts.entries()) {
+    const groupId = `group-${subnetId}-${type}`
+    count += c >= GROUP_THRESHOLD && !expandedGroups.has(groupId) ? 1 : c
+  }
+  return count
+}
+
+function buildFlowNodes(
+  cloudNodes: CloudNode[],
+  selectedId: string | null,
+  highlightedIds: Set<string> | null,
+  collapsedSubnets: Set<string>,
+  collapsedVpcs: Set<string>,
+  collapsedApigws: Set<string>,
+  expandedGroups: Set<string>,
+  selectedRegions: string[],
+  showRegionIndicators: boolean,
+  regionColorMap: Record<string, string>,
+  zonePositionOverrides: Record<string, { x: number; y: number }>,
+  zoneSizeOverrides: Record<string, { width: number; height: number }>
+): Node[] {
+  const allNodes: Node[] = []
+  const nodes = allNodes
+
+  // Separate global nodes from regional nodes
+  const globalNodes = cloudNodes.filter((n) => n.region === 'global')
+  const regionalNodes = cloudNodes.filter((n) => n.region !== 'global')
+
+  // Layout global zone
+  let globalZoneHeight = 0
+  let vpcY = 40
+
+  if (globalNodes.length > 0) {
+    const GLOBAL_COLS = 5
+    const globalRows = Math.ceil(globalNodes.length / GLOBAL_COLS)
+    const globalW =
+      GLOBAL_PAD * 2 + Math.min(globalNodes.length, GLOBAL_COLS) * (RES_W + RES_GAP_X) - RES_GAP_X
+    globalZoneHeight = GLOBAL_LABEL + GLOBAL_PAD + globalRows * (RES_H + RES_GAP_Y)
+
+    const GLOBAL_ZONE_ID = '__global_zone__'
+    nodes.push({
+      id: GLOBAL_ZONE_ID,
+      type: 'globalZone',
+      position: { x: 40, y: 40 },
+      style: { width: Math.max(400, globalW), height: globalZoneHeight },
+      data: {},
+      selectable: false,
+      draggable: false,
+      zIndex: 0
+    })
+
+    // Place global resource nodes inside the zone
+    globalNodes.forEach((n, i) => {
+      const col = i % GLOBAL_COLS
+      const row = Math.floor(i / GLOBAL_COLS)
+      const nodeType =
+        n.type === 'acm' ? 'acm' : n.type === 'cloudfront' ? 'cloudfront' : 'resource'
+      nodes.push({
+        id: n.id,
+        type: nodeType,
+        parentId: GLOBAL_ZONE_ID,
+        extent: 'parent',
+        position: {
+          x: GLOBAL_PAD + col * (RES_W + RES_GAP_X),
+          y: GLOBAL_LABEL + row * (RES_H + RES_GAP_Y)
+        },
+        data: {
+          label: n.label,
+          nodeType: n.type,
+          status: n.status,
+          driftStatus: n.driftStatus,
+          dimmed: highlightedIds !== null && !highlightedIds.has(n.id),
+          metadata: n.metadata
+        },
+        selected: n.id === selectedId,
+        zIndex: 1
+      })
+    })
+
+    vpcY = 40 + globalZoneHeight + 60
+  }
+
+  // Bucket regional nodes by role
+  const vpcs = regionalNodes.filter((n) => n.type === 'vpc')
+  const subnets = regionalNodes.filter((n) => n.type === 'subnet')
+  const apigws = regionalNodes.filter((n) => n.type === 'apigw')
+  const apigwRoutes = regionalNodes.filter((n) => n.type === 'apigw-route')
+  const resources = regionalNodes.filter(
+    (n) => !CONTAINER_TYPES.has(n.type) && n.type !== 'apigw-route'
+  )
+
+  const subnetsByVpc = new Map<string, CloudNode[]>()
+  const resourcesByParent = new Map<string, CloudNode[]>()
+  const rootResources: CloudNode[] = []
+
+  subnets.forEach((s) => {
+    if (!s.parentId) return
+    if (!subnetsByVpc.has(s.parentId)) subnetsByVpc.set(s.parentId, [])
+    subnetsByVpc.get(s.parentId)!.push(s)
+  })
+
+  resources.forEach((r) => {
+    if (!r.parentId) {
+      rootResources.push(r)
+      return
+    }
+    if (!resourcesByParent.has(r.parentId)) resourcesByParent.set(r.parentId, [])
+    resourcesByParent.get(r.parentId)!.push(r)
+  })
+
+  // Place VPCs
+  let vpcX = 40
+  let maxVpcHeight = 0
+  vpcs.forEach((vpc) => {
+    const vpcSubnets = subnetsByVpc.get(vpc.id) ?? []
+    const subSizes = vpcSubnets.map((s) => {
+      if (collapsedSubnets.has(s.id))
+        return {
+          w: subnetSize(effectiveItemCount(resourcesByParent.get(s.id) ?? [], s.id, expandedGroups))
+            .w,
+          h: SUBNET_COLLAPSED_H
+        }
+      return subnetSize(effectiveItemCount(resourcesByParent.get(s.id) ?? [], s.id, expandedGroups))
+    })
+    const totalSubW =
+      subSizes.reduce((sum, s) => sum + s.w, 0) + Math.max(0, vpcSubnets.length - 1) * SUB_GAP
+    const maxSubH = subSizes.length > 0 ? Math.max(...subSizes.map((s) => s.h)) : 120
+    const directRes = resourcesByParent.get(vpc.id) ?? []
+    const directSize = subnetSize(directRes.length)
+    const vpcW = Math.max(
+      260,
+      VPC_PAD * 2 + Math.max(totalSubW, directRes.length > 0 ? directSize.w : 0)
+    )
+    const vpcH =
+      VPC_LABEL + VPC_PAD + maxSubH + VPC_PAD + (directRes.length > 0 ? directSize.h + SUB_GAP : 0)
+    const vpcHFinal = Math.max(160, vpcH)
+    const isCollapsed = collapsedVpcs.has(vpc.id)
+    const childCount = vpcSubnets.length + directRes.length
+    const effectiveVpcH = isCollapsed ? 48 : vpcHFinal
+    maxVpcHeight = Math.max(maxVpcHeight, effectiveVpcH)
+
+    nodes.push({
+      id: vpc.id,
+      type: 'vpc',
+      position: { x: vpcX, y: vpcY },
+      style: { width: vpcW, height: effectiveVpcH },
+      dragHandle: '.cb-zone-drag-handle',
+      data: {
+        label: vpc.label,
+        cidr: vpc.metadata.cidr as string | undefined,
+        collapsed: isCollapsed,
+        childCount
+      }
+    })
+
+    let subX = VPC_PAD
+    if (!isCollapsed)
+      vpcSubnets.forEach((subnet, si) => {
+        const { w: sw, h: sh } = subSizes[si]
+        const isCollapsed = collapsedSubnets.has(subnet.id)
+        nodes.push({
+          id: subnet.id,
+          type: 'subnet',
+          parentId: vpc.id,
+          extent: 'parent',
+          position: { x: subX, y: VPC_LABEL + VPC_PAD },
+          style: { width: sw, height: sh },
+          dragHandle: '.cb-zone-drag-handle',
+          data: {
+            label: subnet.label,
+            isPublic: subnet.metadata.mapPublicIp,
+            az: subnet.metadata.availabilityZone as string | undefined,
+            collapsed: isCollapsed
+          }
+        })
+
+        if (!isCollapsed) {
+          const rNodes = resourcesByParent.get(subnet.id) ?? []
+
+          // Group resources by type — types with count >= GROUP_THRESHOLD become a single group node
+          const typeOrder = new Map<string, CloudNode[]>()
+          for (const r of rNodes) {
+            if (!typeOrder.has(r.type)) typeOrder.set(r.type, [])
+            typeOrder.get(r.type)!.push(r)
+          }
+
+          // Build the ordered list of "effective items" to place in the grid:
+          // group nodes first (sorted by count desc), then individual nodes
+          interface EffectiveItem {
+            kind: 'group' | 'individual'
+            nodeType: string
+            nodes: CloudNode[]
+          }
+          const groups: EffectiveItem[] = []
+          const individuals: EffectiveItem[] = []
+          for (const [type, typeNodes] of typeOrder.entries()) {
+            if (typeNodes.length >= GROUP_THRESHOLD) {
+              groups.push({ kind: 'group', nodeType: type, nodes: typeNodes })
+            } else {
+              for (const n of typeNodes) {
+                individuals.push({ kind: 'individual', nodeType: type, nodes: [n] })
+              }
+            }
+          }
+          groups.sort((a, b) => b.nodes.length - a.nodes.length)
+
+          // Flatten: expanded groups render as individual nodes in the grid
+          const effectiveItems: EffectiveItem[] = []
+          for (const item of [...groups, ...individuals]) {
+            if (
+              item.kind === 'group' &&
+              expandedGroups.has(`group-${subnet.id}-${item.nodeType}`)
+            ) {
+              for (const n of item.nodes) {
+                effectiveItems.push({ kind: 'individual', nodeType: item.nodeType, nodes: [n] })
+              }
+            } else {
+              effectiveItems.push(item)
+            }
+          }
+
+          effectiveItems.forEach((item, ei) => {
+            const col = ei % RES_COLS
+            const row = Math.floor(ei / RES_COLS)
+            const pos = {
+              x: SUB_PAD_X + col * (RES_W + RES_GAP_X),
+              y: SUB_PAD_Y + row * (RES_H + RES_GAP_Y)
+            }
+            const regionColor =
+              showRegionIndicators && selectedRegions.length >= 2
+                ? (regionColorMap[item.nodes[0].region] ?? undefined)
+                : undefined
+
+            if (item.kind === 'group') {
+              const groupId = `group-${subnet.id}-${item.nodeType}`
+              nodes.push({
+                id: groupId,
+                type: 'resource-group',
+                parentId: subnet.id,
+                extent: 'parent',
+                position: pos,
+                data: {
+                  nodeType: item.nodeType,
+                  count: item.nodes.length,
+                  dimmed:
+                    highlightedIds !== null && !item.nodes.some((n) => highlightedIds.has(n.id))
+                },
+                selected: item.nodes.some((n) => n.id === selectedId),
+                zIndex: 1
+              })
+            } else {
+              const r = item.nodes[0]
+              nodes.push({
+                id: r.id,
+                type: 'resource',
+                parentId: subnet.id,
+                extent: 'parent',
+                position: pos,
+                data: {
+                  label: r.label,
+                  nodeType: r.type,
+                  status: r.status,
+                  driftStatus: r.driftStatus,
+                  dimmed: highlightedIds !== null && !highlightedIds.has(r.id),
+                  regionColor,
+                  metadata: r.metadata
+                },
+                selected: r.id === selectedId,
+                zIndex: 1
+              })
+            }
+          })
+        }
+        subX += sw + SUB_GAP
+      })
+
+    if (!isCollapsed) {
+      const subnetBottom = VPC_LABEL + VPC_PAD + maxSubH + VPC_PAD + SUB_GAP
+      directRes.forEach((r, ri) => {
+        const col = ri % RES_COLS
+        const row = Math.floor(ri / RES_COLS)
+        const regionColor =
+          showRegionIndicators && selectedRegions.length >= 2
+            ? (regionColorMap[r.region] ?? undefined)
+            : undefined
+        nodes.push({
+          id: r.id,
+          type: 'resource',
+          parentId: vpc.id,
+          extent: 'parent',
+          position: {
+            x: VPC_PAD + col * (RES_W + RES_GAP_X),
+            y: subnetBottom + row * (RES_H + RES_GAP_Y)
+          },
+          data: {
+            label: r.label,
+            nodeType: r.type,
+            status: r.status,
+            driftStatus: r.driftStatus,
+            dimmed: highlightedIds !== null && !highlightedIds.has(r.id),
+            regionColor,
+            metadata: r.metadata
+          },
+          selected: r.id === selectedId
+        })
+      })
+    }
+
+    vpcX += vpcW + VPC_GAP
+  })
+
+  // Place API Gateway containers — same row as VPCs, appended to the right
+  const routesByApi = new Map<string, CloudNode[]>()
+  apigwRoutes.forEach((r) => {
+    if (!r.parentId) return
+    if (!routesByApi.has(r.parentId)) routesByApi.set(r.parentId, [])
+    routesByApi.get(r.parentId)!.push(r)
+  })
+
+  apigws.forEach((api) => {
+    const allRoutes = routesByApi.get(api.id) ?? []
+    const isCollapsed = collapsedApigws.has(api.id)
+    const routes = isCollapsed ? [] : allRoutes
+    // longestRouteLabel always computed from allRoutes so width doesn't shrink on collapse.
+    // api.label uses *8+120: heavier font in header with badge+button overhead.
+    const longestRouteLabel =
+      allRoutes.length > 0 ? Math.max(...allRoutes.map((r) => r.label.length)) : 0
+    const apigwW = Math.max(
+      APIGW_MIN_W,
+      longestRouteLabel * 7 + APIGW_PAD * 2,
+      api.label.length * 8 + 120
+    )
+    const apigwH = isCollapsed
+      ? APIGW_HEADER
+      : APIGW_HEADER + APIGW_PAD + allRoutes.length * (APIGW_ROUTE_H + APIGW_ROUTE_GAP) + APIGW_PAD
+    const apigwHFinal = Math.max(isCollapsed ? APIGW_HEADER : 80, apigwH)
+    maxVpcHeight = Math.max(maxVpcHeight, apigwHFinal)
+
+    nodes.push({
+      id: api.id,
+      type: 'apigw',
+      position: { x: vpcX, y: vpcY },
+      style: { width: apigwW, height: apigwHFinal },
+      data: {
+        label: api.label,
+        endpoint: api.metadata.endpoint as string | undefined,
+        collapsed: isCollapsed,
+        dimmed: highlightedIds !== null && !highlightedIds.has(api.id)
+      },
+      selected: api.id === selectedId
+    })
+
+    routes.forEach((route, ri) => {
+      nodes.push({
+        id: route.id,
+        type: 'apigw-route',
+        parentId: api.id,
+        extent: 'parent',
+        position: {
+          x: APIGW_PAD,
+          y: APIGW_HEADER + APIGW_PAD + ri * (APIGW_ROUTE_H + APIGW_ROUTE_GAP)
+        },
+        style: { width: apigwW - APIGW_PAD * 2 },
+        data: {
+          label: route.label,
+          method: route.metadata.method as string | undefined,
+          path: route.metadata.path as string | undefined,
+          hasLambda: !!route.metadata.lambdaArn,
+          dimmed: highlightedIds !== null && !highlightedIds.has(route.id)
+        },
+        selected: route.id === selectedId
+      })
+    })
+
+    vpcX += apigwW + VPC_GAP
+  })
+
+  // Root resources (no parent) — row below all VPCs
+  const ROOT_COLS = 5
+  const rootY = vpcY + maxVpcHeight + 60
+  rootResources.forEach((r, i) => {
+    const regionColor =
+      showRegionIndicators && selectedRegions.length >= 2
+        ? (regionColorMap[r.region] ?? undefined)
+        : undefined
+    nodes.push({
+      id: r.id,
+      type: 'resource',
+      position: {
+        x: 40 + (i % ROOT_COLS) * (RES_W + RES_GAP_X + 40),
+        y: rootY + Math.floor(i / ROOT_COLS) * (RES_H + RES_GAP_Y + 20)
+      },
+      data: {
+        label: r.label,
+        nodeType: r.type,
+        status: r.status,
+        driftStatus: r.driftStatus,
+        region: r.region,
+        dimmed: highlightedIds !== null && !highlightedIds.has(r.id),
+        regionColor,
+        metadata: r.metadata
+      },
+      selected: r.id === selectedId
+    })
+  })
+
+  // Add region zone containers if region indicators are enabled
+  if (showRegionIndicators && selectedRegions.length >= 1) {
+    for (const region of selectedRegions) {
+      const zoneId = `region-zone-${region}`
+      const regionNodeIds = new Set(cloudNodes.filter((n) => n.region === region).map((n) => n.id))
+      const positions = allNodes
+        .filter((n) => regionNodeIds.has(n.id) && !n.parentId)
+        .map((n) => ({
+          x: n.position.x,
+          y: n.position.y,
+          w: (n.style?.width as number) ?? 200,
+          h: (n.style?.height as number) ?? 60
+        }))
+
+      if (positions.length === 0) continue
+
+      const PAD = 40
+      const autoMinX = Math.min(...positions.map((p) => p.x)) - PAD
+      const autoMinY = Math.min(...positions.map((p) => p.y)) - PAD
+      const autoMaxX = Math.max(...positions.map((p) => p.x + p.w)) + PAD
+      const autoMaxY = Math.max(...positions.map((p) => p.y + p.h)) + PAD
+
+      const posOverride = zonePositionOverrides[zoneId]
+      const sizeOverride = zoneSizeOverrides[zoneId]
+      const zoneX = posOverride?.x ?? autoMinX
+      const zoneY = posOverride?.y ?? autoMinY
+      const zoneW = sizeOverride?.width ?? autoMaxX - autoMinX
+      const zoneH = sizeOverride?.height ?? autoMaxY - autoMinY
+
+      allNodes.push({
+        id: zoneId,
+        type: 'regionZone',
+        position: { x: zoneX, y: zoneY },
+        style: { width: zoneW, height: zoneH },
+        dragHandle: '.cb-zone-drag-handle',
+        data: { label: region, color: regionColorMap[region] },
+        selectable: true,
+        draggable: true,
+        zIndex: -2
+      })
+    }
+  }
+
+  return allNodes
+}
+
+// Build topology edges: route → lambda, integration edges
+function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
+  const edges: Edge[] = []
+  const lambdaNodes = cloudNodes.filter((n) => n.type === 'lambda')
+  const routeNodes = cloudNodes.filter((n) => n.type === 'apigw-route')
+
+  // Route → Lambda integration edges (dotted)
+  routeNodes.forEach((route) => {
+    const lambdaArn = route.metadata.lambdaArn as string | undefined
+    if (!lambdaArn) return
+    const lambdaNode = lambdaNodes.find((n) => n.id === lambdaArn || n.metadata.arn === lambdaArn)
+    if (!lambdaNode) return
+    edges.push({
+      id: `route-lambda-${route.id}`,
+      source: route.id,
+      target: lambdaNode.id,
+      type: 'integration',
+      data: { isIntegration: true as const, edgeType: 'trigger' as EdgeType }
+    })
+  })
+
+  // Integration edges from node.integrations[]
+  for (const node of cloudNodes) {
+    if (!node.integrations) continue
+    for (const integration of node.integrations) {
+      const resolvedTargetId = resolveIntegrationTargetId(cloudNodes, integration.targetId)
+      const targetExists = cloudNodes.some((n) => n.id === resolvedTargetId)
+      if (!targetExists) continue
+      const edgeType: EdgeType = integration.edgeType
+      edges.push({
+        id: `integration-${node.id}-${resolvedTargetId}`,
+        source: node.id,
+        target: resolvedTargetId,
+        type: 'integration',
+        data: { isIntegration: true as const, edgeType }
+      })
+    }
+  }
+
+  // Reverse ALB → ECS edges: ECS nodes store target group ARNs pointing at ALB;
+  // ALB nodes store the same target group ARNs in metadata.targetGroupArns[].
+  // A blast radius starting at the ALB must propagate to ECS, so emit the reverse edge here.
+  for (const albNode of cloudNodes) {
+    if (albNode.type !== 'alb') continue
+    const tgArns = albNode.metadata.targetGroupArns as string[] | undefined
+    if (!tgArns || tgArns.length === 0) continue
+    for (const ecsNode of cloudNodes) {
+      if (ecsNode.type !== 'ecs') continue
+      const linked = ecsNode.integrations?.some((i) => tgArns.includes(i.targetId))
+      if (!linked) continue
+      const edgeId = `integration-alb-ecs-${albNode.id}-${ecsNode.id}`
+      if (edges.some((e) => e.id === edgeId)) continue
+      edges.push({
+        id: edgeId,
+        source: albNode.id,
+        target: ecsNode.id,
+        type: 'integration',
+        data: { isIntegration: true as const, edgeType: 'trigger' as EdgeType }
+      })
+    }
+  }
+
+  return edges
+}
+
+interface TopologyViewProps {
+  onNodeContextMenu: (node: CloudNode, x: number, y: number) => void
+}
+
+export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JSX.Element {
+  const cloudNodes = useCloudStore((s) => s.nodes)
+  const pendingNodes = useCloudStore((s) => s.pendingNodes)
+  const importedNodes = useCloudStore((s) => s.importedNodes)
+  const selectedRegions = useCloudStore((s) => s.selectedRegions)
+  const showRegionIndicators = useCloudStore((s) => s.settings.showRegionIndicators)
+  const regionColorsSetting = useCloudStore((s) => s.settings.regionColors)
+  const selectNode = useUIStore((s) => s.selectNode)
+  const selectEdge = useUIStore((s) => s.selectEdge)
+  const selectedId = useUIStore((s) => s.selectedNodeId)
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
+  const setSelectedNodeIds = useUIStore((s) => s.setSelectedNodeIds)
+  const clearSelectedNodeIds = useUIStore((s) => s.clearSelectedNodeIds)
+  const setActiveCreate = useUIStore((s) => s.setActiveCreate)
+  const view = useUIStore((s) => s.view)
+  const showIntegrations = useUIStore((s) => s.showIntegrations)
+  const snapToGrid = useUIStore((s) => s.snapToGrid)
+  const lockedNodes = useUIStore((s) => s.lockedNodes)
+  const collapsedSubnets = useUIStore((s) => s.collapsedSubnets)
+  const toggleSubnet = useUIStore((s) => s.toggleSubnet)
+  const collapsedVpcs = useUIStore((s) => s.collapsedVpcs)
+  const toggleVpc = useUIStore((s) => s.toggleVpc)
+  const collapsedApigws = useUIStore((s) => s.collapsedApigws)
+  const toggleApigw = useUIStore((s) => s.toggleApigw)
+  const expandedGroups = useUIStore((s) => s.expandedGroups)
+  const annotations = useUIStore((s) => s.annotations)
+  const stickyNotes = useUIStore((s) => s.stickyNotes)
+  const setNodePosition = useUIStore((s) => s.setNodePosition)
+  const zoneSizes = useUIStore((s) => s.zoneSizes)
+  const setZoneSize = useUIStore((s) => s.setZoneSize)
+  const driftFilterActive = useUIStore((s) => s.driftFilterActive)
+  const activeFilters = useUIStore((s) => s.activeFilters)
+  const clearFilters = useUIStore((s) => s.clearFilters)
+  const { screenToFlowPosition, fitView, getViewport, setViewport } = useReactFlow()
+  const topologyPositions = useUIStore((s) => s.nodePositions.topology)
+  const { onSave: onStickyNotesSave, onDelete: onStickyNoteDelete } = useStickyNoteCallbacks()
+  const customEdges = useUIStore((s) => s.customEdges)
+  const addCustomEdge = useUIStore((s) => s.addCustomEdge)
+  const blastRadiusId = useUIStore((s) => s.blastRadiusId)
+  const setBlastRadiusId = useUIStore((s) => s.setBlastRadiusId)
+  const pathTraceId = useUIStore((s) => s.pathTraceId)
+  const setPathTraceId = useUIStore((s) => s.setPathTraceId)
+  const savedViewport = useUIStore((s) => s.savedViewport)
+  const setSavedViewport = useUIStore((s) => s.setSavedViewport)
+
+  // Path trace animation state (local, transient)
+  const [pathTraceNodes, setPathTraceNodes] = useState<string[]>([])
+  const [pathTraceRevealedCount, setPathTraceRevealedCount] = useState(0)
+
+  const onDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }, [])
+
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      if (!connection.source || !connection.target) return
+      const edge: CustomEdge = {
+        id: `user-${connection.source}-${connection.target}-${Date.now()}`,
+        source: connection.source,
+        target: connection.target,
+        color: '#8b5cf6'
+      }
+      addCustomEdge(edge)
+      void window.riftview.saveCustomEdges(useUIStore.getState().customEdges)
+    },
+    [addCustomEdge]
+  )
+
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      const type = e.dataTransfer.getData('text/plain') as NodeType
+      if (!type) return
+      const dropPosition = screenToFlowPosition({ x: e.clientX, y: e.clientY })
+      setActiveCreate({ resource: type, view, dropPosition })
+    },
+    [screenToFlowPosition, view, setActiveCreate]
+  )
+
+  const allNodes = useMemo(() => [...cloudNodes, ...pendingNodes], [cloudNodes, pendingNodes])
+
+  // Filter-to-hide: nodes not matching any active filter are excluded from the canvas entirely
+  const visibleNodes = useMemo(
+    () => applyNodeFilters(allNodes, activeFilters),
+    [allNodes, activeFilters]
+  )
+
+  // Clear selection when the selected node is hidden by an active filter
+  useEffect(() => {
+    if (!selectedId || activeFilters.length === 0) return
+    const visibleIds = new Set(visibleNodes.map((n) => n.id))
+    if (!visibleIds.has(selectedId)) selectNode(null)
+  }, [visibleNodes, selectedId, activeFilters.length, selectNode])
+
+  // ── Blast radius ─────────────────────────────────────────────────────────────
+  const blastRadius = useMemo(
+    () => (blastRadiusId ? buildBlastRadius(allNodes, blastRadiusId) : null),
+    [blastRadiusId, allNodes]
+  )
+
+  // ── Path trace ────────────────────────────────────────────────────────────────
+  // Inbound adjacency map: targetId → [sourceIds] built from integration edges
+  const inboundMap = useMemo((): Map<string, string[]> => {
+    const map = new Map<string, string[]>()
+    for (const n of allNodes) {
+      for (const { targetId } of n.integrations ?? []) {
+        const arr = map.get(targetId) ?? []
+        arr.push(n.id)
+        map.set(targetId, arr)
+      }
+    }
+    return map
+  }, [allNodes])
+
+  const runPathTrace = useCallback(
+    (nodeId: string) => {
+      // Reverse BFS from clicked node walking inbound edges
+      const visited = new Set<string>()
+      const queue: string[] = [nodeId]
+      while (queue.length > 0) {
+        const curr = queue.shift()!
+        if (visited.has(curr)) continue
+        visited.add(curr)
+        const inbounds = inboundMap.get(curr) ?? []
+        for (const src of inbounds) {
+          if (!visited.has(src)) queue.push(src)
+        }
+      }
+      const sources = [...visited].filter((id) => {
+        const n = allNodes.find((x) => x.id === id)
+        return n && INTERNET_SOURCE_TYPES.has(n.type)
+      })
+      const ordered = [...visited].filter((id) => id !== nodeId)
+      // Internet-facing sources first, then intermediate nodes, then target last
+      ordered.sort((a) => (sources.includes(a) ? -1 : 1))
+      ordered.push(nodeId)
+      setPathTraceNodes(ordered)
+      setPathTraceRevealedCount(0)
+    },
+    [allNodes, inboundMap]
+  )
+
+  // Staggered reveal animation
+  useEffect(() => {
+    if (pathTraceNodes.length === 0 || !pathTraceId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPathTraceRevealedCount(0)
+      return
+    }
+    if (pathTraceRevealedCount >= pathTraceNodes.length) return
+    const timer = setInterval(() => {
+      setPathTraceRevealedCount((c) => {
+        if (c >= pathTraceNodes.length) {
+          clearInterval(timer)
+          return c
+        }
+        return c + 1
+      })
+    }, 150)
+    return () => clearInterval(timer)
+  }, [pathTraceNodes, pathTraceId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-run trace when pathTraceId changes
+  useEffect(() => {
+    if (!pathTraceId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPathTraceNodes([])
+
+      setPathTraceRevealedCount(0)
+      return
+    }
+    runPathTrace(pathTraceId)
+  }, [pathTraceId, runPathTrace])
+
+  // ── Blast radius fit-view on activation / restore on deactivation ─────────────
+  useEffect(() => {
+    if (blastRadiusId && blastRadius) {
+      setSavedViewport(getViewport())
+      const memberIds = [...blastRadius.members.keys()]
+      fitView({ nodes: memberIds.map((id) => ({ id })), duration: 300, padding: 0.3 })
+    } else if (!blastRadiusId && savedViewport) {
+      setViewport(savedViewport, { duration: 300 })
+      setSavedViewport(null)
+    }
+  }, [blastRadiusId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Compute highlighted set for selection-based neighbour dimming only
+  const highlightedIds = useMemo<Set<string> | null>(() => {
+    if (!selectedId) return null
+    const rawEdges = buildTopologyEdges(visibleNodes)
+    const neighbours = new Set<string>([selectedId])
+    for (const e of rawEdges) {
+      if (e.source === selectedId) neighbours.add(e.target)
+      if (e.target === selectedId) neighbours.add(e.source)
+    }
+    return neighbours
+  }, [selectedId, visibleNodes])
+
+  // Track in-flight drag positions so controlled nodes follow the mouse.
+  // Only persisted to the store on drag-end; cleared on drop.
+  const [livePositions, setLivePositions] = useState<Record<string, { x: number; y: number }>>({})
+
+  // Only top-level nodes (no parentId, not in global zone) have draggable positions
+  // we want to persist. Everything else (child nodes, phantom IDs) is ignored.
+  const regionColorMap = useMemo(
+    () => buildRegionColorMap(selectedRegions, regionColorsSetting),
+    [selectedRegions, regionColorsSetting]
+  )
+
+  const topLevelNodeIds = useMemo(() => {
+    const set = new Set<string>()
+    allNodes.forEach((n) => {
+      if (!n.parentId && n.region !== 'global') set.add(n.id)
+    })
+    // Also include imported nodes that render at the top level (no parentId)
+    importedNodes.forEach((n) => {
+      if (!n.parentId) set.add(n.id)
+    })
+    // Include region zone nodes so they can be dragged
+    if (showRegionIndicators) {
+      selectedRegions.forEach((r) => set.add(`region-zone-${r}`))
+    }
+    return set
+  }, [allNodes, importedNodes, showRegionIndicators, selectedRegions])
+
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  const flowNodes: Node[] = useMemo(() => {
+    const raw = buildFlowNodes(
+      visibleNodes,
+      selectedId,
+      highlightedIds,
+      collapsedSubnets,
+      collapsedVpcs,
+      collapsedApigws,
+      expandedGroups,
+      selectedRegions,
+      showRegionIndicators,
+      regionColorMap,
+      topologyPositions,
+      zoneSizes
+    )
+    const mapped = raw.map((n) => {
+      const isMultiSelected = selectedNodeIds.size > 1 && selectedNodeIds.has(n.id)
+      const isLocked = lockedNodes.has(n.id)
+      // Apply lock properties to all nodes (container nodes never get locked draggable/selectable
+      // overrides since they already have those set to false in buildFlowNodes)
+      const lockProps = isLocked ? { draggable: false, selectable: false, zIndex: -1 } : {}
+
+      const multiSelectStyle: React.CSSProperties | undefined = isMultiSelected
+        ? { outline: '2px solid var(--cb-accent)', outlineOffset: '2px' }
+        : undefined
+
+      if (n.extent === 'parent') {
+        // Child nodes: only patch data for lock indicator, no position override
+        // For subnet nodes, inject the toggleSubnet callback
+        if (n.type === 'subnet') {
+          return {
+            ...n,
+            style: { ...n.style, ...multiSelectStyle },
+            data: {
+              ...n.data,
+              onToggleCollapse: () => toggleSubnet(n.id),
+              ...(isLocked ? { locked: true } : {})
+            },
+            ...(isLocked ? lockProps : {})
+          }
+        }
+        const base = isLocked ? { ...n, ...lockProps, data: { ...n.data, locked: true } } : n
+        return multiSelectStyle ? { ...base, style: { ...base.style, ...multiSelectStyle } } : base
+      }
+
+      const live = livePositions[n.id]
+      const saved = topologyPositions[n.id]
+      const position = live ?? saved ?? n.position
+
+      // For region zone nodes, inject the onResizeEnd callback
+      if (n.id.startsWith('region-zone-')) {
+        return {
+          ...n,
+          position,
+          data: {
+            ...(n.data as object),
+            onResizeEnd: (id: string, w: number, h: number) =>
+              setZoneSize(id, { width: w, height: h })
+          }
+        }
+      }
+
+      // For top-level VPC nodes, inject toggleVpc callback
+      if (n.type === 'vpc') {
+        return {
+          ...n,
+          position,
+          ...lockProps,
+          style: { ...n.style, ...multiSelectStyle },
+          data: {
+            ...(n.data as object),
+            onToggleCollapse: () => toggleVpc(n.id),
+            annotation: annotations[n.id],
+            ...(isLocked ? { locked: true } : {})
+          }
+        }
+      }
+
+      // For top-level apigw nodes, inject toggleApigw callback
+      if (n.type === 'apigw') {
+        return {
+          ...n,
+          position,
+          ...lockProps,
+          style: { ...n.style, ...multiSelectStyle },
+          data: {
+            ...(n.data as object),
+            onToggleCollapse: () => toggleApigw(n.id),
+            annotation: annotations[n.id],
+            ...(isLocked ? { locked: true } : {})
+          }
+        }
+      }
+
+      // For top-level subnet nodes (no parentId), also inject toggleSubnet
+      if (n.type === 'subnet') {
+        return {
+          ...n,
+          position,
+          ...lockProps,
+          style: { ...n.style, ...multiSelectStyle },
+          data: {
+            ...n.data,
+            onToggleCollapse: () => toggleSubnet(n.id),
+            ...(isLocked ? { locked: true } : {}),
+            annotation: annotations[n.id]
+          }
+        }
+      }
+
+      return {
+        ...n,
+        position,
+        ...lockProps,
+        style: { ...n.style, ...multiSelectStyle },
+        data: { ...n.data, ...(isLocked ? { locked: true } : {}), annotation: annotations[n.id] }
+      }
+    })
+
+    // Augment SNS nodes with subscriber labels
+    const snsSubscriberMap = new Map<string, string[]>()
+    for (const n of allNodes) {
+      if (n.type !== 'sns' || !n.integrations) continue
+      const labels = n.integrations
+        .filter((i) => i.edgeType === 'subscription')
+        .map((i) => {
+          const resolved = resolveIntegrationTargetId(allNodes, i.targetId)
+          return allNodes.find((x) => x.id === resolved)?.label ?? resolved
+        })
+      if (labels.length > 0) snsSubscriberMap.set(n.id, labels)
+    }
+    const augmented = mapped.map((node) => {
+      const subs = snsSubscriberMap.get(node.id)
+      if (!subs) return node
+      return { ...node, data: { ...(node.data as object), subscribers: subs } }
+    })
+
+    // Append imported nodes (from Terraform state import) as resource nodes
+    const existingIds = new Set(augmented.map((n) => n.id))
+    const importedFlowNodes: Node[] = importedNodes
+      .filter((n) => !existingIds.has(n.id))
+      .map((n) => {
+        // Only keep parentId if the parent already exists in the flow nodes
+        const parentExists = n.parentId != null && augmented.some((fn) => fn.id === n.parentId)
+        const base: Node = {
+          id: n.id,
+          type: 'resource',
+          position: topologyPositions[n.id] ?? { x: 50, y: 50 },
+          data: {
+            label: n.label,
+            nodeType: n.type,
+            status: n.status,
+            driftStatus: n.driftStatus,
+            metadata: n.metadata
+          },
+          selected: n.id === selectedId
+        }
+        if (parentExists) {
+          return { ...base, parentId: n.parentId as string }
+        }
+        return base
+      })
+
+    const stickyFlowNodes: Node[] = stickyNotes.map((sn) => ({
+      id: sn.id,
+      type: 'sticky-note' as const,
+      position: livePositions[sn.id] ?? topologyPositions[sn.id] ?? sn.position,
+      draggable: true,
+      selectable: false,
+      data: {
+        noteId: sn.id,
+        content: sn.content,
+        onSave: onStickyNotesSave,
+        onDelete: onStickyNoteDelete
+      },
+      zIndex: 10
+    }))
+
+    const all = [...augmented, ...importedFlowNodes, ...stickyFlowNodes]
+
+    // Drift filter
+    const driftFiltered = !driftFilterActive
+      ? all
+      : (() => {
+          const DRIFT_CONTAINER_TYPES = new Set([
+            'vpc',
+            'subnet',
+            'apigw',
+            'globalZone',
+            'apigw-route',
+            'regionZone'
+          ])
+          return all.filter((fn) => {
+            if (DRIFT_CONTAINER_TYPES.has(fn.type ?? '')) return true
+            if (fn.type === 'sticky-note') return false
+            const d = fn.data as { driftStatus?: string }
+            return d.driftStatus === 'unmanaged' || d.driftStatus === 'missing'
+          })
+        })()
+
+    return driftFiltered
+  }, [
+    visibleNodes,
+    selectedId,
+    selectedNodeIds,
+    highlightedIds,
+    topologyPositions,
+    livePositions,
+    lockedNodes,
+    collapsedSubnets,
+    toggleSubnet,
+    collapsedVpcs,
+    toggleVpc,
+    collapsedApigws,
+    toggleApigw,
+    expandedGroups,
+    annotations,
+    importedNodes,
+    driftFilterActive,
+    selectedRegions,
+    showRegionIndicators,
+    regionColorMap,
+    stickyNotes,
+    onStickyNotesSave,
+    onStickyNoteDelete,
+    zoneSizes,
+    setZoneSize
+  ])
+
+  // Path-traced nodes that have been revealed so far (ordered source→target)
+  const pathTraceRevealedSet = useMemo((): Set<string> => {
+    return new Set(pathTraceNodes.slice(0, pathTraceRevealedCount))
+  }, [pathTraceNodes, pathTraceRevealedCount])
+
+  // Blast radius / path trace opacity overlay applied on top of base flowNodes
+  const displayNodes: Node[] = useMemo(() => {
+    if (!blastRadius && !pathTraceId) return flowNodes
+
+    return flowNodes.map((n) => {
+      // Container nodes always stay at full opacity
+      if (OPACITY_CONTAINER_TYPES.has(n.type ?? '')) return n
+
+      let opacity = 1
+      let boxShadow: string | undefined
+      let blastInfo: { hop: number; direction: string; edgeTypes: string[] } | undefined
+      let pointerEvents: React.CSSProperties['pointerEvents'] | undefined
+
+      if (blastRadius) {
+        const member = blastRadius.members.get(n.id)
+        if (member) {
+          opacity = 1
+          boxShadow = hopRingStyle(member.hopDistance)
+          blastInfo = {
+            hop: member.hopDistance,
+            direction: member.direction,
+            edgeTypes: member.edgeTypes
+          }
+        } else {
+          opacity = 0
+          pointerEvents = 'none'
+        }
+      } else if (pathTraceId) {
+        if (pathTraceRevealedSet.has(n.id)) {
+          opacity = 1
+          boxShadow = '0 0 8px #60a5fa'
+        } else {
+          opacity = 0.15
+        }
+      }
+
+      return {
+        ...n,
+        style: {
+          ...(n.style ?? {}),
+          opacity,
+          transition: 'opacity 0.15s ease',
+          ...(boxShadow ? { boxShadow } : {}),
+          ...(pointerEvents ? { pointerEvents } : {})
+        },
+        data: blastInfo ? { ...(n.data as object), blastInfo } : n.data
+      }
+    })
+  }, [flowNodes, blastRadius, pathTraceId, pathTraceRevealedSet])
+
+  // One-time fitView when nodes first appear (or re-appear after dropping to 0)
+  const hasFitted = useRef(false)
+  useEffect(() => {
+    if (cloudNodes.length === 0) {
+      hasFitted.current = false
+      return
+    }
+    if (!hasFitted.current) {
+      hasFitted.current = true
+      fitView({ duration: 300 })
+    }
+  }, [cloudNodes.length, fitView])
+
+  // Track drag positions in local state (so controlled nodes follow the mouse),
+  // and persist to the store only on drag-end.
+  const stickyNoteIds = useMemo(() => new Set(stickyNotes.map((sn) => sn.id)), [stickyNotes])
+
+  const onSelectionChange = useCallback(
+    ({ nodes: selected }: OnSelectionChangeParams) => {
+      setSelectedNodeIds(new Set(selected.map((n) => n.id)))
+      if (selected.length === 1) selectNode(selected[0].id)
+      else if (selected.length === 0) {
+        selectNode(null)
+        clearSelectedNodeIds()
+      }
+    },
+    [setSelectedNodeIds, selectNode, clearSelectedNodeIds]
+  )
+
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      const nextLive: Record<string, { x: number; y: number }> = {}
+      const toClear: string[] = []
+
+      for (const change of changes) {
+        if (change.type !== 'position' || !change.position) continue
+        // Allow top-level AWS nodes and sticky note nodes to have positions tracked
+        if (!topLevelNodeIds.has(change.id) && !stickyNoteIds.has(change.id)) continue
+
+        // Region zones move independently — only the zone itself is repositioned,
+        // member service nodes stay in place.
+        if (change.dragging) {
+          nextLive[change.id] = change.position
+        } else {
+          toClear.push(change.id)
+          setNodePosition('topology', change.id, change.position)
+        }
+      }
+
+      if (Object.keys(nextLive).length > 0 || toClear.length > 0) {
+        setLivePositions((prev) => {
+          const next = { ...prev, ...nextLive }
+          toClear.forEach((id) => delete next[id])
+          return next
+        })
+      }
+    },
+    [topLevelNodeIds, stickyNoteIds, setNodePosition, livePositions, topologyPositions, allNodes]
+  )
+
+  const flowEdges: Edge[] = useMemo(() => {
+    const visibleIds = new Set(visibleNodes.map((n) => n.id))
+    const raw = filterEdgesByVisibleNodes(buildTopologyEdges(visibleNodes), visibleIds)
+    const filtered = showIntegrations
+      ? raw
+      : raw.filter((e) => !(e.data as IntegrationEdgeData | undefined)?.isIntegration)
+
+    // Hide subscription edges for SNS nodes with 2+ subscriptions when unselected
+    const snsWithManySubscriptions = new Set(
+      visibleNodes
+        .filter(
+          (n) =>
+            n.type === 'sns' &&
+            (n.integrations?.filter((i) => i.edgeType === 'subscription').length ?? 0) >= 2
+        )
+        .map((n) => n.id)
+    )
+
+    const withSubCollapse = showIntegrations
+      ? filtered.filter((e) => {
+          const edgeData = e.data as IntegrationEdgeData | undefined
+          if (edgeData?.edgeType !== 'subscription') return true
+          if (!snsWithManySubscriptions.has(e.source)) return true
+          return e.source === selectedId
+        })
+      : filtered
+
+    const withOpacity = !selectedId
+      ? withSubCollapse
+      : withSubCollapse.map((e) => {
+          const incident = e.source === selectedId || e.target === selectedId
+          return incident ? e : { ...e, style: { ...(e.style ?? {}), opacity: 0.15 } }
+        })
+
+    // Custom user-drawn edges — always visible, never filtered by showIntegrations
+    const userEdges: Edge[] = customEdges.map((ce) => ({
+      id: ce.id,
+      source: ce.source,
+      target: ce.target,
+      type: 'user',
+      data: { isCustom: true as const, color: ce.color, label: ce.label }
+    }))
+    return applyBlastRadiusToEdges([...withOpacity, ...userEdges], blastRadius)
+  }, [visibleNodes, selectedId, showIntegrations, customEdges, blastRadius])
+
+  const pathSourceNode =
+    pathTraceNodes.length > 0 ? allNodes.find((n) => n.id === pathTraceNodes[0]) : null
+  const pathTargetNode = pathTraceId ? allNodes.find((n) => n.id === pathTraceId) : null
+  const blastNode = blastRadiusId ? allNodes.find((n) => n.id === blastRadiusId) : null
+
+  return (
+    // Wrapper must receive a concrete height from its parent (flex-1) for ReactFlow to fill correctly
+    <div className="flex flex-col w-full h-full">
+      {/* Blast radius / path trace context strip */}
+      {(blastRadiusId || pathTraceId) && (
+        <div
+          style={{
+            padding: '2px 12px',
+            fontFamily: 'monospace',
+            fontSize: 9,
+            color: 'var(--cb-text-muted)',
+            background: 'var(--cb-bg-panel)',
+            borderBottom: '1px solid var(--cb-border)',
+            flexShrink: 0
+          }}
+        >
+          {blastRadiusId && blastRadius && (
+            <span
+              style={{ color: '#f59e0b', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <span
+                style={{ cursor: 'pointer' }}
+                onClick={() => setBlastRadiusId(null)}
+                title="Clear blast radius"
+              >
+                BLAST RADIUS
+                {' · '}
+                {blastNode?.label ?? blastRadiusId}
+                {' · '}
+                {blastRadius.members.size} node{blastRadius.members.size !== 1 ? 's' : ''}
+                {' · '}
+                {blastRadius.upstreamCount > 0 && <span>↑{blastRadius.upstreamCount} </span>}
+                {blastRadius.downstreamCount > 0 && <span>↓{blastRadius.downstreamCount} </span>}
+                {' ✕'}
+              </span>
+              <span
+                style={{ cursor: 'pointer', opacity: 0.8 }}
+                title="Copy blast radius to clipboard"
+                onClick={() => {
+                  const lines = [...blastRadius.members.entries()]
+                    .sort((a, b) => a[1].hopDistance - b[1].hopDistance)
+                    .map(([id, info]) => {
+                      const node = allNodes.find((n) => n.id === id)
+                      return `${directionSymbol(info.direction)} [${info.hopDistance}] ${node?.label ?? id} (${node?.type ?? ''})`
+                    })
+                  void navigator.clipboard.writeText(
+                    `Blast radius: ${blastRadiusId}\n\n${lines.join('\n')}`
+                  )
+                }}
+              >
+                📋
+              </span>
+            </span>
+          )}
+          {pathTraceId && (
+            <span
+              style={{ color: '#60a5fa', cursor: 'pointer' }}
+              onClick={() => setPathTraceId(null)}
+              title="Clear path trace"
+            >
+              PATH · {pathSourceNode?.label ?? '?'} → {pathTargetNode?.label ?? pathTraceId} ✕
+            </span>
+          )}
+        </div>
+      )}
+      <div style={{ position: 'relative', flex: 1 }}>
+        <ReactFlow
+          nodes={displayNodes}
+          edges={flowEdges}
+          nodeTypes={NODE_TYPES}
+          edgeTypes={EDGE_TYPES}
+          onNodeClick={(e: ReactMouseEvent, node) => {
+            if (node.id.startsWith('region-zone-')) return
+            if (lockedNodes.has(node.id)) return
+            selectNode(node.id)
+            if (e.shiftKey) {
+              // Path trace mode
+              if (pathTraceId === node.id) {
+                setPathTraceId(null)
+              } else {
+                setPathTraceId(node.id)
+              }
+            } else {
+              // Blast radius mode
+              setBlastRadiusId(blastRadiusId === node.id ? null : node.id)
+            }
+          }}
+          onNodeDoubleClick={(_e, node) => selectNode(node.id)}
+          onEdgeClick={(_e, edge) =>
+            selectEdge({
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              label: typeof edge.label === 'string' ? edge.label : undefined,
+              data: edge.data as Record<string, unknown> | undefined
+            })
+          }
+          onPaneClick={() => {
+            selectNode(null)
+            selectEdge(null)
+            clearFilters()
+            clearSelectedNodeIds()
+            setBlastRadiusId(null)
+            setPathTraceId(null)
+          }}
+          onSelectionChange={onSelectionChange}
+          onNodeContextMenu={(event, rfNode) => {
+            event.preventDefault()
+            const cloudNode = allNodes.find((n) => n.id === rfNode.id)
+            if (cloudNode) onNodeContextMenu(cloudNode, event.clientX, event.clientY)
+          }}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          onConnect={onConnect}
+          onNodesChange={onNodesChange}
+          panOnScroll
+          snapToGrid={snapToGrid}
+          snapGrid={[SNAP_GRID_SIZE, SNAP_GRID_SIZE]}
+          minZoom={0.1}
+          maxZoom={2}
+          style={{ background: 'var(--cb-canvas-bg)' }}
+        >
+          <Background
+            id="minor"
+            variant={BackgroundVariant.Lines}
+            gap={SNAP_GRID_SIZE}
+            color="rgba(255,255,255,0.015)"
+          />
+          <Background
+            id="major"
+            variant={BackgroundVariant.Lines}
+            gap={100}
+            color="rgba(255,255,255,0.035)"
+          />
+          <MiniMap
+            style={{
+              background: 'var(--cb-minimap-bg)',
+              border: '1px solid var(--cb-minimap-border)'
+            }}
+            nodeColor="#FF9900"
+          />
+        </ReactFlow>
+        <IntegrationLegend />
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" role="img" aria-label="RiftView">
+  <title>RiftView — pixel cloud</title>
+  <rect x="208" y="128" width="96"  height="48"/>
+  <rect x="160" y="176" width="192" height="48"/>
+  <rect x="112" y="224" width="288" height="48"/>
+  <rect x="64"  y="272" width="384" height="48"/>
+  <rect x="64"  y="320" width="384" height="48"/>
+  <rect x="112" y="368" width="288" height="48"/>
+</svg>

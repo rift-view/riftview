@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RiftView">
+  <title>RiftView — cloud in viewport</title>
+  <g fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="88,152 88,88 152,88"/>
+    <polyline points="360,88 424,88 424,152"/>
+    <polyline points="424,360 424,424 360,424"/>
+    <polyline points="152,424 88,424 88,360"/>
+  </g>
+  <path d="M 160 340
+           C 108 340, 92 284, 144 264
+           C 132 216, 204 192, 236 228
+           C 256 196, 320 196, 332 240
+           C 376 236, 396 296, 352 332
+           L 160 340 Z"
+        fill="currentColor"/>
+</svg>

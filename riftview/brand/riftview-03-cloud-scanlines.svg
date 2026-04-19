@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RiftView">
+  <title>RiftView — CRT scanline cloud</title>
+  <defs>
+    <mask id="cloudscan">
+      <rect width="512" height="512" fill="white"/>
+      <rect x="0" y="204" width="512" height="10" fill="black"/>
+      <rect x="0" y="258" width="512" height="10" fill="black"/>
+      <rect x="0" y="312" width="512" height="10" fill="black"/>
+      <rect x="0" y="366" width="512" height="10" fill="black"/>
+    </mask>
+  </defs>
+  <path d="M 148 384
+           C 80 384, 64 304, 128 280
+           C 116 208, 208 180, 252 224
+           C 276 176, 360 180, 372 244
+           C 440 240, 460 332, 392 368
+           L 148 384 Z"
+        fill="currentColor" mask="url(#cloudscan)"/>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="RiftView">
+  <title>RiftView — cloud graph, knockout</title>
+  <defs>
+    <mask id="ko">
+      <rect width="512" height="512" fill="black"/>
+      <path d="M 152 360
+               C 88 360, 72 284, 136 260
+               C 124 196, 212 168, 252 212
+               C 272 168, 356 172, 368 232
+               C 432 228, 452 316, 384 344
+               C 384 368, 344 372, 324 360
+               L 152 360 Z" fill="white"/>
+      <g stroke="black" stroke-width="14" stroke-linecap="round">
+        <line x1="204" y1="284" x2="288" y2="248"/>
+        <line x1="288" y1="248" x2="348" y2="304"/>
+        <line x1="204" y1="284" x2="348" y2="304"/>
+      </g>
+      <g fill="black">
+        <circle cx="204" cy="284" r="18"/>
+        <circle cx="288" cy="248" r="18"/>
+        <circle cx="348" cy="304" r="18"/>
+      </g>
+    </mask>
+  </defs>
+  <rect width="512" height="512" fill="currentColor" mask="url(#ko)"/>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 256" role="img" aria-label="&gt; riftview">
+  <title>RiftView — prompt wordmark</title>
+  <style>
+    .wm { font: 700 160px "JetBrains Mono","Fira Code","IBM Plex Mono",Menlo,Monaco,Consolas,monospace; letter-spacing: -2px; }
+  </style>
+  <g fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="48,82 128,172 48,262" transform="translate(0,-44)"/>
+  </g>
+  <text class="wm" x="168" y="188" fill="currentColor">riftview</text>
+  <rect x="940" y="80" width="56" height="132" fill="currentColor">
+    <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.5;0.5;1" dur="1.1s" repeatCount="indefinite"/>
+  </rect>
+</svg>
