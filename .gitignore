@@ -1,7 +1,39 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor / tooling
+*.tsbuildinfo
+.eslintcache
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Claude Code local state
+.claude/settings.local.json
+.claude/worktrees/
+
+# Superpowers / brainstorm runtime state
+.superpowers/
 .worktrees/
 RiftViewMemory/
-.superpowers/
-.claude/worktrees/
-.env
+
+# Build artifacts
+.build/
+dist/
+out/
+node_modules/
+
+# Terraform state
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# graphify output
 graphify-out/
 riftview/graphify-out/
