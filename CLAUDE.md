@@ -9,6 +9,12 @@
 
   ---
 
+  ## External docs
+
+  Planning notes, specs, team docs, and agent personas live in a separate private repo at `/Users/burkii/riftview-docs/` (remote: `3urkii/riftview-docs`). Read directly when context is needed — same filesystem, no checkout required. Do not commit references or paths to it in the public repo.
+
+  ---
+
   ## Repo Layout
 
   proj1/
