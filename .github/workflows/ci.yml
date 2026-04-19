@@ -16,19 +16,19 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: cloudblocks/package-lock.json
+          cache-dependency-path: riftview/package-lock.json
       - name: Install dependencies
         run: npm ci
-        working-directory: cloudblocks
+        working-directory: riftview
       - name: Lint
         run: npm run lint
-        working-directory: cloudblocks
+        working-directory: riftview
       - name: Typecheck
         run: npm run typecheck
-        working-directory: cloudblocks
+        working-directory: riftview
       - name: Test
         run: npm test
-        working-directory: cloudblocks
+        working-directory: riftview
 
   release:
     needs: ci
@@ -51,13 +51,13 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: cloudblocks/package-lock.json
+          cache-dependency-path: riftview/package-lock.json
       - name: Install dependencies
         run: npm ci
-        working-directory: cloudblocks
+        working-directory: riftview
       - name: Build and publish
         run: npx electron-vite build && npx electron-builder --${{ matrix.platform }} --publish always
-        working-directory: cloudblocks
+        working-directory: riftview
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.CSC_LINK }}

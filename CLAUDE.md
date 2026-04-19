@@ -1,9 +1,9 @@
 ---
   # CLAUDE.md
 
-  ## Project: Terminus
+  ## Project: RiftView
 
-  Visual desktop app for AWS infrastructure management. Source lives in `cloudblocks/`. All commands run from `cloudblocks/` unless noted.
+  Visual desktop app for AWS infrastructure management. Source lives in `riftview/`. All commands run from `riftview/` unless noted.
 
   **Stack:** Electron 32 + electron-vite · React 19 · TypeScript · Zustand 5 · Tailwind CSS 4 · React Flow v12 (@xyflow/react) · AWS SDK v3 · Vitest + RTL · GitHub Actions CI
 
@@ -13,7 +13,7 @@
 
   proj1/
     .github/workflows/ci.yml   ← CI (lint, typecheck, test on push/PR)
-    cloudblocks/               ← all source
+    riftview/                  ← all source
       src/
         main/                  ← Electron main process
           aws/
@@ -26,7 +26,7 @@
             handlers.ts        ← ipcMain.handle registrations
         preload/
           index.ts             ← contextBridge exposure
-          index.d.ts           ← Window.cloudblocks type declarations
+          index.d.ts           ← Window.riftview type declarations
         renderer/
           src/App.tsx          ← root component, IPC bootstrap
           store/
@@ -69,7 +69,7 @@
   - Credentials stay in main process, never cross to renderer
 
   ### IPC boundary
-  - `src/preload/index.d.ts` is the contract — every method on `window.terminus` must be declared here
+  - `src/preload/index.d.ts` is the contract — every method on `window.riftview` must be declared here
   - Add new IPC channels to `channels.ts` first, then `handlers.ts`, then `preload/index.ts`, then `preload/index.d.ts`
 
   ### Adding a new AWS service (scan)
@@ -125,7 +125,7 @@
 
   **Drag-to-create:** Sidebar items are `draggable`. Canvas `onDrop` calls `setActiveCreate({ resource, view, dropPosition })` → `CreateModal` opens.
 
-  **Search-to-fly:** `⌘K` → `SearchPalette` → `App.tsx:handleSearchSelect` → `window.dispatchEvent(new CustomEvent('terminus:fitnode', { detail: { nodeId } }))` → `CloudCanvas` fits view to node.
+  **Search-to-fly:** `⌘K` → `SearchPalette` → `App.tsx:handleSearchSelect` → `window.dispatchEvent(new CustomEvent('riftview:fitnode', { detail: { nodeId } }))` → `CloudCanvas` fits view to node.
 
   **Saved views (slots 1–4):** `useUIStore.saveView(slot, name, view)` snapshots current `nodePositions`. `loadView` restores positions + calls `fitViewFn`.
 
@@ -152,7 +152,7 @@
   | M5.5 | ✅ Done | 11 new services (SQS, Secrets, ECR, SNS, DynamoDB, SSM, NAT, R53, SFN, EventBridge, IGW); store split; CloudProvider interface; drag-to-create |
   | Canvas QoL | ✅ Done | Panning fixes; persistent node positions; saved view slots 1–4 |
   | LocalStack & Polish | ✅ Done | Local emulator support; static creds injection; generic endpoint routing; CRT animation; snap-to-grid; blueprint gridlines; collapsible SSM groups; Terraform HCL export (vpc/subnet/ec2/s3/lambda); integration edges (SNS→SQS via ARN node ID); EC2 form local hints |
-  | Phase 0 | ✅ Done | Terminus rename (window.terminus, all 25 renderer files); feature flag system (VITE_FLAG_* + flag() util); Ladle component dev environment (port 61000, standalone vite config) |
+  | Phase 0 | ✅ Done | Terminus rename (window.riftview, all 25 renderer files); feature flag system (VITE_FLAG_* + flag() util); Ladle component dev environment (port 61000, standalone vite config) |
   | Phase 1 | ✅ Done | STATUS_LANGUAGE (error pulse, pending shimmer, stopped dim, deleting fade-pulse); ACTION_RAIL (Copy ARN + Open Console hover strip); COMMAND_BOARD (swim-lane view, 7-tier NODE_TIER, TierLabelNode, integration edges); all three now always-on |
   | Phase 2 | ✅ Done | EXECUTION_ENGINE: guided remediation in Inspector (REMEDIATE section, buildRemediateCommands, drift diff table); now always-on |
   | Phase 3 | ✅ Done | OP_INTELLIGENCE: `analyzeNode()` pure fn, advisory system (critical/warning/info), scan metadata additions (multiAZ, publicAccessEnabled, hasPublicSsh); always-on |

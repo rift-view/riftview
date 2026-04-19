@@ -1,7 +1,7 @@
 .worktrees/
-CloudblocksMemory/
+RiftViewMemory/
 .superpowers/
 .claude/worktrees/
 .env
 graphify-out/
-cloudblocks/graphify-out/
+riftview/graphify-out/
