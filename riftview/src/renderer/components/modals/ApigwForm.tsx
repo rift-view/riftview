@@ -1,38 +1,9 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { ApigwParams } from '../../types/create'
 
 interface Props {
   onChange: (p: ApigwParams) => void
   showErrors?: boolean
-}
-
-const inp = (err: boolean): React.CSSProperties => ({
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: `1px solid ${err ? '#ff5f57' : 'var(--border)'}`,
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-})
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
-}
-const btnSm: React.CSSProperties = {
-  background: 'var(--ink-850)',
-  border: '1px solid var(--border)',
-  borderRadius: 2,
-  padding: '2px 6px',
-  color: 'var(--fg-muted)',
-  fontFamily: 'monospace',
-  fontSize: 9,
-  cursor: 'pointer'
 }
 
 export function ApigwForm({ onChange, showErrors }: Props): React.JSX.Element {
@@ -51,46 +22,59 @@ export function ApigwForm({ onChange, showErrors }: Props): React.JSX.Element {
     emit(name, newInputs)
   }
 
-  return (
-    <div>
-      <div style={lbl}>API Name *</div>
-      <input
-        style={inp(err && !name.trim())}
-        value={name}
-        placeholder="my-http-api"
-        onChange={(e) => {
-          setName(e.target.value)
-          emit(e.target.value, corsInputs)
-        }}
-      />
+  const nameInvalid = err && !name.trim()
 
-      <div style={lbl}>CORS Origins</div>
-      {corsInputs.map((origin, i) => (
-        <div key={i} style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-          <input
-            style={{ ...inp(false), flex: 1 }}
-            value={origin}
-            placeholder="https://example.com"
-            onChange={(e) => {
-              const next = [...corsInputs]
-              next[i] = e.target.value
-              updateCors(next)
-            }}
-          />
-          <button
-            style={btnSm}
-            onClick={() => {
-              const next = corsInputs.filter((_, j) => j !== i)
-              updateCors(next.length > 0 ? next : [''])
-            }}
-          >
-            ✕
-          </button>
-        </div>
-      ))}
-      <button style={{ ...btnSm, marginTop: 6 }} onClick={() => updateCors([...corsInputs, ''])}>
-        + Add Origin
-      </button>
+  return (
+    <div className="form-group">
+      <div className={'form-field' + (nameInvalid ? ' -invalid' : '')}>
+        <span className="label">API Name</span>
+        <input
+          className="form-input"
+          value={name}
+          placeholder="my-http-api"
+          onChange={(e) => {
+            setName(e.target.value)
+            emit(e.target.value, corsInputs)
+          }}
+        />
+      </div>
+
+      <div className="form-field">
+        <span className="label">CORS Origins</span>
+        {corsInputs.map((origin, i) => (
+          <div key={i} style={{ display: 'flex', gap: 4, marginTop: i === 0 ? 0 : 4 }}>
+            <input
+              className="form-input"
+              style={{ flex: 1 }}
+              value={origin}
+              placeholder="https://example.com"
+              onChange={(e) => {
+                const next = [...corsInputs]
+                next[i] = e.target.value
+                updateCors(next)
+              }}
+            />
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => {
+                const next = corsInputs.filter((_, j) => j !== i)
+                updateCors(next.length > 0 ? next : [''])
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="btn btn-sm btn-ghost"
+          style={{ marginTop: 6, alignSelf: 'flex-start' }}
+          onClick={() => updateCors([...corsInputs, ''])}
+        >
+          + Add Origin
+        </button>
+      </div>
     </div>
   )
 }
