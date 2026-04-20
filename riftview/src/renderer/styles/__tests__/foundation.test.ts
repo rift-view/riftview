@@ -120,3 +120,36 @@ describe('R1 foundation: wired into main.tsx', () => {
     expect(existsSync(join(__dirname, '..', '..', 'assets', 'riftview-logo.jpg'))).toBe(true)
   })
 })
+
+describe('R3 foundation: canvas primitives', () => {
+  test('defines rift-node pattern', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.rift-node\s*\{/)
+    expect(s).toMatch(/\.rift-node-eye\s*\{/)
+    expect(s).toMatch(/\.rift-node-title\s*\{/)
+    expect(s).toMatch(/\.rift-node-rule\s*\{/)
+    expect(s).toMatch(/\.rift-node-meta\s*\{/)
+  })
+  test('defines status dot variants', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.dot\.-ok/)
+    expect(s).toMatch(/\.dot\.-warn/)
+    expect(s).toMatch(/\.dot\.-err/)
+    expect(s).toMatch(/\.dot\.-pending/)
+    expect(s).toMatch(/\.dot\.-neutral/)
+  })
+  test('defines containers', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.rift-vpc\s*\{/)
+    expect(s).toMatch(/\.rift-subnet\s*\{/)
+    expect(s).toMatch(/\.rift-zone\s*\{/)
+    expect(s).toMatch(/\.rift-container-label\s*\{/)
+  })
+  test('defines advisory badge + canvas bg + sweep + action rail', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.advisory-badge\s*\{/)
+    expect(s).toMatch(/\.rift-canvas-bg\s*\{/)
+    expect(s).toMatch(/\.rift-sweep\s*\{/)
+    expect(s).toMatch(/\.action-rail\s*\{/)
+  })
+})
