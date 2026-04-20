@@ -13,10 +13,7 @@ export function ErrorBanner({ message, onDismiss }: Props): React.JSX.Element {
         borderLeft: '2px solid var(--fault-500)'
       }}
     >
-      <span
-        className="eyebrow"
-        style={{ color: 'var(--fault-500)' }}
-      >
+      <span className="eyebrow" style={{ color: 'var(--fault-500)' }}>
         ERROR
       </span>
       <span
@@ -29,12 +26,7 @@ export function ErrorBanner({ message, onDismiss }: Props): React.JSX.Element {
       >
         {message}
       </span>
-      <button
-        onClick={onDismiss}
-        className="btn-link"
-        style={{ fontSize: 12 }}
-        title="Dismiss"
-      >
+      <button onClick={onDismiss} className="btn-link" style={{ fontSize: 12 }} title="Dismiss">
         ×
       </button>
     </div>

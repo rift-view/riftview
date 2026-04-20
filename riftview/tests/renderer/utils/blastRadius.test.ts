@@ -92,7 +92,7 @@ describe('buildBlastRadius', () => {
       status: 'running',
       region: 'us-east-1',
       metadata: {},
-      integrations: [{ targetId: 'my-alb.us-east-1.elb.amazonaws.com', edgeType: 'trigger' }],
+      integrations: [{ targetId: 'my-alb.us-east-1.elb.amazonaws.com', edgeType: 'trigger' }]
     }
     const alb: CloudNode = {
       id: 'alb-1',
@@ -100,7 +100,7 @@ describe('buildBlastRadius', () => {
       label: 'alb',
       status: 'running',
       region: 'us-east-1',
-      metadata: { dnsName: 'my-alb.us-east-1.elb.amazonaws.com' },
+      metadata: { dnsName: 'my-alb.us-east-1.elb.amazonaws.com' }
     }
     const result = buildBlastRadius([apigw, alb], 'apigw-1')
     // Member set must contain resolved node id, NOT the raw DNS name
@@ -117,7 +117,7 @@ describe('buildBlastRadius', () => {
       status: 'running',
       region: 'us-east-1',
       metadata: {},
-      integrations: [{ targetId: 'some-queue.sqs.amazonaws.com', edgeType: 'trigger' }],
+      integrations: [{ targetId: 'some-queue.sqs.amazonaws.com', edgeType: 'trigger' }]
     }
     // SQS node ID is different from the queue endpoint — simulate via dnsName-style
     // resolver (not real, but proves the pathway). Use rds trick with endpoint.
@@ -127,7 +127,7 @@ describe('buildBlastRadius', () => {
       label: 'db',
       status: 'running',
       region: 'us-east-1',
-      metadata: { endpoint: 'some-queue.sqs.amazonaws.com' },
+      metadata: { endpoint: 'some-queue.sqs.amazonaws.com' }
     }
     // Click rds-1 — backward BFS should find lambda via resolved id
     const result = buildBlastRadius([lambda, rds], 'rds-1')
@@ -162,9 +162,12 @@ describe('applyBlastRadiusToEdges', () => {
     const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
     const blast = buildBlastRadius(nodes, 'A')
     // Caller-provided style simulates an edge type's native color (e.g. indigo for 'serves')
-    const edges: { source: string; target: string; style?: Record<string, unknown>; animated?: boolean }[] = [
-      { source: 'A', target: 'B', style: { stroke: '#6366f1' } }
-    ]
+    const edges: {
+      source: string
+      target: string
+      style?: Record<string, unknown>
+      animated?: boolean
+    }[] = [{ source: 'A', target: 'B', style: { stroke: '#6366f1' } }]
     const result = applyBlastRadiusToEdges(edges, blast)
     // Native color preserved (no amber override)
     expect(result[0].style?.stroke).toBe('#6366f1')
@@ -177,9 +180,12 @@ describe('applyBlastRadiusToEdges', () => {
     const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
     const blast = buildBlastRadius(nodes, 'A')
     // C is not in the blast radius
-    const edges: { source: string; target: string; style?: Record<string, unknown>; animated?: boolean }[] = [
-      { source: 'C', target: 'D' }
-    ]
+    const edges: {
+      source: string
+      target: string
+      style?: Record<string, unknown>
+      animated?: boolean
+    }[] = [{ source: 'C', target: 'D' }]
     const result = applyBlastRadiusToEdges(edges, blast)
     expect(result[0].style?.opacity).toBe(0)
     expect(result[0].style?.pointerEvents).toBe('none')

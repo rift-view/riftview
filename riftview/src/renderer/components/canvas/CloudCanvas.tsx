@@ -291,11 +291,7 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
                   ...btnBase,
                   background: isActive ? 'var(--ink-850)' : 'transparent',
                   border: `1px solid ${saved ? (isActive ? 'var(--accent)' : 'var(--border-strong)') : 'var(--border)'}`,
-                  color: saved
-                    ? isActive
-                      ? 'var(--accent)'
-                      : 'var(--bone-200)'
-                    : '#444',
+                  color: saved ? (isActive ? 'var(--accent)' : 'var(--bone-200)') : '#444',
                   minWidth: '20px'
                 }}
               >

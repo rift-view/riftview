@@ -144,9 +144,7 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
           )}
 
           {loading && (
-            <div style={{ fontSize: 11, color: 'var(--fg-muted)' }}>
-              Analyzing IAM policies…
-            </div>
+            <div style={{ fontSize: 11, color: 'var(--fg-muted)' }}>Analyzing IAM policies…</div>
           )}
 
           {!loading && result?.error && (

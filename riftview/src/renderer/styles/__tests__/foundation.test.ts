@@ -92,10 +92,7 @@ describe('R1 foundation: primitives.css', () => {
 
 describe('R1 foundation: wired into main.tsx', () => {
   test('main.tsx imports the new style files', () => {
-    const main = readFileSync(
-      join(__dirname, '..', '..', 'src', 'main.tsx'),
-      'utf8'
-    )
+    const main = readFileSync(join(__dirname, '..', '..', 'src', 'main.tsx'), 'utf8')
     expect(main).toContain("'../styles/tokens.css'")
     expect(main).toContain("'../styles/motion.css'")
     expect(main).toContain("'../styles/primitives.css'")

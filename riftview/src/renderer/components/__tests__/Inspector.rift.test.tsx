@@ -18,12 +18,10 @@ import type { CloudNode } from '../../types/cloud'
 const saveAnnotationsMock = vi.fn().mockResolvedValue(undefined)
 const analyzeIamMock = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
 const getNodeHistoryMock = vi.fn().mockResolvedValue([])
-const fetchMetricsMock = vi
-  .fn()
-  .mockResolvedValue([
-    { name: 'CPU', value: 12, unit: '%' },
-    { name: 'MEM', value: 340, unit: 'MB' }
-  ])
+const fetchMetricsMock = vi.fn().mockResolvedValue([
+  { name: 'CPU', value: 12, unit: '%' },
+  { name: 'MEM', value: 340, unit: 'MB' }
+])
 
 Object.defineProperty(window, 'riftview', {
   value: {
@@ -42,7 +40,12 @@ const noop = (): void => {}
 
 function renderInspector(): ReturnType<typeof render> {
   return render(
-    <Inspector onDelete={noop} onEdit={noop} onQuickAction={noop} onRemediate={async () => ({ code: 0 })} />
+    <Inspector
+      onDelete={noop}
+      onEdit={noop}
+      onQuickAction={noop}
+      onRemediate={async () => ({ code: 0 })}
+    />
   )
 }
 

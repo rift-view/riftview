@@ -3,23 +3,31 @@ import { classifyScanError } from '../../../src/main/aws/classifyScanError'
 
 describe('classifyScanError', () => {
   it('classifies expired SSO session as credentials-expired', () => {
-    const d = classifyScanError(new Error('The SSO session associated with this profile has expired'))
+    const d = classifyScanError(
+      new Error('The SSO session associated with this profile has expired')
+    )
     expect(d.kind).toBe('credentials-expired')
     expect(d.message).toMatch(/expired|re-auth/i)
   })
 
   it('classifies InvalidClientTokenId as credentials-invalid', () => {
-    const d = classifyScanError(new Error('InvalidClientTokenId: The security token included in the request is invalid'))
+    const d = classifyScanError(
+      new Error('InvalidClientTokenId: The security token included in the request is invalid')
+    )
     expect(d.kind).toBe('credentials-invalid')
   })
 
   it('classifies SignatureDoesNotMatch as credentials-invalid', () => {
-    const d = classifyScanError(new Error('SignatureDoesNotMatch: The request signature we calculated does not match'))
+    const d = classifyScanError(
+      new Error('SignatureDoesNotMatch: The request signature we calculated does not match')
+    )
     expect(d.kind).toBe('credentials-invalid')
   })
 
   it('classifies AccessDenied as permission', () => {
-    const d = classifyScanError(new Error('AccessDenied: User: arn:aws:iam::x:user/y is not authorized'))
+    const d = classifyScanError(
+      new Error('AccessDenied: User: arn:aws:iam::x:user/y is not authorized')
+    )
     expect(d.kind).toBe('permission')
   })
 

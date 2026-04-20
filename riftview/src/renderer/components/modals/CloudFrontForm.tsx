@@ -59,7 +59,15 @@ export function CloudFrontForm({ onChange, showErrors }: Props): React.JSX.Eleme
       <div className="form-field">
         <span className="label">Origins</span>
         {form.origins.map((origin, i) => (
-          <div key={i} style={{ display: 'flex', gap: 4, marginTop: i === 0 ? 0 : 8, alignItems: 'flex-start' }}>
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              gap: 4,
+              marginTop: i === 0 ? 0 : 8,
+              alignItems: 'flex-start'
+            }}
+          >
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <input
                 className="form-input"

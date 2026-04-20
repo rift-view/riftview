@@ -152,11 +152,11 @@ export function directionSymbol(direction: BlastRadiusNode['direction']): string
  * objects assign cleanly.
  */
 interface DimmableEdge {
-  source:    string
-  target:    string
+  source: string
+  target: string
   animated?: boolean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  style?:    any
+  style?: any
 }
 
 /**
@@ -171,8 +171,8 @@ interface DimmableEdge {
  * - blastRadius null → edges returned unchanged
  */
 export function applyBlastRadiusToEdges<T extends DimmableEdge>(
-  edges:        T[],
-  blastRadius:  BlastRadiusResult | null,
+  edges: T[],
+  blastRadius: BlastRadiusResult | null
 ): T[] {
   if (!blastRadius) return edges
   return edges.map((e) => {
@@ -187,8 +187,8 @@ export function applyBlastRadiusToEdges<T extends DimmableEdge>(
         style: {
           ...(e.style ?? {}),
           strokeWidth: 2.5,
-          opacity:     1,
-        },
+          opacity: 1
+        }
       }
     }
     return {
@@ -196,9 +196,9 @@ export function applyBlastRadiusToEdges<T extends DimmableEdge>(
       animated: false,
       style: {
         ...(e.style ?? {}),
-        opacity:       0,
-        pointerEvents: 'none' as const,
-      },
+        opacity: 0,
+        pointerEvents: 'none' as const
+      }
     }
   })
 }

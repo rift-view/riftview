@@ -28,8 +28,13 @@ contextBridge.exposeInMainWorld('riftview', {
     ipcRenderer.on(IPC.CONN_STATUS, handler)
     return () => ipcRenderer.removeListener(IPC.CONN_STATUS, handler)
   },
-  onScanErrorDetail: (cb: (detail: { kind: string; message: string; raw: string }) => void): (() => void) => {
-    const handler = (_e: Electron.IpcRendererEvent, detail: { kind: string; message: string; raw: string }): void => cb(detail)
+  onScanErrorDetail: (
+    cb: (detail: { kind: string; message: string; raw: string }) => void
+  ): (() => void) => {
+    const handler = (
+      _e: Electron.IpcRendererEvent,
+      detail: { kind: string; message: string; raw: string }
+    ): void => cb(detail)
     ipcRenderer.on(IPC.SCAN_ERROR_DETAIL, handler)
     return () => ipcRenderer.removeListener(IPC.SCAN_ERROR_DETAIL, handler)
   },
