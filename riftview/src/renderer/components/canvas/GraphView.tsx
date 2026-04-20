@@ -34,6 +34,7 @@ import type { CloudNode } from '../../types/cloud'
 import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
 import IntegrationEdge from './edges/IntegrationEdge'
 import UserEdge from './edges/UserEdge'
+import { edgeStyle } from './edges/edgeStyle'
 import IntegrationLegend from './IntegrationLegend'
 import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
 import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../utils/filterToHide'
@@ -99,7 +100,7 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
         source: n.parentId!,
         target: n.id,
         type: 'step',
-        style: { stroke: 'var(--cb-border-strong)', strokeWidth: 1.5 }
+        style: edgeStyle('structural', false)
       })
     })
 
@@ -119,7 +120,7 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
           source: cf.id,
           target: certNode.id,
           type: 'step',
-          style: { stroke: 'var(--cb-border)', strokeDasharray: '4 2', strokeWidth: 1 },
+          style: { ...edgeStyle('structural', false), strokeDasharray: '4 2' },
           label: 'cert'
         })
       }
@@ -137,11 +138,11 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
           source: route.parentId,
           target: route.id,
           type: 'step',
-          style: { stroke: 'var(--cb-border)', strokeWidth: 1 }
+          style: edgeStyle('structural', false)
         })
       }
 
-      // route → lambda integration (dotted)
+      // route → lambda integration (flow: data path to handler)
       const lambdaArn = route.metadata.lambdaArn as string | undefined
       if (lambdaArn) {
         const lambdaNode = lambdaNodes.find(
@@ -154,7 +155,7 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
             target: lambdaNode.id,
             type: 'step',
             label: 'integration',
-            style: { stroke: 'var(--cb-border)', strokeDasharray: '4 2', strokeWidth: 1 }
+            style: edgeStyle('flow', false)
           })
         }
       }
@@ -172,7 +173,8 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
         source: node.id,
         target: resolvedTargetId,
         type: 'integration',
-        data: { isIntegration: true as const, edgeType: integration.edgeType as EdgeType }
+        data: { isIntegration: true as const, edgeType: integration.edgeType as EdgeType },
+        style: edgeStyle('flow', false)
       })
     }
   }
@@ -193,7 +195,8 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
         source: albNode.id,
         target: ecsNode.id,
         type: 'integration',
-        data: { isIntegration: true as const, edgeType: 'trigger' as EdgeType }
+        data: { isIntegration: true as const, edgeType: 'trigger' as EdgeType },
+        style: edgeStyle('flow', false)
       })
     }
   }
@@ -805,15 +808,17 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
         >
           <Background
             id="minor"
-            variant={BackgroundVariant.Lines}
-            gap={SNAP_GRID_SIZE}
-            color="rgba(255,255,255,0.015)"
+            variant={BackgroundVariant.Dots}
+            gap={18}
+            size={1}
+            color="var(--canvas-grid-dot)"
           />
           <Background
             id="major"
-            variant={BackgroundVariant.Lines}
+            variant={BackgroundVariant.Dots}
             gap={100}
-            color="rgba(255,255,255,0.035)"
+            size={1}
+            color="var(--canvas-grid-dot)"
           />
           <MiniMap
             style={{

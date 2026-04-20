@@ -40,6 +40,7 @@ import type { CloudNode, EdgeType, IntegrationEdgeData, CustomEdge } from '../..
 import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
 import IntegrationEdge from './edges/IntegrationEdge'
 import UserEdge from './edges/UserEdge'
+import { edgeStyle } from './edges/edgeStyle'
 import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../utils/filterToHide'
 import IntegrationLegend from './IntegrationLegend'
 import {
@@ -605,7 +606,8 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
       source: route.id,
       target: lambdaNode.id,
       type: 'integration',
-      data: { isIntegration: true as const, edgeType: 'trigger' as EdgeType }
+      data: { isIntegration: true as const, edgeType: 'trigger' as EdgeType },
+      style: edgeStyle('flow', false)
     })
   })
 
@@ -622,7 +624,8 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
         source: node.id,
         target: resolvedTargetId,
         type: 'integration',
-        data: { isIntegration: true as const, edgeType }
+        data: { isIntegration: true as const, edgeType },
+        style: edgeStyle('flow', false)
       })
     }
   }
@@ -645,7 +648,8 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
         source: albNode.id,
         target: ecsNode.id,
         type: 'integration',
-        data: { isIntegration: true as const, edgeType: 'trigger' as EdgeType }
+        data: { isIntegration: true as const, edgeType: 'trigger' as EdgeType },
+        style: edgeStyle('flow', false)
       })
     }
   }
@@ -1402,15 +1406,17 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
         >
           <Background
             id="minor"
-            variant={BackgroundVariant.Lines}
-            gap={SNAP_GRID_SIZE}
-            color="rgba(255,255,255,0.015)"
+            variant={BackgroundVariant.Dots}
+            gap={18}
+            size={1}
+            color="var(--canvas-grid-dot)"
           />
           <Background
             id="major"
-            variant={BackgroundVariant.Lines}
+            variant={BackgroundVariant.Dots}
             gap={100}
-            color="rgba(255,255,255,0.035)"
+            size={1}
+            color="var(--canvas-grid-dot)"
           />
           <MiniMap
             style={{
