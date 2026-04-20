@@ -87,7 +87,6 @@ const META_FIELDS: { key: string; label: string }[] = [
 ]
 
 function getMetaMatch(node: CloudNode, q: string): string | null {
-  // node.id is often the ARN
   if (node.id.toLowerCase().includes(q)) return node.id
   for (const { key } of META_FIELDS) {
     const val = node.metadata[key]
@@ -104,7 +103,7 @@ interface Props {
 
 interface SearchResult {
   node: CloudNode
-  matchedField: string | null // null = label/type matched
+  matchedField: string | null
 }
 
 export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Element | null {
@@ -132,10 +131,8 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
           }, [])
           .slice(0, 8)
 
-  // Reset on open
   useEffect(() => {
     if (open) {
-      // Use requestAnimationFrame to avoid synchronous setState in effect
       requestAnimationFrame(() => {
         setQuery('')
         setCursor(0)
@@ -144,7 +141,6 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
     }
   }, [open])
 
-  // Clamp cursor
   useEffect(() => {
     requestAnimationFrame(() => {
       setCursor((c) => Math.min(c, Math.max(0, results.length - 1)))
@@ -180,7 +176,6 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
     [results, cursor, onClose, onSelect]
   )
 
-  // Scroll active item into view
   useEffect(() => {
     if (!listRef.current) return
     const active = listRef.current.querySelector<HTMLElement>('[data-active="true"]')
@@ -190,8 +185,8 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
   if (!open) return null
 
   return (
-    // Overlay — click outside closes
     <div
+      className="search-palette-backdrop"
       style={{
         position: 'fixed',
         inset: 0,
@@ -199,36 +194,38 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'flex-start',
-        paddingTop: '25vh'
+        paddingTop: '25vh',
+        background: 'oklch(0 0 0 / 0.5)',
+        backdropFilter: 'blur(8px)'
       }}
       onMouseDown={(e) => {
-        // Close only when clicking the backdrop itself
         if (e.target === e.currentTarget) onClose()
       }}
     >
       <div
+        className="search-palette"
         style={{
-          background: 'var(--ink-850)',
-          border: '1px solid var(--border)',
-          borderRadius: '6px',
-          boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
-          width: '420px',
+          width: '640px',
           maxWidth: 'calc(100vw - 32px)',
-          fontFamily: 'monospace',
+          background: 'var(--bg-elev-1)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
           overflow: 'hidden'
         }}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        {/* Search input */}
         <div
+          className="search-palette-input"
           style={{
             display: 'flex',
             alignItems: 'center',
-            padding: '8px 10px',
+            gap: 'var(--space-2xs)',
+            padding: '10px 14px',
             borderBottom: '1px solid var(--border)'
           }}
         >
-          <span style={{ color: 'var(--fg-muted)', fontSize: 13, marginRight: 8 }}>⌕</span>
+          <span style={{ color: 'var(--fg-muted)', fontSize: 16, lineHeight: 1 }}>⌕</span>
           <input
             ref={inputRef}
             value={query}
@@ -244,31 +241,24 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
               border: 'none',
               outline: 'none',
               color: 'var(--fg)',
-              fontSize: 12,
-              fontFamily: 'monospace'
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--text-base)'
             }}
           />
-          <kbd
-            style={{
-              fontSize: 9,
-              color: 'var(--fg-muted)',
-              background: 'var(--ink-900)',
-              border: '1px solid var(--border)',
-              borderRadius: 3,
-              padding: '1px 5px'
-            }}
-          >
-            ESC
-          </kbd>
+          <kbd className="kbd">ESC</kbd>
         </div>
 
-        {/* Results list */}
-        <div ref={listRef} style={{ maxHeight: 320, overflowY: 'auto' }}>
+        <div
+          ref={listRef}
+          className="search-palette-results"
+          style={{ maxHeight: 360, overflowY: 'auto' }}
+        >
           {query.trim() !== '' && results.length === 0 && (
             <div
               style={{
-                padding: '12px 12px',
-                fontSize: 11,
+                padding: '14px 14px',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--text-sm)',
                 color: 'var(--fg-muted)',
                 textAlign: 'center'
               }}
@@ -291,6 +281,7 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
             return (
               <div
                 key={node.id}
+                className="search-result"
                 data-active={isActive}
                 onMouseEnter={() => setCursor(i)}
                 onMouseDown={() => {
@@ -300,24 +291,25 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 8,
-                  padding: '7px 10px',
+                  gap: 10,
+                  padding: '8px 14px',
                   cursor: 'pointer',
                   background: isActive ? 'var(--ink-900)' : 'transparent',
-                  borderLeft: isActive ? `2px solid ${badgeColor}` : '2px solid transparent'
+                  borderLeft: isActive ? '2px solid var(--ember-500)' : '2px solid transparent'
                 }}
               >
-                {/* Type badge */}
                 <span
+                  className="search-result-badge"
                   style={{
-                    fontSize: 8,
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 9,
                     fontWeight: 700,
                     color: badgeColor,
                     background: `${badgeColor}18`,
                     border: `1px solid ${badgeColor}55`,
                     borderRadius: 3,
                     padding: '1px 5px',
-                    minWidth: 28,
+                    minWidth: 32,
                     textAlign: 'center',
                     flexShrink: 0
                   }}
@@ -325,7 +317,6 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
                   {typeShort}
                 </span>
 
-                {/* Label + optional metadata subtitle */}
                 <span
                   style={{
                     flex: 1,
@@ -337,8 +328,9 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
                 >
                   <span
                     style={{
-                      fontSize: 11,
-                      color: 'var(--fg)',
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 'var(--text-sm)',
+                      color: 'var(--bone-100)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap'
@@ -349,7 +341,8 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
                   {matchedField !== null && (
                     <span
                       style={{
-                        fontSize: 9,
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 'var(--text-xs)',
                         color: 'var(--fg-muted)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -361,8 +354,14 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
                   )}
                 </span>
 
-                {/* Region */}
-                <span style={{ fontSize: 9, color: 'var(--fg-muted)', flexShrink: 0 }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--fg-muted)',
+                    flexShrink: 0
+                  }}
+                >
                   {node.region}
                 </span>
               </div>
@@ -370,22 +369,21 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
           })}
         </div>
 
-        {/* Footer hint */}
-        {results.length > 0 && (
-          <div
-            style={{
-              padding: '4px 10px',
-              borderTop: '1px solid var(--border)',
-              fontSize: 9,
-              color: 'var(--fg-muted)',
-              display: 'flex',
-              gap: 10
-            }}
-          >
-            <span>↑↓ navigate</span>
-            <span>↵ select</span>
-          </div>
-        )}
+        <div
+          className="search-palette-foot"
+          style={{
+            padding: '6px 14px',
+            borderTop: '1px solid var(--border)',
+            display: 'flex',
+            gap: 14,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--text-xs)',
+            color: 'var(--fg-muted)'
+          }}
+        >
+          <span>↑↓ navigate</span>
+          <span>↵ select</span>
+        </div>
       </div>
     </div>
   )

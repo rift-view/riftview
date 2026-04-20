@@ -1,5 +1,52 @@
 import { useUIStore } from '../store/ui'
 
+interface Shortcut {
+  keys: string[]
+  desc: string
+}
+
+const NAVIGATION: Shortcut[] = [
+  { keys: ['j', 'k'], desc: 'next / previous node' },
+  { keys: ['Enter'], desc: 'fly to selected node' },
+  { keys: ['/'], desc: 'search nodes' },
+  { keys: ['1', '2', '3', '4'], desc: 'load saved view' }
+]
+
+const CANVAS: Shortcut[] = [
+  { keys: ['Esc'], desc: 'clear selection' },
+  { keys: ['r'], desc: 're-scan AWS' }
+]
+
+const OTHER: Shortcut[] = [{ keys: ['?'], desc: 'toggle this help' }]
+
+function KbdRow({ shortcut }: { shortcut: Shortcut }): React.JSX.Element {
+  return (
+    <div className="kbd-row">
+      <span className="kbd-row-keys">
+        {shortcut.keys.map((k, i) => (
+          <kbd key={i} className="kbd">
+            {k}
+          </kbd>
+        ))}
+      </span>
+      <span className="kbd-row-desc">{shortcut.desc}</span>
+    </div>
+  )
+}
+
+function Group({ label, items }: { label: string; items: Shortcut[] }): React.JSX.Element {
+  return (
+    <section className="kbd-group">
+      <span className="label">{label}</span>
+      <div className="kbd-rows">
+        {items.map((s, i) => (
+          <KbdRow key={i} shortcut={s} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export function KeyboardHelp(): React.JSX.Element | null {
   const open = useUIStore((s) => s.keyboardHelpOpen)
   const close = useUIStore((s) => s.setKeyboardHelpOpen)
@@ -7,87 +54,28 @@ export function KeyboardHelp(): React.JSX.Element | null {
   if (!open) return null
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        background: 'rgba(0,0,0,0.6)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}
-      onClick={() => close(false)}
-    >
+    <div className="modal-backdrop" onClick={() => close(false)}>
       <div
-        style={{
-          background: 'var(--ink-850)',
-          border: '1px solid var(--border)',
-          borderRadius: 8,
-          padding: '24px 32px',
-          minWidth: 320,
-          color: 'var(--fg)',
-          fontFamily: 'monospace'
-        }}
+        className="modal modal--sm kbd-help"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Keyboard shortcuts"
       >
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            marginBottom: 16,
-            color: 'var(--bone-200)'
-          }}
-        >
-          Keyboard Shortcuts
+        <header className="modal-head">
+          <div className="modal-head-text">
+            <span className="eyebrow">KEYBOARD</span>
+            <h2 className="modal-title">Shortcuts</h2>
+          </div>
+          <button className="modal-close" onClick={() => close(false)} aria-label="Close">
+            ×
+          </button>
+        </header>
+        <div className="modal-body">
+          <Group label="NAVIGATION" items={NAVIGATION} />
+          <Group label="CANVAS" items={CANVAS} />
+          <Group label="OTHER" items={OTHER} />
         </div>
-        <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>
-          <tbody>
-            {[
-              ['Navigation', ''],
-              ['j / k', 'Next / previous node'],
-              ['Enter', 'Fly to selected node'],
-              ['/', 'Search nodes'],
-              ['1 – 4', 'Load saved view'],
-              ['', ''],
-              ['Canvas', ''],
-              ['Escape', 'Clear selection'],
-              ['r', 'Re-scan AWS'],
-              ['', ''],
-              ['Other', ''],
-              ['?', 'Toggle this help']
-            ].map(([key, desc], i) =>
-              !key && !desc ? (
-                <tr key={i}>
-                  <td colSpan={2} style={{ paddingTop: 8 }} />
-                </tr>
-              ) : !desc ? (
-                <tr key={i}>
-                  <td
-                    colSpan={2}
-                    style={{ color: 'var(--fg-muted)', fontSize: 11, paddingBottom: 4 }}
-                  >
-                    {key}
-                  </td>
-                </tr>
-              ) : (
-                <tr key={i}>
-                  <td
-                    style={{
-                      paddingRight: 24,
-                      paddingBottom: 4,
-                      color: 'var(--accent)',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {key}
-                  </td>
-                  <td style={{ color: 'var(--bone-200)', paddingBottom: 4 }}>{desc}</td>
-                </tr>
-              )
-            )}
-          </tbody>
-        </table>
       </div>
     </div>
   )
