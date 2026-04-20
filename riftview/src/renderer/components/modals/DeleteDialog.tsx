@@ -30,136 +30,85 @@ export default function DeleteDialog({
 
   const confirmed = input === node.id
 
-  const overlay: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 200
-  }
-  const dialog: React.CSSProperties = {
-    background: 'var(--ink-900)',
-    border: '1px solid #ff5f57',
-    borderRadius: 8,
-    padding: 20,
-    width: 340,
-    fontFamily: 'monospace'
-  }
-
   return (
     <div
-      style={overlay}
+      className="modal-backdrop"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
       }}
       tabIndex={-1}
+      style={{ zIndex: 200 }}
     >
-      <div style={dialog}>
-        <div style={{ color: '#ff5f57', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>
-          Delete {RESOURCE_LABELS[node.type] ?? node.type}?
+      <div
+        className="modal modal--sm"
+        style={{ borderLeft: '2px solid var(--fault-500)' }}
+      >
+        <div className="modal-head">
+          <div className="modal-head-text">
+            <span className="eyebrow" style={{ color: 'var(--fault-500)' }}>
+              DELETE
+            </span>
+            <h2 className="modal-title">
+              {RESOURCE_LABELS[node.type] ?? node.type}?
+            </h2>
+          </div>
+          <button className="modal-close" onClick={onClose} title="Close">
+            ×
+          </button>
         </div>
-        <div style={{ color: 'var(--bone-200)', fontSize: 10, marginBottom: 4 }}>
-          Type <span style={{ color: 'var(--fg)' }}>{node.id}</span> to confirm
-        </div>
-        <input
-          autoFocus
-          placeholder={node.id}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          style={{
-            width: '100%',
-            background: 'var(--ink-900)',
-            border: '1px solid var(--border)',
-            borderRadius: 3,
-            padding: '4px 8px',
-            color: 'var(--fg)',
-            fontFamily: 'monospace',
-            fontSize: 11,
-            boxSizing: 'border-box',
-            marginBottom: 10
-          }}
-        />
 
-        {node.type === 's3' && (
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 10,
-              color: 'var(--bone-200)',
-              marginBottom: 8,
-              cursor: 'pointer'
-            }}
-          >
-            <input type="checkbox" checked={force} onChange={(e) => setForce(e.target.checked)} />
-            Force delete (removes all objects)
-          </label>
-        )}
-
-        {node.type === 'rds' && (
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 10,
-              color: 'var(--bone-200)',
-              marginBottom: 8,
-              cursor: 'pointer'
-            }}
-          >
+        <div className="modal-body">
+          <div className="form-field">
+            <label className="label">
+              Type <span style={{ color: 'var(--bone-50)' }}>{node.id}</span> to confirm
+            </label>
             <input
-              type="checkbox"
-              checked={skipSnapshot}
-              onChange={(e) => setSkipSnapshot(e.target.checked)}
+              autoFocus
+              placeholder={node.id}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="form-input"
+              style={{ fontFamily: 'var(--font-mono)' }}
             />
-            Skip final snapshot
-          </label>
-        )}
+          </div>
 
-        {node.type === 'rds' && node.metadata?.deletionProtection === true && (
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 10,
-              color: 'var(--bone-200)',
-              marginBottom: 8,
-              cursor: 'pointer'
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={disableProtection}
-              onChange={(e) => setDisableProtection(e.target.checked)}
-            />
-            Disable deletion protection first
-          </label>
-        )}
+          {node.type === 's3' && (
+            <label className="form-checkbox" style={{ marginBottom: 8 }}>
+              <input type="checkbox" checked={force} onChange={(e) => setForce(e.target.checked)} />
+              Force delete (removes all objects)
+            </label>
+          )}
 
-        <div style={{ color: 'var(--fg-muted)', fontSize: 9, marginBottom: 12 }}>
-          This action cannot be undone.
+          {node.type === 'rds' && (
+            <label className="form-checkbox" style={{ marginBottom: 8 }}>
+              <input
+                type="checkbox"
+                checked={skipSnapshot}
+                onChange={(e) => setSkipSnapshot(e.target.checked)}
+              />
+              Skip final snapshot
+            </label>
+          )}
+
+          {node.type === 'rds' && node.metadata?.deletionProtection === true && (
+            <label className="form-checkbox" style={{ marginBottom: 8 }}>
+              <input
+                type="checkbox"
+                checked={disableProtection}
+                onChange={(e) => setDisableProtection(e.target.checked)}
+              />
+              Disable deletion protection first
+            </label>
+          )}
+
+          <div className="form-helper" style={{ color: 'var(--fault-500)' }}>
+            This action cannot be undone.
+          </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'var(--ink-850)',
-              border: '1px solid var(--border)',
-              borderRadius: 3,
-              padding: '4px 14px',
-              color: 'var(--bone-200)',
-              fontFamily: 'monospace',
-              fontSize: 11,
-              cursor: 'pointer'
-            }}
-          >
+        <div className="modal-foot">
+          <button onClick={onClose} className="btn btn-sm btn-ghost">
             Cancel
           </button>
           <button
@@ -171,15 +120,11 @@ export default function DeleteDialog({
               if (disableProtection) opts.disableProtectionFirst = true
               onConfirm(opts)
             }}
+            className="btn btn-sm"
             style={{
-              background: confirmed ? '#ff5f57' : '#3a1a1a',
-              border: '1px solid #ff5f57',
-              borderRadius: 3,
-              padding: '4px 14px',
-              color: confirmed ? '#000' : '#ff5f57',
-              fontFamily: 'monospace',
-              fontSize: 11,
-              fontWeight: 'bold',
+              background: confirmed ? 'var(--fault-500)' : 'transparent',
+              borderColor: 'var(--fault-500)',
+              color: confirmed ? 'var(--ink-1000)' : 'var(--fault-500)',
               cursor: confirmed ? 'pointer' : 'not-allowed',
               opacity: confirmed ? 1 : 0.5
             }}
