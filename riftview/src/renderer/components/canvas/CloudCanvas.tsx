@@ -180,17 +180,17 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
         <div
           className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-md"
           style={{
-            background: 'var(--cb-minimap-bg)',
-            border: '1px solid var(--cb-border-strong)'
+            background: 'var(--ink-950)',
+            border: '1px solid var(--border-strong)'
           }}
         >
           <button
             onClick={() => fitView({ duration: 300 })}
             style={{
               ...btnBase,
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-border)',
-              color: 'var(--cb-text-secondary)'
+              background: 'var(--ink-850)',
+              border: '1px solid var(--border)',
+              color: 'var(--bone-200)'
             }}
           >
             ⊞ Fit
@@ -199,9 +199,9 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
             onClick={() => zoomIn()}
             style={{
               ...btnBase,
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-border)',
-              color: 'var(--cb-text-secondary)'
+              background: 'var(--ink-850)',
+              border: '1px solid var(--border)',
+              color: 'var(--bone-200)'
             }}
           >
             +
@@ -210,9 +210,9 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
             onClick={() => zoomOut()}
             style={{
               ...btnBase,
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-border)',
-              color: 'var(--cb-text-secondary)'
+              background: 'var(--ink-850)',
+              border: '1px solid var(--border)',
+              color: 'var(--bone-200)'
             }}
           >
             −
@@ -225,8 +225,8 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
             title={showIntegrations ? 'Hide integration edges' : 'Show integration edges'}
             style={{
               ...btnBase,
-              background: showIntegrations ? 'var(--cb-bg-elevated)' : 'transparent',
-              border: `1px solid ${showIntegrations ? '#64b5f6' : 'var(--cb-border)'}`,
+              background: showIntegrations ? 'var(--ink-850)' : 'transparent',
+              border: `1px solid ${showIntegrations ? '#64b5f6' : 'var(--border)'}`,
               color: showIntegrations ? '#64b5f6' : '#666'
             }}
           >
@@ -238,8 +238,8 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
             title={snapToGrid ? 'Disable snap to grid' : 'Enable snap to grid'}
             style={{
               ...btnBase,
-              background: snapToGrid ? 'var(--cb-bg-elevated)' : 'transparent',
-              border: `1px solid ${snapToGrid ? '#64b5f6' : 'var(--cb-border)'}`,
+              background: snapToGrid ? 'var(--ink-850)' : 'transparent',
+              border: `1px solid ${snapToGrid ? '#64b5f6' : 'var(--border)'}`,
               color: snapToGrid ? '#64b5f6' : '#666'
             }}
           >
@@ -254,8 +254,8 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
               onClick={() => setView(v)}
               style={{
                 ...btnBase,
-                background: view === v ? 'var(--cb-bg-elevated)' : 'transparent',
-                border: `1px solid ${view === v ? '#64b5f6' : 'var(--cb-border)'}`,
+                background: view === v ? 'var(--ink-850)' : 'transparent',
+                border: `1px solid ${view === v ? '#64b5f6' : 'var(--border)'}`,
                 color: view === v ? '#64b5f6' : '#666'
               }}
             >
@@ -268,8 +268,8 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
               onClick={() => setView('command')}
               style={{
                 ...btnBase,
-                background: view === 'command' ? 'var(--cb-bg-elevated)' : 'transparent',
-                border: `1px solid ${view === 'command' ? '#a78bfa' : 'var(--cb-border)'}`,
+                background: view === 'command' ? 'var(--ink-850)' : 'transparent',
+                border: `1px solid ${view === 'command' ? '#a78bfa' : 'var(--border)'}`,
                 color: view === 'command' ? '#a78bfa' : '#666'
               }}
             >
@@ -289,12 +289,12 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
                 title={saved?.name ?? `Empty slot ${slot + 1}`}
                 style={{
                   ...btnBase,
-                  background: isActive ? 'var(--cb-bg-elevated)' : 'transparent',
-                  border: `1px solid ${saved ? (isActive ? 'var(--cb-accent)' : 'var(--cb-border-strong)') : 'var(--cb-border)'}`,
+                  background: isActive ? 'var(--ink-850)' : 'transparent',
+                  border: `1px solid ${saved ? (isActive ? 'var(--accent)' : 'var(--border-strong)') : 'var(--border)'}`,
                   color: saved
                     ? isActive
-                      ? 'var(--cb-accent)'
-                      : 'var(--cb-text-secondary)'
+                      ? 'var(--accent)'
+                      : 'var(--bone-200)'
                     : '#444',
                   minWidth: '20px'
                 }}
@@ -308,7 +308,7 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
             <span
               style={{
                 fontSize: 10,
-                color: 'var(--cb-text-muted)',
+                color: 'var(--fg-muted)',
                 fontFamily: 'monospace',
                 whiteSpace: 'nowrap',
                 maxWidth: 80,

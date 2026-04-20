@@ -22,8 +22,8 @@ export default function IntegrationLegend(): React.JSX.Element | null {
         bottom: 12,
         left: 12,
         zIndex: 10,
-        background: 'var(--cb-bg-panel)',
-        border: '1px solid var(--cb-border)',
+        background: 'var(--ink-900)',
+        border: '1px solid var(--border)',
         borderRadius: 6,
         padding: '8px 10px',
         fontFamily: 'monospace',
@@ -40,7 +40,7 @@ export default function IntegrationLegend(): React.JSX.Element | null {
           marginBottom: 6
         }}
       >
-        <span style={{ color: 'var(--cb-text-secondary)', fontWeight: 600 }}>
+        <span style={{ color: 'var(--bone-200)', fontWeight: 600 }}>
           Integration Edges
         </span>
         <button
@@ -50,7 +50,7 @@ export default function IntegrationLegend(): React.JSX.Element | null {
             marginLeft: 8,
             border: 'none',
             background: 'transparent',
-            color: 'var(--cb-text-secondary)',
+            color: 'var(--bone-200)',
             cursor: 'pointer',
             fontSize: 13,
             lineHeight: 1,
@@ -85,7 +85,7 @@ export default function IntegrationLegend(): React.JSX.Element | null {
               }
             />
           </svg>
-          <span style={{ color: 'var(--cb-text)' }}>{label}</span>
+          <span style={{ color: 'var(--fg)' }}>{label}</span>
         </div>
       ))}
 
@@ -94,9 +94,9 @@ export default function IntegrationLegend(): React.JSX.Element | null {
         style={{
           marginTop: 6,
           paddingTop: 6,
-          borderTop: '1px dashed var(--cb-border)',
+          borderTop: '1px dashed var(--border)',
           fontSize: 9,
-          color: 'var(--cb-text-muted)',
+          color: 'var(--fg-muted)',
           lineHeight: 1.4
         }}
       >
@@ -107,7 +107,7 @@ export default function IntegrationLegend(): React.JSX.Element | null {
             width: 6,
             height: 6,
             borderRadius: '50%',
-            background: 'var(--cb-accent)',
+            background: 'var(--accent)',
             margin: '0 3px',
             verticalAlign: 'middle'
           }}

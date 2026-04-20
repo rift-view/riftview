@@ -208,8 +208,8 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
     >
       <div
         style={{
-          background: 'var(--cb-bg-elevated)',
-          border: '1px solid var(--cb-border)',
+          background: 'var(--ink-850)',
+          border: '1px solid var(--border)',
           borderRadius: '6px',
           boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
           width: '420px',
@@ -225,10 +225,10 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
             display: 'flex',
             alignItems: 'center',
             padding: '8px 10px',
-            borderBottom: '1px solid var(--cb-border)'
+            borderBottom: '1px solid var(--border)'
           }}
         >
-          <span style={{ color: 'var(--cb-text-muted)', fontSize: 13, marginRight: 8 }}>⌕</span>
+          <span style={{ color: 'var(--fg-muted)', fontSize: 13, marginRight: 8 }}>⌕</span>
           <input
             ref={inputRef}
             value={query}
@@ -243,7 +243,7 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              color: 'var(--cb-text-primary)',
+              color: 'var(--fg)',
               fontSize: 12,
               fontFamily: 'monospace'
             }}
@@ -251,9 +251,9 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
           <kbd
             style={{
               fontSize: 9,
-              color: 'var(--cb-text-muted)',
-              background: 'var(--cb-bg-panel)',
-              border: '1px solid var(--cb-border)',
+              color: 'var(--fg-muted)',
+              background: 'var(--ink-900)',
+              border: '1px solid var(--border)',
               borderRadius: 3,
               padding: '1px 5px'
             }}
@@ -269,7 +269,7 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
               style={{
                 padding: '12px 12px',
                 fontSize: 11,
-                color: 'var(--cb-text-muted)',
+                color: 'var(--fg-muted)',
                 textAlign: 'center'
               }}
             >
@@ -303,7 +303,7 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
                   gap: 8,
                   padding: '7px 10px',
                   cursor: 'pointer',
-                  background: isActive ? 'var(--cb-bg-panel)' : 'transparent',
+                  background: isActive ? 'var(--ink-900)' : 'transparent',
                   borderLeft: isActive ? `2px solid ${badgeColor}` : '2px solid transparent'
                 }}
               >
@@ -338,7 +338,7 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
                   <span
                     style={{
                       fontSize: 11,
-                      color: 'var(--cb-text-primary)',
+                      color: 'var(--fg)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap'
@@ -350,7 +350,7 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
                     <span
                       style={{
                         fontSize: 9,
-                        color: 'var(--cb-text-muted)',
+                        color: 'var(--fg-muted)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap'
@@ -362,7 +362,7 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
                 </span>
 
                 {/* Region */}
-                <span style={{ fontSize: 9, color: 'var(--cb-text-muted)', flexShrink: 0 }}>
+                <span style={{ fontSize: 9, color: 'var(--fg-muted)', flexShrink: 0 }}>
                   {node.region}
                 </span>
               </div>
@@ -375,9 +375,9 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
           <div
             style={{
               padding: '4px 10px',
-              borderTop: '1px solid var(--cb-border)',
+              borderTop: '1px solid var(--border)',
               fontSize: 9,
-              color: 'var(--cb-text-muted)',
+              color: 'var(--fg-muted)',
               display: 'flex',
               gap: 10
             }}

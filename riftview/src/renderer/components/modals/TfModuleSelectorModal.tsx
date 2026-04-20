@@ -42,8 +42,8 @@ export default function TfModuleSelectorModal({
     zIndex: 200
   }
   const dialog: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)',
-    border: '1px solid var(--cb-border-strong)',
+    background: 'var(--ink-900)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 8,
     padding: 20,
     width: 400,
@@ -70,11 +70,11 @@ export default function TfModuleSelectorModal({
       <div style={dialog}>
         {/* Header */}
         <div
-          style={{ color: 'var(--cb-accent)', fontWeight: 'bold', fontSize: 13, marginBottom: 4 }}
+          style={{ color: 'var(--accent)', fontWeight: 'bold', fontSize: 13, marginBottom: 4 }}
         >
           Import Terraform State
         </div>
-        <div style={{ color: 'var(--cb-text-muted)', fontSize: 10, marginBottom: 16 }}>
+        <div style={{ color: 'var(--fg-muted)', fontSize: 10, marginBottom: 16 }}>
           Found {modules.length} module{modules.length !== 1 ? 's' : ''} · {totalResources} total
           resource{totalResources !== 1 ? 's' : ''}
         </div>
@@ -86,7 +86,7 @@ export default function TfModuleSelectorModal({
               flex: 1,
               overflowY: 'auto',
               marginBottom: 16,
-              border: '1px solid var(--cb-border)',
+              border: '1px solid var(--border)',
               borderRadius: 4
             }}
           >
@@ -99,7 +99,7 @@ export default function TfModuleSelectorModal({
                   gap: 10,
                   padding: '7px 12px',
                   cursor: 'pointer',
-                  borderBottom: idx < modules.length - 1 ? '1px solid var(--cb-border)' : 'none',
+                  borderBottom: idx < modules.length - 1 ? '1px solid var(--border)' : 'none',
                   background: checked[m.name] ? 'rgba(99,102,241,0.06)' : 'transparent'
                 }}
               >
@@ -109,14 +109,14 @@ export default function TfModuleSelectorModal({
                   onChange={() => toggle(m.name)}
                   style={{ cursor: 'pointer', flexShrink: 0 }}
                 />
-                <span style={{ flex: 1, color: 'var(--cb-text-primary)', fontSize: 11 }}>
+                <span style={{ flex: 1, color: 'var(--fg)', fontSize: 11 }}>
                   {m.name}
                 </span>
                 <span
                   style={{
                     fontSize: 9,
-                    color: 'var(--cb-text-muted)',
-                    background: 'var(--cb-bg-elevated)',
+                    color: 'var(--fg-muted)',
+                    background: 'var(--ink-850)',
                     borderRadius: 3,
                     padding: '1px 5px',
                     flexShrink: 0
@@ -130,7 +130,7 @@ export default function TfModuleSelectorModal({
         )}
 
         {/* Selection summary */}
-        <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, marginBottom: 14 }}>
+        <div style={{ color: 'var(--fg-muted)', fontSize: 9, marginBottom: 14 }}>
           {isSingleModule
             ? `${totalResources} resource${totalResources !== 1 ? 's' : ''} will be imported`
             : `${selectedCount} of ${totalResources} resource${totalResources !== 1 ? 's' : ''} selected`}
@@ -141,11 +141,11 @@ export default function TfModuleSelectorModal({
           <button
             onClick={onCancel}
             style={{
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-border)',
+              background: 'var(--ink-850)',
+              border: '1px solid var(--border)',
               borderRadius: 3,
               padding: '4px 14px',
-              color: 'var(--cb-text-secondary)',
+              color: 'var(--bone-200)',
               fontFamily: 'monospace',
               fontSize: 11,
               cursor: 'pointer'
@@ -157,11 +157,11 @@ export default function TfModuleSelectorModal({
             onClick={handleConfirm}
             disabled={noneSelected}
             style={{
-              background: noneSelected ? 'var(--cb-bg-elevated)' : 'var(--cb-accent)',
-              border: '1px solid var(--cb-accent)',
+              background: noneSelected ? 'var(--ink-850)' : 'var(--accent)',
+              border: '1px solid var(--accent)',
               borderRadius: 3,
               padding: '4px 14px',
-              color: noneSelected ? 'var(--cb-accent)' : 'var(--cb-bg-panel)',
+              color: noneSelected ? 'var(--accent)' : 'var(--ink-900)',
               fontFamily: 'monospace',
               fontSize: 11,
               fontWeight: 'bold',

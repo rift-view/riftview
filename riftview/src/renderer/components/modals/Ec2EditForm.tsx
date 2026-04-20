@@ -10,11 +10,11 @@ interface Props {
 
 const inp: React.CSSProperties = {
   width: '100%',
-  background: 'var(--cb-bg-panel)',
-  border: '1px solid var(--cb-border)',
+  background: 'var(--ink-900)',
+  border: '1px solid var(--border)',
   borderRadius: 3,
   padding: '3px 6px',
-  color: 'var(--cb-text-primary)',
+  color: 'var(--fg)',
   fontFamily: 'monospace',
   fontSize: 10,
   boxSizing: 'border-box' as const
@@ -22,7 +22,7 @@ const inp: React.CSSProperties = {
 const sel = inp
 const lbl: React.CSSProperties = {
   fontSize: 9,
-  color: 'var(--cb-text-muted)',
+  color: 'var(--fg-muted)',
   textTransform: 'uppercase',
   marginBottom: 2,
   marginTop: 8
@@ -89,7 +89,7 @@ export default function Ec2EditForm({ node, onChange }: Props): React.JSX.Elemen
                 gap: 6,
                 marginTop: 4,
                 fontSize: 10,
-                color: 'var(--cb-text-secondary)',
+                color: 'var(--bone-200)',
                 cursor: 'pointer'
               }}
             >

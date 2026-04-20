@@ -54,7 +54,7 @@ export function TerminalPane(): React.JSX.Element | null {
         right: 0,
         height: 300,
         background: '#0d1117',
-        borderTop: '2px solid var(--cb-accent)',
+        borderTop: '2px solid var(--accent)',
         zIndex: 500,
         display: 'flex',
         flexDirection: 'column'
@@ -66,12 +66,12 @@ export function TerminalPane(): React.JSX.Element | null {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '4px 12px',
-          borderBottom: '1px solid var(--cb-border)',
-          color: 'var(--cb-text-muted)',
+          borderBottom: '1px solid var(--border)',
+          color: 'var(--fg-muted)',
           fontSize: 11
         }}
       >
-        <span style={{ color: 'var(--cb-accent)', fontFamily: 'monospace' }}>SSM › {nodeId}</span>
+        <span style={{ color: 'var(--accent)', fontFamily: 'monospace' }}>SSM › {nodeId}</span>
         <button
           onClick={() => {
             closePane()
@@ -80,7 +80,7 @@ export function TerminalPane(): React.JSX.Element | null {
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--cb-text-muted)',
+            color: 'var(--fg-muted)',
             cursor: 'pointer',
             fontSize: 14
           }}

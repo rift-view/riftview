@@ -8,11 +8,11 @@ interface Props {
 }
 
 const inp: React.CSSProperties = {
-  background: 'var(--cb-bg-panel)',
-  border: '1px solid var(--cb-border)',
+  background: 'var(--ink-900)',
+  border: '1px solid var(--border)',
   borderRadius: 3,
   padding: '2px 4px',
-  color: 'var(--cb-text-primary)',
+  color: 'var(--fg)',
   fontFamily: 'monospace',
   fontSize: 9,
   boxSizing: 'border-box' as const
@@ -41,7 +41,7 @@ export default function SgEditForm({ node, onChange }: Props): React.JSX.Element
       <div
         style={{
           fontSize: 9,
-          color: 'var(--cb-text-muted)',
+          color: 'var(--fg-muted)',
           textTransform: 'uppercase',
           marginBottom: 6
         }}
@@ -67,7 +67,7 @@ export default function SgEditForm({ node, onChange }: Props): React.JSX.Element
             value={r.fromPort}
             onChange={(e) => setRule(i, 'fromPort', Number(e.target.value))}
           />
-          <span style={{ color: 'var(--cb-text-muted)', fontSize: 9 }}>-</span>
+          <span style={{ color: 'var(--fg-muted)', fontSize: 9 }}>-</span>
           <input
             style={{ ...inp, width: 40 }}
             type="number"
@@ -100,9 +100,9 @@ export default function SgEditForm({ node, onChange }: Props): React.JSX.Element
         }
         style={{
           background: 'none',
-          border: '1px solid var(--cb-border)',
+          border: '1px solid var(--border)',
           borderRadius: 3,
-          color: 'var(--cb-text-secondary)',
+          color: 'var(--bone-200)',
           fontSize: 9,
           padding: '2px 8px',
           cursor: 'pointer',

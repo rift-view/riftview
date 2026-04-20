@@ -38,8 +38,8 @@ export default function SidebarFilterDialog({
   }
 
   const dialog: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)',
-    border: '1px solid var(--cb-accent)',
+    background: 'var(--ink-900)',
+    border: '1px solid var(--accent)',
     borderRadius: 8,
     padding: 20,
     width: 300,
@@ -59,22 +59,22 @@ export default function SidebarFilterDialog({
     >
       <div style={dialog}>
         <div
-          style={{ color: 'var(--cb-accent)', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}
+          style={{ color: 'var(--accent)', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}
         >
           Filter to [{label}] only?
         </div>
-        <div style={{ color: 'var(--cb-text-secondary)', fontSize: 10, marginBottom: 16 }}>
+        <div style={{ color: 'var(--bone-200)', fontSize: 10, marginBottom: 16 }}>
           {count} node{count === 1 ? '' : 's'} will be highlighted
         </div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}
             style={{
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-border)',
+              background: 'var(--ink-850)',
+              border: '1px solid var(--border)',
               borderRadius: 3,
               padding: '4px 14px',
-              color: 'var(--cb-text-muted)',
+              color: 'var(--fg-muted)',
               fontFamily: 'monospace',
               fontSize: 11,
               cursor: 'pointer'
@@ -86,8 +86,8 @@ export default function SidebarFilterDialog({
             autoFocus
             onClick={onConfirm}
             style={{
-              background: 'var(--cb-accent)',
-              border: '1px solid var(--cb-accent)',
+              background: 'var(--accent)',
+              border: '1px solid var(--accent)',
               borderRadius: 3,
               padding: '4px 14px',
               color: '#000',

@@ -21,12 +21,12 @@ export function KeyboardHelp(): React.JSX.Element | null {
     >
       <div
         style={{
-          background: 'var(--cb-bg-elevated)',
-          border: '1px solid var(--cb-border)',
+          background: 'var(--ink-850)',
+          border: '1px solid var(--border)',
           borderRadius: 8,
           padding: '24px 32px',
           minWidth: 320,
-          color: 'var(--cb-text-primary)',
+          color: 'var(--fg)',
           fontFamily: 'monospace'
         }}
         onClick={(e) => e.stopPropagation()}
@@ -36,7 +36,7 @@ export function KeyboardHelp(): React.JSX.Element | null {
             fontSize: 14,
             fontWeight: 600,
             marginBottom: 16,
-            color: 'var(--cb-text-secondary)'
+            color: 'var(--bone-200)'
           }}
         >
           Keyboard Shortcuts
@@ -65,7 +65,7 @@ export function KeyboardHelp(): React.JSX.Element | null {
                 <tr key={i}>
                   <td
                     colSpan={2}
-                    style={{ color: 'var(--cb-text-muted)', fontSize: 11, paddingBottom: 4 }}
+                    style={{ color: 'var(--fg-muted)', fontSize: 11, paddingBottom: 4 }}
                   >
                     {key}
                   </td>
@@ -76,13 +76,13 @@ export function KeyboardHelp(): React.JSX.Element | null {
                     style={{
                       paddingRight: 24,
                       paddingBottom: 4,
-                      color: 'var(--cb-accent)',
+                      color: 'var(--accent)',
                       whiteSpace: 'nowrap'
                     }}
                   >
                     {key}
                   </td>
-                  <td style={{ color: 'var(--cb-text-secondary)', paddingBottom: 4 }}>{desc}</td>
+                  <td style={{ color: 'var(--bone-200)', paddingBottom: 4 }}>{desc}</td>
                 </tr>
               )
             )}

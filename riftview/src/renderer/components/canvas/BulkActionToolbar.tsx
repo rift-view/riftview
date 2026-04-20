@@ -61,16 +61,16 @@ export function BulkActionToolbar(): React.JSX.Element | null {
         gap: '6px',
         padding: '4px 10px',
         borderRadius: '6px',
-        background: 'var(--cb-bg-elevated)',
-        border: '1px solid var(--cb-accent)',
+        background: 'var(--ink-850)',
+        border: '1px solid var(--accent)',
         boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
         pointerEvents: 'all'
       }}
     >
-      <span style={{ fontFamily: 'monospace', fontSize: '9px', color: 'var(--cb-accent)' }}>
+      <span style={{ fontFamily: 'monospace', fontSize: '9px', color: 'var(--accent)' }}>
         {selectedNodeIds.size} selected
       </span>
-      <div style={{ width: 1, height: 12, background: 'var(--cb-border-strong)' }} />
+      <div style={{ width: 1, height: 12, background: 'var(--border-strong)' }} />
       <button
         onClick={() => {
           void handleBulkDelete()
@@ -102,8 +102,8 @@ export function BulkActionToolbar(): React.JSX.Element | null {
         style={{
           ...btnBase,
           background: 'transparent',
-          color: 'var(--cb-text-muted)',
-          border: '1px solid var(--cb-border)',
+          color: 'var(--fg-muted)',
+          border: '1px solid var(--border)',
           padding: '3px 6px'
         }}
         title="Clear selection"

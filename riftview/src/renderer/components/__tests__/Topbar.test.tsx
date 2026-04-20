@@ -178,9 +178,9 @@ describe('Topbar — connection status indicator', () => {
 
     const label = screen.getByText(/^connected$/i)
     const color = (label.getAttribute('style') ?? '') + (label.className ?? '')
-    // Moss-coloured: look for a moss/green token (moss class, var(--cb-moss), or a green hex)
+    // Moss-coloured: look for a moss/green token (moss class or a green hex)
     expect(color).toMatch(
-      /moss|--cb-moss|--cb-success|#28c840|#22c55e|#4ade80|rgb\(40,\s*200,\s*64\)|#16a34a/i
+      /moss|--ok|#28c840|#22c55e|#4ade80|rgb\(40,\s*200,\s*64\)|#16a34a/i
     )
   })
 
@@ -195,7 +195,7 @@ describe('Topbar — connection status indicator', () => {
 
     const label = screen.getByText(/^error$/i)
     const color = (label.getAttribute('style') ?? '') + (label.className ?? '')
-    expect(color).toMatch(/fault|--cb-fault|--cb-error|#ff5f57|#ef4444|#dc2626|#f87171/i)
+    expect(color).toMatch(/fault|--danger|--fault-500|#ff5f57|#ef4444|#dc2626|#f87171/i)
     // Make sure some connection indicator is present
     expect(getConnLabel()).toBeInTheDocument()
   })

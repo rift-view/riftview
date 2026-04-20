@@ -96,7 +96,7 @@ export default function UserEdge({
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
               fontSize: 9,
               fontFamily: 'monospace',
-              background: 'var(--cb-bg-panel)',
+              background: 'var(--ink-900)',
               border: `1px solid ${color}`,
               borderRadius: 3,
               padding: '1px 5px',
@@ -115,7 +115,7 @@ export default function UserEdge({
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-              background: 'var(--cb-bg-panel)',
+              background: 'var(--ink-900)',
               border: `1px solid ${color}`,
               borderRadius: 5,
               padding: '4px 6px',
@@ -155,9 +155,9 @@ export default function UserEdge({
                 style={{
                   fontSize: 9,
                   fontFamily: 'monospace',
-                  background: 'var(--cb-bg-elevated)',
+                  background: 'var(--ink-850)',
                   border: `1px solid ${color}`,
-                  color: 'var(--cb-text-primary)',
+                  color: 'var(--fg)',
                   borderRadius: 3,
                   padding: '1px 4px',
                   outline: 'none',
@@ -173,7 +173,7 @@ export default function UserEdge({
                 style={{
                   fontSize: 9,
                   fontFamily: 'monospace',
-                  color: label ? color : 'var(--cb-text-muted)',
+                  color: label ? color : 'var(--fg-muted)',
                   cursor: 'text',
                   minWidth: 60
                 }}

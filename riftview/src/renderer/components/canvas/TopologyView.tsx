@@ -911,7 +911,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       const lockProps = isLocked ? { draggable: false, selectable: false, zIndex: -1 } : {}
 
       const multiSelectStyle: React.CSSProperties | undefined = isMultiSelected
-        ? { outline: '2px solid var(--cb-accent)', outlineOffset: '2px' }
+        ? { outline: '2px solid var(--accent)', outlineOffset: '2px' }
         : undefined
 
       if (n.extent === 'parent') {
@@ -1292,9 +1292,9 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
             padding: '2px 12px',
             fontFamily: 'monospace',
             fontSize: 9,
-            color: 'var(--cb-text-muted)',
-            background: 'var(--cb-bg-panel)',
-            borderBottom: '1px solid var(--cb-border)',
+            color: 'var(--fg-muted)',
+            background: 'var(--ink-900)',
+            borderBottom: '1px solid var(--border)',
             flexShrink: 0
           }}
         >
@@ -1402,7 +1402,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
           snapGrid={[SNAP_GRID_SIZE, SNAP_GRID_SIZE]}
           minZoom={0.1}
           maxZoom={2}
-          style={{ background: 'var(--cb-canvas-bg)' }}
+          style={{ background: 'var(--canvas-bg)' }}
         >
           <Background
             id="minor"
@@ -1420,8 +1420,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
           />
           <MiniMap
             style={{
-              background: 'var(--cb-minimap-bg)',
-              border: '1px solid var(--cb-minimap-border)'
+              background: 'var(--ink-950)',
+              border: '1px solid var(--ink-700)'
             }}
             nodeColor="#FF9900"
           />

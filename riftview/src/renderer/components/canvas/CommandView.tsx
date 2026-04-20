@@ -387,9 +387,9 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
             padding: '2px 10px',
             fontFamily: 'monospace',
             fontSize: 9,
-            color: 'var(--cb-text-muted)',
-            background: 'var(--cb-bg-panel)',
-            border: '1px solid var(--cb-border)',
+            color: 'var(--fg-muted)',
+            background: 'var(--ink-900)',
+            border: '1px solid var(--border)',
             borderRadius: 4,
             display: 'flex',
             alignItems: 'center',
@@ -417,7 +417,7 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
 
           {commandFocusId && (
             <span
-              style={{ color: 'var(--cb-accent)', cursor: 'pointer' }}
+              style={{ color: 'var(--accent)', cursor: 'pointer' }}
               onClick={() => setCommandFocusId(null)}
               title="Exit focus mode"
             >
@@ -520,8 +520,8 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
             color="var(--canvas-grid-dot)"
           />
           <MiniMap
-            style={{ background: 'var(--cb-minimap-bg)' }}
-            nodeColor="var(--cb-border-strong)"
+            style={{ background: 'var(--ink-950)' }}
+            nodeColor="var(--border-strong)"
           />
         </ReactFlow>
       </div>

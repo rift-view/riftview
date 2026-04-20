@@ -56,11 +56,11 @@ function ResizeHandle({ onResize }: { onResize: (delta: number) => void }): Reac
         width: 4,
         flexShrink: 0,
         cursor: 'col-resize',
-        background: 'var(--cb-border)',
+        background: 'var(--border)',
         transition: 'background 0.15s'
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--cb-accent)')}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--cb-border)')}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--accent)')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--border)')}
     />
   )
 }
@@ -225,7 +225,7 @@ export default function App(): React.JSX.Element | null {
     setNodeMenu({ node, x, y })
   }
 
-  if (profiles === null) return <div style={{ background: 'var(--cb-bg-app)', height: '100vh' }} />
+  if (profiles === null) return <div style={{ background: 'var(--ink-1000)', height: '100vh' }} />
   if (profiles.length === 0) return <Onboarding />
 
   return (
@@ -234,7 +234,7 @@ export default function App(): React.JSX.Element | null {
       style={{
         display: 'grid',
         gridTemplateRows: 'auto auto 1fr auto',
-        background: 'var(--cb-bg-app)'
+        background: 'var(--ink-1000)'
       }}
     >
       <Topbar onScan={triggerScan} fixCount={fixCount} />

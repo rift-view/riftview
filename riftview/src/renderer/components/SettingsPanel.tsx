@@ -37,27 +37,27 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps): React.JS
     zIndex: 200
   }
   const panel: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)',
-    border: '1px solid var(--cb-border)',
+    background: 'var(--ink-900)',
+    border: '1px solid var(--border)',
     borderRadius: 8,
     padding: 24,
     width: 400,
     fontFamily: 'monospace',
-    color: 'var(--cb-text-primary)'
+    color: 'var(--fg)'
   }
   const label: React.CSSProperties = {
     fontSize: 10,
-    color: 'var(--cb-text-secondary)',
+    color: 'var(--bone-200)',
     textTransform: 'uppercase',
     marginBottom: 4
   }
   const selectStyle: React.CSSProperties = {
     width: '100%',
-    background: 'var(--cb-bg-panel)',
-    border: '1px solid var(--cb-border)',
+    background: 'var(--ink-900)',
+    border: '1px solid var(--border)',
     borderRadius: 3,
     padding: '4px 8px',
-    color: 'var(--cb-text-primary)',
+    color: 'var(--fg)',
     fontFamily: 'monospace',
     fontSize: 11,
     marginBottom: 16
@@ -83,9 +83,9 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps): React.JS
           style={{
             fontSize: 13,
             fontWeight: 'bold',
-            color: 'var(--cb-accent)',
+            color: 'var(--accent)',
             marginBottom: 20,
-            borderBottom: '1px solid var(--cb-border-strong)',
+            borderBottom: '1px solid var(--border-strong)',
             paddingBottom: 8
           }}
         >
@@ -124,7 +124,7 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps): React.JS
           <div
             style={{
               fontSize: 9,
-              color: 'var(--cb-text-muted)',
+              color: 'var(--fg-muted)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
               marginBottom: 6
@@ -144,9 +144,9 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps): React.JS
                     gap: 8,
                     padding: '4px 10px',
                     borderRadius: 3,
-                    border: `1px solid ${local.theme === t ? accent : 'var(--cb-border)'}`,
-                    background: local.theme === t ? 'var(--cb-accent-subtle)' : 'transparent',
-                    color: local.theme === t ? accent : 'var(--cb-text-secondary)',
+                    border: `1px solid ${local.theme === t ? accent : 'var(--border)'}`,
+                    background: local.theme === t ? 'var(--ember-glow)' : 'transparent',
+                    color: local.theme === t ? accent : 'var(--bone-200)',
                     fontFamily: 'monospace',
                     fontSize: 10,
                     cursor: 'pointer',
@@ -174,11 +174,11 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps): React.JS
           <button
             onClick={onClose}
             style={{
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-border)',
+              background: 'var(--ink-850)',
+              border: '1px solid var(--border)',
               borderRadius: 3,
               padding: '4px 16px',
-              color: 'var(--cb-text-secondary)',
+              color: 'var(--bone-200)',
               fontFamily: 'monospace',
               fontSize: 11,
               cursor: 'pointer'

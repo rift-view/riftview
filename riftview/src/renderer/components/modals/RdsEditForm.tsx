@@ -9,18 +9,18 @@ interface Props {
 
 const sel: React.CSSProperties = {
   width: '100%',
-  background: 'var(--cb-bg-panel)',
-  border: '1px solid var(--cb-border)',
+  background: 'var(--ink-900)',
+  border: '1px solid var(--border)',
   borderRadius: 3,
   padding: '3px 6px',
-  color: 'var(--cb-text-primary)',
+  color: 'var(--fg)',
   fontFamily: 'monospace',
   fontSize: 10,
   boxSizing: 'border-box' as const
 }
 const lbl: React.CSSProperties = {
   fontSize: 9,
-  color: 'var(--cb-text-muted)',
+  color: 'var(--fg-muted)',
   textTransform: 'uppercase',
   marginBottom: 2,
   marginTop: 8
@@ -67,7 +67,7 @@ export default function RdsEditForm({ node, onChange }: Props): React.JSX.Elemen
             emit({ multiAZ: e.target.checked })
           }}
         />
-        <span style={{ fontSize: 10, color: 'var(--cb-text-secondary)' }}>Multi-AZ</span>
+        <span style={{ fontSize: 10, color: 'var(--bone-200)' }}>Multi-AZ</span>
       </label>
       <label style={row}>
         <input
@@ -78,7 +78,7 @@ export default function RdsEditForm({ node, onChange }: Props): React.JSX.Elemen
             emit({ deletionProtection: e.target.checked })
           }}
         />
-        <span style={{ fontSize: 10, color: 'var(--cb-text-secondary)' }}>Deletion protection</span>
+        <span style={{ fontSize: 10, color: 'var(--bone-200)' }}>Deletion protection</span>
       </label>
     </div>
   )
