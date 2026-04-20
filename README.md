@@ -33,6 +33,28 @@ The console is a service browser. It cannot show you cross-service relationships
 
 Electron 32 · React 19 · TypeScript · React Flow v12 · AWS SDK v3 · Tailwind CSS 4
 
+## CLI
+
+RiftView ships with a companion command-line tool, **`@riftview/cli`**, for running scans and drift checks from CI without the desktop app.
+
+```bash
+npm install -g @riftview/cli
+riftview scan --profile prod
+riftview drift --state terraform.tfstate --fail-on-drift
+```
+
+See [`docs/cli.md`](./docs/cli.md) for the full reference: command flags, JSON output schema, exit codes, and a GitHub Actions example.
+
+## Repository layout
+
+This is an npm workspaces monorepo. Three workspaces under `riftview/`:
+
+- `apps/desktop` — the Electron app (private, not published)
+- `apps/cli` — `@riftview/cli` (published to npm)
+- `packages/shared` — platform-agnostic analysis, graph, drift, and scan primitives reused by both apps
+
+Root `package.json` hoists devDeps; `npm install` at the root sets up all three.
+
 ## Development
 
 ```bash
