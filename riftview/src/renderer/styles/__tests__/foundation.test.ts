@@ -195,3 +195,54 @@ describe('R6 foundation: modal + form primitives', () => {
     expect(s).toMatch(/\.form-checkbox\s*\{/)
   })
 })
+
+describe('R7 foundation: empty-state + keyboard-help + toast primitives', () => {
+  test('defines empty-state shell + card + title + body', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.empty-state\s*\{/)
+    expect(s).toMatch(/\.empty-state-card\s*\{/)
+    expect(s).toMatch(/\.empty-state-title\s*\{/)
+    expect(s).toMatch(/\.empty-state-body\s*\{/)
+  })
+  test('empty-state-title uses display font + bone-50', () => {
+    const s = css('primitives.css')
+    const block = s.match(/\.empty-state-title\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(block).toMatch(/font-family:\s*var\(--font-display\)/)
+    expect(block).toMatch(/color:\s*var\(--bone-50\)/)
+  })
+  test('defines kbd chip + kbd-help shell + group/rows/row', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.kbd\s*\{/)
+    expect(s).toMatch(/\.modal\.kbd-help\s*\{/)
+    expect(s).toMatch(/\.kbd-group\s*\{/)
+    expect(s).toMatch(/\.kbd-rows\s*\{/)
+    expect(s).toMatch(/\.kbd-row\s*\{/)
+  })
+  test('kbd chip uses mono + ink-900 background + ink-700 border', () => {
+    const s = css('primitives.css')
+    const block = s.match(/\.kbd\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(block).toMatch(/font-family:\s*var\(--font-mono\)/)
+    expect(block).toMatch(/background:\s*var\(--ink-900\)/)
+    expect(block).toMatch(/border:\s*1px solid var\(--ink-700\)/)
+  })
+  test('defines rift-toast base + success + error variants', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.rift-toast\s*\{/)
+    expect(s).toMatch(/\.rift-toast--success\s*\{/)
+    expect(s).toMatch(/\.rift-toast--error\s*\{/)
+  })
+  test('rift-toast binds rift-fade-in-up + alert-card grammar', () => {
+    const s = css('primitives.css')
+    const block = s.match(/\.rift-toast\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(block).toMatch(/animation:\s*rift-fade-in-up/)
+    expect(block).toMatch(/border-left:/)
+    expect(block).toMatch(/background:\s*var\(--bg-elev-1\)/)
+  })
+  test('toast variants set border-left-color to semantic tokens', () => {
+    const s = css('primitives.css')
+    const ok = s.match(/\.rift-toast--success\s*\{[^}]*\}/)?.[0] ?? ''
+    const err = s.match(/\.rift-toast--error\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(ok).toMatch(/border-left-color:\s*var\(--moss-500\)/)
+    expect(err).toMatch(/border-left-color:\s*var\(--fault-500\)/)
+  })
+})
