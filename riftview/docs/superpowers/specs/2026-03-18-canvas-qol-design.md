@@ -25,10 +25,12 @@ Fix unreliable canvas panning, make node positions persist across re-scans, and 
 Position overrides are scoped per-view so that dragging in Topology does not affect Graph layout and vice versa.
 
 Add to `useUIStore`:
+
 - `nodePositions: { topology: Record<string, { x: number; y: number }>; graph: Record<string, { x: number; y: number }> }` — per-view override maps, both start empty.
 - `setNodePosition(view: 'topology' | 'graph', id: string, pos: { x: number; y: number })` — saves a position for the given view.
 
 Both views:
+
 - Wire `onNodesChange` — extract `type === 'position'` events, call `setNodePosition` with the correct view key.
 - Position overrides apply to **top-level nodes only** (nodes without `extent: 'parent'`). Child nodes inside subnet/VPC containers in TopologyView carry `extent: 'parent'` and their positions are layout-managed; applying overrides to them risks silent clamping when the parent resizes after a re-scan. To check the guard, look up the node by `id` in the current `flowNodes` array (via `useNodes()` hook or a local ref) — `cloudNodes` has no `extent` field. Skip persisting any node where `extent === 'parent'`.
 - When building `flowNodes`, check the per-view `nodePositions[n.id]` first; fall back to computed position if no override exists. Do not apply overrides to child nodes (same `extent: 'parent'` guard).
@@ -40,6 +42,7 @@ Positions are stored in memory only (reset on app restart). Stale entries for de
 A "view slot" holds a name and a snapshot of the current view's node positions. Max 4 slots. Slots are independent of the active canvas view (topology vs graph) — saved positions are always taken from whichever canvas view is currently active.
 
 Add to `useUIStore`:
+
 - `savedViews: Array<{ name: string; positions: Record<string, { x: number; y: number }> } | null>` — array of 4 entries, `null` means slot is empty.
 - `activeViewSlot: number | null` — which slot (0–3) is currently loaded, or null.
 - `saveView(slot: number, name: string, view: 'topology' | 'graph')` — snapshots `nodePositions[view]` into the slot with the given name; sets `activeViewSlot` to this slot.
@@ -70,21 +73,25 @@ Cross-view loading note: a slot saved in Topology mode stores topology coordinat
 ## Testing
 
 New test file `src/renderer/store/__tests__/ui.test.ts`:
+
 - `setNodePosition` saves correct id/coords to the correct per-view map.
 - `saveView` snapshots current positions into the correct slot with the given name.
 - `loadView` copies slot positions into the correct per-view map, updates `activeViewSlot`, and invokes the `fitView` callback.
 - `activeViewSlot` does not change when `setNodePosition` is called (panning/dragging).
 
 New test file `src/renderer/components/canvas/__tests__/GraphView.test.tsx`:
+
 - `fitView` is called once when `cloudNodes.length` transitions from 0 → N.
 - `fitView` is NOT called again on subsequent node updates.
 - `fitView` IS called again if count drops back to 0 and then becomes non-zero (0 → N → 0 → N).
 
 New test file `src/renderer/components/canvas/__tests__/TopologyView.test.tsx`:
+
 - Same fitView timing tests as GraphView (including the 0 → N → 0 → N re-fire case).
 - Position overrides are NOT applied to child nodes with `extent: 'parent'`.
 
 New test file `src/renderer/components/canvas/__tests__/SaveViewModal.test.tsx`:
+
 - Renders with pre-filled name (max 24 chars) when slot already has a name.
 - Calls `saveView` with correct slot and typed name on confirm.
 - Calls nothing on cancel.

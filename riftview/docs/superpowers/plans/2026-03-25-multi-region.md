@@ -12,26 +12,27 @@
 
 ## File Map
 
-| File | Action | Responsibility |
-|------|--------|----------------|
-| `src/renderer/types/cloud.ts` | Modify | Add `showRegionIndicators: boolean`, `regionColors: Record<string, string>` to `Settings` |
-| `src/main/ipc/handlers.ts` | Modify | Add same two fields to `DEFAULT_SETTINGS` |
-| `src/renderer/store/cloud.ts` | Modify | Add same two fields to both `defaultSettings` objects (lines ~57 and ~147) |
-| `src/renderer/utils/regionColors.ts` | **Create** | 8-color palette + stable first-seen assignment map + `getRegionColor()` |
-| `src/renderer/components/RegionBar.tsx` | **Create** | Chips sub-bar: shows active regions, add/remove, triggers rescan |
-| `src/renderer/src/App.tsx` | Modify | Insert `<RegionBar />` between `<TitleBar />` and the main flex row |
-| `src/renderer/components/TitleBar.tsx` | Modify | Remove region `<select>` and its handler |
-| `src/renderer/components/canvas/nodes/ResourceNode.tsx` | Modify | Render left-edge accent strip when `node.data.regionColor` is set |
-| `src/renderer/components/canvas/nodes/RegionZoneNode.tsx` | **Create** | Zone container node for Topology view (mirrors GlobalZoneNode) |
-| `src/renderer/components/canvas/TopologyView.tsx` | Modify | Add `regionZone: RegionZoneNode` to `NODE_TYPES`; add region zone wrapping to `buildFlowNodes`; add `selectedRegions`, `showRegionIndicators`, `regionColors` to memo deps |
-| `src/renderer/components/SettingsModal.tsx` | Modify | Add `showRegionIndicators` toggle + per-region hex color inputs to Regions tab |
-| `src/renderer/hooks/useScanner.ts` | Modify | Call `setSelectedRegions([region])` alongside `setRegion` on profile-load delta |
+| File                                                      | Action     | Responsibility                                                                                                                                                             |
+| --------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/renderer/types/cloud.ts`                             | Modify     | Add `showRegionIndicators: boolean`, `regionColors: Record<string, string>` to `Settings`                                                                                  |
+| `src/main/ipc/handlers.ts`                                | Modify     | Add same two fields to `DEFAULT_SETTINGS`                                                                                                                                  |
+| `src/renderer/store/cloud.ts`                             | Modify     | Add same two fields to both `defaultSettings` objects (lines ~57 and ~147)                                                                                                 |
+| `src/renderer/utils/regionColors.ts`                      | **Create** | 8-color palette + stable first-seen assignment map + `getRegionColor()`                                                                                                    |
+| `src/renderer/components/RegionBar.tsx`                   | **Create** | Chips sub-bar: shows active regions, add/remove, triggers rescan                                                                                                           |
+| `src/renderer/src/App.tsx`                                | Modify     | Insert `<RegionBar />` between `<TitleBar />` and the main flex row                                                                                                        |
+| `src/renderer/components/TitleBar.tsx`                    | Modify     | Remove region `<select>` and its handler                                                                                                                                   |
+| `src/renderer/components/canvas/nodes/ResourceNode.tsx`   | Modify     | Render left-edge accent strip when `node.data.regionColor` is set                                                                                                          |
+| `src/renderer/components/canvas/nodes/RegionZoneNode.tsx` | **Create** | Zone container node for Topology view (mirrors GlobalZoneNode)                                                                                                             |
+| `src/renderer/components/canvas/TopologyView.tsx`         | Modify     | Add `regionZone: RegionZoneNode` to `NODE_TYPES`; add region zone wrapping to `buildFlowNodes`; add `selectedRegions`, `showRegionIndicators`, `regionColors` to memo deps |
+| `src/renderer/components/SettingsModal.tsx`               | Modify     | Add `showRegionIndicators` toggle + per-region hex color inputs to Regions tab                                                                                             |
+| `src/renderer/hooks/useScanner.ts`                        | Modify     | Call `setSelectedRegions([region])` alongside `setRegion` on profile-load delta                                                                                            |
 
 ---
 
 ## Task 1: Extend Settings type and defaults
 
 **Files:**
+
 - Modify: `src/renderer/types/cloud.ts`
 - Modify: `src/main/ipc/handlers.ts`
 - Modify: `src/renderer/store/cloud.ts`
@@ -60,7 +61,7 @@ const DEFAULT_SETTINGS = {
   scanInterval: 30 as const,
   theme: 'dark' as const,
   showRegionIndicators: true,
-  regionColors: {} as Record<string, string>,
+  regionColors: {} as Record<string, string>
 }
 ```
 
@@ -93,6 +94,7 @@ git commit -m "feat(multi-region): add showRegionIndicators and regionColors to 
 ## Task 2: Region color utility
 
 **Files:**
+
 - Create: `src/renderer/utils/regionColors.ts`
 
 - [ ] **Step 1: Create the utility**
@@ -107,7 +109,7 @@ const PALETTE = [
   '#f87171', // red
   '#34d399', // teal
   '#fbbf24', // amber
-  '#a78bfa', // violet
+  '#a78bfa' // violet
 ]
 
 // Stable first-seen assignment: once a region gets a color it keeps it
@@ -130,11 +132,9 @@ export function getRegionColor(region: string, override?: string): string {
  */
 export function buildRegionColorMap(
   regions: string[],
-  overrides: Record<string, string> = {},
+  overrides: Record<string, string> = {}
 ): Record<string, string> {
-  return Object.fromEntries(
-    regions.map((r) => [r, getRegionColor(r, overrides[r])])
-  )
+  return Object.fromEntries(regions.map((r) => [r, getRegionColor(r, overrides[r])]))
 }
 ```
 
@@ -158,6 +158,7 @@ git commit -m "feat(multi-region): add regionColors utility with stable first-se
 ## Task 3: RegionBar component
 
 **Files:**
+
 - Create: `src/renderer/components/RegionBar.tsx`
 
 The bar shows when `selectedRegions.length >= 1` always (not just multi-region) so it's always the region control surface. It only shows color dots on chips when ≥ 2 regions are active.
@@ -170,16 +171,25 @@ import { useCloudStore } from '../store/cloud'
 import { buildRegionColorMap } from '../utils/regionColors'
 
 const ALL_REGIONS = [
-  'us-east-1','us-east-2','us-west-1','us-west-2',
-  'eu-west-1','eu-west-2','eu-central-1',
-  'ap-southeast-1','ap-southeast-2','ap-northeast-1',
-  'ap-south-1','sa-east-1','ca-central-1',
+  'us-east-1',
+  'us-east-2',
+  'us-west-1',
+  'us-west-2',
+  'eu-west-1',
+  'eu-west-2',
+  'eu-central-1',
+  'ap-southeast-1',
+  'ap-southeast-2',
+  'ap-northeast-1',
+  'ap-south-1',
+  'sa-east-1',
+  'ca-central-1'
 ]
 
 export function RegionBar(): React.JSX.Element {
-  const selectedRegions    = useCloudStore((s) => s.selectedRegions)
+  const selectedRegions = useCloudStore((s) => s.selectedRegions)
   const setSelectedRegions = useCloudStore((s) => s.setSelectedRegions)
-  const regionColors       = useCloudStore((s) => s.settings.regionColors)
+  const regionColors = useCloudStore((s) => s.settings.regionColors)
   const [addOpen, setAddOpen] = useState(false)
 
   const colorMap = buildRegionColorMap(selectedRegions, regionColors)
@@ -204,18 +214,26 @@ export function RegionBar(): React.JSX.Element {
   return (
     <div
       style={{
-        display:        'flex',
-        alignItems:     'center',
-        gap:            6,
-        padding:        '0 12px',
-        height:         26,
-        flexShrink:     0,
-        background:     'var(--cb-bg-elevated)',
-        borderBottom:   '1px solid var(--cb-border)',
-        fontFamily:     'monospace',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '0 12px',
+        height: 26,
+        flexShrink: 0,
+        background: 'var(--cb-bg-elevated)',
+        borderBottom: '1px solid var(--cb-border)',
+        fontFamily: 'monospace'
       }}
     >
-      <span style={{ fontSize: 8, color: 'var(--cb-text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginRight: 2 }}>
+      <span
+        style={{
+          fontSize: 8,
+          color: 'var(--cb-text-muted)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.07em',
+          marginRight: 2
+        }}
+      >
         Regions
       </span>
 
@@ -223,27 +241,41 @@ export function RegionBar(): React.JSX.Element {
         <span
           key={r}
           style={{
-            display:      'inline-flex',
-            alignItems:   'center',
-            gap:          4,
-            background:   'var(--cb-bg-panel)',
-            border:       `1px solid ${showColors ? colorMap[r] : 'var(--cb-border)'}`,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            background: 'var(--cb-bg-panel)',
+            border: `1px solid ${showColors ? colorMap[r] : 'var(--cb-border)'}`,
             borderRadius: 10,
-            padding:      '1px 7px',
-            fontSize:     9,
-            color:        'var(--cb-text-primary)',
+            padding: '1px 7px',
+            fontSize: 9,
+            color: 'var(--cb-text-primary)'
           }}
         >
           {showColors && (
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: colorMap[r], flexShrink: 0 }} />
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: colorMap[r],
+                flexShrink: 0
+              }}
+            />
           )}
           {r}
           {selectedRegions.length > 1 && (
             <button
               onClick={() => removeRegion(r)}
               style={{
-                background: 'none', border: 'none', padding: 0, marginLeft: 2,
-                color: 'var(--cb-text-muted)', cursor: 'pointer', fontSize: 9, lineHeight: 1,
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                marginLeft: 2,
+                color: 'var(--cb-text-muted)',
+                cursor: 'pointer',
+                fontSize: 9,
+                lineHeight: 1
               }}
             >
               ×
@@ -257,14 +289,14 @@ export function RegionBar(): React.JSX.Element {
           <button
             onClick={() => setAddOpen((o) => !o)}
             style={{
-              background:   'none',
-              border:       '1px dashed var(--cb-border)',
+              background: 'none',
+              border: '1px dashed var(--cb-border)',
               borderRadius: 10,
-              padding:      '1px 7px',
-              fontSize:     9,
-              color:        'var(--cb-text-muted)',
-              cursor:       'pointer',
-              fontFamily:   'monospace',
+              padding: '1px 7px',
+              fontSize: 9,
+              color: 'var(--cb-text-muted)',
+              cursor: 'pointer',
+              fontFamily: 'monospace'
             }}
           >
             + add
@@ -272,16 +304,16 @@ export function RegionBar(): React.JSX.Element {
           {addOpen && (
             <div
               style={{
-                position:   'absolute',
-                top:        '100%',
-                left:       0,
-                zIndex:     200,
-                marginTop:  4,
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                zIndex: 200,
+                marginTop: 4,
                 background: 'var(--cb-bg-panel)',
-                border:     '1px solid var(--cb-border)',
+                border: '1px solid var(--cb-border)',
                 borderRadius: 4,
-                minWidth:   140,
-                boxShadow:  '0 4px 12px rgba(0,0,0,0.3)',
+                minWidth: 140,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
               }}
             >
               {available.map((r) => (
@@ -289,19 +321,23 @@ export function RegionBar(): React.JSX.Element {
                   key={r}
                   onClick={() => addRegion(r)}
                   style={{
-                    display:     'block',
-                    width:       '100%',
-                    textAlign:   'left',
-                    background:  'none',
-                    border:      'none',
-                    padding:     '5px 10px',
-                    fontSize:    10,
-                    color:       'var(--cb-text-secondary)',
-                    cursor:      'pointer',
-                    fontFamily:  'monospace',
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    background: 'none',
+                    border: 'none',
+                    padding: '5px 10px',
+                    fontSize: 10,
+                    color: 'var(--cb-text-secondary)',
+                    cursor: 'pointer',
+                    fontFamily: 'monospace'
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--cb-bg-elevated)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--cb-bg-elevated)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'none'
+                  }}
                 >
                   {r}
                 </button>
@@ -354,6 +390,7 @@ git commit -m "feat(multi-region): add RegionBar chip component"
 ## Task 4: Wire RegionBar into App; remove region select from TitleBar
 
 **Files:**
+
 - Modify: `src/renderer/src/App.tsx`
 - Modify: `src/renderer/components/TitleBar.tsx`
 
@@ -378,6 +415,7 @@ import { RegionBar } from '../components/RegionBar'
 - [ ] **Step 2: Remove region select from TitleBar.tsx**
 
 In `TitleBar.tsx`:
+
 1. Remove the `{/* Region selector */}` `<select>` block (lines ~143–152)
 2. Remove `const region = useCloudStore((s) => s.region)` — no longer needed in TitleBar
 3. Remove `const setRegion = useCloudStore((s) => s.setRegion)` — no longer needed in TitleBar
@@ -406,6 +444,7 @@ git commit -m "feat(multi-region): wire RegionBar; remove region select from Tit
 ## Task 5: Region accent strip on ResourceNode
 
 **Files:**
+
 - Modify: `src/renderer/components/canvas/nodes/ResourceNode.tsx`
 
 The node data already carries arbitrary fields. We add `regionColor?: string` to `ResourceNodeData` and render a 3px left strip when set.
@@ -426,20 +465,22 @@ interface ResourceNodeData {
 In the node's return JSX, the outer wrapper div already has a `position: relative` or can be given one. Add the strip as an absolutely-positioned child:
 
 ```tsx
-{node.data.regionColor && (
-  <div
-    style={{
-      position:     'absolute',
-      left:         0,
-      top:          0,
-      bottom:       0,
-      width:        3,
-      borderRadius: '4px 0 0 4px',
-      background:   node.data.regionColor,
-      pointerEvents: 'none',
-    }}
-  />
-)}
+{
+  node.data.regionColor && (
+    <div
+      style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 3,
+        borderRadius: '4px 0 0 4px',
+        background: node.data.regionColor,
+        pointerEvents: 'none'
+      }}
+    />
+  )
+}
 ```
 
 Place it as the first child inside the node container so it sits behind the content.
@@ -466,6 +507,7 @@ git commit -m "feat(multi-region): add region accent strip to ResourceNode"
 ## Task 6: RegionZoneNode + TopologyView zone wrapping
 
 **Files:**
+
 - Create: `src/renderer/components/canvas/nodes/RegionZoneNode.tsx`
 - Modify: `src/renderer/components/canvas/TopologyView.tsx`
 
@@ -486,21 +528,30 @@ export function RegionZoneNode({ data }: NodeProps): React.JSX.Element {
   return (
     <div
       style={{
-        background:    'rgba(255,255,255,0.015)',
-        border:        `1px dashed ${d.color ?? 'var(--cb-border)'}`,
-        borderRadius:  8,
-        minWidth:      200,
-        minHeight:     80,
-        fontFamily:    'monospace',
-        overflow:      'hidden',
-        pointerEvents: 'none',
+        background: 'rgba(255,255,255,0.015)',
+        border: `1px dashed ${d.color ?? 'var(--cb-border)'}`,
+        borderRadius: 8,
+        minWidth: 200,
+        minHeight: 80,
+        fontFamily: 'monospace',
+        overflow: 'hidden',
+        pointerEvents: 'none'
       }}
     >
       <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
         {d.color && (
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }} />
+          <span
+            style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }}
+          />
         )}
-        <span style={{ fontSize: 9, color: d.color ?? 'var(--cb-text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <span
+          style={{
+            fontSize: 9,
+            color: d.color ?? 'var(--cb-text-muted)',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase'
+          }}
+        >
           {d.label}
         </span>
       </div>
@@ -515,11 +566,11 @@ export function RegionZoneNode({ data }: NodeProps): React.JSX.Element {
 import { RegionZoneNode } from './nodes/RegionZoneNode'
 
 const NODE_TYPES = {
-  resource:   ResourceNode,
-  vpc:        VpcNode,
-  subnet:     SubnetNode,
+  resource: ResourceNode,
+  vpc: VpcNode,
+  subnet: SubnetNode,
   globalZone: GlobalZoneNode,
-  regionZone: RegionZoneNode,   // ← add this
+  regionZone: RegionZoneNode // ← add this
 }
 ```
 
@@ -535,7 +586,7 @@ function buildFlowNodes(
   collapsedSubnets: Set<string>,
   selectedRegions: string[],
   showRegionIndicators: boolean,
-  regionColorMap: Record<string, string>,
+  regionColorMap: Record<string, string>
 ): Node[]
 ```
 
@@ -565,14 +616,14 @@ if (showRegionIndicators && selectedRegions.length >= 2) {
     // Use a generous padding (e.g. 40px) around the computed bbox
     // Add a node of type 'regionZone' with zIndex: -2, position behind VPCs
     allNodes.push({
-      id:       `region-zone-${region}`,
-      type:     'regionZone',
+      id: `region-zone-${region}`,
+      type: 'regionZone',
       position: { x: bbox.x - 40, y: bbox.y - 40 },
-      style:    { width: bbox.width + 80, height: bbox.height + 80 },
-      data:     { label: region, color: regionColorMap[region] },
+      style: { width: bbox.width + 80, height: bbox.height + 80 },
+      data: { label: region, color: regionColorMap[region] },
       selectable: false,
-      draggable:  false,
-      zIndex:    -2,
+      draggable: false,
+      zIndex: -2
     })
   }
 }
@@ -583,14 +634,15 @@ For the bounding box: iterate the already-computed VPC node positions for nodes 
 - [ ] **Step 6: Update the `flowNodes` memo call to pass new args and add deps**
 
 Find the `useMemo` that calls `buildFlowNodes` (around line 462) and:
+
 1. Pass `selectedRegions`, `showRegionIndicators`, `regionColorMap` (computed inline from store)
 2. Add them to the dependency array
 
 ```ts
-const selectedRegions     = useCloudStore((s) => s.selectedRegions)
+const selectedRegions = useCloudStore((s) => s.selectedRegions)
 const showRegionIndicators = useCloudStore((s) => s.settings.showRegionIndicators)
-const regionColorsSetting  = useCloudStore((s) => s.settings.regionColors)
-const regionColorMap       = useMemo(
+const regionColorsSetting = useCloudStore((s) => s.settings.regionColors)
+const regionColorMap = useMemo(
   () => buildRegionColorMap(selectedRegions, regionColorsSetting),
   [selectedRegions, regionColorsSetting]
 )
@@ -618,6 +670,7 @@ git commit -m "feat(multi-region): RegionZoneNode + zone wrapping in TopologyVie
 ## Task 7: Settings UI for region indicators
 
 **Files:**
+
 - Modify: `src/renderer/components/SettingsModal.tsx`
 
 The existing Regions tab already shows checkboxes per region. We append region indicator controls below the existing list.
@@ -629,7 +682,9 @@ In `SettingsModal.tsx`, find the Regions tab block (around line 316). After the 
 ```tsx
 <div style={{ marginTop: 16, borderTop: '1px solid var(--cb-border)', paddingTop: 12 }}>
   <div style={sectionLabel}>Region Indicators</div>
-  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 10 }}>
+  <label
+    style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 10 }}
+  >
     <input
       type="checkbox"
       checked={settings.showRegionIndicators}
@@ -643,12 +698,29 @@ In `SettingsModal.tsx`, find the Regions tab block (around line 316). After the 
 
   {settings.showRegionIndicators && selectedRegions.length >= 2 && (
     <div>
-      <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+      <div
+        style={{
+          fontSize: 9,
+          color: 'var(--cb-text-muted)',
+          marginBottom: 8,
+          textTransform: 'uppercase',
+          letterSpacing: '0.07em'
+        }}
+      >
         Custom colors (hex, leave blank for default)
       </div>
       {selectedRegions.map((r) => (
         <label key={r} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          <span style={{ fontFamily: 'monospace', fontSize: 10, color: 'var(--cb-text-secondary)', minWidth: 120 }}>{r}</span>
+          <span
+            style={{
+              fontFamily: 'monospace',
+              fontSize: 10,
+              color: 'var(--cb-text-secondary)',
+              minWidth: 120
+            }}
+          >
+            {r}
+          </span>
           <input
             type="text"
             placeholder={getRegionColor(r)}
@@ -656,22 +728,32 @@ In `SettingsModal.tsx`, find the Regions tab block (around line 316). After the 
             onChange={(e) => {
               const val = e.target.value.trim()
               const next = { ...settings.regionColors }
-              if (val) next[r] = val; else delete next[r]
+              if (val) next[r] = val
+              else delete next[r]
               handleSettingChange('regionColors', next)
             }}
             style={{
-              width: 90, fontFamily: 'monospace', fontSize: 10,
-              background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-border)',
-              borderRadius: 3, padding: '2px 6px', color: 'var(--cb-text-primary)',
+              width: 90,
+              fontFamily: 'monospace',
+              fontSize: 10,
+              background: 'var(--cb-bg-elevated)',
+              border: '1px solid var(--cb-border)',
+              borderRadius: 3,
+              padding: '2px 6px',
+              color: 'var(--cb-text-primary)'
             }}
           />
           {(settings.regionColors[r] || getRegionColor(r)) && (
-            <span style={{
-              width: 14, height: 14, borderRadius: '50%',
-              background: settings.regionColors[r] || getRegionColor(r),
-              border: '1px solid var(--cb-border)',
-              flexShrink: 0,
-            }} />
+            <span
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: '50%',
+                background: settings.regionColors[r] || getRegionColor(r),
+                border: '1px solid var(--cb-border)',
+                flexShrink: 0
+              }}
+            />
           )}
         </label>
       ))}
@@ -704,6 +786,7 @@ git commit -m "feat(multi-region): add region indicator settings to SettingsModa
 ## Task 8: Sync selectedRegions on profile load
 
 **Files:**
+
 - Modify: `src/renderer/hooks/useScanner.ts`
 
 The scanner receives a profile-change delta and calls `setRegion`. It must also call `setSelectedRegions([region])` so the RegionBar reflects the correct initial region when switching profiles.
@@ -721,7 +804,7 @@ const setSelectedRegions = useCloudStore((s) => s.setSelectedRegions)
 
 // In the delta handler where setRegion is called:
 setRegion(first.region)
-setSelectedRegions([first.region])   // reset to single region on profile change
+setSelectedRegions([first.region]) // reset to single region on profile change
 ```
 
 - [ ] **Step 3: Run typecheck and tests**

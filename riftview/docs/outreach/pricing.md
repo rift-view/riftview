@@ -84,11 +84,11 @@ small-team sales motion.
 
 ## Revenue model projections (directional, not forecast)
 
-| Pilot → paid conversion | Users paying | MRR (Team @ $49/user avg) |
-|---|---|---|
-| 20% | 20 users × 3 avg seats = 60 | $2,940 |
-| 30% | 60 × 3 = 180 | $8,820 |
-| 40% | 100 × 3 = 300 | $14,700 |
+| Pilot → paid conversion | Users paying                | MRR (Team @ $49/user avg) |
+| ----------------------- | --------------------------- | ------------------------- |
+| 20%                     | 20 users × 3 avg seats = 60 | $2,940                    |
+| 30%                     | 60 × 3 = 180                | $8,820                    |
+| 40%                     | 100 × 3 = 300               | $14,700                   |
 
 Assumes 300 pilot signups in first 6 months. Conservative.
 
@@ -103,4 +103,4 @@ Assumes 300 pilot signups in first 6 months. Conservative.
 
 ---
 
-*Last updated 2026-04-17 (Julius draft, pre-BizDev review).*
+_Last updated 2026-04-17 (Julius draft, pre-BizDev review)._

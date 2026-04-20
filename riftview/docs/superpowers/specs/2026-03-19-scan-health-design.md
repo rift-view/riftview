@@ -21,9 +21,9 @@ Add a `ScanHealth` type to `src/renderer/types/cloud.ts`:
 export type ScanServiceStatus = 'ok' | 'error' | 'timeout'
 
 export interface ScanServiceHealth {
-  status:  ScanServiceStatus
-  message?: string   // error message if status === 'error' or 'timeout'
-  count:   number    // number of resources returned
+  status: ScanServiceStatus
+  message?: string // error message if status === 'error' or 'timeout'
+  count: number // number of resources returned
 }
 
 export type ScanHealth = Partial<Record<NodeType, ScanServiceHealth>>
@@ -38,7 +38,10 @@ Add `scanHealth: ScanHealth` to `useCloudStore`. Set it alongside `nodes` at the
 Replace `.catch(() => [])` per service with a wrapper that captures success/failure:
 
 ```ts
-async function scanSafe<T>(fn: () => Promise<T[]>, type: NodeType): Promise<{ type: NodeType; nodes: T[]; health: ScanServiceHealth }> {
+async function scanSafe<T>(
+  fn: () => Promise<T[]>,
+  type: NodeType
+): Promise<{ type: NodeType; nodes: T[]; health: ScanServiceHealth }> {
   try {
     const nodes = await fn()
     return { type, nodes, health: { status: 'ok', count: nodes.length } }
@@ -53,6 +56,7 @@ Run all scans through `scanSafe`, collect results, then dispatch both the merged
 ### UI
 
 In `Sidebar.tsx`, each service row badge currently shows a count. When `scanHealth[type]` exists:
+
 - `status: 'ok'` — no change; show count badge as today
 - `status: 'error'` — replace count badge with a red `!` badge; add `title` tooltip with the error message
 - `status: 'timeout'` — replace with an amber `?` badge
@@ -72,12 +76,15 @@ React Flow renders nodes as they arrive. If subnet nodes are stored before VPC n
 Run scans in three sequential waves instead of one flat `Promise.all`:
 
 **Wave 1 — Foundation** (no dependencies):
+
 - VPC, IGW, Route53 zones, S3, ECR, SQS, SNS, DynamoDB, Secrets, SFN, EventBridge
 
 **Wave 2 — Depends on Wave 1**:
+
 - Subnet (needs VPC), Security Group (needs VPC), NAT Gateway (needs subnet/VPC), ACM
 
 **Wave 3 — Depends on Wave 2**:
+
 - EC2 (needs subnet + SG), RDS (needs subnet + SG), ALB (needs subnet + SG), Lambda (needs SG optional), API Gateway + Routes, CloudFront (needs ACM optional), SSM Parameters
 
 ### Implementation

@@ -1,4 +1,5 @@
 # RiftView — API Gateway v2 (M5b) Design Spec
+
 **Date:** 2026-03-18
 **Status:** Approved
 
@@ -60,7 +61,12 @@ Add AWS API Gateway HTTP APIs (v2) as a full CRUD service. API Gateway resources
 New file `src/main/aws/services/apigw.ts`. Uses `@aws-sdk/client-apigatewayv2`:
 
 ```ts
-import { ApiGatewayV2Client, GetApisCommand, GetRoutesCommand, GetIntegrationsCommand } from '@aws-sdk/client-apigatewayv2'
+import {
+  ApiGatewayV2Client,
+  GetApisCommand,
+  GetRoutesCommand,
+  GetIntegrationsCommand
+} from '@aws-sdk/client-apigatewayv2'
 ```
 
 Two exported functions:
@@ -93,7 +99,7 @@ import { listApis, listRoutes } from './services/apigw'
 // In the Promise.all scan:
 const apiNodes = await listApis(this.clients.apigw, this.region)
 const routeNodes = (
-  await Promise.all(apiNodes.map(api => listRoutes(this.clients.apigw, api.id, this.region)))
+  await Promise.all(apiNodes.map((api) => listRoutes(this.clients.apigw, api.id, this.region)))
 ).flat()
 // Append apiNodes and routeNodes to results
 ```
@@ -125,19 +131,22 @@ Uses the standard regional `config` (same region as the active session).
 API Gateway container nodes (`ApigwNode`) render like `VpcNode` — a container with a header bar. Route nodes (`ApigwRouteNode`) appear inside as children.
 
 **Layout constants:**
+
 ```ts
-const APIGW_PAD         = 16   // padding inside API container
-const APIGW_HEADER      = 32   // height of header bar
-const APIGW_ROUTE_H     = 36   // height of each route node
-const APIGW_ROUTE_GAP   = 8    // vertical gap between route nodes
-const APIGW_MIN_W       = 240  // minimum container width
+const APIGW_PAD = 16 // padding inside API container
+const APIGW_HEADER = 32 // height of header bar
+const APIGW_ROUTE_H = 36 // height of each route node
+const APIGW_ROUTE_GAP = 8 // vertical gap between route nodes
+const APIGW_MIN_W = 240 // minimum container width
 ```
 
 **Container sizing:**
+
 - Width: `max(APIGW_MIN_W, longestRouteLabel * 7 + APIGW_PAD * 2)`
 - Height: `APIGW_HEADER + APIGW_PAD + (routeCount * (APIGW_ROUTE_H + APIGW_ROUTE_GAP)) + APIGW_PAD`
 
 **Route node placement inside container:**
+
 - `x`: `APIGW_PAD`
 - `y`: `APIGW_HEADER + APIGW_PAD + index * (APIGW_ROUTE_H + APIGW_ROUTE_GAP)`
 - Route nodes have `parentId` set to the API node ID and React Flow `parentNode` set accordingly
@@ -170,6 +179,7 @@ const APIGW_MIN_W       = 240  // minimum container width
 In graph view, API Gateway resources appear as regular nodes without container/child relationships.
 
 **Node types registered in `nodeTypes` map:**
+
 - `'apigw'` → `ApigwNode` (reuse same component, graph variant renders without expand/collapse)
 - `'apigw-route'` → `ApigwRouteNode`
 
@@ -178,26 +188,30 @@ In graph view, API Gateway resources appear as regular nodes without container/c
 ```ts
 // For each apigw-route node with lambdaArn:
 if (node.type === 'apigw-route' && node.metadata.lambdaArn) {
-  const lambdaNode = nodes.find(n => n.id === node.metadata.lambdaArn || n.label === extractFnName(node.metadata.lambdaArn as string))
+  const lambdaNode = nodes.find(
+    (n) =>
+      n.id === node.metadata.lambdaArn ||
+      n.label === extractFnName(node.metadata.lambdaArn as string)
+  )
   if (lambdaNode) {
     edges.push({
-      id:     `route-lambda-${node.id}`,
+      id: `route-lambda-${node.id}`,
       source: node.id,
       target: lambdaNode.id,
-      type:   'step',
-      label:  'integration',
-      style:  { stroke: 'var(--cb-border)', strokeDasharray: '4 2', strokeWidth: 1 },
+      type: 'step',
+      label: 'integration',
+      style: { stroke: 'var(--cb-border)', strokeDasharray: '4 2', strokeWidth: 1 }
     })
   }
 }
 
 // For each apigw-route node: connect to parent apigw node
 edges.push({
-  id:     `apigw-route-${node.id}`,
+  id: `apigw-route-${node.id}`,
   source: node.metadata.apiId as string,
   target: node.id,
-  type:   'step',
-  style:  { stroke: 'var(--cb-border)', strokeWidth: 1 },
+  type: 'step',
+  style: { stroke: 'var(--cb-border)', strokeWidth: 1 }
 })
 ```
 
@@ -219,6 +233,7 @@ aws apigatewayv2 create-api \
 ```
 
 `buildCommand.ts` case for `'apigw'`:
+
 - If `corsOrigins.length > 0`: include `--cors-configuration` with `AllowOrigins` as comma-joined list
 - If `corsOrigins` empty: omit `--cors-configuration`
 
@@ -266,6 +281,7 @@ aws apigatewayv2 delete-route \
 ## Inspector Changes
 
 **`apigw` node selected:**
+
 - Standard fields: ID, NAME, REGION, STATE
 - Metadata display:
   - `ENDPOINT` — full endpoint URL (with copy button)
@@ -276,6 +292,7 @@ aws apigatewayv2 delete-route \
 - Delete shows confirmation warning: "This will delete all routes inside the API."
 
 **`apigw-route` node selected:**
+
 - Standard fields: ID (composite `${apiId}/routes/${routeId}`), LABEL (`METHOD PATH`), REGION
 - Metadata display:
   - `METHOD`
@@ -294,10 +311,12 @@ All form components follow the existing pattern in `src/renderer/components/moda
 ### `ApigwForm` (create API)
 
 Fields:
+
 - **Name** (text input, required) — API name
 - **CORS Origins** (multi-row add/remove) — each row is a text input for one origin (e.g. `https://example.com`). Add row button. Remove button per row. Empty rows ignored on submit.
 
 On submit, produces `ApigwParams`:
+
 ```ts
 export interface ApigwParams {
   resource: 'apigw'
@@ -309,10 +328,12 @@ export interface ApigwParams {
 ### `ApigwEditForm` (edit API)
 
 Fields:
+
 - **Name** (text, pre-filled from current `node.label`)
 - **CORS Origins** (same multi-row add/remove, pre-filled from `node.metadata.corsOrigins`)
 
 On submit, produces `ApigwEditParams`:
+
 ```ts
 export interface ApigwEditParams {
   resource: 'apigw'
@@ -325,16 +346,18 @@ export interface ApigwEditParams {
 ### `ApigwRouteForm` (create route)
 
 Fields:
+
 - **Method** (select): `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `ANY` — default `GET`
 - **Path** (text, required) — must start with `/`; validated client-side
 
 The form receives `parentId` (API ID) from the selected node context when "Add Route" is triggered from an API node's Inspector or context menu.
 
 On submit, produces `ApigwRouteParams`:
+
 ```ts
 export interface ApigwRouteParams {
   resource: 'apigw-route'
-  apiId: string      // parentId from context
+  apiId: string // parentId from context
   method: string
   path: string
 }
@@ -385,49 +408,52 @@ export type EditParams = ... | ApigwEditParams
 ## Context Menu
 
 In `CanvasContextMenu.tsx`, when right-clicking on an `apigw` node, add a menu item:
+
 - "Add Route" — opens `CreateModal` with resource pre-set to `'apigw-route'` and `parentId` set to the node ID
 
 When right-clicking the canvas background (no node), add:
+
 - "New API Gateway" — opens `CreateModal` with resource pre-set to `'apigw'`
 
 ---
 
 ## New Files
 
-| File | Purpose |
-|------|---------|
-| `src/main/aws/services/apigw.ts` | Scan functions for API GW v2 (`listApis`, `listRoutes`) |
-| `src/renderer/components/canvas/nodes/ApigwNode.tsx` | Container node (API) |
-| `src/renderer/components/canvas/nodes/ApigwRouteNode.tsx` | Route child node |
-| `src/renderer/components/modals/ApigwForm.tsx` | Create API form |
-| `src/renderer/components/modals/ApigwEditForm.tsx` | Edit API form |
-| `src/renderer/components/modals/ApigwRouteForm.tsx` | Create route form |
+| File                                                      | Purpose                                                 |
+| --------------------------------------------------------- | ------------------------------------------------------- |
+| `src/main/aws/services/apigw.ts`                          | Scan functions for API GW v2 (`listApis`, `listRoutes`) |
+| `src/renderer/components/canvas/nodes/ApigwNode.tsx`      | Container node (API)                                    |
+| `src/renderer/components/canvas/nodes/ApigwRouteNode.tsx` | Route child node                                        |
+| `src/renderer/components/modals/ApigwForm.tsx`            | Create API form                                         |
+| `src/renderer/components/modals/ApigwEditForm.tsx`        | Edit API form                                           |
+| `src/renderer/components/modals/ApigwRouteForm.tsx`       | Create route form                                       |
 
 ## Modified Files
 
-| File | Change |
-|------|--------|
-| `package.json` | Add `@aws-sdk/client-apigatewayv2` |
-| `src/main/aws/client.ts` | Add `ApiGatewayV2Client` to `AwsClients` + `createClients` |
-| `src/main/aws/scanner.ts` | Add `listApis` + `listRoutes` calls |
-| `src/renderer/types/cloud.ts` | Add `'apigw'`, `'apigw-route'` to `NodeType` |
-| `src/renderer/types/create.ts` | Add `ApigwParams`, `ApigwRouteParams`, extend `CreateParams` |
-| `src/renderer/types/edit.ts` | Add `ApigwEditParams`, extend `EditParams` |
-| `src/renderer/utils/buildCommand.ts` | Add `apigw`, `apigw-route` cases |
-| `src/renderer/utils/buildDeleteCommands.ts` | Add `apigw`, `apigw-route` cases |
-| `src/renderer/utils/buildEditCommands.ts` | Add `apigw` case |
-| `src/renderer/components/canvas/TopologyView.tsx` | Render `ApigwNode` containers in VPC row, draw route→lambda edges |
-| `src/renderer/components/canvas/GraphView.tsx` | Register node types, add route→lambda + route→apigw edges |
-| `src/renderer/components/Inspector.tsx` | Handle `apigw`, `apigw-route` node types |
-| `src/renderer/components/modals/CreateModal.tsx` | Wire `ApigwForm`, `ApigwRouteForm`; pass `parentId` for routes |
-| `src/renderer/components/modals/EditModal.tsx` | Wire `ApigwEditForm` |
-| `src/renderer/components/canvas/CanvasContextMenu.tsx` | Add "New API Gateway" + "Add Route" menu items |
+| File                                                   | Change                                                            |
+| ------------------------------------------------------ | ----------------------------------------------------------------- |
+| `package.json`                                         | Add `@aws-sdk/client-apigatewayv2`                                |
+| `src/main/aws/client.ts`                               | Add `ApiGatewayV2Client` to `AwsClients` + `createClients`        |
+| `src/main/aws/scanner.ts`                              | Add `listApis` + `listRoutes` calls                               |
+| `src/renderer/types/cloud.ts`                          | Add `'apigw'`, `'apigw-route'` to `NodeType`                      |
+| `src/renderer/types/create.ts`                         | Add `ApigwParams`, `ApigwRouteParams`, extend `CreateParams`      |
+| `src/renderer/types/edit.ts`                           | Add `ApigwEditParams`, extend `EditParams`                        |
+| `src/renderer/utils/buildCommand.ts`                   | Add `apigw`, `apigw-route` cases                                  |
+| `src/renderer/utils/buildDeleteCommands.ts`            | Add `apigw`, `apigw-route` cases                                  |
+| `src/renderer/utils/buildEditCommands.ts`              | Add `apigw` case                                                  |
+| `src/renderer/components/canvas/TopologyView.tsx`      | Render `ApigwNode` containers in VPC row, draw route→lambda edges |
+| `src/renderer/components/canvas/GraphView.tsx`         | Register node types, add route→lambda + route→apigw edges         |
+| `src/renderer/components/Inspector.tsx`                | Handle `apigw`, `apigw-route` node types                          |
+| `src/renderer/components/modals/CreateModal.tsx`       | Wire `ApigwForm`, `ApigwRouteForm`; pass `parentId` for routes    |
+| `src/renderer/components/modals/EditModal.tsx`         | Wire `ApigwEditForm`                                              |
+| `src/renderer/components/canvas/CanvasContextMenu.tsx` | Add "New API Gateway" + "Add Route" menu items                    |
 
 ---
 
 ## Scope
 
 **In scope:**
+
 - API Gateway v2 HTTP APIs: scan, create, edit, delete
 - Routes: scan, create, delete
 - Lambda integration edges (topology + graph)
@@ -436,6 +462,7 @@ When right-clicking the canvas background (no node), add:
 - Inspector for both `apigw` and `apigw-route`
 
 **Out of scope:**
+
 - REST APIs (v1)
 - WebSocket APIs
 - Custom domains

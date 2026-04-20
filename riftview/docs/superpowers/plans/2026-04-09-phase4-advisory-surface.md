@@ -12,27 +12,28 @@
 
 ## File Map
 
-| File | Change |
-|---|---|
-| `src/renderer/components/canvas/nodes/ResourceNode.tsx` | Add advisory badge |
-| `src/renderer/types/cloud.ts` | Add 5 new `AdvisoryRuleId` entries |
-| `src/renderer/utils/analyzeNode.ts` | Add 5 new advisory rules |
-| `src/renderer/utils/buildAdvisoryRemediations.ts` | **New** — advisory → CLI command mapping |
-| `src/renderer/components/Inspector.tsx` | Add "Fix" button to ADVISORIES section |
-| `src/main/aws/services/sqs.ts` | Add `hasDlq` metadata field |
-| `src/main/aws/services/rds.ts` | Add `deletionProtection`, `backupRetentionPeriod` |
-| `src/main/aws/services/s3.ts` | Add `versioningEnabled` |
-| `src/main/aws/services/lambda.ts` | Add `hasDlq` from existing `GetFunctionConfigurationCommand` |
-| `tests/renderer/utils/analyzeNode.test.ts` | Add tests for new rules |
-| `tests/renderer/utils/buildAdvisoryRemediations.test.ts` | **New** test file |
-| `tests/main/aws/services/sqs.test.ts` | Update for new `hasDlq` field |
-| `tests/main/aws/services/rds.test.ts` | Update for new fields |
+| File                                                     | Change                                                       |
+| -------------------------------------------------------- | ------------------------------------------------------------ |
+| `src/renderer/components/canvas/nodes/ResourceNode.tsx`  | Add advisory badge                                           |
+| `src/renderer/types/cloud.ts`                            | Add 5 new `AdvisoryRuleId` entries                           |
+| `src/renderer/utils/analyzeNode.ts`                      | Add 5 new advisory rules                                     |
+| `src/renderer/utils/buildAdvisoryRemediations.ts`        | **New** — advisory → CLI command mapping                     |
+| `src/renderer/components/Inspector.tsx`                  | Add "Fix" button to ADVISORIES section                       |
+| `src/main/aws/services/sqs.ts`                           | Add `hasDlq` metadata field                                  |
+| `src/main/aws/services/rds.ts`                           | Add `deletionProtection`, `backupRetentionPeriod`            |
+| `src/main/aws/services/s3.ts`                            | Add `versioningEnabled`                                      |
+| `src/main/aws/services/lambda.ts`                        | Add `hasDlq` from existing `GetFunctionConfigurationCommand` |
+| `tests/renderer/utils/analyzeNode.test.ts`               | Add tests for new rules                                      |
+| `tests/renderer/utils/buildAdvisoryRemediations.test.ts` | **New** test file                                            |
+| `tests/main/aws/services/sqs.test.ts`                    | Update for new `hasDlq` field                                |
+| `tests/main/aws/services/rds.test.ts`                    | Update for new fields                                        |
 
 ---
 
 ## Task 1: Advisory badge on ResourceNode
 
 **Files:**
+
 - Modify: `src/renderer/components/canvas/nodes/ResourceNode.tsx`
 - Test: `tests/renderer/components/canvas/nodes/ActionRail.test.tsx` (look at this for the testing pattern; write a new `ResourceNode.advisories.test.tsx`)
 
@@ -115,23 +116,27 @@ After the existing flag reads (`const actionRail = flag('ACTION_RAIL')`), add:
 ```typescript
 const opIntelligence = flag('OP_INTELLIGENCE')
 
-const advisoryBadge = opIntelligence && d.metadata ? (() => {
-  const advisories = analyzeNode({
-    id,
-    type:     d.nodeType,
-    label:    d.label,
-    status:   d.status,
-    region:   d.region ?? '',
-    metadata: d.metadata,
-  })
-  const critical = advisories.filter((a) => a.severity === 'critical').length
-  const warning  = advisories.filter((a) => a.severity === 'warning').length
-  if (critical === 0 && warning === 0) return null
-  return { critical, warning }
-})() : null
+const advisoryBadge =
+  opIntelligence && d.metadata
+    ? (() => {
+        const advisories = analyzeNode({
+          id,
+          type: d.nodeType,
+          label: d.label,
+          status: d.status,
+          region: d.region ?? '',
+          metadata: d.metadata
+        })
+        const critical = advisories.filter((a) => a.severity === 'critical').length
+        const warning = advisories.filter((a) => a.severity === 'warning').length
+        if (critical === 0 && warning === 0) return null
+        return { critical, warning }
+      })()
+    : null
 ```
 
 Add the import at the top of the file:
+
 ```typescript
 import { analyzeNode } from '../../../utils/analyzeNode'
 ```
@@ -177,11 +182,13 @@ The advisory badge must stack with existing top-right badges (TF badge at `right
 ```bash
 npm test -- tests/renderer/components/canvas/nodes/ResourceNode.advisories.test.tsx
 ```
+
 Expected: PASS
 
 ```bash
 npm run typecheck
 ```
+
 Expected: 0 errors
 
 - [ ] **Step 4: Run full test suite**
@@ -189,6 +196,7 @@ Expected: 0 errors
 ```bash
 npm test
 ```
+
 Expected: all 928+ tests PASS
 
 - [ ] **Step 5: Commit**
@@ -203,6 +211,7 @@ git commit -m "feat(canvas): advisory badge on ResourceNode — critical/warning
 ## Task 2: Expand scan metadata (main process)
 
 **Files:**
+
 - Modify: `src/main/aws/services/sqs.ts`
 - Modify: `src/main/aws/services/rds.ts`
 - Modify: `src/main/aws/services/s3.ts`
@@ -218,20 +227,30 @@ The `GetQueueAttributesCommand` call in `sqs.ts` already fetches `QueueArn`, `Ap
 - [ ] **Step 1: SQS — update `AttributeNames` and add `hasDlq` to metadata**
 
 In `src/main/aws/services/sqs.ts`, change:
+
 ```typescript
 AttributeNames: ['QueueArn', 'ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible']
 ```
+
 to:
+
 ```typescript
-AttributeNames: ['QueueArn', 'ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible', 'RedrivePolicy']
+AttributeNames: [
+  'QueueArn',
+  'ApproximateNumberOfMessages',
+  'ApproximateNumberOfMessagesNotVisible',
+  'RedrivePolicy'
+]
 ```
 
 In the enriched node metadata, add:
+
 ```typescript
-const hasDlq = !!(attrRes.Attributes?.['RedrivePolicy'])
+const hasDlq = !!attrRes.Attributes?.['RedrivePolicy']
 ```
 
 And include in `metadata`:
+
 ```typescript
 metadata: {
   ...(msgs != null ? { messages: Number(msgs) } : {}),
@@ -251,23 +270,45 @@ In `src/main/aws/services/rds.ts`, there are two changes:
 **2a. Widen the inline type annotation on `allInstances` (line 13).** The file uses a manually typed inline type — NOT the SDK type — so you must add the new fields explicitly.
 
 Find:
+
 ```typescript
-    const allInstances: { DBInstanceIdentifier?: string; DBInstanceStatus?: string; Engine?: string; DBInstanceClass?: string; Endpoint?: { Address?: string }; DBSubnetGroup?: { VpcId?: string }; MultiAZ?: boolean }[] = []
+const allInstances: {
+  DBInstanceIdentifier?: string
+  DBInstanceStatus?: string
+  Engine?: string
+  DBInstanceClass?: string
+  Endpoint?: { Address?: string }
+  DBSubnetGroup?: { VpcId?: string }
+  MultiAZ?: boolean
+}[] = []
 ```
 
 Replace with:
+
 ```typescript
-    const allInstances: { DBInstanceIdentifier?: string; DBInstanceStatus?: string; Engine?: string; DBInstanceClass?: string; Endpoint?: { Address?: string }; DBSubnetGroup?: { VpcId?: string }; MultiAZ?: boolean; DeletionProtection?: boolean; BackupRetentionPeriod?: number }[] = []
+const allInstances: {
+  DBInstanceIdentifier?: string
+  DBInstanceStatus?: string
+  Engine?: string
+  DBInstanceClass?: string
+  Endpoint?: { Address?: string }
+  DBSubnetGroup?: { VpcId?: string }
+  MultiAZ?: boolean
+  DeletionProtection?: boolean
+  BackupRetentionPeriod?: number
+}[] = []
 ```
 
 **2b. Update the `metadata` field in the `.map()` call (line 26).**
 
 Find:
+
 ```typescript
       metadata: { engine: db.Engine, instanceClass: db.DBInstanceClass, endpoint: db.Endpoint?.Address, multiAZ: db.MultiAZ ?? false },
 ```
 
 Replace with:
+
 ```typescript
       metadata: { engine: db.Engine, instanceClass: db.DBInstanceClass, endpoint: db.Endpoint?.Address, multiAZ: db.MultiAZ ?? false, deletionProtection: db.DeletionProtection ?? false, backupRetentionPeriod: db.BackupRetentionPeriod ?? 0 },
 ```
@@ -279,17 +320,19 @@ Add a `GetBucketVersioningCommand` call in the per-bucket enrichment in `s3.ts`.
 - [ ] **Step 3: S3 — add versioning check**
 
 At the top of `src/main/aws/services/s3.ts`, add to the import:
+
 ```typescript
 import {
   S3Client,
   ListBucketsCommand,
   GetBucketNotificationConfigurationCommand,
   GetPublicAccessBlockCommand,
-  GetBucketVersioningCommand,
+  GetBucketVersioningCommand
 } from '@aws-sdk/client-s3'
 ```
 
 In the per-bucket enrichment (after the public access block check), add:
+
 ```typescript
 // Versioning status
 let versioningEnabled = false
@@ -302,6 +345,7 @@ if (versioningRes?.Status === 'Enabled') {
 ```
 
 Update `baseNode` metadata:
+
 ```typescript
 metadata: { creationDate: b.CreationDate, publicAccessEnabled, versioningEnabled },
 ```
@@ -313,11 +357,13 @@ metadata: { creationDate: b.CreationDate, publicAccessEnabled, versioningEnabled
 - [ ] **Step 4: Lambda — add hasDlq from existing config call**
 
 In `src/main/aws/services/lambda.ts`, in the block where `configRes` is used (around line 93–112), add:
+
 ```typescript
-const hasDlq = !!(configRes.DeadLetterConfig?.TargetArn)
+const hasDlq = !!configRes.DeadLetterConfig?.TargetArn
 ```
 
 Update the metadata line:
+
 ```typescript
 metadata: { runtime: fn.Runtime, handler: fn.Handler, timeout, memorySize, hasDlq },
 ```
@@ -335,6 +381,7 @@ Expected: existing tests still pass. The new fields should be present — if the
 ```bash
 npm run typecheck
 ```
+
 Expected: 0 errors
 
 - [ ] **Step 7: Commit**
@@ -349,6 +396,7 @@ git commit -m "feat(scan): add hasDlq, deletionProtection, backupRetentionPeriod
 ## Task 3: Expand advisory rules
 
 **Files:**
+
 - Modify: `src/renderer/types/cloud.ts` (add 5 `AdvisoryRuleId` entries)
 - Modify: `src/renderer/utils/analyzeNode.ts` (add 5 rules)
 - Modify: `tests/renderer/utils/analyzeNode.test.ts` (add tests)
@@ -364,55 +412,73 @@ Add to `tests/renderer/utils/analyzeNode.test.ts` (after existing tests, inside 
 Note: the test file uses a helper called `node()` (not `makeNode`). Use that pattern exactly.
 
 ```typescript
-  // ── sqs-no-dlq ────────────────────────────────────────────────────────────
-  it('sqs with hasDlq=false → warning sqs-no-dlq', () => {
-    const r = analyzeNode(node({ type: 'sqs', metadata: { hasDlq: false } }))
-    expect(r.some((a) => a.ruleId === 'sqs-no-dlq')).toBe(true)
-  })
-  it('sqs with hasDlq=true → no sqs-no-dlq', () => {
-    const r = analyzeNode(node({ type: 'sqs', metadata: { hasDlq: true } }))
-    expect(r.find((a) => a.ruleId === 'sqs-no-dlq')).toBeUndefined()
-  })
+// ── sqs-no-dlq ────────────────────────────────────────────────────────────
+it('sqs with hasDlq=false → warning sqs-no-dlq', () => {
+  const r = analyzeNode(node({ type: 'sqs', metadata: { hasDlq: false } }))
+  expect(r.some((a) => a.ruleId === 'sqs-no-dlq')).toBe(true)
+})
+it('sqs with hasDlq=true → no sqs-no-dlq', () => {
+  const r = analyzeNode(node({ type: 'sqs', metadata: { hasDlq: true } }))
+  expect(r.find((a) => a.ruleId === 'sqs-no-dlq')).toBeUndefined()
+})
 
-  // ── rds-no-deletion-protection ────────────────────────────────────────────
-  it('rds with deletionProtection=false → warning rds-no-deletion-protection', () => {
-    const r = analyzeNode(node({ type: 'rds', metadata: { multiAZ: true, deletionProtection: false } }))
-    expect(r.some((a) => a.ruleId === 'rds-no-deletion-protection')).toBe(true)
-  })
-  it('rds with deletionProtection=true → no rds-no-deletion-protection', () => {
-    const r = analyzeNode(node({ type: 'rds', metadata: { multiAZ: true, deletionProtection: true } }))
-    expect(r.find((a) => a.ruleId === 'rds-no-deletion-protection')).toBeUndefined()
-  })
+// ── rds-no-deletion-protection ────────────────────────────────────────────
+it('rds with deletionProtection=false → warning rds-no-deletion-protection', () => {
+  const r = analyzeNode(
+    node({ type: 'rds', metadata: { multiAZ: true, deletionProtection: false } })
+  )
+  expect(r.some((a) => a.ruleId === 'rds-no-deletion-protection')).toBe(true)
+})
+it('rds with deletionProtection=true → no rds-no-deletion-protection', () => {
+  const r = analyzeNode(
+    node({ type: 'rds', metadata: { multiAZ: true, deletionProtection: true } })
+  )
+  expect(r.find((a) => a.ruleId === 'rds-no-deletion-protection')).toBeUndefined()
+})
 
-  // ── rds-no-backup ─────────────────────────────────────────────────────────
-  it('rds with backupRetentionPeriod=0 → critical rds-no-backup', () => {
-    const r = analyzeNode(node({ type: 'rds', metadata: { multiAZ: true, deletionProtection: true, backupRetentionPeriod: 0 } }))
-    expect(r.some((a) => a.ruleId === 'rds-no-backup')).toBe(true)
-  })
-  it('rds with backupRetentionPeriod=7 → no rds-no-backup', () => {
-    const r = analyzeNode(node({ type: 'rds', metadata: { multiAZ: true, deletionProtection: true, backupRetentionPeriod: 7 } }))
-    expect(r.find((a) => a.ruleId === 'rds-no-backup')).toBeUndefined()
-  })
+// ── rds-no-backup ─────────────────────────────────────────────────────────
+it('rds with backupRetentionPeriod=0 → critical rds-no-backup', () => {
+  const r = analyzeNode(
+    node({
+      type: 'rds',
+      metadata: { multiAZ: true, deletionProtection: true, backupRetentionPeriod: 0 }
+    })
+  )
+  expect(r.some((a) => a.ruleId === 'rds-no-backup')).toBe(true)
+})
+it('rds with backupRetentionPeriod=7 → no rds-no-backup', () => {
+  const r = analyzeNode(
+    node({
+      type: 'rds',
+      metadata: { multiAZ: true, deletionProtection: true, backupRetentionPeriod: 7 }
+    })
+  )
+  expect(r.find((a) => a.ruleId === 'rds-no-backup')).toBeUndefined()
+})
 
-  // ── s3-no-versioning ──────────────────────────────────────────────────────
-  it('s3 with versioningEnabled=false → warning s3-no-versioning', () => {
-    const r = analyzeNode(node({ type: 's3', metadata: { publicAccessEnabled: false, versioningEnabled: false } }))
-    expect(r.some((a) => a.ruleId === 's3-no-versioning')).toBe(true)
-  })
-  it('s3 with versioningEnabled=true → no s3-no-versioning', () => {
-    const r = analyzeNode(node({ type: 's3', metadata: { publicAccessEnabled: false, versioningEnabled: true } }))
-    expect(r.find((a) => a.ruleId === 's3-no-versioning')).toBeUndefined()
-  })
+// ── s3-no-versioning ──────────────────────────────────────────────────────
+it('s3 with versioningEnabled=false → warning s3-no-versioning', () => {
+  const r = analyzeNode(
+    node({ type: 's3', metadata: { publicAccessEnabled: false, versioningEnabled: false } })
+  )
+  expect(r.some((a) => a.ruleId === 's3-no-versioning')).toBe(true)
+})
+it('s3 with versioningEnabled=true → no s3-no-versioning', () => {
+  const r = analyzeNode(
+    node({ type: 's3', metadata: { publicAccessEnabled: false, versioningEnabled: true } })
+  )
+  expect(r.find((a) => a.ruleId === 's3-no-versioning')).toBeUndefined()
+})
 
-  // ── lambda-no-dlq ─────────────────────────────────────────────────────────
-  it('lambda with hasDlq=false → warning lambda-no-dlq', () => {
-    const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, hasDlq: false } }))
-    expect(r.some((a) => a.ruleId === 'lambda-no-dlq')).toBe(true)
-  })
-  it('lambda with hasDlq=true → no lambda-no-dlq', () => {
-    const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, hasDlq: true } }))
-    expect(r.find((a) => a.ruleId === 'lambda-no-dlq')).toBeUndefined()
-  })
+// ── lambda-no-dlq ─────────────────────────────────────────────────────────
+it('lambda with hasDlq=false → warning lambda-no-dlq', () => {
+  const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, hasDlq: false } }))
+  expect(r.some((a) => a.ruleId === 'lambda-no-dlq')).toBe(true)
+})
+it('lambda with hasDlq=true → no lambda-no-dlq', () => {
+  const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, hasDlq: true } }))
+  expect(r.find((a) => a.ruleId === 'lambda-no-dlq')).toBeUndefined()
+})
 ```
 
 Run: `npm test -- tests/renderer/utils/analyzeNode.test.ts`
@@ -441,56 +507,64 @@ export type AdvisoryRuleId =
 Add at the end of `analyzeNode.ts`, before the `return advisories` line:
 
 ```typescript
-  if (node.type === 'sqs' && node.metadata.hasDlq === false) {
+if (node.type === 'sqs' && node.metadata.hasDlq === false) {
+  advisories.push({
+    ruleId: 'sqs-no-dlq',
+    severity: 'warning',
+    title: 'No dead-letter queue configured',
+    detail:
+      'Messages that fail processing will be discarded. Configure a DLQ to retain failed messages for inspection and replay.',
+    nodeId: node.id
+  })
+}
+
+if (node.type === 'rds') {
+  if (node.metadata.deletionProtection === false) {
     advisories.push({
-      ruleId:   'sqs-no-dlq',
+      ruleId: 'rds-no-deletion-protection',
       severity: 'warning',
-      title:    'No dead-letter queue configured',
-      detail:   'Messages that fail processing will be discarded. Configure a DLQ to retain failed messages for inspection and replay.',
-      nodeId:   node.id,
+      title: 'Deletion protection disabled',
+      detail:
+        'This RDS instance can be deleted with a single API call. Enable deletion protection to prevent accidental or unauthorised deletion.',
+      nodeId: node.id
     })
   }
-
-  if (node.type === 'rds') {
-    if (node.metadata.deletionProtection === false) {
-      advisories.push({
-        ruleId:   'rds-no-deletion-protection',
-        severity: 'warning',
-        title:    'Deletion protection disabled',
-        detail:   'This RDS instance can be deleted with a single API call. Enable deletion protection to prevent accidental or unauthorised deletion.',
-        nodeId:   node.id,
-      })
-    }
-    if (typeof node.metadata.backupRetentionPeriod === 'number' && node.metadata.backupRetentionPeriod === 0) {
-      advisories.push({
-        ruleId:   'rds-no-backup',
-        severity: 'critical',
-        title:    'Automated backups disabled',
-        detail:   'Backup retention period is 0 days — automated backups are disabled. Set a retention period of at least 7 days to enable point-in-time recovery.',
-        nodeId:   node.id,
-      })
-    }
-  }
-
-  if (node.type === 's3' && node.metadata.versioningEnabled === false) {
+  if (
+    typeof node.metadata.backupRetentionPeriod === 'number' &&
+    node.metadata.backupRetentionPeriod === 0
+  ) {
     advisories.push({
-      ruleId:   's3-no-versioning',
-      severity: 'warning',
-      title:    'Versioning not enabled',
-      detail:   'Objects deleted or overwritten cannot be recovered. Enable versioning to protect against accidental deletion and enable point-in-time recovery.',
-      nodeId:   node.id,
+      ruleId: 'rds-no-backup',
+      severity: 'critical',
+      title: 'Automated backups disabled',
+      detail:
+        'Backup retention period is 0 days — automated backups are disabled. Set a retention period of at least 7 days to enable point-in-time recovery.',
+      nodeId: node.id
     })
   }
+}
 
-  if (node.type === 'lambda' && node.metadata.hasDlq === false) {
-    advisories.push({
-      ruleId:   'lambda-no-dlq',
-      severity: 'warning',
-      title:    'No dead-letter queue or destination configured',
-      detail:   'Failed asynchronous invocations are silently discarded. Configure a dead-letter queue or an on-failure destination to capture errors.',
-      nodeId:   node.id,
-    })
-  }
+if (node.type === 's3' && node.metadata.versioningEnabled === false) {
+  advisories.push({
+    ruleId: 's3-no-versioning',
+    severity: 'warning',
+    title: 'Versioning not enabled',
+    detail:
+      'Objects deleted or overwritten cannot be recovered. Enable versioning to protect against accidental deletion and enable point-in-time recovery.',
+    nodeId: node.id
+  })
+}
+
+if (node.type === 'lambda' && node.metadata.hasDlq === false) {
+  advisories.push({
+    ruleId: 'lambda-no-dlq',
+    severity: 'warning',
+    title: 'No dead-letter queue or destination configured',
+    detail:
+      'Failed asynchronous invocations are silently discarded. Configure a dead-letter queue or an on-failure destination to capture errors.',
+    nodeId: node.id
+  })
+}
 ```
 
 - [ ] **Step 5: Run tests**
@@ -498,6 +572,7 @@ Add at the end of `analyzeNode.ts`, before the `return advisories` line:
 ```bash
 npm test -- tests/renderer/utils/analyzeNode.test.ts
 ```
+
 Expected: all tests PASS
 
 - [ ] **Step 6: Run full suite + typecheck**
@@ -505,6 +580,7 @@ Expected: all tests PASS
 ```bash
 npm run typecheck && npm test
 ```
+
 Expected: 0 errors, all tests PASS
 
 - [ ] **Step 7: Commit**
@@ -519,6 +595,7 @@ git commit -m "feat(advisories): add 5 new rules — sqs-no-dlq, rds-no-deletion
 ## Task 4: Advisory-to-remediation bridge
 
 **Files:**
+
 - Create: `src/renderer/utils/buildAdvisoryRemediations.ts`
 - Modify: `src/renderer/components/Inspector.tsx` (ADVISORIES section only)
 - Create: `tests/renderer/utils/buildAdvisoryRemediations.test.ts`
@@ -526,6 +603,7 @@ git commit -m "feat(advisories): add 5 new rules — sqs-no-dlq, rds-no-deletion
 **Background:** For advisory rules where there is a deterministic CLI fix, expose that fix directly from the ADVISORIES section in Inspector — a "Fix" button that calls `onRemediate` with the generated commands. This eliminates the need for drift to trigger remediation for security issues.
 
 Three rules have clear CLI fixes:
+
 - `s3-public-access` → `aws s3api put-public-access-block --bucket {name} --public-access-block-configuration BlockPublicAcls=true,BlockPublicPolicy=true,IgnorePublicAcls=true,RestrictPublicBuckets=true`
 - `rds-no-deletion-protection` → `aws rds modify-db-instance --db-instance-identifier {id} --deletion-protection --apply-immediately`
 - `rds-no-backup` → `aws rds modify-db-instance --db-instance-identifier {id} --backup-retention-period 7 --apply-immediately`
@@ -595,28 +673,41 @@ import type { Advisory } from '../types/cloud'
 export function buildAdvisoryRemediation(advisory: Advisory, nodeId: string): string[][] | null {
   switch (advisory.ruleId) {
     case 's3-public-access':
-      return [[
-        's3api', 'put-public-access-block',
-        '--bucket', nodeId,
-        '--public-access-block-configuration',
-        'BlockPublicAcls=true,BlockPublicPolicy=true,IgnorePublicAcls=true,RestrictPublicBuckets=true',
-      ]]
+      return [
+        [
+          's3api',
+          'put-public-access-block',
+          '--bucket',
+          nodeId,
+          '--public-access-block-configuration',
+          'BlockPublicAcls=true,BlockPublicPolicy=true,IgnorePublicAcls=true,RestrictPublicBuckets=true'
+        ]
+      ]
 
     case 'rds-no-deletion-protection':
-      return [[
-        'rds', 'modify-db-instance',
-        '--db-instance-identifier', nodeId,
-        '--deletion-protection',
-        '--apply-immediately',
-      ]]
+      return [
+        [
+          'rds',
+          'modify-db-instance',
+          '--db-instance-identifier',
+          nodeId,
+          '--deletion-protection',
+          '--apply-immediately'
+        ]
+      ]
 
     case 'rds-no-backup':
-      return [[
-        'rds', 'modify-db-instance',
-        '--db-instance-identifier', nodeId,
-        '--backup-retention-period', '7',
-        '--apply-immediately',
-      ]]
+      return [
+        [
+          'rds',
+          'modify-db-instance',
+          '--db-instance-identifier',
+          nodeId,
+          '--backup-retention-period',
+          '7',
+          '--apply-immediately'
+        ]
+      ]
 
     default:
       return null
@@ -629,6 +720,7 @@ export function buildAdvisoryRemediation(advisory: Advisory, nodeId: string): st
 ```bash
 npm test -- tests/renderer/utils/buildAdvisoryRemediations.test.ts
 ```
+
 Expected: all tests PASS
 
 - [ ] **Step 4: Add "Fix" button to Inspector ADVISORIES section**
@@ -636,6 +728,7 @@ Expected: all tests PASS
 In `src/renderer/components/Inspector.tsx`:
 
 **4a.** Add import at the top (after existing imports):
+
 ```typescript
 import { buildAdvisoryRemediation } from '../utils/buildAdvisoryRemediations'
 ```
@@ -722,6 +815,7 @@ Replace it with this (drops the `<ul>/<li>`, converts to `<div>` rows, adds Fix 
 ```bash
 npm run typecheck && npm test
 ```
+
 Expected: 0 errors, all tests PASS
 
 - [ ] **Step 6: Commit**

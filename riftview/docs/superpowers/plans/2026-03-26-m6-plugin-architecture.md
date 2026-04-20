@@ -9,6 +9,7 @@
 **Tech Stack:** Electron 32 + React 19 + TypeScript, Zustand 5, React Flow v12 (@xyflow/react), Vitest + RTL
 
 **Key constraints:**
+
 - `JSX.Element` return types are NOT allowed — use `React.JSX.Element`
 - `Record<NodeType, string>` maps with `satisfies` must remain exhaustive — do NOT widen `NodeType`
 - Plugin types are `string` at runtime; the compile-time union stays closed
@@ -18,33 +19,34 @@
 
 ## File Map
 
-| File | Action | Responsibility |
-|------|--------|----------------|
-| `src/main/plugin/types.ts` | **Create** | `ScanContext`, `PluginScanResult`, `NodeTypeMetadata`, `PluginCommandHandlers`, `PluginHclGenerator`, `RiftViewPlugin` interface |
-| `src/main/plugin/registry.ts` | **Create** | `PluginRegistry` class + `pluginRegistry` singleton |
-| `src/main/plugin/awsPlugin.ts` | **Create** | `awsPlugin` — wraps all existing AWS service scan functions |
-| `src/main/plugin/index.ts` | **Create** | Re-exports `pluginRegistry`, calls `pluginRegistry.register(awsPlugin)` |
-| `src/renderer/types/plugin.ts` | **Create** | Re-exports `NodeTypeMetadata` for renderer-side use (avoids cross-process import) |
-| `src/renderer/plugin/rendererRegistry.ts` | **Create** | `registerPluginComponent()`, `getPluginNodeComponents()` |
-| `src/renderer/plugin/pluginCommands.ts` | **Create** | `resolveCreateCommands`, `resolveDeleteCommands`, `resolveEditCommands` routing |
-| `src/renderer/plugin/index.ts` | **Create** | Entry point (empty for M6, ready for Azure) |
-| `src/main/aws/scanner.ts` | Modify | Replace `awsProvider.scan()` with `pluginRegistry.scanAll()`; move key-pair fetch to `awsPlugin` `scanExtras` |
-| `src/main/ipc/channels.ts` | Modify | Add `PLUGIN_METADATA: 'plugin:metadata'` |
-| `src/main/ipc/handlers.ts` | Modify | Push `PLUGIN_METADATA` after `restartScanner`; call `pluginRegistry.activateAll()` |
-| `src/preload/index.ts` | Modify | Expose `onPluginMetadata` listener |
-| `src/preload/index.d.ts` | Modify | Declare `onPluginMetadata` on `Window.riftview` |
-| `src/renderer/store/ui.ts` | Modify | Add `pluginNodeTypes` slice + `setPluginNodeTypes` action |
-| `src/renderer/src/App.tsx` | Modify | Handle `onPluginMetadata` IPC event; import `renderer/plugin/index.ts` |
-| `src/renderer/components/canvas/nodes/ResourceNode.tsx` | Modify | Runtime fallback for `TYPE_BORDER` and `TYPE_LABEL` using `pluginNodeTypes` |
-| `src/renderer/components/SearchPalette.tsx` | Modify | Runtime fallback for `TYPE_BADGE_COLOR` and `TYPE_SHORT` using `pluginNodeTypes` |
-| `src/renderer/components/Sidebar.tsx` | Modify | Append plugin types with `hasCreate: true` from `pluginNodeTypes` store |
-| `src/main/terraform/index.ts` | Modify | Fallback to `pluginRegistry.getHclGenerator()` for non-built-in types |
+| File                                                    | Action     | Responsibility                                                                                                                   |
+| ------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `src/main/plugin/types.ts`                              | **Create** | `ScanContext`, `PluginScanResult`, `NodeTypeMetadata`, `PluginCommandHandlers`, `PluginHclGenerator`, `RiftViewPlugin` interface |
+| `src/main/plugin/registry.ts`                           | **Create** | `PluginRegistry` class + `pluginRegistry` singleton                                                                              |
+| `src/main/plugin/awsPlugin.ts`                          | **Create** | `awsPlugin` — wraps all existing AWS service scan functions                                                                      |
+| `src/main/plugin/index.ts`                              | **Create** | Re-exports `pluginRegistry`, calls `pluginRegistry.register(awsPlugin)`                                                          |
+| `src/renderer/types/plugin.ts`                          | **Create** | Re-exports `NodeTypeMetadata` for renderer-side use (avoids cross-process import)                                                |
+| `src/renderer/plugin/rendererRegistry.ts`               | **Create** | `registerPluginComponent()`, `getPluginNodeComponents()`                                                                         |
+| `src/renderer/plugin/pluginCommands.ts`                 | **Create** | `resolveCreateCommands`, `resolveDeleteCommands`, `resolveEditCommands` routing                                                  |
+| `src/renderer/plugin/index.ts`                          | **Create** | Entry point (empty for M6, ready for Azure)                                                                                      |
+| `src/main/aws/scanner.ts`                               | Modify     | Replace `awsProvider.scan()` with `pluginRegistry.scanAll()`; move key-pair fetch to `awsPlugin` `scanExtras`                    |
+| `src/main/ipc/channels.ts`                              | Modify     | Add `PLUGIN_METADATA: 'plugin:metadata'`                                                                                         |
+| `src/main/ipc/handlers.ts`                              | Modify     | Push `PLUGIN_METADATA` after `restartScanner`; call `pluginRegistry.activateAll()`                                               |
+| `src/preload/index.ts`                                  | Modify     | Expose `onPluginMetadata` listener                                                                                               |
+| `src/preload/index.d.ts`                                | Modify     | Declare `onPluginMetadata` on `Window.riftview`                                                                                  |
+| `src/renderer/store/ui.ts`                              | Modify     | Add `pluginNodeTypes` slice + `setPluginNodeTypes` action                                                                        |
+| `src/renderer/src/App.tsx`                              | Modify     | Handle `onPluginMetadata` IPC event; import `renderer/plugin/index.ts`                                                           |
+| `src/renderer/components/canvas/nodes/ResourceNode.tsx` | Modify     | Runtime fallback for `TYPE_BORDER` and `TYPE_LABEL` using `pluginNodeTypes`                                                      |
+| `src/renderer/components/SearchPalette.tsx`             | Modify     | Runtime fallback for `TYPE_BADGE_COLOR` and `TYPE_SHORT` using `pluginNodeTypes`                                                 |
+| `src/renderer/components/Sidebar.tsx`                   | Modify     | Append plugin types with `hasCreate: true` from `pluginNodeTypes` store                                                          |
+| `src/main/terraform/index.ts`                           | Modify     | Fallback to `pluginRegistry.getHclGenerator()` for non-built-in types                                                            |
 
 ---
 
 ## Task 1: Define `RiftViewPlugin` interface and types
 
 **Files:**
+
 - Create: `src/main/plugin/types.ts`
 - Create: `src/renderer/types/plugin.ts`
 - Create: `tests/main/plugin/types.test.ts`
@@ -55,17 +57,22 @@
 
 ```ts
 import { describe, it, expect } from 'vitest'
-import type { RiftViewPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from '../../../src/main/plugin/types'
+import type {
+  RiftViewPlugin,
+  NodeTypeMetadata,
+  PluginScanResult,
+  ScanContext
+} from '../../../src/main/plugin/types'
 
 describe('RiftViewPlugin interface — structural shape', () => {
   it('NodeTypeMetadata has all required fields', () => {
     const meta: NodeTypeMetadata = {
-      label:       'EC2',
+      label: 'EC2',
       borderColor: '#FF9900',
-      badgeColor:  '#FF9900',
-      shortLabel:  'EC2',
+      badgeColor: '#FF9900',
+      shortLabel: 'EC2',
       displayName: 'EC2 Instance',
-      hasCreate:   true,
+      hasCreate: true
     }
     expect(meta.label).toBe('EC2')
     expect(meta.hasCreate).toBe(true)
@@ -84,17 +91,21 @@ describe('RiftViewPlugin interface — structural shape', () => {
 
   it('RiftViewPlugin duck-type: minimal plugin object satisfies required fields', () => {
     const plugin: RiftViewPlugin = {
-      id:              'com.test.plugin',
-      displayName:     'Test Plugin',
-      nodeTypes:       ['test-node'],
+      id: 'com.test.plugin',
+      displayName: 'Test Plugin',
+      nodeTypes: ['test-node'],
       nodeTypeMetadata: {
         'test-node': {
-          label: 'TEST', borderColor: '#fff', badgeColor: '#fff',
-          shortLabel: 'T', displayName: 'Test Node', hasCreate: false,
-        },
+          label: 'TEST',
+          borderColor: '#fff',
+          badgeColor: '#fff',
+          shortLabel: 'T',
+          displayName: 'Test Node',
+          hasCreate: false
+        }
       },
       createCredentials: (_profile, _region) => ({}),
-      scan: async (_ctx) => ({ nodes: [], errors: [] }),
+      scan: async (_ctx) => ({ nodes: [], errors: [] })
     }
     expect(plugin.id).toBe('com.test.plugin')
     expect(plugin.nodeTypes).toHaveLength(1)
@@ -146,7 +157,7 @@ export interface NodeTypeMetadata {
 export interface PluginCommandHandlers {
   buildCreate?: (resource: string, params: Record<string, unknown>) => string[][]
   buildDelete?: (node: CloudNode, opts?: Record<string, unknown>) => string[][]
-  buildEdit?:   (node: CloudNode, params: Record<string, unknown>) => string[][]
+  buildEdit?: (node: CloudNode, params: Record<string, unknown>) => string[][]
 }
 
 export type PluginHclGenerator = (node: CloudNode) => string
@@ -209,6 +220,7 @@ cd /Users/julius/AI/riftview/riftview && git add src/main/plugin/types.ts src/re
 ## Task 2: Implement `PluginRegistry`
 
 **Files:**
+
 - Create: `src/main/plugin/registry.ts`
 - Create: `tests/main/plugin/registry.test.ts`
 
@@ -229,10 +241,20 @@ function makePlugin(id: string, nodeTypes: string[] = ['test-node']): RiftViewPl
     displayName: `Plugin ${id}`,
     nodeTypes,
     nodeTypeMetadata: Object.fromEntries(
-      nodeTypes.map((t) => [t, { label: t.toUpperCase(), borderColor: '#fff', badgeColor: '#fff', shortLabel: t, displayName: t, hasCreate: false }])
+      nodeTypes.map((t) => [
+        t,
+        {
+          label: t.toUpperCase(),
+          borderColor: '#fff',
+          badgeColor: '#fff',
+          shortLabel: t,
+          displayName: t,
+          hasCreate: false
+        }
+      ])
     ),
     createCredentials: vi.fn().mockReturnValue({ stubClient: true }),
-    scan: vi.fn().mockResolvedValue({ nodes: [], errors: [] }),
+    scan: vi.fn().mockResolvedValue({ nodes: [], errors: [] })
   }
 }
 
@@ -252,7 +274,9 @@ describe('PluginRegistry', () => {
 
   it('throws on duplicate NodeType registration', () => {
     registry.register(makePlugin('com.test.a', ['shared-type']))
-    expect(() => registry.register(makePlugin('com.test.b', ['shared-type']))).toThrow(/shared-type/)
+    expect(() => registry.register(makePlugin('com.test.b', ['shared-type']))).toThrow(
+      /shared-type/
+    )
   })
 
   it('getNodeTypeMetadata returns metadata for registered type', () => {
@@ -266,8 +290,22 @@ describe('PluginRegistry', () => {
   })
 
   it('scanAll merges results from all plugins', async () => {
-    const nodeA = { id: 'a', type: 'ec2' as const, label: 'A', status: 'running' as const, region: 'us-east-1', metadata: {} }
-    const nodeB = { id: 'b', type: 'ec2' as const, label: 'B', status: 'running' as const, region: 'us-east-1', metadata: {} }
+    const nodeA = {
+      id: 'a',
+      type: 'ec2' as const,
+      label: 'A',
+      status: 'running' as const,
+      region: 'us-east-1',
+      metadata: {}
+    }
+    const nodeB = {
+      id: 'b',
+      type: 'ec2' as const,
+      label: 'B',
+      status: 'running' as const,
+      region: 'us-east-1',
+      metadata: {}
+    }
     const pa = makePlugin('com.test.a', ['type-a'])
     const pb = makePlugin('com.test.b', ['type-b'])
     ;(pa.scan as ReturnType<typeof vi.fn>).mockResolvedValue({ nodes: [nodeA], errors: [] })
@@ -325,7 +363,12 @@ Expected: `Cannot find module '../../../src/main/plugin/registry'`
 
 ```ts
 // src/main/plugin/registry.ts
-import type { RiftViewPlugin, NodeTypeMetadata, PluginHclGenerator, PluginScanResult } from './types'
+import type {
+  RiftViewPlugin,
+  NodeTypeMetadata,
+  PluginHclGenerator,
+  PluginScanResult
+} from './types'
 import type { CloudNode } from '../../renderer/types/cloud'
 
 export class PluginRegistry {
@@ -343,7 +386,7 @@ export class PluginRegistry {
         const owner = this._ownerByType.get(nodeType)!
         throw new Error(
           `NodeType "${nodeType}" is already claimed by plugin "${owner.id}". ` +
-          `Cannot register plugin "${plugin.id}".`
+            `Cannot register plugin "${plugin.id}".`
         )
       }
       this._ownerByType.set(nodeType, plugin)
@@ -394,7 +437,7 @@ export class PluginRegistry {
           allErrors.push({
             service: plugin.id,
             region,
-            message: (err as Error)?.message ?? String(err),
+            message: (err as Error)?.message ?? String(err)
           })
         }
       })
@@ -475,6 +518,7 @@ cd /Users/julius/AI/riftview/riftview && git add src/main/plugin/registry.ts tes
 ## Task 3: Implement `awsPlugin.ts`
 
 **Files:**
+
 - Create: `src/main/plugin/awsPlugin.ts`
 - Create: `tests/main/plugin/awsPlugin.test.ts`
 
@@ -488,35 +532,63 @@ import type { AwsClients } from '../../../src/main/aws/client'
 
 vi.mock('electron', () => ({ BrowserWindow: vi.fn() }))
 vi.mock('../../../src/main/aws/client', () => ({
-  createClients: vi.fn().mockReturnValue({} as AwsClients),
+  createClients: vi.fn().mockReturnValue({} as AwsClients)
 }))
 vi.mock('../../../src/main/aws/services/ec2', () => ({
-  describeInstances:      vi.fn().mockResolvedValue([]),
-  describeVpcs:           vi.fn().mockResolvedValue([]),
-  describeSubnets:        vi.fn().mockResolvedValue([]),
+  describeInstances: vi.fn().mockResolvedValue([]),
+  describeVpcs: vi.fn().mockResolvedValue([]),
+  describeSubnets: vi.fn().mockResolvedValue([]),
   describeSecurityGroups: vi.fn().mockResolvedValue([]),
-  describeKeyPairs:       vi.fn().mockResolvedValue(['key-1', 'key-2']),
-  listInternetGateways:   vi.fn().mockResolvedValue([]),
-  listNatGateways:        vi.fn().mockResolvedValue([]),
+  describeKeyPairs: vi.fn().mockResolvedValue(['key-1', 'key-2']),
+  listInternetGateways: vi.fn().mockResolvedValue([]),
+  listNatGateways: vi.fn().mockResolvedValue([])
 }))
-vi.mock('../../../src/main/aws/services/igw', () => ({ listInternetGateways: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/nat', () => ({ listNatGateways: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/rds', () => ({ describeDBInstances: vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/igw', () => ({
+  listInternetGateways: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/nat', () => ({
+  listNatGateways: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/rds', () => ({
+  describeDBInstances: vi.fn().mockResolvedValue([])
+}))
 vi.mock('../../../src/main/aws/services/s3', () => ({ listBuckets: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/lambda', () => ({ listFunctions: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/alb', () => ({ describeLoadBalancers: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/acm', () => ({ listCertificates: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/cloudfront', () => ({ listDistributions: vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/lambda', () => ({
+  listFunctions: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/alb', () => ({
+  describeLoadBalancers: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/acm', () => ({
+  listCertificates: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/cloudfront', () => ({
+  listDistributions: vi.fn().mockResolvedValue([])
+}))
 vi.mock('../../../src/main/aws/services/apigw', () => ({ listApis: vi.fn().mockResolvedValue([]) }))
 vi.mock('../../../src/main/aws/services/sqs', () => ({ listQueues: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/secrets', () => ({ listSecrets: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/ecr', () => ({ listRepositories: vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/secrets', () => ({
+  listSecrets: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/ecr', () => ({
+  listRepositories: vi.fn().mockResolvedValue([])
+}))
 vi.mock('../../../src/main/aws/services/sns', () => ({ listTopics: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/dynamo', () => ({ listTables: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/ssm', () => ({ listParameters: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/r53', () => ({ listHostedZones: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/sfn', () => ({ listStateMachines: vi.fn().mockResolvedValue([]) }))
-vi.mock('../../../src/main/aws/services/eventbridge', () => ({ listEventBuses: vi.fn().mockResolvedValue([]) }))
+vi.mock('../../../src/main/aws/services/dynamo', () => ({
+  listTables: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/ssm', () => ({
+  listParameters: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/r53', () => ({
+  listHostedZones: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/sfn', () => ({
+  listStateMachines: vi.fn().mockResolvedValue([])
+}))
+vi.mock('../../../src/main/aws/services/eventbridge', () => ({
+  listEventBuses: vi.fn().mockResolvedValue([])
+}))
 
 describe('awsPlugin', () => {
   let awsPlugin: import('../../../src/main/plugin/awsPlugin').RiftViewPlugin
@@ -579,7 +651,12 @@ Create `src/main/plugin/awsPlugin.ts`:
 // src/main/plugin/awsPlugin.ts
 import { createClients } from '../aws/client'
 import type { AwsClients } from '../aws/client'
-import { describeInstances, describeVpcs, describeSubnets, describeSecurityGroups } from '../aws/services/ec2'
+import {
+  describeInstances,
+  describeVpcs,
+  describeSubnets,
+  describeSecurityGroups
+} from '../aws/services/ec2'
 import { listInternetGateways, listNatGateways } from '../aws/services/ec2'
 import { describeDBInstances } from '../aws/services/rds'
 import { listBuckets } from '../aws/services/s3'
@@ -602,30 +679,198 @@ import type { CloudNode } from '../../renderer/types/cloud'
 
 // Metadata copied from ResourceNode.tsx TYPE_BORDER + TYPE_LABEL + Sidebar.tsx SERVICES
 const AWS_NODE_TYPE_METADATA: Record<string, NodeTypeMetadata> = {
-  ec2:              { label: 'EC2',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'EC2',    displayName: 'EC2',             hasCreate: true  },
-  vpc:              { label: 'VPC',    borderColor: '#1976D2', badgeColor: '#1976D2', shortLabel: 'VPC',    displayName: 'VPC',             hasCreate: true  },
-  subnet:           { label: 'SUBNET', borderColor: '#4CAF50', badgeColor: '#4CAF50', shortLabel: 'SUB',    displayName: 'Subnet',          hasCreate: false },
-  rds:              { label: 'RDS',    borderColor: '#4CAF50', badgeColor: '#4CAF50', shortLabel: 'RDS',    displayName: 'RDS',             hasCreate: true  },
-  s3:               { label: 'S3',     borderColor: '#64b5f6', badgeColor: '#64b5f6', shortLabel: 'S3',     displayName: 'S3',              hasCreate: true  },
-  lambda:           { label: 'λ',      borderColor: '#64b5f6', badgeColor: '#64b5f6', shortLabel: 'FN',     displayName: 'Lambda',          hasCreate: true  },
-  alb:              { label: 'ALB',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'ALB',    displayName: 'ALB',             hasCreate: true  },
-  'security-group': { label: 'SG',     borderColor: '#9c27b0', badgeColor: '#9c27b0', shortLabel: 'SG',     displayName: 'Security Group',  hasCreate: true  },
-  igw:              { label: 'IGW',    borderColor: '#4CAF50', badgeColor: '#4CAF50', shortLabel: 'IGW',    displayName: 'IGW',             hasCreate: false },
-  acm:              { label: 'ACM',    borderColor: '#64b5f6', badgeColor: '#64b5f6', shortLabel: 'ACM',    displayName: 'ACM',             hasCreate: true  },
-  cloudfront:       { label: 'CF',     borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'CF',     displayName: 'CloudFront',      hasCreate: true  },
-  apigw:            { label: 'APIGW',  borderColor: '#8b5cf6', badgeColor: '#8b5cf6', shortLabel: 'APIGW',  displayName: 'API Gateway',     hasCreate: true  },
-  'apigw-route':    { label: 'ROUTE',  borderColor: '#22c55e', badgeColor: '#22c55e', shortLabel: 'ROUTE',  displayName: 'API Route',       hasCreate: false },
-  sqs:              { label: 'SQS',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'SQS',    displayName: 'SQS',             hasCreate: true  },
-  secret:           { label: 'SECRET', borderColor: '#22c55e', badgeColor: '#22c55e', shortLabel: 'SEC',    displayName: 'Secrets Manager', hasCreate: true  },
-  'ecr-repo':       { label: 'ECR',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'ECR',    displayName: 'ECR',             hasCreate: true  },
-  sns:              { label: 'SNS',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'SNS',    displayName: 'SNS',             hasCreate: true  },
-  dynamo:           { label: 'DDB',    borderColor: '#64b5f6', badgeColor: '#64b5f6', shortLabel: 'DDB',    displayName: 'DynamoDB',        hasCreate: true  },
-  'ssm-param':      { label: 'SSM',    borderColor: '#22c55e', badgeColor: '#22c55e', shortLabel: 'SSM',    displayName: 'SSM',             hasCreate: false },
-  'nat-gateway':    { label: 'NAT',    borderColor: '#4CAF50', badgeColor: '#4CAF50', shortLabel: 'NAT',    displayName: 'NAT Gateway',     hasCreate: false },
-  'r53-zone':       { label: 'R53',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'R53',    displayName: 'Route 53',        hasCreate: false },
-  sfn:              { label: 'SFN',    borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'SFN',    displayName: 'Step Functions',  hasCreate: true  },
-  'eventbridge-bus':{ label: 'EB',     borderColor: '#FF9900', badgeColor: '#FF9900', shortLabel: 'EB',     displayName: 'EventBridge',     hasCreate: true  },
-  unknown:          { label: '?',      borderColor: '#6b7280', badgeColor: '#6b7280', shortLabel: '?',      displayName: 'Unknown',         hasCreate: false },
+  ec2: {
+    label: 'EC2',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'EC2',
+    displayName: 'EC2',
+    hasCreate: true
+  },
+  vpc: {
+    label: 'VPC',
+    borderColor: '#1976D2',
+    badgeColor: '#1976D2',
+    shortLabel: 'VPC',
+    displayName: 'VPC',
+    hasCreate: true
+  },
+  subnet: {
+    label: 'SUBNET',
+    borderColor: '#4CAF50',
+    badgeColor: '#4CAF50',
+    shortLabel: 'SUB',
+    displayName: 'Subnet',
+    hasCreate: false
+  },
+  rds: {
+    label: 'RDS',
+    borderColor: '#4CAF50',
+    badgeColor: '#4CAF50',
+    shortLabel: 'RDS',
+    displayName: 'RDS',
+    hasCreate: true
+  },
+  s3: {
+    label: 'S3',
+    borderColor: '#64b5f6',
+    badgeColor: '#64b5f6',
+    shortLabel: 'S3',
+    displayName: 'S3',
+    hasCreate: true
+  },
+  lambda: {
+    label: 'λ',
+    borderColor: '#64b5f6',
+    badgeColor: '#64b5f6',
+    shortLabel: 'FN',
+    displayName: 'Lambda',
+    hasCreate: true
+  },
+  alb: {
+    label: 'ALB',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'ALB',
+    displayName: 'ALB',
+    hasCreate: true
+  },
+  'security-group': {
+    label: 'SG',
+    borderColor: '#9c27b0',
+    badgeColor: '#9c27b0',
+    shortLabel: 'SG',
+    displayName: 'Security Group',
+    hasCreate: true
+  },
+  igw: {
+    label: 'IGW',
+    borderColor: '#4CAF50',
+    badgeColor: '#4CAF50',
+    shortLabel: 'IGW',
+    displayName: 'IGW',
+    hasCreate: false
+  },
+  acm: {
+    label: 'ACM',
+    borderColor: '#64b5f6',
+    badgeColor: '#64b5f6',
+    shortLabel: 'ACM',
+    displayName: 'ACM',
+    hasCreate: true
+  },
+  cloudfront: {
+    label: 'CF',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'CF',
+    displayName: 'CloudFront',
+    hasCreate: true
+  },
+  apigw: {
+    label: 'APIGW',
+    borderColor: '#8b5cf6',
+    badgeColor: '#8b5cf6',
+    shortLabel: 'APIGW',
+    displayName: 'API Gateway',
+    hasCreate: true
+  },
+  'apigw-route': {
+    label: 'ROUTE',
+    borderColor: '#22c55e',
+    badgeColor: '#22c55e',
+    shortLabel: 'ROUTE',
+    displayName: 'API Route',
+    hasCreate: false
+  },
+  sqs: {
+    label: 'SQS',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'SQS',
+    displayName: 'SQS',
+    hasCreate: true
+  },
+  secret: {
+    label: 'SECRET',
+    borderColor: '#22c55e',
+    badgeColor: '#22c55e',
+    shortLabel: 'SEC',
+    displayName: 'Secrets Manager',
+    hasCreate: true
+  },
+  'ecr-repo': {
+    label: 'ECR',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'ECR',
+    displayName: 'ECR',
+    hasCreate: true
+  },
+  sns: {
+    label: 'SNS',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'SNS',
+    displayName: 'SNS',
+    hasCreate: true
+  },
+  dynamo: {
+    label: 'DDB',
+    borderColor: '#64b5f6',
+    badgeColor: '#64b5f6',
+    shortLabel: 'DDB',
+    displayName: 'DynamoDB',
+    hasCreate: true
+  },
+  'ssm-param': {
+    label: 'SSM',
+    borderColor: '#22c55e',
+    badgeColor: '#22c55e',
+    shortLabel: 'SSM',
+    displayName: 'SSM',
+    hasCreate: false
+  },
+  'nat-gateway': {
+    label: 'NAT',
+    borderColor: '#4CAF50',
+    badgeColor: '#4CAF50',
+    shortLabel: 'NAT',
+    displayName: 'NAT Gateway',
+    hasCreate: false
+  },
+  'r53-zone': {
+    label: 'R53',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'R53',
+    displayName: 'Route 53',
+    hasCreate: false
+  },
+  sfn: {
+    label: 'SFN',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'SFN',
+    displayName: 'Step Functions',
+    hasCreate: true
+  },
+  'eventbridge-bus': {
+    label: 'EB',
+    borderColor: '#FF9900',
+    badgeColor: '#FF9900',
+    shortLabel: 'EB',
+    displayName: 'EventBridge',
+    hasCreate: true
+  },
+  unknown: {
+    label: '?',
+    borderColor: '#6b7280',
+    badgeColor: '#6b7280',
+    shortLabel: '?',
+    displayName: 'Unknown',
+    hasCreate: false
+  }
 }
 
 function errCatch(service: string, region: string, errors: PluginScanResult['errors']) {
@@ -647,9 +892,9 @@ export const awsPlugin: RiftViewPlugin = {
 
   async scan(context: ScanContext): Promise<PluginScanResult> {
     const clients = context.credentials as AwsClients
-    const region  = context.region
+    const region = context.region
     const errors: PluginScanResult['errors'] = []
-    const catch_  = (service: string) => errCatch(service, region, errors)
+    const catch_ = (service: string) => errCatch(service, region, errors)
 
     const results = await Promise.all([
       describeInstances(clients.ec2, region).catch(catch_('ec2:instances')),
@@ -673,18 +918,19 @@ export const awsPlugin: RiftViewPlugin = {
       listNatGateways(clients.ec2, region).catch(catch_('nat')),
       listHostedZones(clients.r53).catch(catch_('r53')),
       listStateMachines(clients.sfn, region).catch(catch_('sfn')),
-      listEventBuses(clients.eventbridge, region).catch(catch_('eventbridge')),
+      listEventBuses(clients.eventbridge, region).catch(catch_('eventbridge'))
     ])
 
     const nodes = results.flat().map((node) => ({ ...node, region: node.region ?? region }))
     return { nodes, errors }
-  },
+  }
 }
 ```
 
 Note: `listInternetGateways` and `listNatGateways` are imported from `services/igw` and `services/nat` respectively in the real file — adjust the imports to match the actual service module paths (check `provider.ts`). Looking at `provider.ts` lines 19-20, they are in `services/igw` and `services/nat`. Fix the double-import of ec2 services in the template above:
 
 The actual imports for `awsPlugin.ts` should match `provider.ts` exactly — use `services/igw` for `listInternetGateways` and `services/nat` for `listNatGateways`. Remove the line `import { listInternetGateways, listNatGateways } from '../aws/services/ec2'` — that was a template error. Use:
+
 ```ts
 import { listInternetGateways } from '../aws/services/igw'
 import { listNatGateways } from '../aws/services/nat'
@@ -737,6 +983,7 @@ cd /Users/julius/AI/riftview/riftview && git add src/main/plugin/awsPlugin.ts sr
 ## Task 4: Wire `ResourceScanner` through `pluginRegistry.scanAll()`
 
 **Files:**
+
 - Modify: `src/main/aws/scanner.ts`
 - Modify: `tests/main/aws/scanner.test.ts` (update existing test or create one)
 
@@ -761,22 +1008,22 @@ import type { CloudNode } from '../../../src/renderer/types/cloud'
 
 vi.mock('electron', () => ({
   BrowserWindow: vi.fn(() => ({
-    webContents: { send: vi.fn() },
-  })),
+    webContents: { send: vi.fn() }
+  }))
 }))
 
 vi.mock('../../../src/main/plugin/registry', () => ({
   pluginRegistry: {
-    scanAll: vi.fn().mockResolvedValue({ nodes: [], errors: [] }),
-  },
+    scanAll: vi.fn().mockResolvedValue({ nodes: [], errors: [] })
+  }
 }))
 
 vi.mock('../../../src/main/aws/client', () => ({
-  createClients: vi.fn().mockReturnValue({}),
+  createClients: vi.fn().mockReturnValue({})
 }))
 
 vi.mock('../../../src/main/aws/services/ec2', () => ({
-  describeKeyPairs: vi.fn().mockResolvedValue([]),
+  describeKeyPairs: vi.fn().mockResolvedValue([])
 }))
 
 function makeNode(id: string): CloudNode {
@@ -832,6 +1079,7 @@ cd /Users/julius/AI/riftview/riftview && npm test -- tests/main/aws/scanner.test
 - [ ] Replace the `awsProvider.scan()` call with `pluginRegistry.scanAll(region)`. Keep the key-pair send inline (guarded with a try/catch) since the scanner already holds `this.window` and the AWS plugin does not implement `scanExtras` in M6.
 
 Replace the `private async scan()` method. The changes are:
+
 1. Remove `import { awsProvider } from './provider'`
 2. Remove `const clients = createClients(...)` inside the region map
 3. Replace `awsProvider.scan(clients, region)` with `pluginRegistry.scanAll(region)`
@@ -915,6 +1163,7 @@ cd /Users/julius/AI/riftview/riftview && git add src/main/aws/scanner.ts tests/m
 ## Task 5: Add `PLUGIN_METADATA` IPC channel and push
 
 **Files:**
+
 - Modify: `src/main/ipc/channels.ts`
 - Modify: `src/main/ipc/handlers.ts`
 - Modify: `src/preload/index.ts`
@@ -963,17 +1212,22 @@ Expected: all pass.
 
 ```ts
 import { pluginRegistry } from '../plugin/registry'
-import '../plugin/index'  // side-effect: registers awsPlugin into pluginRegistry
+import '../plugin/index' // side-effect: registers awsPlugin into pluginRegistry
 import type { NodeTypeMetadata } from '../plugin/types'
 ```
 
 - [ ] Modify the `restartScanner` function to call `pluginRegistry.activateAll()` and push metadata:
 
 ```ts
-async function restartScanner(win: BrowserWindow, profile: string, regions: string[], endpoint?: string): Promise<void> {
+async function restartScanner(
+  win: BrowserWindow,
+  profile: string,
+  regions: string[],
+  endpoint?: string
+): Promise<void> {
   scanner?.stop()
   cliEngine = new CliEngine(win, endpoint)
-  clients   = createClients(profile, regions[0] ?? 'us-east-1', endpoint)
+  clients = createClients(profile, regions[0] ?? 'us-east-1', endpoint)
 
   await pluginRegistry.deactivateAll()
   await pluginRegistry.activateAll(profile, regions[0] ?? 'us-east-1', endpoint)
@@ -1048,6 +1302,7 @@ cd /Users/julius/AI/riftview/riftview && git add src/main/ipc/channels.ts src/ma
 ## Task 6: Add `pluginNodeTypes` slice to `useUIStore`
 
 **Files:**
+
 - Modify: `src/renderer/store/ui.ts`
 - Modify: `src/renderer/src/App.tsx`
 - Create: `tests/renderer/store/ui-plugin-nodetypes.test.ts`
@@ -1064,7 +1319,7 @@ import type { NodeTypeMetadata } from '../../../src/main/plugin/types'
 describe('useUIStore — pluginNodeTypes slice', () => {
   beforeEach(() => {
     useUIStore.setState({
-      pluginNodeTypes: {},
+      pluginNodeTypes: {}
     } as Parameters<typeof useUIStore.setState>[0])
   })
 
@@ -1075,17 +1330,39 @@ describe('useUIStore — pluginNodeTypes slice', () => {
   it('setPluginNodeTypes stores metadata keyed by type string', () => {
     const meta: Record<string, NodeTypeMetadata> = {
       'azure-vm': {
-        label: 'VM', borderColor: '#0078D4', badgeColor: '#0078D4',
-        shortLabel: 'VM', displayName: 'Azure VM', hasCreate: true,
-      },
+        label: 'VM',
+        borderColor: '#0078D4',
+        badgeColor: '#0078D4',
+        shortLabel: 'VM',
+        displayName: 'Azure VM',
+        hasCreate: true
+      }
     }
     useUIStore.getState().setPluginNodeTypes(meta)
     expect(useUIStore.getState().pluginNodeTypes['azure-vm']?.label).toBe('VM')
   })
 
   it('setPluginNodeTypes replaces the entire map (not merge)', () => {
-    useUIStore.getState().setPluginNodeTypes({ 'type-a': { label: 'A', borderColor: '#fff', badgeColor: '#fff', shortLabel: 'A', displayName: 'A', hasCreate: false } })
-    useUIStore.getState().setPluginNodeTypes({ 'type-b': { label: 'B', borderColor: '#fff', badgeColor: '#fff', shortLabel: 'B', displayName: 'B', hasCreate: false } })
+    useUIStore.getState().setPluginNodeTypes({
+      'type-a': {
+        label: 'A',
+        borderColor: '#fff',
+        badgeColor: '#fff',
+        shortLabel: 'A',
+        displayName: 'A',
+        hasCreate: false
+      }
+    })
+    useUIStore.getState().setPluginNodeTypes({
+      'type-b': {
+        label: 'B',
+        borderColor: '#fff',
+        badgeColor: '#fff',
+        shortLabel: 'B',
+        displayName: 'B',
+        hasCreate: false
+      }
+    })
     expect(useUIStore.getState().pluginNodeTypes['type-a']).toBeUndefined()
     expect(useUIStore.getState().pluginNodeTypes['type-b']).toBeDefined()
   })
@@ -1105,17 +1382,20 @@ Expected: `pluginNodeTypes is not a property of UIState` or similar type error.
 - [ ] In `src/renderer/store/ui.ts`:
 
 Add the import at the top:
+
 ```ts
 import type { NodeTypeMetadata } from '../../main/plugin/types'
 ```
 
 Add to the `UIState` interface (after `sidebarFilter`):
+
 ```ts
 pluginNodeTypes: Record<string, NodeTypeMetadata>
 setPluginNodeTypes: (meta: Record<string, NodeTypeMetadata>) => void
 ```
 
 Add to the `create<UIState>((set) => ({` initializer block (after `sidebarFilter: null`):
+
 ```ts
 pluginNodeTypes: {},
 setPluginNodeTypes: (meta) => set({ pluginNodeTypes: meta }),
@@ -1138,7 +1418,7 @@ Expected: `3 passed`
 Find the existing `useEffect` blocks that call `window.riftview.onScanDelta(...)` etc. Add adjacent:
 
 ```ts
-import '../plugin/index'   // renderer-side plugin registrations (empty for M6)
+import '../plugin/index' // renderer-side plugin registrations (empty for M6)
 ```
 
 Inside the component (near other `useEffect` IPC listeners):
@@ -1178,6 +1458,7 @@ cd /Users/julius/AI/riftview/riftview && git add src/renderer/store/ui.ts src/re
 ## Task 7: Runtime fallback in `ResourceNode` and `SearchPalette`
 
 **Files:**
+
 - Modify: `src/renderer/components/canvas/nodes/ResourceNode.tsx`
 - Modify: `src/renderer/components/SearchPalette.tsx`
 - Modify: `tests/renderer/components/canvas/nodes/ResourceNode.test.tsx`
@@ -1237,16 +1518,18 @@ Change the two lookup lines inside `ResourceNode`:
 ```ts
 // Before:
 const borderColor = TYPE_BORDER[d.nodeType] ?? '#555'
-const typeLabel   = TYPE_LABEL[d.nodeType] ?? d.nodeType.toUpperCase()
+const typeLabel = TYPE_LABEL[d.nodeType] ?? d.nodeType.toUpperCase()
 
 // After:
 const pluginNodeTypes = useUIStore.getState().pluginNodeTypes
-const borderColor = TYPE_BORDER[d.nodeType as import('../../../types/cloud').NodeType]
-  ?? pluginNodeTypes[d.nodeType]?.borderColor
-  ?? '#555'
-const typeLabel = TYPE_LABEL[d.nodeType as import('../../../types/cloud').NodeType]
-  ?? pluginNodeTypes[d.nodeType]?.label
-  ?? d.nodeType.toUpperCase()
+const borderColor =
+  TYPE_BORDER[d.nodeType as import('../../../types/cloud').NodeType] ??
+  pluginNodeTypes[d.nodeType]?.borderColor ??
+  '#555'
+const typeLabel =
+  TYPE_LABEL[d.nodeType as import('../../../types/cloud').NodeType] ??
+  pluginNodeTypes[d.nodeType]?.label ??
+  d.nodeType.toUpperCase()
 ```
 
 Note: `d.nodeType` is typed as `NodeType` in `ResourceNodeData`. The `TYPE_BORDER[d.nodeType]` lookup already uses the built-in type, so the `as NodeType` cast is for the index access — the value is `undefined` for unknown strings, which is the desired behavior. Alternatively keep `d.nodeType` as-is since TypeScript allows string indexing on `Record<NodeType, string>` at runtime even if the key is not in the union — the result is `undefined`, which triggers the `??` fallback.
@@ -1306,6 +1589,7 @@ cd /Users/julius/AI/riftview/riftview && git add src/renderer/components/canvas/
 ## Task 8: Sidebar appends plugin types with `hasCreate: true`
 
 **Files:**
+
 - Modify: `src/renderer/components/Sidebar.tsx`
 - Create or modify: `tests/renderer/components/__tests__/Sidebar.test.tsx`
 
@@ -1395,23 +1679,27 @@ const pluginNodeTypes = useUIStore((s) => s.pluginNodeTypes)
 Then in the render section where the `SERVICES` array is mapped, after the static services list, append entries from `pluginNodeTypes` where `hasCreate: true`. The exact location depends on the current JSX structure — insert below the closing tag of the last static SERVICES item's render, within the same scrollable container. Example:
 
 ```tsx
-{/* Plugin types with hasCreate: true — appended after built-in services */}
-{Object.entries(pluginNodeTypes)
-  .filter(([, meta]) => meta.hasCreate)
-  .map(([type, meta]) => (
-    <div
-      key={type}
-      draggable
-      className="flex items-center justify-between px-3 py-1.5 cursor-grab rounded hover:bg-white/5"
-      onDragStart={(e) => {
-        e.dataTransfer.setData('application/riftview-resource', type)
-      }}
-    >
-      <span className="text-xs" style={{ color: meta.borderColor }}>
-        {meta.displayName}
-      </span>
-    </div>
-  ))}
+{
+  /* Plugin types with hasCreate: true — appended after built-in services */
+}
+{
+  Object.entries(pluginNodeTypes)
+    .filter(([, meta]) => meta.hasCreate)
+    .map(([type, meta]) => (
+      <div
+        key={type}
+        draggable
+        className="flex items-center justify-between px-3 py-1.5 cursor-grab rounded hover:bg-white/5"
+        onDragStart={(e) => {
+          e.dataTransfer.setData('application/riftview-resource', type)
+        }}
+      >
+        <span className="text-xs" style={{ color: meta.borderColor }}>
+          {meta.displayName}
+        </span>
+      </div>
+    ))
+}
 ```
 
 The drag-start handler should match whatever pattern the existing static entries use (check the `SERVICES` map render for the `onDragStart` pattern and replicate it exactly).
@@ -1449,6 +1737,7 @@ cd /Users/julius/AI/riftview/riftview && git add src/renderer/components/Sidebar
 ## Task 9: HCL generator fallback in Terraform export
 
 **Files:**
+
 - Modify: `src/main/terraform/index.ts`
 - Modify: `tests/main/terraform/generators.test.ts`
 
@@ -1475,23 +1764,34 @@ describe('generateTerraformFile — plugin HCL generator fallback', () => {
       nodeTypes: ['mock-service'],
       nodeTypeMetadata: {
         'mock-service': {
-          label: 'MOCK', borderColor: '#fff', badgeColor: '#fff',
-          shortLabel: 'MOCK', displayName: 'Mock Service', hasCreate: false,
-        },
+          label: 'MOCK',
+          borderColor: '#fff',
+          badgeColor: '#fff',
+          shortLabel: 'MOCK',
+          displayName: 'Mock Service',
+          hasCreate: false
+        }
       },
       createCredentials: () => ({}),
       scan: async () => ({ nodes: [], errors: [] }),
       hclGenerators: {
-        'mock-service': (_node) => 'resource "mock_service" "r" { name = "test" }',
-      },
+        'mock-service': (_node) => 'resource "mock_service" "r" { name = "test" }'
+      }
     }
 
     // Only register if not already registered (test isolation)
-    try { pluginRegistry.register(mockPlugin) } catch { /* already registered */ }
+    try {
+      pluginRegistry.register(mockPlugin)
+    } catch {
+      /* already registered */
+    }
 
     const node = makeNode({ type: 'unknown', id: 'mock-001', label: 'test-mock' })
     // Override type at runtime to simulate plugin type
-    const pluginNode = { ...node, type: 'mock-service' } as unknown as import('../../../src/renderer/types/cloud').CloudNode
+    const pluginNode = {
+      ...node,
+      type: 'mock-service'
+    } as unknown as import('../../../src/renderer/types/cloud').CloudNode
 
     const { hcl } = generateTerraformFile([pluginNode])
     expect(hcl).toContain('resource "mock_service"')
@@ -1534,7 +1834,12 @@ Note: `terraformGenerators[node.type]` returns a function for built-in types. Fo
 If TypeScript complains about indexing `Record<NodeType, TerraformGenerator>` with `node.type` (which is `NodeType`), the existing code already handles this. If the type of `node.type` is widened to `string` in `CloudNode`, adjust accordingly. Since `CloudNode.type` is typed as `NodeType` at compile time but plugin nodes have string types at runtime, use:
 
 ```ts
-const builtInGen = (terraformGenerators as Record<string, typeof terraformGenerators[keyof typeof terraformGenerators]>)[node.type]
+const builtInGen = (
+  terraformGenerators as Record<
+    string,
+    (typeof terraformGenerators)[keyof typeof terraformGenerators]
+  >
+)[node.type]
 ```
 
 Or simply keep the existing `terraformGenerators[node.type](node)` call and add a fallback branch for when it would throw/be undefined.
@@ -1574,6 +1879,7 @@ cd /Users/julius/AI/riftview/riftview && git add src/main/terraform/index.ts tes
 ## Task 10: Renderer plugin command routing
 
 **Files:**
+
 - Create: `src/renderer/plugin/rendererRegistry.ts`
 - Create: `src/renderer/plugin/pluginCommands.ts`
 - Create: `src/renderer/plugin/index.ts`
@@ -1588,13 +1894,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useUIStore } from '../../../src/renderer/store/ui'
 
 vi.mock('../../../src/renderer/utils/buildCommand', () => ({
-  buildCommand: vi.fn().mockReturnValue([['aws', 'ec2', 'run-instances']]),
+  buildCommand: vi.fn().mockReturnValue([['aws', 'ec2', 'run-instances']])
 }))
 vi.mock('../../../src/renderer/utils/buildDeleteCommands', () => ({
-  buildDeleteCommands: vi.fn().mockReturnValue([['aws', 'ec2', 'terminate-instances']]),
+  buildDeleteCommands: vi.fn().mockReturnValue([['aws', 'ec2', 'terminate-instances']])
 }))
 vi.mock('../../../src/renderer/utils/buildEditCommands', () => ({
-  buildEditCommands: vi.fn().mockReturnValue([['aws', 'ec2', 'modify-instance-attribute']]),
+  buildEditCommands: vi.fn().mockReturnValue([['aws', 'ec2', 'modify-instance-attribute']])
 }))
 
 describe('pluginCommands routing', () => {
@@ -1610,7 +1916,14 @@ describe('pluginCommands routing', () => {
 
   it('resolveDeleteCommands routes ec2 to buildDeleteCommands', async () => {
     const { resolveDeleteCommands } = await import('../../../src/renderer/plugin/pluginCommands')
-    const node = { id: 'i-001', type: 'ec2', label: 'web', status: 'running', region: 'us-east-1', metadata: {} } as import('../../../src/renderer/types/cloud').CloudNode
+    const node = {
+      id: 'i-001',
+      type: 'ec2',
+      label: 'web',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: {}
+    } as import('../../../src/renderer/types/cloud').CloudNode
     const result = resolveDeleteCommands(node)
     expect(result).toEqual([['aws', 'ec2', 'terminate-instances']])
   })
@@ -1619,7 +1932,7 @@ describe('pluginCommands routing', () => {
     // Register a plugin type in the renderer registry
     const { rendererPluginHandlers } = await import('../../../src/renderer/plugin/pluginCommands')
     rendererPluginHandlers.set('azure-vm', {
-      buildCreate: () => [['az', 'vm', 'create']],
+      buildCreate: () => [['az', 'vm', 'create']]
     })
 
     const { resolveCreateCommands } = await import('../../../src/renderer/plugin/pluginCommands')
@@ -1647,7 +1960,10 @@ import type { NodeProps } from '@xyflow/react'
 
 const pluginNodeComponents = new Map<string, React.ComponentType<NodeProps>>()
 
-export function registerPluginComponent(key: string, component: React.ComponentType<NodeProps>): void {
+export function registerPluginComponent(
+  key: string,
+  component: React.ComponentType<NodeProps>
+): void {
   pluginNodeComponents.set(key, component)
 }
 
@@ -1670,17 +1986,40 @@ import type { PluginCommandHandlers } from '../../main/plugin/types'
 
 // Runtime set of built-in NodeType strings (mirrors NodeType union in cloud.ts)
 const BUILTIN_NODE_TYPES = new Set([
-  'ec2', 'vpc', 'subnet', 'rds', 's3', 'lambda', 'alb', 'security-group',
-  'igw', 'acm', 'cloudfront', 'apigw', 'apigw-route', 'sqs', 'secret',
-  'ecr-repo', 'sns', 'dynamo', 'ssm-param', 'nat-gateway', 'r53-zone',
-  'sfn', 'eventbridge-bus', 'unknown',
+  'ec2',
+  'vpc',
+  'subnet',
+  'rds',
+  's3',
+  'lambda',
+  'alb',
+  'security-group',
+  'igw',
+  'acm',
+  'cloudfront',
+  'apigw',
+  'apigw-route',
+  'sqs',
+  'secret',
+  'ecr-repo',
+  'sns',
+  'dynamo',
+  'ssm-param',
+  'nat-gateway',
+  'r53-zone',
+  'sfn',
+  'eventbridge-bus',
+  'unknown'
 ])
 
 // Renderer-side plugin command handler map: nodeType → handlers
 // Populated by plugin renderer registrations in renderer/plugin/index.ts
 export const rendererPluginHandlers = new Map<string, PluginCommandHandlers>()
 
-export function resolveCreateCommands(resource: string, params: Record<string, unknown>): string[][] {
+export function resolveCreateCommands(
+  resource: string,
+  params: Record<string, unknown>
+): string[][] {
   if (BUILTIN_NODE_TYPES.has(resource)) {
     return buildCommand(resource as import('../types/cloud').NodeType, params as never)
   }
@@ -1748,6 +2087,7 @@ cd /Users/julius/AI/riftview/riftview && git add src/renderer/plugin/rendererReg
 ## Task 11: Integration smoke test — mock plugin on canvas
 
 **Files:**
+
 - Create: `tests/main/plugin/integration.test.ts`
 
 ### Step 1: Create the integration test
@@ -1780,29 +2120,29 @@ const mockPlugin: RiftViewPlugin = {
     'mock-service': {
       label: 'MOCK',
       borderColor: '#ABCDEF',
-      badgeColor:  '#ABCDEF',
-      shortLabel:  'MOCK',
+      badgeColor: '#ABCDEF',
+      shortLabel: 'MOCK',
       displayName: 'Mock Service',
-      hasCreate:   true,
-    },
+      hasCreate: true
+    }
   },
   createCredentials: (_profile, _region) => ({ apiKey: 'test-key' }),
   scan: async (_ctx) => ({
     nodes: [
       {
-        id:       'mock-001',
-        type:     'mock-service' as import('../../../src/renderer/types/cloud').NodeType,
-        label:    'My Mock Resource',
-        status:   'running',
-        region:   'us-east-1',
-        metadata: { provider: 'mock' },
-      },
+        id: 'mock-001',
+        type: 'mock-service' as import('../../../src/renderer/types/cloud').NodeType,
+        label: 'My Mock Resource',
+        status: 'running',
+        region: 'us-east-1',
+        metadata: { provider: 'mock' }
+      }
     ],
-    errors: [],
+    errors: []
   }),
   hclGenerators: {
-    'mock-service': (_node) => 'resource "mock_service" "r" { provider = "mock" }',
-  },
+    'mock-service': (_node) => 'resource "mock_service" "r" { provider = "mock" }'
+  }
 }
 
 describe('M6 plugin integration smoke test', () => {
@@ -1834,7 +2174,14 @@ describe('M6 plugin integration smoke test', () => {
 
     const gen = registry.getHclGenerator('mock-service')
     expect(gen).toBeDefined()
-    const hcl = gen!({ id: 'mock-001', type: 'mock-service' as import('../../../src/renderer/types/cloud').NodeType, label: 'My Mock Resource', status: 'running', region: 'us-east-1', metadata: {} })
+    const hcl = gen!({
+      id: 'mock-001',
+      type: 'mock-service' as import('../../../src/renderer/types/cloud').NodeType,
+      label: 'My Mock Resource',
+      status: 'running',
+      region: 'us-east-1',
+      metadata: {}
+    })
     expect(hcl).toContain('resource "mock_service"')
   })
 
@@ -1853,10 +2200,19 @@ describe('M6 plugin integration smoke test', () => {
       displayName: 'Failing Plugin',
       nodeTypes: ['fail-type'],
       nodeTypeMetadata: {
-        'fail-type': { label: 'FAIL', borderColor: '#f00', badgeColor: '#f00', shortLabel: 'F', displayName: 'Fail', hasCreate: false },
+        'fail-type': {
+          label: 'FAIL',
+          borderColor: '#f00',
+          badgeColor: '#f00',
+          shortLabel: 'F',
+          displayName: 'Fail',
+          hasCreate: false
+        }
       },
       createCredentials: () => ({}),
-      scan: async () => { throw new Error('network unreachable') },
+      scan: async () => {
+        throw new Error('network unreachable')
+      }
     }
 
     const registry = new PluginRegistry()

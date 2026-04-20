@@ -17,6 +17,7 @@ This is Phase 0 of the RiftView command board marathon — a revolutionary redes
 **Product direction (locked):** The product is now called **RiftView**. It is an operational tool, not a diagram tool. The IPC boundary (credentials never cross to renderer) is sacred and unchanged.
 
 **Process rules for this marathon:**
+
 - Foreman must sign off on every task before it is marked complete
 - At ~90% context usage, commit in-progress work, write `RESUME.md` at project root, stop cleanly
 - All new tools/scripts go into `scripts/` and are committed
@@ -27,7 +28,9 @@ This is Phase 0 of the RiftView command board marathon — a revolutionary redes
 ## File Map
 
 ### Task 1 — RiftView Rename
+
 **Source files:**
+
 - Modify: `package.json`
 - Modify: `electron-builder.yml`
 - Modify: `src/preload/index.ts`
@@ -38,6 +41,7 @@ This is Phase 0 of the RiftView command board marathon — a revolutionary redes
 - Modify: All 24 renderer source files listed in the Renderer Callsites section below
 
 **Test files (must be updated atomically with source):**
+
 - Modify: `tests/main/preload.test.ts`
 - Modify: `tests/main/plugin/awsPlugin.test.ts`
 - Modify: `tests/renderer/components/DriftModeStrip.test.tsx`
@@ -50,15 +54,18 @@ This is Phase 0 of the RiftView command board marathon — a revolutionary redes
 - Modify: `tests/renderer/hooks/useIpc.test.ts`
 
 **Documentation:**
+
 - Modify: `CLAUDE.md`
 
 ### Task 2 — Feature Flag System
+
 - Create: `src/renderer/utils/flags.ts`
 - Create: `tests/renderer/utils/flags.test.ts`
 - Create: `.env.local.example`
 - Modify: `.gitignore` (ensure `.env.local` is listed)
 
 ### Task 3 — Ladle Component Dev Environment
+
 - Modify: `package.json` (devDependency + `stories` script)
 - Create: `ladle.config.mjs`
 - Create: `vite.ladle.config.ts` (standalone Vite config for Ladle — see below)
@@ -67,6 +74,7 @@ This is Phase 0 of the RiftView command board marathon — a revolutionary redes
 - Create: `src/renderer/components/canvas/nodes/SubnetNode.stories.tsx`
 
 ### Task 4 — Process Infrastructure
+
 - Create: `scripts/README.md`
 - Create: `RESUME.md` (template at project root)
 - Scribe: Initialize `RiftView/Changelog/CHANGELOG.md` in Obsidian
@@ -80,30 +88,35 @@ This is Phase 0 of the RiftView command board marathon — a revolutionary redes
 ### Complete Rename Targets
 
 #### Build & Config
-| File | Change |
-|---|---|
-| `package.json` | `"name": "riftview"` → `"riftview"` |
-| `electron-builder.yml` | `productName: riftview` → `RiftView` |
+
+| File                   | Change                                                 |
+| ---------------------- | ------------------------------------------------------ |
+| `package.json`         | `"name": "riftview"` → `"riftview"`                    |
+| `electron-builder.yml` | `productName: riftview` → `RiftView`                   |
 | `electron-builder.yml` | `appId: com.riftview.desktop` → `com.riftview.desktop` |
-| `electron-builder.yml` | `win.executableName: riftview` → `riftview` |
-| `electron-builder.yml` | `publish.repo: riftview` → `riftview` |
+| `electron-builder.yml` | `win.executableName: riftview` → `riftview`            |
+| `electron-builder.yml` | `publish.repo: riftview` → `riftview`                  |
 
 #### Preload Bridge (the canonical rename point)
-| File | Change |
-|---|---|
-| `src/preload/index.ts` | `contextBridge.exposeInMainWorld('riftview', …)` → `'riftview'` |
-| `src/preload/index.d.ts` | `interface Window { riftview: … }` → `riftview` |
+
+| File                     | Change                                                          |
+| ------------------------ | --------------------------------------------------------------- |
+| `src/preload/index.ts`   | `contextBridge.exposeInMainWorld('riftview', …)` → `'riftview'` |
+| `src/preload/index.d.ts` | `interface Window { riftview: … }` → `riftview`                 |
 
 #### Main Process — Plugin Interface & ID
-| File | Change |
-|---|---|
-| `src/main/plugin/types.ts` | `export interface RiftViewPlugin` → `RiftViewPlugin` |
-| `src/main/plugin/registry.ts` | All 4 occurrences of `RiftViewPlugin` → `RiftViewPlugin` |
-| `src/main/plugin/awsPlugin.ts` | `RiftViewPlugin` → `RiftViewPlugin` (import + type) |
-| `src/main/plugin/awsPlugin.ts` | `id: 'com.riftview.aws'` → `'com.riftview.aws'` |
+
+| File                           | Change                                                   |
+| ------------------------------ | -------------------------------------------------------- |
+| `src/main/plugin/types.ts`     | `export interface RiftViewPlugin` → `RiftViewPlugin`     |
+| `src/main/plugin/registry.ts`  | All 4 occurrences of `RiftViewPlugin` → `RiftViewPlugin` |
+| `src/main/plugin/awsPlugin.ts` | `RiftViewPlugin` → `RiftViewPlugin` (import + type)      |
+| `src/main/plugin/awsPlugin.ts` | `id: 'com.riftview.aws'` → `'com.riftview.aws'`          |
 
 #### Renderer — `window.riftview.*` Callsites (26 files)
+
 Every `window.riftview.` → `window.riftview.` in:
+
 - `src/renderer/src/App.tsx`
 - `src/renderer/hooks/useIpc.ts`
 - `src/renderer/hooks/useScanner.ts`
@@ -131,6 +144,7 @@ Every `window.riftview.` → `window.riftview.` in:
 - `src/renderer/components/modals/EditModal.tsx`
 
 #### Renderer — CustomEvent Name Strings
+
 All `'riftview:*'` event strings → `'riftview:*'`. These are used in pairs (dispatchEvent + addEventListener) within the renderer. They are NOT IPC channel strings and are being renamed for consistency.
 
 Full list of event string replacements:
@@ -145,6 +159,7 @@ Full list of event string replacements:
 | `'riftview:show-about'` | `'riftview:show-about'` |
 
 Files containing these event strings:
+
 - `src/renderer/components/TitleBar.tsx`
 - `src/renderer/components/Inspector.tsx`
 - `src/renderer/components/canvas/CloudCanvas.tsx`
@@ -157,33 +172,37 @@ Files containing these event strings:
 **Note:** IPC channel string values in `src/main/ipc/channels.ts` (e.g. `'canvas:save-image'`) are NOT renamed — they are internal transport strings, not product-facing identifiers.
 
 #### Test Files
-| File | Change |
-|---|---|
-| `tests/main/preload.test.ts` | `'riftview'` string literal → `'riftview'` |
-| `tests/main/plugin/awsPlugin.test.ts` | `'com.riftview.aws'` → `'com.riftview.aws'` |
-| `tests/renderer/components/DriftModeStrip.test.tsx` | `window.riftview` → `window.riftview` (all occurrences) |
-| `tests/renderer/components/Inspector.test.tsx` | `Object.defineProperty(window, 'riftview', …)` → `'riftview'` |
-| `tests/renderer/components/IamAdvisor.test.tsx` | `Object.defineProperty(window, 'riftview', …)` → `'riftview'` |
-| `tests/renderer/components/canvas/nodes/StickyNoteNode.test.tsx` | `Object.defineProperty(window, 'riftview', …)` → `'riftview'` |
-| `tests/renderer/components/canvas/BulkActionToolbar.test.tsx` | `Object.defineProperty(window, 'riftview', …)` → `'riftview'` |
-| `tests/renderer/components/TemplatesModal.deploy.test.tsx` | `window.riftview` → `window.riftview`; `makeRiftView` → `makeRiftView`; `typeof window.riftview` → `typeof window.riftview` |
-| `tests/renderer/hooks/useScanner.test.ts` | `window.riftview` → `window.riftview` |
-| `tests/renderer/hooks/useIpc.test.ts` | `window.riftview` → `window.riftview` |
+
+| File                                                             | Change                                                                                                                      |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `tests/main/preload.test.ts`                                     | `'riftview'` string literal → `'riftview'`                                                                                  |
+| `tests/main/plugin/awsPlugin.test.ts`                            | `'com.riftview.aws'` → `'com.riftview.aws'`                                                                                 |
+| `tests/renderer/components/DriftModeStrip.test.tsx`              | `window.riftview` → `window.riftview` (all occurrences)                                                                     |
+| `tests/renderer/components/Inspector.test.tsx`                   | `Object.defineProperty(window, 'riftview', …)` → `'riftview'`                                                               |
+| `tests/renderer/components/IamAdvisor.test.tsx`                  | `Object.defineProperty(window, 'riftview', …)` → `'riftview'`                                                               |
+| `tests/renderer/components/canvas/nodes/StickyNoteNode.test.tsx` | `Object.defineProperty(window, 'riftview', …)` → `'riftview'`                                                               |
+| `tests/renderer/components/canvas/BulkActionToolbar.test.tsx`    | `Object.defineProperty(window, 'riftview', …)` → `'riftview'`                                                               |
+| `tests/renderer/components/TemplatesModal.deploy.test.tsx`       | `window.riftview` → `window.riftview`; `makeRiftView` → `makeRiftView`; `typeof window.riftview` → `typeof window.riftview` |
+| `tests/renderer/hooks/useScanner.test.ts`                        | `window.riftview` → `window.riftview`                                                                                       |
+| `tests/renderer/hooks/useIpc.test.ts`                            | `window.riftview` → `window.riftview`                                                                                       |
 
 #### UI String Literals ("RiftView" display text)
-| File | Change |
-|---|---|
-| `src/main/index.ts` | `title: 'RiftView'` → `'RiftView'` (window title bar) |
-| `src/main/ipc/handlers.ts` | `'RiftView — Drift Detected'` → `'RiftView — Drift Detected'` (OS notification) |
-| `src/renderer/components/AboutModal.tsx` | Brand name display string → `RiftView` |
-| `src/renderer/components/TitleBar.tsx` | `title="About RiftView"` tooltip → `"About RiftView"` |
-| `src/renderer/components/Onboarding.tsx` | `restart RiftView` → `restart RiftView` |
-| `src/renderer/components/TemplatesModal.tsx` | `restart RiftView` → `restart RiftView` |
+
+| File                                         | Change                                                                          |
+| -------------------------------------------- | ------------------------------------------------------------------------------- |
+| `src/main/index.ts`                          | `title: 'RiftView'` → `'RiftView'` (window title bar)                           |
+| `src/main/ipc/handlers.ts`                   | `'RiftView — Drift Detected'` → `'RiftView — Drift Detected'` (OS notification) |
+| `src/renderer/components/AboutModal.tsx`     | Brand name display string → `RiftView`                                          |
+| `src/renderer/components/TitleBar.tsx`       | `title="About RiftView"` tooltip → `"About RiftView"`                           |
+| `src/renderer/components/Onboarding.tsx`     | `restart RiftView` → `restart RiftView`                                         |
+| `src/renderer/components/TemplatesModal.tsx` | `restart RiftView` → `restart RiftView`                                         |
 
 #### electron-builder.yml — `repo:` field
+
 **Do NOT change `repo: riftview`** until the GitHub repository is renamed on GitHub. `electron-updater` uses this field to construct the auto-update download URL — changing it without renaming the repo will silently break auto-updates in production builds. This field stays as-is for now.
 
 #### CLAUDE.md
+
 Update all product-name occurrences of "RiftView"/"riftview" to "RiftView"/"riftview" where they refer to the product name. Keep structural identifiers (file paths, store names, CSS class names) unchanged — only update the product name references.
 
 ### Steps
@@ -264,11 +283,11 @@ git commit -m "feat: rename product to RiftView — window.riftview, RiftViewPlu
 // This file is scoped to tsconfig.web.json which covers src/renderer/**/*.
 
 export type FlagName =
-  | 'COMMAND_BOARD'      // Phase 1: relationship-first layout engine
-  | 'STATUS_LANGUAGE'    // Phase 1: live health visual texture on nodes
-  | 'ACTION_RAIL'        // Phase 1: node hover inline action surface
-  | 'EXECUTION_ENGINE'   // Phase 2: bulk ops + action chains
-  | 'OP_INTELLIGENCE'    // Phase 3: command palette + CloudWatch log tail
+  | 'COMMAND_BOARD' // Phase 1: relationship-first layout engine
+  | 'STATUS_LANGUAGE' // Phase 1: live health visual texture on nodes
+  | 'ACTION_RAIL' // Phase 1: node hover inline action surface
+  | 'EXECUTION_ENGINE' // Phase 2: bulk ops + action chains
+  | 'OP_INTELLIGENCE' // Phase 3: command palette + CloudWatch log tail
 
 const ENV_PREFIX = 'VITE_FLAG_'
 
@@ -401,9 +420,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@renderer': resolve(__dirname, 'src/renderer/src'),
-    },
-  },
+      '@renderer': resolve(__dirname, 'src/renderer/src')
+    }
+  }
 })
 ```
 
@@ -412,7 +431,7 @@ export default defineConfig({
 export default {
   stories: 'src/**/*.stories.{tsx,jsx}',
   viteConfig: './vite.ladle.config.ts',
-  port: 61000,
+  port: 61000
 }
 ```
 
@@ -491,6 +510,7 @@ grep -r "@renderer/" tests --include="*.ts" --include="*.tsx"
 ```
 
 If any results appear, add to `vitest.config.ts`:
+
 ```ts
 import { resolve } from 'path'
 // inside defineConfig:
@@ -539,25 +559,32 @@ Written when a session approaches context limits (~90% usage).
 Delete this file once the session is successfully resumed.
 
 ## Status
+
 (populated at pause time: PAUSED / IN_PROGRESS)
 
 ## Current Task
+
 (populated at pause time)
 
 ## Last Completed Step
+
 (populated at pause time — copy the checkbox text)
 
 ## Next Step
+
 (populated at pause time — exact next action)
 
 ## Files Modified But Not Committed
+
 (populated at pause time)
 
 ## Git State
+
 Branch: (populated at pause time)
 Last commit: (populated at pause time — git log --oneline -1)
 
 ## Resume Instructions
+
 1. Read this file
 2. Run: npm run typecheck && npm test (verify baseline)
 3. Continue from "Next Step" above
@@ -574,15 +601,19 @@ Scribe creates `RiftView/Changelog/CHANGELOG.md` with:
 ## Phase 0: Marathon Infrastructure
 
 ### 2026-04-05 — Task 1: RiftView Rename
+
 (populated by Scribe after Task 1 completes)
 
 ### 2026-04-05 — Task 2: Feature Flag System
+
 (populated by Scribe after Task 2 completes)
 
 ### 2026-04-05 — Task 3: Ladle Component Dev Environment
+
 (populated by Scribe after Task 3 completes)
 
 ### 2026-04-05 — Task 4: Process Infrastructure
+
 (populated by Scribe after Task 4 completes)
 ```
 

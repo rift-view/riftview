@@ -1,11 +1,14 @@
 # RiftView Demo Clip — 20-Second Script
+
 Date: 2026-04-13
 
 ## Goal
+
 Convert a viewer into a GitHub star in 20 seconds.
 Target: DevOps lead, platform engineer, startup CTO.
 
 ## Setup
+
 - LocalStack running with localstack-seed.sh applied
 - RiftView open, dark theme, Command Board view
 - Window: 1280×800, no menu bar visible
@@ -44,10 +47,11 @@ Cut to: RiftView wordmark on dark background.
 Tagline: "The incident diagnostic layer AWS doesn't have."
 
 ## Recording Notes
+
 - Use LocalStack seed data — consistent, repeatable
 - Record at 2x then slow to 1x for the path trace animation
 - No voiceover — music only (or silent)
 - Export: MP4 + GIF (GIF for GitHub README embed)
 - Caption overlay at 0:03: "Your top risks, ranked"
-- Caption overlay at 0:06: "Click any node. See what breaks."  
+- Caption overlay at 0:06: "Click any node. See what breaks."
 - Caption overlay at 0:11: "Shift+click. Trace the path."

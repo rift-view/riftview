@@ -26,10 +26,11 @@ provider.ts: errCatch() → ScanError[]
 ```
 
 `ScanError` shape (already in `renderer/types/cloud.ts`):
+
 ```ts
 interface ScanError {
-  service: string   // e.g. 'ecr', 'ec2:instances', 'rds'
-  region:  string
+  service: string // e.g. 'ecr', 'ec2:instances', 'rds'
+  region: string
   message: string
 }
 ```
@@ -44,36 +45,37 @@ Each service row in `Sidebar.tsx` gets a small amber `⚠` icon when any `scanEr
 
 **Service → NodeType mapping** (defined in Sidebar, not imported):
 
-| scanError.service prefix | NodeType rows affected |
-|--------------------------|------------------------|
-| `ec2:instances` | `ec2` |
-| `ec2:vpcs` | `vpc` |
-| `ec2:subnets` | `subnet` |
-| `ec2:security-groups` | `security-group` |
-| `igw` | `igw` |
-| `nat` | `nat-gateway` |
-| `rds` | `rds` |
-| `s3` | `s3` |
-| `lambda` | `lambda` |
-| `alb` | `alb` |
-| `acm` | `acm` |
-| `cloudfront` | `cloudfront` |
-| `apigw` | `apigw` (route errors surface through this row; `apigw-route` has no independent scan call and needs no badge) |
-| `sqs` | `sqs` |
-| `secrets` | `secret` |
-| `ecr` | `ecr-repo` |
-| `sns` | `sns` |
-| `dynamo` | `dynamo` |
-| `ssm` | `ssm-param` — **not a `SERVICES` row**; badge appears on the Parameters section header. **Special case:** the Parameters section is normally gated on `ssmGroups.length > 0`, so it won't render at all when the SSM scan failed (zero params returned). When an `ssm` scan error is present and `ssmGroups` is empty, the implementer must render a minimal Parameters header row outside the gate so the badge is visible. |
-| `r53` | `r53-zone` |
-| `sfn` | `sfn` |
-| `eventbridge` | `eventbridge-bus` |
+| scanError.service prefix | NodeType rows affected                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ec2:instances`          | `ec2`                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `ec2:vpcs`               | `vpc`                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `ec2:subnets`            | `subnet`                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `ec2:security-groups`    | `security-group`                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `igw`                    | `igw`                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `nat`                    | `nat-gateway`                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `rds`                    | `rds`                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `s3`                     | `s3`                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `lambda`                 | `lambda`                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `alb`                    | `alb`                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `acm`                    | `acm`                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `cloudfront`             | `cloudfront`                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `apigw`                  | `apigw` (route errors surface through this row; `apigw-route` has no independent scan call and needs no badge)                                                                                                                                                                                                                                                                                                               |
+| `sqs`                    | `sqs`                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `secrets`                | `secret`                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `ecr`                    | `ecr-repo`                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `sns`                    | `sns`                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `dynamo`                 | `dynamo`                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `ssm`                    | `ssm-param` — **not a `SERVICES` row**; badge appears on the Parameters section header. **Special case:** the Parameters section is normally gated on `ssmGroups.length > 0`, so it won't render at all when the SSM scan failed (zero params returned). When an `ssm` scan error is present and `ssmGroups` is empty, the implementer must render a minimal Parameters header row outside the gate so the badge is visible. |
+| `r53`                    | `r53-zone`                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `sfn`                    | `sfn`                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `eventbridge`            | `eventbridge-bus`                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 `unknown` NodeType has no scan call and is never in this table.
 
 `apigw-route` IS a normal `SERVICES` row but has no independent `catch_()` key in `provider.ts` (route errors surface under `apigw`). The badge lookup for `apigw-route` will always return empty — no special guard needed. `unknown` has no scan call and is never in this table. All other 21 service-bearing NodeTypes are covered above.
 
 **Visual:**
+
 - `⚠` icon rendered inline after the service label, in amber (`#f59e0b` / `color: var(--cb-warning, #f59e0b)`)
 - `title` attribute on the icon shows the full error: `[service] region — message` (one line per error if multiple)
 - No extra layout changes — the icon fits inline with the existing label
@@ -91,7 +93,7 @@ One new boolean field:
 ```ts
 interface Settings {
   // ...existing fields...
-  showScanErrorBadges: boolean   // default: true
+  showScanErrorBadges: boolean // default: true
 }
 ```
 
@@ -102,13 +104,13 @@ interface Settings {
 
 ## 4. Files Changed
 
-| File | Change |
-|------|--------|
-| `renderer/types/cloud.ts` | Add `showScanErrorBadges: boolean` to `Settings` |
-| `store/cloud.ts` | Add `showScanErrorBadges: true` to the module-level `DEFAULT_SETTINGS` const (the test factory at line ~144 references the same const, so one edit covers both) |
-| `main/ipc/handlers.ts` | Add `showScanErrorBadges: true` to `DEFAULT_SETTINGS` |
-| `components/Sidebar.tsx` | Read `scanErrors` + `settings.showScanErrorBadges`; render `⚠` on matching rows |
-| `components/SettingsModal.tsx` | Add toggle for `showScanErrorBadges` |
+| File                           | Change                                                                                                                                                          |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `renderer/types/cloud.ts`      | Add `showScanErrorBadges: boolean` to `Settings`                                                                                                                |
+| `store/cloud.ts`               | Add `showScanErrorBadges: true` to the module-level `DEFAULT_SETTINGS` const (the test factory at line ~144 references the same const, so one edit covers both) |
+| `main/ipc/handlers.ts`         | Add `showScanErrorBadges: true` to `DEFAULT_SETTINGS`                                                                                                           |
+| `components/Sidebar.tsx`       | Read `scanErrors` + `settings.showScanErrorBadges`; render `⚠` on matching rows                                                                                 |
+| `components/SettingsModal.tsx` | Add toggle for `showScanErrorBadges`                                                                                                                            |
 
 ---
 

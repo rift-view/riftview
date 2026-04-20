@@ -19,21 +19,21 @@ shot-by-shot storyboard.
 
 ### Week 1 — Soft launch
 
-| Channel | Format | CTA |
-|---|---|---|
-| r/devops | GIF in post + text explainer + GitHub link | "Beta tester feedback welcome" |
-| r/aws | GIF + post about the blast radius concept | Same |
-| Platform Engineering Slack (#show-and-tell) | MP4 + short pitch | "DM if you want the dmg" |
-| YC Bookface (Show channel) | MP4 + full one-pager | "Free pilot for YC companies" |
+| Channel                                     | Format                                     | CTA                            |
+| ------------------------------------------- | ------------------------------------------ | ------------------------------ |
+| r/devops                                    | GIF in post + text explainer + GitHub link | "Beta tester feedback welcome" |
+| r/aws                                       | GIF + post about the blast radius concept  | Same                           |
+| Platform Engineering Slack (#show-and-tell) | MP4 + short pitch                          | "DM if you want the dmg"       |
+| YC Bookface (Show channel)                  | MP4 + full one-pager                       | "Free pilot for YC companies"  |
 
 ### Week 2 — Targeted amplification
 
-| Channel | Format | CTA |
-|---|---|---|
-| Hacker News Show HN | Blog post with embedded GIF + link | Main GitHub repo |
-| Twitter/X — own handle | MP4 thread, 3 tweets | Retweet ask from founder network |
-| LinkedIn — own profile | MP4 post + founder commentary | Book a demo |
-| Indie Hackers | Post-mortem style post ("I built X because Y") | Direct link |
+| Channel                | Format                                         | CTA                              |
+| ---------------------- | ---------------------------------------------- | -------------------------------- |
+| Hacker News Show HN    | Blog post with embedded GIF + link             | Main GitHub repo                 |
+| Twitter/X — own handle | MP4 thread, 3 tweets                           | Retweet ask from founder network |
+| LinkedIn — own profile | MP4 post + founder commentary                  | Book a demo                      |
+| Indie Hackers          | Post-mortem style post ("I built X because Y") | Direct link                      |
 
 ### Week 3+ — Owned content
 
@@ -44,13 +44,13 @@ shot-by-shot storyboard.
 
 ## What success looks like
 
-| Metric | Week 1 | Week 2 | Week 4 |
-|---|---|---|---|
-| Clip views (aggregated) | 2,000 | 8,000 | 20,000 |
-| Website visits | 500 | 2,000 | 5,000 |
-| Pilot signups | 10 | 30 | 75 |
-| Booked demos | 5 | 15 | 40 |
-| Press / podcast mentions | 0 | 1 | 3 |
+| Metric                   | Week 1 | Week 2 | Week 4 |
+| ------------------------ | ------ | ------ | ------ |
+| Clip views (aggregated)  | 2,000  | 8,000  | 20,000 |
+| Website visits           | 500    | 2,000  | 5,000  |
+| Pilot signups            | 10     | 30     | 75     |
+| Booked demos             | 5      | 15     | 40     |
+| Press / podcast mentions | 0      | 1      | 3      |
 
 Conversion funnel assumption: 20% view → visit, 5% visit → pilot,
 50% pilot → booked demo. These are aspirational; actual numbers will
@@ -86,6 +86,7 @@ respond to genuine input requests.
 ### Twitter/X
 
 3-tweet thread:
+
 1. **Hook:** "Every AWS incident starts with the same question: which
    services does this take down with it?" + clip
 2. **Detail:** "RiftView answers that in one click. Upstream,
@@ -95,16 +96,19 @@ respond to genuine input requests.
 ## Response plan
 
 ### High-interest replies
+
 - Respond within 4 hours during launch week
 - Default to offering a 15-min live demo (real or LocalStack account)
 - Track which channel the reply came from for conversion attribution
 
 ### Negative / skeptical replies
+
 - Engage once with genuine technical response
 - Don't argue. Don't oversell.
 - If they come around, re-engage. If not, disengage.
 
 ### Silence
+
 - Don't repost the same clip on the same channel for 10+ days
 - Follow up with a **different** asset (screenshot, blog post, etc.)
   after the first clip fatigues
@@ -123,6 +127,7 @@ respond to genuine input requests.
 ## Post-distribution review
 
 After Week 4:
+
 - Which channel converted highest?
 - Which variant of the clip got shared most?
 - What objections came up most often?
@@ -132,4 +137,4 @@ Update this plan for v2 launch (likely tied to Windows/Linux builds).
 
 ---
 
-*Last updated 2026-04-17.*
+_Last updated 2026-04-17._

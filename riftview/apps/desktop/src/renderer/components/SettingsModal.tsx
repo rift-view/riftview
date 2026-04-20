@@ -1,0 +1,628 @@
+import React, { useEffect, useState, useCallback } from 'react'
+import { useCloudStore } from '../store/cloud'
+import type { Settings, AwsProfile } from '@riftview/shared'
+import { getRegionColor } from '../utils/regionColors'
+
+interface SettingsModalProps {
+  onClose: () => void
+}
+
+type TabKey = 'profile' | 'regions' | 'localstack' | 'general'
+
+const ALL_REGIONS: string[] = [
+  'us-east-1',
+  'us-east-2',
+  'us-west-1',
+  'us-west-2',
+  'eu-west-1',
+  'eu-west-2',
+  'eu-central-1',
+  'ap-southeast-1',
+  'ap-southeast-2',
+  'ap-northeast-1'
+]
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'profile', label: 'Profile' },
+  { key: 'regions', label: 'Regions' },
+  { key: 'general', label: 'General' },
+  { key: 'localstack', label: 'LocalStack' }
+]
+
+export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Element {
+  const profile = useCloudStore((s) => s.profile)
+  const setProfile = useCloudStore((s) => s.setProfile)
+  const settings = useCloudStore((s) => s.settings)
+  const saveSettings = useCloudStore((s) => s.saveSettings)
+  const selectedRegions = useCloudStore((s) => s.selectedRegions)
+  const setSelectedRegions = useCloudStore((s) => s.setSelectedRegions)
+
+  const [tab, setTab] = useState<TabKey>('profile')
+  const [awsProfiles, setAwsProfiles] = useState<string[]>(['default'])
+  const [endpointInput, setEndpointInput] = useState<string>(profile.endpoint ?? '')
+
+  useEffect(() => {
+    window.riftview
+      .listAwsProfiles()
+      .then(setAwsProfiles)
+      .catch(() => setAwsProfiles(['default']))
+  }, [])
+
+  // Close on Escape
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent): void => {
+      if (e.key === 'Escape') onClose()
+    },
+    [onClose]
+  )
+
+  function handleProfileSelect(name: string): void {
+    const next: AwsProfile = { name, endpoint: profile.endpoint }
+    setProfile(next)
+  }
+
+  function handleSettingChange<K extends keyof Settings>(key: K, val: Settings[K]): void {
+    saveSettings({ ...settings, [key]: val }).catch(() => {
+      /* best-effort */
+    })
+  }
+
+  function toggleRegion(region: string): void {
+    const next = selectedRegions.includes(region)
+      ? selectedRegions.filter((r) => r !== region)
+      : [...selectedRegions, region]
+    // Keep at least one region selected
+    if (next.length === 0) return
+    setSelectedRegions(next)
+  }
+
+  function handleEndpointSave(): void {
+    const trimmed = endpointInput.trim()
+    setProfile({ ...profile, endpoint: trimmed || undefined })
+  }
+
+  function handleEndpointClear(): void {
+    setEndpointInput('')
+    setProfile({ ...profile, endpoint: undefined })
+  }
+
+  const body: React.CSSProperties = {
+    display: 'flex',
+    flex: 1,
+    overflow: 'hidden',
+    minHeight: 0
+  }
+
+  const sidebar: React.CSSProperties = {
+    width: 130,
+    borderRight: '1px solid var(--border)',
+    padding: '12px 0',
+    flexShrink: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2
+  }
+
+  const content: React.CSSProperties = {
+    flex: 1,
+    padding: '20px 24px',
+    overflowY: 'auto'
+  }
+
+  function tabBtn(key: TabKey): React.CSSProperties {
+    const active = tab === key
+    return {
+      display: 'block',
+      width: '100%',
+      padding: '6px 16px',
+      textAlign: 'left',
+      fontFamily: 'monospace',
+      fontSize: 11,
+      cursor: 'pointer',
+      border: 'none',
+      borderLeft: active ? '2px solid var(--accent)' : '2px solid transparent',
+      background: active ? 'var(--ember-glow)' : 'transparent',
+      color: active ? 'var(--accent)' : 'var(--bone-200)'
+    }
+  }
+
+  const sectionLabel: React.CSSProperties = {
+    fontSize: 9,
+    color: 'var(--fg-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    marginBottom: 10
+  }
+
+  const noteStyle: React.CSSProperties = {
+    fontSize: 10,
+    color: 'var(--fg-muted)',
+    marginTop: 14,
+    lineHeight: 1.6
+  }
+
+  const amberNote: React.CSSProperties = {
+    fontSize: 10,
+    color: '#f59e0b',
+    background: 'rgba(251,191,36,0.08)',
+    border: '1px solid rgba(251,191,36,0.25)',
+    borderRadius: 4,
+    padding: '6px 10px',
+    marginTop: 14,
+    lineHeight: 1.6
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    background: 'var(--ink-850)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 4,
+    padding: '5px 10px',
+    color: 'var(--fg)',
+    fontFamily: 'monospace',
+    fontSize: 11,
+    boxSizing: 'border-box'
+  }
+
+  const btnSecondary: React.CSSProperties = {
+    background: 'var(--ink-850)',
+    border: '1px solid var(--border)',
+    borderRadius: 4,
+    padding: '4px 14px',
+    color: 'var(--bone-200)',
+    fontFamily: 'monospace',
+    fontSize: 11,
+    cursor: 'pointer'
+  }
+
+  const btnDanger: React.CSSProperties = {
+    background: 'transparent',
+    border: '1px solid #ef4444',
+    borderRadius: 4,
+    padding: '4px 14px',
+    color: '#ef4444',
+    fontFamily: 'monospace',
+    fontSize: 11,
+    cursor: 'pointer'
+  }
+
+  return (
+    <div
+      className="modal-backdrop"
+      onClick={(e): void => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+      onKeyDown={handleKeyDown}
+      tabIndex={-1}
+      style={{ zIndex: 300 }}
+    >
+      <div className="modal modal--lg" style={{ maxHeight: '80vh' }}>
+        <div className="modal-head">
+          <div className="modal-head-text">
+            <span className="eyebrow">PREFERENCES</span>
+            <h2 className="modal-title">Settings</h2>
+          </div>
+          <button className="modal-close" onClick={onClose} aria-label="Close settings">
+            ×
+          </button>
+        </div>
+
+        <div style={body}>
+          {/* Sidebar */}
+          <div style={sidebar}>
+            {TABS.map(({ key, label }) => (
+              <button key={key} style={tabBtn(key)} onClick={(): void => setTab(key)}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Content */}
+          <div style={content}>
+            {/* ── Profile tab ── */}
+            {tab === 'profile' && (
+              <div>
+                <div style={sectionLabel}>AWS Credential Profile</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {awsProfiles.map((name) => {
+                    const active = name === profile.name
+                    return (
+                      <button
+                        key={name}
+                        onClick={(): void => handleProfileSelect(name)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '6px 12px',
+                          borderRadius: 4,
+                          border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                          background: active ? 'var(--ember-glow)' : 'transparent',
+                          color: active ? 'var(--accent)' : 'var(--bone-200)',
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: active ? 'var(--accent)' : 'var(--border-strong)',
+                            flexShrink: 0
+                          }}
+                        />
+                        {name}
+                        {active && (
+                          <span
+                            style={{
+                              marginLeft: 'auto',
+                              fontSize: 9,
+                              color: 'var(--accent)',
+                              opacity: 0.75
+                            }}
+                          >
+                            active
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+                <div style={noteStyle}>
+                  To add a profile, run{' '}
+                  <code
+                    style={{
+                      color: 'var(--fg)',
+                      background: 'var(--ink-850)',
+                      padding: '1px 4px',
+                      borderRadius: 3
+                    }}
+                  >
+                    aws configure --profile &lt;name&gt;
+                  </code>{' '}
+                  in your terminal, then reopen Settings.
+                </div>
+              </div>
+            )}
+
+            {/* ── Regions tab ── */}
+            {tab === 'regions' && (
+              <div>
+                <div style={sectionLabel}>Scan Regions</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {ALL_REGIONS.map((region) => {
+                    const checked = selectedRegions.includes(region)
+                    return (
+                      <label
+                        key={region}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          cursor: 'pointer',
+                          padding: '4px 8px',
+                          borderRadius: 4,
+                          border: `1px solid ${checked ? 'var(--accent)' : 'var(--border)'}`,
+                          background: checked ? 'var(--ember-glow)' : 'transparent'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(): void => toggleRegion(region)}
+                          style={{ accentColor: 'var(--accent)', cursor: 'pointer' }}
+                        />
+                        <span
+                          style={{
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            color: checked ? 'var(--accent)' : 'var(--bone-200)'
+                          }}
+                        >
+                          {region}
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
+                <div style={noteStyle}>
+                  Selected regions are used when &quot;Scan All Selected&quot; is triggered.
+                  Currently scanning:{' '}
+                  <strong style={{ color: 'var(--fg)' }}>{useCloudStore.getState().region}</strong>
+                </div>
+
+                <div
+                  style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 12 }}
+                >
+                  <div style={sectionLabel}>Region Indicators</div>
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      cursor: 'pointer',
+                      marginBottom: 10
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={settings.showRegionIndicators}
+                      onChange={(e): void =>
+                        handleSettingChange('showRegionIndicators', e.target.checked)
+                      }
+                      style={{ accentColor: 'var(--accent)', cursor: 'pointer' }}
+                    />
+                    <span
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        color: 'var(--bone-200)'
+                      }}
+                    >
+                      Show region color indicators on nodes (when ≥ 2 regions active)
+                    </span>
+                  </label>
+
+                  {settings.showRegionIndicators && selectedRegions.length >= 2 && (
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 9,
+                          color: 'var(--fg-muted)',
+                          marginBottom: 8,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.07em'
+                        }}
+                      >
+                        Custom colors (hex, leave blank for default)
+                      </div>
+                      {selectedRegions.map((r) => (
+                        <label
+                          key={r}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: 'monospace',
+                              fontSize: 10,
+                              color: 'var(--bone-200)',
+                              minWidth: 120
+                            }}
+                          >
+                            {r}
+                          </span>
+                          <input
+                            type="text"
+                            placeholder={getRegionColor(r)}
+                            value={settings.regionColors[r] ?? ''}
+                            onChange={(e): void => {
+                              const val = e.target.value.trim()
+                              const next = { ...settings.regionColors }
+                              if (val) next[r] = val
+                              else delete next[r]
+                              handleSettingChange('regionColors', next)
+                            }}
+                            style={{
+                              width: 90,
+                              fontFamily: 'monospace',
+                              fontSize: 10,
+                              background: 'var(--ink-850)',
+                              border: '1px solid var(--border)',
+                              borderRadius: 3,
+                              padding: '2px 6px',
+                              color: 'var(--fg)'
+                            }}
+                          />
+                          {(settings.regionColors[r] || getRegionColor(r)) && (
+                            <span
+                              style={{
+                                width: 14,
+                                height: 14,
+                                borderRadius: '50%',
+                                background: settings.regionColors[r] || getRegionColor(r),
+                                border: '1px solid var(--border)',
+                                flexShrink: 0
+                              }}
+                            />
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── General tab ── */}
+            {tab === 'general' && (
+              <div>
+                <div style={sectionLabel}>Delete Confirmation</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
+                  {(['type-to-confirm', 'command-drawer'] as const).map((val) => {
+                    const active = settings.deleteConfirmStyle === val
+                    const label = val === 'type-to-confirm' ? 'Type to confirm' : 'Command Drawer'
+                    return (
+                      <button
+                        key={val}
+                        onClick={(): void => handleSettingChange('deleteConfirmStyle', val)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '6px 12px',
+                          borderRadius: 4,
+                          border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                          background: active ? 'var(--ember-glow)' : 'transparent',
+                          color: active ? 'var(--accent)' : 'var(--bone-200)',
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: active ? 'var(--accent)' : 'var(--border-strong)',
+                            flexShrink: 0
+                          }}
+                        />
+                        {label}
+                        {active && (
+                          <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>
+                            active
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div style={sectionLabel}>Scan Interval</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {(['15', '30', '60', 'manual'] as const).map((val) => {
+                    const numVal = val === 'manual' ? 'manual' : (Number(val) as 15 | 30 | 60)
+                    const active = String(settings.scanInterval) === val
+                    const label = val === 'manual' ? 'Manual only' : `${val}s`
+                    return (
+                      <button
+                        key={val}
+                        onClick={(): void => handleSettingChange('scanInterval', numVal)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '6px 12px',
+                          borderRadius: 4,
+                          border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                          background: active ? 'var(--ember-glow)' : 'transparent',
+                          color: active ? 'var(--accent)' : 'var(--bone-200)',
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            background: active ? 'var(--accent)' : 'var(--border-strong)',
+                            flexShrink: 0
+                          }}
+                        />
+                        {label}
+                        {active && (
+                          <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>
+                            active
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div style={{ marginTop: 20 }}>
+                  <div style={sectionLabel}>Scan Errors</div>
+                  <label
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={settings.showScanErrorBadges}
+                      onChange={(e): void =>
+                        handleSettingChange('showScanErrorBadges', e.target.checked)
+                      }
+                      style={{ accentColor: 'var(--accent)', cursor: 'pointer' }}
+                    />
+                    <span
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        color: 'var(--bone-200)'
+                      }}
+                    >
+                      Show error badges in sidebar when a service scan fails
+                    </span>
+                  </label>
+                </div>
+
+                <div style={{ marginTop: 20 }}>
+                  <div style={sectionLabel}>Drift Notifications</div>
+                  <label
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={settings.notifyOnDrift}
+                      onChange={(e): void => handleSettingChange('notifyOnDrift', e.target.checked)}
+                      style={{ accentColor: 'var(--accent)', cursor: 'pointer' }}
+                    />
+                    <span
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        color: 'var(--bone-200)'
+                      }}
+                    >
+                      Notify when drift is detected
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* ── LocalStack tab ── */}
+            {tab === 'localstack' && (
+              <div>
+                <div style={sectionLabel}>Local Endpoint</div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={endpointInput}
+                    onChange={(e): void => setEndpointInput(e.target.value)}
+                    onKeyDown={(e): void => {
+                      if (e.key === 'Enter') handleEndpointSave()
+                    }}
+                    placeholder="http://localhost:4566"
+                    style={inputStyle}
+                    spellCheck={false}
+                  />
+                  <button onClick={handleEndpointSave} style={btnSecondary}>
+                    Set
+                  </button>
+                  <button onClick={handleEndpointClear} style={btnDanger}>
+                    Clear
+                  </button>
+                </div>
+                {profile.endpoint && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 10,
+                      color: '#f59e0b',
+                      fontFamily: 'monospace'
+                    }}
+                  >
+                    Active: {profile.endpoint}
+                  </div>
+                )}
+                <div style={amberNote}>
+                  When an endpoint is set, all CLI commands route to the local emulator with test
+                  credentials (key: <code>test</code>). Real AWS credentials are never used for
+                  local calls.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

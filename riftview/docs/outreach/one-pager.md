@@ -66,5 +66,5 @@ clicking a different node.
 
 ---
 
-*Built on the observation that most AWS incidents are structural, not
-numerical. If you can see the structure, you can diagnose faster.*
+_Built on the observation that most AWS incidents are structural, not
+numerical. If you can see the structure, you can diagnose faster._

@@ -46,8 +46,8 @@ Two new fields added to the `Settings` interface:
 ```ts
 interface Settings {
   // ...existing fields...
-  showRegionIndicators: boolean           // default: true
-  regionColors: Record<string, string>    // default: {} (uses palette defaults)
+  showRegionIndicators: boolean // default: true
+  regionColors: Record<string, string> // default: {} (uses palette defaults)
 }
 ```
 
@@ -76,18 +76,18 @@ selectedRegions (useCloudStore)
 
 ## 5. New Components / Files
 
-| File | Change |
-|------|--------|
-| `components/RegionBar.tsx` | New — chips sub-bar component |
-| `components/canvas/nodes/RegionZoneNode.tsx` | New — zone container for Topology view |
-| `renderer/src/App.tsx` | Add `<RegionBar />` between TitleBar and main layout |
-| `components/TitleBar.tsx` | Remove single-region `<select>` |
-| `components/canvas/nodes/ResourceNode.tsx` | Add left-edge accent strip when `regionColor` set |
-| `components/canvas/TopologyView.tsx` | Add RegionZone wrapping when ≥ 2 regions; add `regionZone: RegionZoneNode` to `NODE_TYPES` |
-| `renderer/types/cloud.ts` | Add `showRegionIndicators: boolean`, `regionColors: Record<string, string>` to `Settings` |
-| `store/cloud.ts` | Update `defaultSettings` with `showRegionIndicators: true, regionColors: {}` |
-| `main/ipc/handlers.ts` | Update `DEFAULT_SETTINGS` with same two new fields (required for typecheck) |
-| `hooks/useScanner.ts` or `useIpc.ts` | Call `setSelectedRegions([region])` alongside `setRegion` on profile load |
+| File                                         | Change                                                                                     |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `components/RegionBar.tsx`                   | New — chips sub-bar component                                                              |
+| `components/canvas/nodes/RegionZoneNode.tsx` | New — zone container for Topology view                                                     |
+| `renderer/src/App.tsx`                       | Add `<RegionBar />` between TitleBar and main layout                                       |
+| `components/TitleBar.tsx`                    | Remove single-region `<select>`                                                            |
+| `components/canvas/nodes/ResourceNode.tsx`   | Add left-edge accent strip when `regionColor` set                                          |
+| `components/canvas/TopologyView.tsx`         | Add RegionZone wrapping when ≥ 2 regions; add `regionZone: RegionZoneNode` to `NODE_TYPES` |
+| `renderer/types/cloud.ts`                    | Add `showRegionIndicators: boolean`, `regionColors: Record<string, string>` to `Settings`  |
+| `store/cloud.ts`                             | Update `defaultSettings` with `showRegionIndicators: true, regionColors: {}`               |
+| `main/ipc/handlers.ts`                       | Update `DEFAULT_SETTINGS` with same two new fields (required for typecheck)                |
+| `hooks/useScanner.ts` or `useIpc.ts`         | Call `setSelectedRegions([region])` alongside `setRegion` on profile load                  |
 
 ---
 

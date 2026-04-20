@@ -28,14 +28,18 @@ analyzeNode?(node: CloudNode): Advisory[]
 ```
 
 With this optional method:
+
 - `analyzeNode.ts` becomes the AWS implementation: it runs its existing rules for AWS-owned node types
 - A future `azurePlugin` or `gcpPlugin` implements `analyzeNode` for its own types
 - The shared `FirstScanSummary` / advisory queue calls a dispatcher:
 
 ```typescript
 // In src/renderer/utils/analyzeNode.ts — when M6 lands, replace with:
-export function analyzeNode(node: CloudNode, pluginAdvisoryFn?: (n: CloudNode) => Advisory[]): Advisory[] {
-  const base = awsAnalyzeNode(node)           // existing AWS rules
+export function analyzeNode(
+  node: CloudNode,
+  pluginAdvisoryFn?: (n: CloudNode) => Advisory[]
+): Advisory[] {
+  const base = awsAnalyzeNode(node) // existing AWS rules
   const extra = pluginAdvisoryFn?.(node) ?? []
   return [...base, ...extra]
 }

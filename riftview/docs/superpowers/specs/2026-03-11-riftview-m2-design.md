@@ -1,4 +1,5 @@
 # RiftView M2 — Design Spec
+
 **Date:** 2026-03-11
 **Status:** Approved
 
@@ -25,43 +26,47 @@ Drag-and-drop from palette: add non-functional drag handles to `Sidebar.tsx` pal
 All dropdowns for VPC/Subnet/SG are populated from the live Zustand store — no extra API calls.
 
 ### VPC
-| Field | Default |
-|---|---|
-| Name | — |
+
+| Field      | Default       |
+| ---------- | ------------- |
+| Name       | —             |
 | CIDR block | `10.0.0.0/16` |
-| Tenancy | default |
+| Tenancy    | default       |
 
 Generates: `aws ec2 create-vpc --cidr-block <cidr> --instance-tenancy <tenancy> --tag-specifications ...`
 
 ### EC2 Instance
-| Field | Notes |
-|---|---|
-| Name | tag |
-| AMI ID | — |
-| Instance type | dropdown, default `t3.micro` |
-| Key pair | free-text in M2 (dropdown in M3 once keypairs are scanned) |
-| VPC | dropdown from existing nodes |
-| Subnet | filtered by selected VPC |
-| Security Groups | multi-select from existing nodes |
+
+| Field           | Notes                                                      |
+| --------------- | ---------------------------------------------------------- |
+| Name            | tag                                                        |
+| AMI ID          | —                                                          |
+| Instance type   | dropdown, default `t3.micro`                               |
+| Key pair        | free-text in M2 (dropdown in M3 once keypairs are scanned) |
+| VPC             | dropdown from existing nodes                               |
+| Subnet          | filtered by selected VPC                                   |
+| Security Groups | multi-select from existing nodes                           |
 
 Generates: `aws ec2 run-instances ...`
 
 ### Security Group
-| Field | Notes |
-|---|---|
-| Name | — |
-| Description | — |
-| VPC | dropdown from existing nodes |
+
+| Field         | Notes                                             |
+| ------------- | ------------------------------------------------- |
+| Name          | —                                                 |
+| Description   | —                                                 |
+| VPC           | dropdown from existing nodes                      |
 | Inbound rules | repeating rows: protocol, port range, source CIDR |
 
 Generates: `aws ec2 create-security-group ...` + one `aws ec2 authorize-security-group-ingress ...` per rule, run sequentially.
 
 ### S3 Bucket
-| Field | Default |
-|---|---|
-| Bucket name | — |
-| Region | pre-filled from current session |
-| Block all public access | on |
+
+| Field                   | Default                         |
+| ----------------------- | ------------------------------- |
+| Bucket name             | —                               |
+| Region                  | pre-filled from current session |
+| Block all public access | on                              |
 
 Generates: `aws s3api create-bucket --bucket <name>` (+ `--create-bucket-configuration` if non-us-east-1) + `aws s3api put-public-access-block ...`
 
@@ -77,12 +82,12 @@ New IPC channels:
 
 The renderer sends `{ resource, params }` to main; main calls `buildCommand` and executes. This keeps all CLI logic in the main process.
 
-| Channel | Direction | Purpose |
-|---|---|---|
-| `cli:run` | renderer → main | send `{ resource, params }`, main builds command and starts execution |
-| `cli:output` | main → renderer | stream `{ line, stream }` |
-| `cli:done` | main → renderer | `{ code }` on exit |
-| `cli:cancel` | renderer → main | kill in-flight process |
+| Channel      | Direction       | Purpose                                                               |
+| ------------ | --------------- | --------------------------------------------------------------------- |
+| `cli:run`    | renderer → main | send `{ resource, params }`, main builds command and starts execution |
+| `cli:output` | main → renderer | stream `{ line, stream }`                                             |
+| `cli:done`   | main → renderer | `{ code }` on exit                                                    |
+| `cli:cancel` | renderer → main | kill in-flight process                                                |
 
 ## State
 

@@ -12,19 +12,20 @@
 
 ## File Map
 
-| Action | File | Responsibility |
-|---|---|---|
-| Create | `src/renderer/utils/buildRemediateCommands.ts` | Pure fn: `CloudNode → string[][]` |
-| Create | `tests/renderer/utils/buildRemediateCommands.test.ts` | Unit tests — all cases, no mocks |
-| Modify | `src/renderer/components/Inspector.tsx` | Add `onRemediate` prop + REMEDIATE section |
-| Modify | `src/renderer/src/App.tsx` | Add `handleRemediate`, pass to `<Inspector>` |
-| Create | `tests/renderer/components/Inspector.remediate.test.tsx` | Integration: visibility + execution states |
+| Action | File                                                     | Responsibility                               |
+| ------ | -------------------------------------------------------- | -------------------------------------------- |
+| Create | `src/renderer/utils/buildRemediateCommands.ts`           | Pure fn: `CloudNode → string[][]`            |
+| Create | `tests/renderer/utils/buildRemediateCommands.test.ts`    | Unit tests — all cases, no mocks             |
+| Modify | `src/renderer/components/Inspector.tsx`                  | Add `onRemediate` prop + REMEDIATE section   |
+| Modify | `src/renderer/src/App.tsx`                               | Add `handleRemediate`, pass to `<Inspector>` |
+| Create | `tests/renderer/components/Inspector.remediate.test.tsx` | Integration: visibility + execution states   |
 
 ---
 
 ## Task 1: `buildRemediateCommands` — pure function + tests
 
 **Files:**
+
 - Create: `tests/renderer/utils/buildRemediateCommands.test.ts`
 - Create: `src/renderer/utils/buildRemediateCommands.ts`
 
@@ -32,21 +33,21 @@
 
 The function takes a `CloudNode` and returns `string[][]` — each inner array is one `aws` CLI invocation's argv (without the `aws` prefix, matching the existing `buildDeleteCommands` / `buildEditCommands` convention).
 
-| driftStatus | Behaviour |
-|---|---|
-| `'unmanaged'` | Delegates to `buildDeleteCommands(node)` |
-| `'matched'` | Diffs `node.metadata` vs `node.tfMetadata`; emits update commands for supported fields |
-| `'missing'` / undefined | Returns `[]` |
+| driftStatus             | Behaviour                                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------- |
+| `'unmanaged'`           | Delegates to `buildDeleteCommands(node)`                                               |
+| `'matched'`             | Diffs `node.metadata` vs `node.tfMetadata`; emits update commands for supported fields |
+| `'missing'` / undefined | Returns `[]`                                                                           |
 
 Supported fields for `matched`:
 
-| NodeType | Key | Command |
-|---|---|---|
-| `lambda` | `runtime` | `lambda update-function-configuration --function-name {node.id} --runtime {tfVal}` |
-| `lambda` | `memorySize` | `lambda update-function-configuration --function-name {node.id} --memory-size {tfVal}` |
-| `lambda` | `timeout` | `lambda update-function-configuration --function-name {node.id} --timeout {tfVal}` |
-| `ec2` | `instanceType` | stop (if running) + `ec2 modify-instance-attribute --instance-id {node.id} --instance-type Value={tfVal}` + start (if running) |
-| `rds` | `instanceClass` | `rds modify-db-instance --db-instance-identifier {node.id} --db-instance-class {tfVal} --apply-immediately` |
+| NodeType | Key             | Command                                                                                                                        |
+| -------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `lambda` | `runtime`       | `lambda update-function-configuration --function-name {node.id} --runtime {tfVal}`                                             |
+| `lambda` | `memorySize`    | `lambda update-function-configuration --function-name {node.id} --memory-size {tfVal}`                                         |
+| `lambda` | `timeout`       | `lambda update-function-configuration --function-name {node.id} --timeout {tfVal}`                                             |
+| `ec2`    | `instanceType`  | stop (if running) + `ec2 modify-instance-attribute --instance-id {node.id} --instance-type Value={tfVal}` + start (if running) |
+| `rds`    | `instanceClass` | `rds modify-db-instance --db-instance-identifier {node.id} --db-instance-class {tfVal} --apply-immediately`                    |
 
 **Multiple Lambda diffs** are merged into one `update-function-configuration` command with all changed flags combined.
 
@@ -73,7 +74,7 @@ function node(overrides: Partial<CloudNode>): CloudNode {
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    ...overrides,
+    ...overrides
   } as CloudNode
 }
 
@@ -101,7 +102,9 @@ describe('buildRemediateCommands', () => {
   })
 
   it('matched with no tfMetadata → []', () => {
-    expect(buildRemediateCommands(node({ driftStatus: 'matched', tfMetadata: undefined }))).toEqual([])
+    expect(buildRemediateCommands(node({ driftStatus: 'matched', tfMetadata: undefined }))).toEqual(
+      []
+    )
   })
 
   // ── matched lambda ─────────────────────────────────────────────────────
@@ -110,11 +113,18 @@ describe('buildRemediateCommands', () => {
       node({
         driftStatus: 'matched',
         metadata: { runtime: 'python3.9' },
-        tfMetadata: { runtime: 'python3.11' },
+        tfMetadata: { runtime: 'python3.11' }
       })
     )
     expect(result).toEqual([
-      ['lambda', 'update-function-configuration', '--function-name', 'test-id', '--runtime', 'python3.11'],
+      [
+        'lambda',
+        'update-function-configuration',
+        '--function-name',
+        'test-id',
+        '--runtime',
+        'python3.11'
+      ]
     ])
   })
 
@@ -123,7 +133,7 @@ describe('buildRemediateCommands', () => {
       node({
         driftStatus: 'matched',
         metadata: { memorySize: '128', timeout: '3' },
-        tfMetadata: { memorySize: '512', timeout: '30' },
+        tfMetadata: { memorySize: '512', timeout: '30' }
       })
     )
     expect(result).toHaveLength(1)
@@ -140,7 +150,7 @@ describe('buildRemediateCommands', () => {
       node({
         driftStatus: 'matched',
         metadata: { tags: '{}' },
-        tfMetadata: { tags: '{"env":"prod"}' },
+        tfMetadata: { tags: '{"env":"prod"}' }
       })
     )
     expect(result).toEqual([])
@@ -155,13 +165,20 @@ describe('buildRemediateCommands', () => {
         status: 'running',
         driftStatus: 'matched',
         metadata: { instanceType: 't3.small' },
-        tfMetadata: { instanceType: 't3.medium' },
+        tfMetadata: { instanceType: 't3.medium' }
       })
     )
     expect(result).toEqual([
       ['ec2', 'stop-instances', '--instance-ids', 'i-abc123'],
-      ['ec2', 'modify-instance-attribute', '--instance-id', 'i-abc123', '--instance-type', 'Value=t3.medium'],
-      ['ec2', 'start-instances', '--instance-ids', 'i-abc123'],
+      [
+        'ec2',
+        'modify-instance-attribute',
+        '--instance-id',
+        'i-abc123',
+        '--instance-type',
+        'Value=t3.medium'
+      ],
+      ['ec2', 'start-instances', '--instance-ids', 'i-abc123']
     ])
   })
 
@@ -173,11 +190,18 @@ describe('buildRemediateCommands', () => {
         status: 'stopped',
         driftStatus: 'matched',
         metadata: { instanceType: 't3.small' },
-        tfMetadata: { instanceType: 't3.medium' },
+        tfMetadata: { instanceType: 't3.medium' }
       })
     )
     expect(result).toEqual([
-      ['ec2', 'modify-instance-attribute', '--instance-id', 'i-abc123', '--instance-type', 'Value=t3.medium'],
+      [
+        'ec2',
+        'modify-instance-attribute',
+        '--instance-id',
+        'i-abc123',
+        '--instance-type',
+        'Value=t3.medium'
+      ]
     ])
   })
 
@@ -189,11 +213,19 @@ describe('buildRemediateCommands', () => {
         type: 'rds',
         driftStatus: 'matched',
         metadata: { instanceClass: 'db.t3.small' },
-        tfMetadata: { instanceClass: 'db.t3.medium' },
+        tfMetadata: { instanceClass: 'db.t3.medium' }
       })
     )
     expect(result).toEqual([
-      ['rds', 'modify-db-instance', '--db-instance-identifier', 'my-db', '--db-instance-class', 'db.t3.medium', '--apply-immediately'],
+      [
+        'rds',
+        'modify-db-instance',
+        '--db-instance-identifier',
+        'my-db',
+        '--db-instance-class',
+        'db.t3.medium',
+        '--apply-immediately'
+      ]
     ])
   })
 })
@@ -231,25 +263,25 @@ export function buildRemediateCommands(node: CloudNode): string[][] {
 
 function buildMatchedCommands(node: CloudNode): string[][] {
   const live = node.metadata
-  const tf   = node.tfMetadata as Record<string, unknown>
+  const tf = node.tfMetadata as Record<string, unknown>
 
   function diffed(key: string): string | null {
     const liveVal = String(live[key] ?? '')
-    const tfVal   = String(tf[key] ?? '')
+    const tfVal = String(tf[key] ?? '')
     return liveVal !== tfVal && tf[key] !== undefined ? tfVal : null
   }
 
   if (node.type === 'lambda') {
-    const runtimeVal  = diffed('runtime')
-    const memoryVal   = diffed('memorySize')
-    const timeoutVal  = diffed('timeout')
+    const runtimeVal = diffed('runtime')
+    const memoryVal = diffed('memorySize')
+    const timeoutVal = diffed('timeout')
 
     if (!runtimeVal && !memoryVal && !timeoutVal) return []
 
     const cmd = ['lambda', 'update-function-configuration', '--function-name', node.id]
-    if (runtimeVal)  cmd.push('--runtime',     runtimeVal)
-    if (memoryVal)   cmd.push('--memory-size',  memoryVal)
-    if (timeoutVal)  cmd.push('--timeout',      timeoutVal)
+    if (runtimeVal) cmd.push('--runtime', runtimeVal)
+    if (memoryVal) cmd.push('--memory-size', memoryVal)
+    if (timeoutVal) cmd.push('--timeout', timeoutVal)
     return [cmd]
   }
 
@@ -257,13 +289,20 @@ function buildMatchedCommands(node: CloudNode): string[][] {
     const instanceTypeVal = diffed('instanceType')
     if (!instanceTypeVal) return []
 
-    const modify = ['ec2', 'modify-instance-attribute', '--instance-id', node.id, '--instance-type', `Value=${instanceTypeVal}`]
+    const modify = [
+      'ec2',
+      'modify-instance-attribute',
+      '--instance-id',
+      node.id,
+      '--instance-type',
+      `Value=${instanceTypeVal}`
+    ]
 
     if (node.status === 'running') {
       return [
-        ['ec2', 'stop-instances',  '--instance-ids', node.id],
+        ['ec2', 'stop-instances', '--instance-ids', node.id],
         modify,
-        ['ec2', 'start-instances', '--instance-ids', node.id],
+        ['ec2', 'start-instances', '--instance-ids', node.id]
       ]
     }
     return [modify]
@@ -272,7 +311,17 @@ function buildMatchedCommands(node: CloudNode): string[][] {
   if (node.type === 'rds') {
     const instanceClassVal = diffed('instanceClass')
     if (!instanceClassVal) return []
-    return [['rds', 'modify-db-instance', '--db-instance-identifier', node.id, '--db-instance-class', instanceClassVal, '--apply-immediately']]
+    return [
+      [
+        'rds',
+        'modify-db-instance',
+        '--db-instance-identifier',
+        node.id,
+        '--db-instance-class',
+        instanceClassVal,
+        '--apply-immediately'
+      ]
+    ]
   }
 
   return []
@@ -319,6 +368,7 @@ git commit -m "feat(phase2): buildRemediateCommands pure function + tests"
 ## Task 2: Inspector REMEDIATE section + App.tsx wiring
 
 **Files:**
+
 - Modify: `src/renderer/components/Inspector.tsx` (add `onRemediate` prop + REMEDIATE section)
 - Modify: `src/renderer/src/App.tsx` (add `handleRemediate`, pass to Inspector)
 - Create: `tests/renderer/components/Inspector.remediate.test.tsx`
@@ -328,6 +378,7 @@ git commit -m "feat(phase2): buildRemediateCommands pure function + tests"
 **Insert point in Inspector.tsx:** After the drift banners block (currently lines 194–212) and before `{/* node type header */}` (line 214). The REMEDIATE section is only rendered when `flag('EXECUTION_ENGINE')` is true AND `node.driftStatus` is `'unmanaged'` or `'matched'`.
 
 **State machine (local useState):**
+
 - `'idle'` — shows commands + Execute button
 - `'running'` — "Executing…", button disabled
 - `'done-ok'` — "✓ Done" (green)
@@ -359,15 +410,15 @@ import type { CloudNode } from '../../../src/renderer/types/cloud'
 // ---- Mocks (same pattern as Inspector.test.tsx) ----------------------------
 
 const saveAnnotationsMock = vi.fn().mockResolvedValue(undefined)
-const analyzeIamMock      = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
+const analyzeIamMock = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
 
 Object.defineProperty(window, 'riftview', {
   value: { saveAnnotations: saveAnnotationsMock, analyzeIam: analyzeIamMock },
-  writable: true,
+  writable: true
 })
 
 vi.mock('../../../src/renderer/components/IamAdvisor', () => ({
-  IamAdvisor: () => null,
+  IamAdvisor: () => null
 }))
 
 // ---------------------------------------------------------------------------
@@ -380,7 +431,7 @@ function baseNode(overrides: Partial<CloudNode> = {}): CloudNode {
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    ...overrides,
+    ...overrides
   } as CloudNode
 }
 
@@ -405,7 +456,12 @@ describe('Inspector REMEDIATE section', () => {
     analyzeIamMock.mockClear()
     // Enable the EXECUTION_ENGINE flag for all tests except the flag=false test
     vi.stubEnv('VITE_FLAG_EXECUTION_ENGINE', 'true')
-    useUIStore.setState({ selectedNodeId: null, annotations: {}, selectedEdgeId: null, selectedEdgeInfo: null })
+    useUIStore.setState({
+      selectedNodeId: null,
+      annotations: {},
+      selectedEdgeId: null,
+      selectedEdgeInfo: null
+    })
     useCloudStore.setState({ nodes: [], importedNodes: [] })
   })
 
@@ -436,20 +492,24 @@ describe('Inspector REMEDIATE section', () => {
   })
 
   it('shown for matched node with commands', () => {
-    setup(baseNode({
-      driftStatus: 'matched',
-      metadata: { runtime: 'python3.9' },
-      tfMetadata: { runtime: 'python3.11' },
-    }))
+    setup(
+      baseNode({
+        driftStatus: 'matched',
+        metadata: { runtime: 'python3.9' },
+        tfMetadata: { runtime: 'python3.11' }
+      })
+    )
     expect(screen.getByText('REMEDIATE')).toBeTruthy()
   })
 
   it('shows "Manual remediation required" when matched but no supported diff', () => {
-    setup(baseNode({
-      driftStatus: 'matched',
-      metadata: { tags: '{}' },
-      tfMetadata: { tags: '{"env":"prod"}' },
-    }))
+    setup(
+      baseNode({
+        driftStatus: 'matched',
+        metadata: { tags: '{}' },
+        tfMetadata: { tags: '{"env":"prod"}' }
+      })
+    )
     expect(screen.getByText(/Manual remediation required/)).toBeTruthy()
   })
 
@@ -465,7 +525,11 @@ describe('Inspector REMEDIATE section', () => {
 
   it('shows Executing… while running, then ✓ Done on success', async () => {
     let resolve!: (v: { code: number }) => void
-    const onRemediate = vi.fn<OnRemediate>().mockReturnValue(new Promise((r) => { resolve = r }))
+    const onRemediate = vi.fn<OnRemediate>().mockReturnValue(
+      new Promise((r) => {
+        resolve = r
+      })
+    )
     setup(baseNode({ driftStatus: 'unmanaged' }), onRemediate)
 
     fireEvent.click(screen.getByText('Execute'))
@@ -497,28 +561,36 @@ Expected: FAIL — `onRemediate` prop not found, REMEDIATE section not rendered
 In `src/renderer/components/Inspector.tsx`:
 
 **3a. Add import for `flag` and `buildRemediateCommands` at the top of the file (after existing imports):**
+
 ```ts
 import { flag } from '../utils/flags'
 import { buildRemediateCommands } from '../utils/buildRemediateCommands'
 ```
 
 **3b. Extend `InspectorProps` interface (replace the existing interface):**
+
 ```ts
 interface InspectorProps {
   onDelete: (node: CloudNode) => void
   onEdit: (node: CloudNode) => void
-  onQuickAction: (node: CloudNode, action: 'stop' | 'start' | 'reboot' | 'invalidate', meta?: { path?: string }) => void
+  onQuickAction: (
+    node: CloudNode,
+    action: 'stop' | 'start' | 'reboot' | 'invalidate',
+    meta?: { path?: string }
+  ) => void
   onAddRoute?: (apiId: string) => void
   onRemediate?: (node: CloudNode, commands: string[][]) => Promise<{ code: number }>
 }
 ```
 
 **3c. Update the destructured props in the `Inspector` function signature:**
+
 ```ts
 export function Inspector({ onDelete, onEdit, onQuickAction, onAddRoute, onRemediate }: InspectorProps): React.JSX.Element {
 ```
 
 **3d. Add remediate state after the existing `useState` declarations (near line 68, after `acmDeleteError`):**
+
 ```ts
 type RemediateState = 'idle' | 'running' | `done-ok` | `done-err:${number}`
 const [remediateState, setRemediateState] = useState<RemediateState>('idle')
@@ -534,96 +606,125 @@ React.useEffect(() => {
 In `src/renderer/components/Inspector.tsx`, after the matched drift banner block (after the closing `)}` of the `node.driftStatus === 'matched'` block, around line 212) and before `{/* node type header */}`:
 
 ```tsx
-{/* REMEDIATE section — flag-gated, unmanaged + matched only */}
-{flag('EXECUTION_ENGINE') && (node.driftStatus === 'unmanaged' || node.driftStatus === 'matched') && (() => {
-  const commands = buildRemediateCommands(node)
-  const hasCommands = commands.length > 0
+{
+  /* REMEDIATE section — flag-gated, unmanaged + matched only */
+}
+{
+  flag('EXECUTION_ENGINE') &&
+    (node.driftStatus === 'unmanaged' || node.driftStatus === 'matched') &&
+    (() => {
+      const commands = buildRemediateCommands(node)
+      const hasCommands = commands.length > 0
 
-  async function handleRemediate(): Promise<void> {
-    if (!onRemediate) return
-    setRemediateState('running')
-    try {
-      const result = await onRemediate(node, commands)
-      setRemediateState(result.code === 0 ? 'done-ok' : `done-err:${result.code}`)
-    } catch {
-      setRemediateState('done-err:1')
-    }
-  }
+      async function handleRemediate(): Promise<void> {
+        if (!onRemediate) return
+        setRemediateState('running')
+        try {
+          const result = await onRemediate(node, commands)
+          setRemediateState(result.code === 0 ? 'done-ok' : `done-err:${result.code}`)
+        } catch {
+          setRemediateState('done-err:1')
+        }
+      }
 
-  return (
-    <div style={{
-      padding: '8px 10px',
-      borderRadius: 4,
-      background: 'rgba(167,139,250,0.07)',
-      border: '1px solid rgba(167,139,250,0.3)',
-      fontSize: 10,
-      marginBottom: 8,
-    }}>
-      <div style={{ fontWeight: 700, color: '#a78bfa', marginBottom: 6, fontSize: 9 }}>REMEDIATE</div>
-
-      {node.driftStatus === 'unmanaged' && (
-        <div style={{ color: '#f59e0b', marginBottom: 6, fontSize: 9 }}>⚠ Unmanaged — not in baseline.</div>
-      )}
-      {node.driftStatus === 'matched' && hasCommands && (
-        <div style={{ color: '#86efac', marginBottom: 6, fontSize: 9 }}>↺ Apply baseline values.</div>
-      )}
-
-      {hasCommands ? (
-        <>
-          <div style={{ marginBottom: 6 }}>
-            {commands.map((argv, i) => {
-              const full = 'aws ' + argv.join(' ')
-              const display = full.length > 200 ? full.slice(0, 200) + '…' : full
-              return (
-                <div key={i} title={full} style={{
-                  fontFamily: 'monospace', fontSize: 8,
-                  color: 'var(--cb-text-secondary)',
-                  background: 'rgba(0,0,0,0.3)',
-                  borderRadius: 2, padding: '2px 5px', marginBottom: 2,
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                }}>
-                  {display}
-                </div>
-              )
-            })}
+      return (
+        <div
+          style={{
+            padding: '8px 10px',
+            borderRadius: 4,
+            background: 'rgba(167,139,250,0.07)',
+            border: '1px solid rgba(167,139,250,0.3)',
+            fontSize: 10,
+            marginBottom: 8
+          }}
+        >
+          <div style={{ fontWeight: 700, color: '#a78bfa', marginBottom: 6, fontSize: 9 }}>
+            REMEDIATE
           </div>
 
-          <div style={{ color: '#f59e0b', fontSize: 8, marginBottom: 6 }}>
-            ⚠ This will modify live AWS infrastructure.
-          </div>
+          {node.driftStatus === 'unmanaged' && (
+            <div style={{ color: '#f59e0b', marginBottom: 6, fontSize: 9 }}>
+              ⚠ Unmanaged — not in baseline.
+            </div>
+          )}
+          {node.driftStatus === 'matched' && hasCommands && (
+            <div style={{ color: '#86efac', marginBottom: 6, fontSize: 9 }}>
+              ↺ Apply baseline values.
+            </div>
+          )}
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button
-              onClick={() => void handleRemediate()}
-              disabled={remediateState === 'running' || !onRemediate}
-              style={{
-                background: remediateState === 'running' ? 'rgba(107,114,128,0.3)' : 'rgba(167,139,250,0.15)',
-                border: '1px solid rgba(167,139,250,0.5)',
-                borderRadius: 3, padding: '3px 10px',
-                color: remediateState === 'running' ? '#6b7280' : '#a78bfa',
-                fontFamily: 'monospace', fontSize: 9, cursor: remediateState === 'running' || !onRemediate ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {remediateState === 'running' ? 'Executing…' : 'Execute'}
-            </button>
-            {remediateState === 'done-ok' && (
-              <span style={{ color: '#4ade80', fontSize: 9 }}>✓ Done</span>
-            )}
-            {typeof remediateState === 'string' && remediateState.startsWith('done-err') && (
-              <span style={{ color: '#f87171', fontSize: 9 }}>
-                ✗ Failed (exit {remediateState.split(':')[1]})
-              </span>
-            )}
-          </div>
-        </>
-      ) : (
-        <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}>
-          Manual remediation required — diff contains unsupported field types.
+          {hasCommands ? (
+            <>
+              <div style={{ marginBottom: 6 }}>
+                {commands.map((argv, i) => {
+                  const full = 'aws ' + argv.join(' ')
+                  const display = full.length > 200 ? full.slice(0, 200) + '…' : full
+                  return (
+                    <div
+                      key={i}
+                      title={full}
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: 8,
+                        color: 'var(--cb-text-secondary)',
+                        background: 'rgba(0,0,0,0.3)',
+                        borderRadius: 2,
+                        padding: '2px 5px',
+                        marginBottom: 2,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {display}
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div style={{ color: '#f59e0b', fontSize: 8, marginBottom: 6 }}>
+                ⚠ This will modify live AWS infrastructure.
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  onClick={() => void handleRemediate()}
+                  disabled={remediateState === 'running' || !onRemediate}
+                  style={{
+                    background:
+                      remediateState === 'running'
+                        ? 'rgba(107,114,128,0.3)'
+                        : 'rgba(167,139,250,0.15)',
+                    border: '1px solid rgba(167,139,250,0.5)',
+                    borderRadius: 3,
+                    padding: '3px 10px',
+                    color: remediateState === 'running' ? '#6b7280' : '#a78bfa',
+                    fontFamily: 'monospace',
+                    fontSize: 9,
+                    cursor: remediateState === 'running' || !onRemediate ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {remediateState === 'running' ? 'Executing…' : 'Execute'}
+                </button>
+                {remediateState === 'done-ok' && (
+                  <span style={{ color: '#4ade80', fontSize: 9 }}>✓ Done</span>
+                )}
+                {typeof remediateState === 'string' && remediateState.startsWith('done-err') && (
+                  <span style={{ color: '#f87171', fontSize: 9 }}>
+                    ✗ Failed (exit {remediateState.split(':')[1]})
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}>
+              Manual remediation required — diff contains unsupported field types.
+            </div>
+          )}
         </div>
-      )}
-    </div>
-  )
-})()}
+      )
+    })()
+}
 ```
 
 - [ ] **Step 5: Wire `handleRemediate` in App.tsx**
@@ -631,6 +732,7 @@ In `src/renderer/components/Inspector.tsx`, after the matched drift banner block
 In `src/renderer/src/App.tsx`:
 
 **5a. Add `handleRemediate` function** (after `handleQuickAction`, around line 187):
+
 ```ts
 async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{ code: number }> {
   return window.riftview.runCli(commands)
@@ -638,8 +740,14 @@ async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{
 ```
 
 **5b. Pass it to `<Inspector>`** (line 212 area — add `onRemediate={handleRemediate}`):
+
 ```tsx
-<Inspector onDelete={handleDeleteRequest} onEdit={node => setEditTarget(node)} onQuickAction={handleQuickAction} onRemediate={handleRemediate} />
+<Inspector
+  onDelete={handleDeleteRequest}
+  onEdit={(node) => setEditTarget(node)}
+  onQuickAction={handleQuickAction}
+  onRemediate={handleRemediate}
+/>
 ```
 
 - [ ] **Step 6: Run the Inspector tests**
@@ -696,6 +804,7 @@ npm run typecheck && npm test
 ```
 
 Expected outcome:
+
 - typecheck exits 0
 - All tests pass (874 baseline + ~20 new = ~894 total)
 - `flag('EXECUTION_ENGINE') = false` → Inspector renders identically to today (covered by test)

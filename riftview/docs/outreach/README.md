@@ -4,13 +4,13 @@ Pre-launch assets for reaching out to companies with RiftView.
 
 ## Contents
 
-| Doc | Purpose |
-|---|---|
-| [`one-pager.md`](./one-pager.md) | Single-page product summary; landing-page content source |
-| [`firefly-coexistence.md`](./firefly-coexistence.md) | Positioning against / alongside Firefly.ai |
-| [`cold-email-templates.md`](./cold-email-templates.md) | 3 cold email variants + send-time / follow-up guidance |
-| [`pricing.md`](./pricing.md) | Draft pricing tiers (pilot, individual, team, enterprise) |
-| [`distribution-plan.md`](./distribution-plan.md) | Week-by-week channel plan for the demo clip |
+| Doc                                                    | Purpose                                                   |
+| ------------------------------------------------------ | --------------------------------------------------------- |
+| [`one-pager.md`](./one-pager.md)                       | Single-page product summary; landing-page content source  |
+| [`firefly-coexistence.md`](./firefly-coexistence.md)   | Positioning against / alongside Firefly.ai                |
+| [`cold-email-templates.md`](./cold-email-templates.md) | 3 cold email variants + send-time / follow-up guidance    |
+| [`pricing.md`](./pricing.md)                           | Draft pricing tiers (pilot, individual, team, enterprise) |
+| [`distribution-plan.md`](./distribution-plan.md)       | Week-by-week channel plan for the demo clip               |
 
 ## Sibling docs
 

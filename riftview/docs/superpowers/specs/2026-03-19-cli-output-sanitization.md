@@ -17,14 +17,14 @@ There is currently no filtering, truncation, or sanitization between the subproc
 
 The following categories of sensitive data can appear in AWS CLI output under normal operation:
 
-| Category | Example | Likelihood |
-|---|---|---|
-| Account IDs | ARNs containing `123456789012` | High — ARNs are everywhere |
-| Resource names with PII | EC2 name tag `prod-john-doe-server` | Medium |
-| Tag values | User-defined tags with email, cost center, env secrets | Medium |
-| Error messages with config detail | `NoCredentialProviders: no valid providers in chain` with profile path | Medium |
-| Pre-signed URLs | S3 presign commands include temporary credentials in query params | Low — not a current feature |
-| Secret values | `secretsmanager get-secret-value` output | **Critical — current feature** |
+| Category                          | Example                                                                | Likelihood                     |
+| --------------------------------- | ---------------------------------------------------------------------- | ------------------------------ |
+| Account IDs                       | ARNs containing `123456789012`                                         | High — ARNs are everywhere     |
+| Resource names with PII           | EC2 name tag `prod-john-doe-server`                                    | Medium                         |
+| Tag values                        | User-defined tags with email, cost center, env secrets                 | Medium                         |
+| Error messages with config detail | `NoCredentialProviders: no valid providers in chain` with profile path | Medium                         |
+| Pre-signed URLs                   | S3 presign commands include temporary credentials in query params      | Low — not a current feature    |
+| Secret values                     | `secretsmanager get-secret-value` output                               | **Critical — current feature** |
 
 The most critical risk is Secrets Manager. The `secret` NodeType is scanned (name + ARN only), but if a user were to run a manual CLI command via CommandDrawer that fetches secret values, those values would land in `cliOutput` verbatim.
 

@@ -12,22 +12,23 @@
 
 ## File Map
 
-| Action | File | Responsibility |
-|---|---|---|
-| Modify | `src/main/aws/services/rds.ts` | Add `multiAZ: boolean` from existing `DescribeDBInstances` response |
-| Modify | `src/main/aws/services/s3.ts` | Add `publicAccessEnabled: boolean` via `GetPublicAccessBlock` |
-| Modify | `src/main/aws/services/ec2.ts` | Add `hasPublicSsh: boolean` via one-shot `DescribeSecurityGroups` on all instance SG IDs |
-| Modify | `src/renderer/types/cloud.ts` | Add `AdvisoryRuleId`, `AdvisorySeverity`, `Advisory` types |
-| Create | `src/renderer/utils/analyzeNode.ts` | Pure fn: `CloudNode → Advisory[]` |
-| Create | `tests/renderer/utils/analyzeNode.test.ts` | Unit tests — one per rule, no mocks |
-| Modify | `src/renderer/components/Inspector.tsx` | Add ADVISORIES section (flag-gated `OP_INTELLIGENCE`, after REMEDIATE) |
-| Create | `tests/renderer/components/Inspector.advisories.test.tsx` | Integration: visibility, severity order, empty state |
+| Action | File                                                      | Responsibility                                                                           |
+| ------ | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Modify | `src/main/aws/services/rds.ts`                            | Add `multiAZ: boolean` from existing `DescribeDBInstances` response                      |
+| Modify | `src/main/aws/services/s3.ts`                             | Add `publicAccessEnabled: boolean` via `GetPublicAccessBlock`                            |
+| Modify | `src/main/aws/services/ec2.ts`                            | Add `hasPublicSsh: boolean` via one-shot `DescribeSecurityGroups` on all instance SG IDs |
+| Modify | `src/renderer/types/cloud.ts`                             | Add `AdvisoryRuleId`, `AdvisorySeverity`, `Advisory` types                               |
+| Create | `src/renderer/utils/analyzeNode.ts`                       | Pure fn: `CloudNode → Advisory[]`                                                        |
+| Create | `tests/renderer/utils/analyzeNode.test.ts`                | Unit tests — one per rule, no mocks                                                      |
+| Modify | `src/renderer/components/Inspector.tsx`                   | Add ADVISORIES section (flag-gated `OP_INTELLIGENCE`, after REMEDIATE)                   |
+| Create | `tests/renderer/components/Inspector.advisories.test.tsx` | Integration: visibility, severity order, empty state                                     |
 
 ---
 
 ## Task 1: Scan augmentation — RDS `multiAZ`
 
 **Files:**
+
 - Modify: `src/main/aws/services/rds.ts`
 - Modify: `tests/main/aws/services/rds.test.ts`
 
@@ -42,6 +43,7 @@
 In `src/main/aws/services/rds.ts`, extend the `allInstances` destructured type and metadata:
 
 Change the type annotation (line 12) to include `MultiAZ`:
+
 ```ts
 const allInstances: {
   DBInstanceIdentifier?: string
@@ -55,6 +57,7 @@ const allInstances: {
 ```
 
 Change the metadata line in the `.map()`:
+
 ```ts
 metadata: { engine: db.Engine, instanceClass: db.DBInstanceClass, endpoint: db.Endpoint?.Address, multiAZ: db.MultiAZ ?? false },
 ```
@@ -62,6 +65,7 @@ metadata: { engine: db.Engine, instanceClass: db.DBInstanceClass, endpoint: db.E
 - [ ] **Step 2: Update the RDS test**
 
 In `tests/main/aws/services/rds.test.ts`, find the test that asserts the metadata shape and add `multiAZ` to the expected output. Look for where `metadata` is asserted and add:
+
 ```ts
 expect(nodes[0].metadata.multiAZ).toBe(false) // or true — match the fixture
 ```
@@ -97,6 +101,7 @@ git commit -m "feat(phase3): add multiAZ to RDS scan metadata"
 ## Task 2: Scan augmentation — S3 `publicAccessEnabled`
 
 **Files:**
+
 - Modify: `src/main/aws/services/s3.ts`
 - Modify: `tests/main/aws/services/s3.test.ts`
 
@@ -111,12 +116,13 @@ The call is per-bucket and happens inside the existing `Promise.all` enrichment 
 - [ ] **Step 1: Add `GetPublicAccessBlockCommand` import**
 
 In `src/main/aws/services/s3.ts`, add to the import:
+
 ```ts
 import {
   S3Client,
   ListBucketsCommand,
   GetBucketNotificationConfigurationCommand,
-  GetPublicAccessBlockCommand,
+  GetPublicAccessBlockCommand
 } from '@aws-sdk/client-s3'
 ```
 
@@ -136,11 +142,17 @@ if (!pabRes) {
   publicAccessEnabled = true
 } else {
   const c = pabRes.PublicAccessBlockConfiguration ?? {}
-  publicAccessEnabled = !(c.BlockPublicAcls && c.BlockPublicPolicy && c.RestrictPublicBuckets && c.IgnorePublicAcls)
+  publicAccessEnabled = !(
+    c.BlockPublicAcls &&
+    c.BlockPublicPolicy &&
+    c.RestrictPublicBuckets &&
+    c.IgnorePublicAcls
+  )
 }
 ```
 
 Then update the `baseNode` definition to include this field:
+
 ```ts
 const baseNode: CloudNode = {
   id: name,
@@ -148,13 +160,14 @@ const baseNode: CloudNode = {
   label: name,
   status: 'running',
   region,
-  metadata: { creationDate: b.CreationDate, publicAccessEnabled },
+  metadata: { creationDate: b.CreationDate, publicAccessEnabled }
 }
 ```
 
 Move the `publicAccessEnabled` computation before the `baseNode` definition — the logic above must run first.
 
 Full rewritten `enriched` map body for the bucket:
+
 ```ts
 const name = b.Name ?? 'unknown'
 
@@ -167,7 +180,12 @@ if (!pabRes) {
   publicAccessEnabled = true
 } else {
   const c = pabRes.PublicAccessBlockConfiguration ?? {}
-  publicAccessEnabled = !(c.BlockPublicAcls && c.BlockPublicPolicy && c.RestrictPublicBuckets && c.IgnorePublicAcls)
+  publicAccessEnabled = !(
+    c.BlockPublicAcls &&
+    c.BlockPublicPolicy &&
+    c.RestrictPublicBuckets &&
+    c.IgnorePublicAcls
+  )
 }
 
 const baseNode: CloudNode = {
@@ -176,7 +194,7 @@ const baseNode: CloudNode = {
   label: name,
   status: 'running',
   region,
-  metadata: { creationDate: b.CreationDate, publicAccessEnabled },
+  metadata: { creationDate: b.CreationDate, publicAccessEnabled }
 }
 
 const notifRes = await client
@@ -199,8 +217,8 @@ if (input instanceof GetPublicAccessBlockCommand) {
       BlockPublicAcls: true,
       BlockPublicPolicy: true,
       RestrictPublicBuckets: true,
-      IgnorePublicAcls: true,
-    },
+      IgnorePublicAcls: true
+    }
   }
 }
 ```
@@ -240,6 +258,7 @@ git commit -m "feat(phase3): add publicAccessEnabled to S3 scan metadata"
 ## Task 3: Scan augmentation — EC2 `hasPublicSsh`
 
 **Files:**
+
 - Modify: `src/main/aws/services/ec2.ts`
 - Modify: `tests/main/aws/services/ec2.test.ts`
 
@@ -254,6 +273,7 @@ Add `IpPermission` to the import from `@aws-sdk/client-ec2`.
 - [ ] **Step 1: Add `IpPermission` to import**
 
 In `src/main/aws/services/ec2.ts`:
+
 ```ts
 import {
   EC2Client,
@@ -263,7 +283,7 @@ import {
   DescribeSecurityGroupsCommand,
   DescribeKeyPairsCommand,
   type Instance,
-  type IpPermission,
+  type IpPermission
 } from '@aws-sdk/client-ec2'
 ```
 
@@ -275,10 +295,8 @@ After the paginated loop that collects `instances`, add this block before the `.
 // Build SG → IpPermissions map (one call for all instance SGs)
 const allSgIds = [
   ...new Set(
-    instances.flatMap((i) =>
-      (i.SecurityGroups ?? []).map((sg) => sg.GroupId ?? '').filter(Boolean)
-    )
-  ),
+    instances.flatMap((i) => (i.SecurityGroups ?? []).map((sg) => sg.GroupId ?? '').filter(Boolean))
+  )
 ]
 const sgRulesMap = new Map<string, IpPermission[]>()
 if (allSgIds.length > 0) {
@@ -311,6 +329,7 @@ const hasPublicSsh = sgIds.some((sgId) => {
 ```
 
 Add `hasPublicSsh` to the metadata:
+
 ```ts
 metadata: {
   instanceType:     i.InstanceType,
@@ -359,6 +378,7 @@ git commit -m "feat(phase3): add hasPublicSsh to EC2 scan metadata via SG rule c
 ## Task 4: `Advisory` type definitions
 
 **Files:**
+
 - Modify: `src/renderer/types/cloud.ts`
 
 ### Background
@@ -414,6 +434,7 @@ git commit -m "feat(phase3): add Advisory, AdvisoryRuleId, AdvisorySeverity type
 ## Task 5: `analyzeNode` — pure function + tests (TDD)
 
 **Files:**
+
 - Create: `tests/renderer/utils/analyzeNode.test.ts`
 - Create: `src/renderer/utils/analyzeNode.ts`
 
@@ -442,7 +463,7 @@ function node(overrides: Partial<CloudNode>): CloudNode {
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    ...overrides,
+    ...overrides
   } as CloudNode
 }
 
@@ -450,9 +471,11 @@ describe('analyzeNode', () => {
   // ── lambda-no-timeout ──────────────────────────────────────────────────────
   it('lambda with no timeout → critical lambda-no-timeout', () => {
     const r = analyzeNode(node({ type: 'lambda', metadata: {} }))
-    expect(r).toEqual(expect.arrayContaining([
-      expect.objectContaining({ ruleId: 'lambda-no-timeout', severity: 'critical' }),
-    ]))
+    expect(r).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: 'lambda-no-timeout', severity: 'critical' })
+      ])
+    )
   })
 
   it('lambda with timeout=0 → critical lambda-no-timeout', () => {
@@ -468,9 +491,11 @@ describe('analyzeNode', () => {
   // ── lambda-low-memory ──────────────────────────────────────────────────────
   it('lambda with memorySize=128 → warning lambda-low-memory', () => {
     const r = analyzeNode(node({ type: 'lambda', metadata: { timeout: 30, memorySize: 128 } }))
-    expect(r).toEqual(expect.arrayContaining([
-      expect.objectContaining({ ruleId: 'lambda-low-memory', severity: 'warning' }),
-    ]))
+    expect(r).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: 'lambda-low-memory', severity: 'warning' })
+      ])
+    )
   })
 
   it('lambda with memorySize=512 → no lambda-low-memory', () => {
@@ -486,9 +511,11 @@ describe('analyzeNode', () => {
   // ── ec2-public-ssh ────────────────────────────────────────────────────────
   it('ec2 with hasPublicSsh=true → critical ec2-public-ssh', () => {
     const r = analyzeNode(node({ type: 'ec2', metadata: { hasPublicSsh: true } }))
-    expect(r).toEqual(expect.arrayContaining([
-      expect.objectContaining({ ruleId: 'ec2-public-ssh', severity: 'critical' }),
-    ]))
+    expect(r).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: 'ec2-public-ssh', severity: 'critical' })
+      ])
+    )
   })
 
   it('ec2 with hasPublicSsh=false → no ec2-public-ssh', () => {
@@ -504,9 +531,11 @@ describe('analyzeNode', () => {
   // ── s3-public-access ───────────────────────────────────────────────────────
   it('s3 with publicAccessEnabled=true → critical s3-public-access', () => {
     const r = analyzeNode(node({ type: 's3', metadata: { publicAccessEnabled: true } }))
-    expect(r).toEqual(expect.arrayContaining([
-      expect.objectContaining({ ruleId: 's3-public-access', severity: 'critical' }),
-    ]))
+    expect(r).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: 's3-public-access', severity: 'critical' })
+      ])
+    )
   })
 
   it('s3 with publicAccessEnabled=false → no s3-public-access', () => {
@@ -522,9 +551,11 @@ describe('analyzeNode', () => {
   // ── rds-no-multiaz ────────────────────────────────────────────────────────
   it('rds with multiAZ=false → warning rds-no-multiaz', () => {
     const r = analyzeNode(node({ type: 'rds', metadata: { multiAZ: false } }))
-    expect(r).toEqual(expect.arrayContaining([
-      expect.objectContaining({ ruleId: 'rds-no-multiaz', severity: 'warning' }),
-    ]))
+    expect(r).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ ruleId: 'rds-no-multiaz', severity: 'warning' })
+      ])
+    )
   })
 
   it('rds with no multiAZ → warning rds-no-multiaz', () => {
@@ -583,7 +614,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
         title: 'No timeout configured',
         detail:
           'This Lambda function has no timeout set and may run indefinitely, incurring unexpected costs. Set a timeout in the function configuration.',
-        nodeId: node.id,
+        nodeId: node.id
       })
     }
 
@@ -595,7 +626,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
         title: 'Memory at default (128 MB)',
         detail:
           'This function uses the default memory allocation and has likely never been tuned. Review execution duration and consider adjusting memory to optimise cost and latency.',
-        nodeId: node.id,
+        nodeId: node.id
       })
     }
   }
@@ -607,7 +638,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
       title: 'Public SSH exposure (port 22 open to 0.0.0.0/0)',
       detail:
         'A security group on this instance allows inbound SSH from any IP. Restrict port 22 to known CIDR ranges or use AWS Systems Manager Session Manager instead.',
-      nodeId: node.id,
+      nodeId: node.id
     })
   }
 
@@ -618,7 +649,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
       title: 'Public access not fully blocked',
       detail:
         'This S3 bucket does not have all public access block settings enabled. Unless intentionally serving public content, enable all four public access block settings in the bucket configuration.',
-      nodeId: node.id,
+      nodeId: node.id
     })
   }
 
@@ -629,7 +660,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
       title: 'Single-AZ deployment',
       detail:
         'This RDS instance is not configured for Multi-AZ. A hardware failure or maintenance event may cause unplanned downtime. Enable Multi-AZ for production workloads.',
-      nodeId: node.id,
+      nodeId: node.id
     })
   }
 
@@ -677,6 +708,7 @@ git commit -m "feat(phase3): analyzeNode pure function + 5-rule advisory set"
 ## Task 6: Inspector ADVISORIES section + tests
 
 **Files:**
+
 - Modify: `src/renderer/components/Inspector.tsx`
 - Create: `tests/renderer/components/Inspector.advisories.test.tsx`
 
@@ -685,6 +717,7 @@ git commit -m "feat(phase3): analyzeNode pure function + 5-rule advisory set"
 **Insert point:** After the closing `})()}` of the REMEDIATE IIFE (line 315) and before `{/* node type header */}` (line 317).
 
 **Behaviour:**
+
 - Flag-gated on `flag('EXECUTION_ENGINE')` — wait, no. The meeting decided `OP_INTELLIGENCE` flag. Use `flag('OP_INTELLIGENCE')`.
 - Renders for any node type that might produce advisories (lambda, ec2, s3, rds). Simplest guard: always render the section when the flag is on and a node is selected — `analyzeNode` returns `[]` for unsupported types.
 - Severity order: critical → warning → info (sort before render).
@@ -693,11 +726,13 @@ git commit -m "feat(phase3): analyzeNode pure function + 5-rule advisory set"
 - Each advisory row: colored severity badge + title (bold) + detail (muted, smaller).
 
 **Severity colors:**
+
 - `critical` → `#ef4444` (red)
 - `warning` → `#f59e0b` (amber)
 - `info` → `#60a5fa` (blue)
 
 **Import additions needed in Inspector.tsx:**
+
 ```ts
 import { analyzeNode } from '../utils/analyzeNode'
 import type { Advisory } from '../types/cloud'
@@ -725,11 +760,11 @@ const analyzeIamMock = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fet
 
 Object.defineProperty(window, 'riftview', {
   value: { saveAnnotations: saveAnnotationsMock, analyzeIam: analyzeIamMock },
-  writable: true,
+  writable: true
 })
 
 vi.mock('../../../src/renderer/components/IamAdvisor', () => ({
-  IamAdvisor: () => null,
+  IamAdvisor: () => null
 }))
 
 function baseNode(overrides: Partial<CloudNode> = {}): CloudNode {
@@ -740,26 +775,25 @@ function baseNode(overrides: Partial<CloudNode> = {}): CloudNode {
     status: 'running',
     region: 'us-east-1',
     metadata: {},
-    ...overrides,
+    ...overrides
   } as CloudNode
 }
 
 function setup(node: CloudNode) {
   useUIStore.setState({ selectedNodeId: node.id })
   useCloudStore.setState({ nodes: [node], importedNodes: [] })
-  return render(
-    <Inspector
-      onDelete={vi.fn()}
-      onEdit={vi.fn()}
-      onQuickAction={vi.fn()}
-    />
-  )
+  return render(<Inspector onDelete={vi.fn()} onEdit={vi.fn()} onQuickAction={vi.fn()} />)
 }
 
 describe('Inspector ADVISORIES section', () => {
   beforeEach(() => {
     vi.stubEnv('VITE_FLAG_OP_INTELLIGENCE', 'true')
-    useUIStore.setState({ selectedNodeId: null, annotations: {}, selectedEdgeId: null, selectedEdgeInfo: null })
+    useUIStore.setState({
+      selectedNodeId: null,
+      annotations: {},
+      selectedEdgeId: null,
+      selectedEdgeInfo: null
+    })
     useCloudStore.setState({ nodes: [], importedNodes: [] })
   })
 
@@ -799,7 +833,7 @@ describe('Inspector ADVISORIES section', () => {
     const items = screen.getAllByRole('listitem')
     const titles = items.map((el) => el.textContent ?? '')
     const criticalIdx = titles.findIndex((t) => t.includes('No timeout'))
-    const warningIdx  = titles.findIndex((t) => t.includes('Memory at default'))
+    const warningIdx = titles.findIndex((t) => t.includes('Memory at default'))
     expect(criticalIdx).toBeLessThan(warningIdx)
   })
 
@@ -828,6 +862,7 @@ Expected: FAIL — `ADVISORIES` not found
 - [ ] **Step 3: Add imports to Inspector.tsx**
 
 In `src/renderer/components/Inspector.tsx`, add after the existing `buildRemediateCommands` import line:
+
 ```ts
 import { analyzeNode } from '../utils/analyzeNode'
 import type { Advisory } from '../types/cloud'
@@ -838,64 +873,86 @@ import type { Advisory } from '../types/cloud'
 In `src/renderer/components/Inspector.tsx`, insert after the closing `})()}` of the REMEDIATE IIFE (after line 315, before `{/* node type header */}`):
 
 ```tsx
-{/* ADVISORIES section — flag-gated OP_INTELLIGENCE */}
-{flag('OP_INTELLIGENCE') && (() => {
-  const rawAdvisories = analyzeNode(node as CloudNode)
-  const severityOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 }
-  const advisories: Advisory[] = [...rawAdvisories].sort(
-    (a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9)
-  )
-  const [expanded, setExpanded] = React.useState(true)
-  const severityColor = (s: string): string =>
-    s === 'critical' ? '#ef4444' : s === 'warning' ? '#f59e0b' : '#60a5fa'
+{
+  /* ADVISORIES section — flag-gated OP_INTELLIGENCE */
+}
+{
+  flag('OP_INTELLIGENCE') &&
+    (() => {
+      const rawAdvisories = analyzeNode(node as CloudNode)
+      const severityOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 }
+      const advisories: Advisory[] = [...rawAdvisories].sort(
+        (a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9)
+      )
+      const [expanded, setExpanded] = React.useState(true)
+      const severityColor = (s: string): string =>
+        s === 'critical' ? '#ef4444' : s === 'warning' ? '#f59e0b' : '#60a5fa'
 
-  return (
-    <div style={{
-      padding: '8px 10px',
-      borderRadius: 4,
-      background: 'rgba(239,68,68,0.06)',
-      border: '1px solid rgba(239,68,68,0.2)',
-      fontSize: 10,
-      marginBottom: 8,
-    }}>
-      <div
-        onClick={() => setExpanded((e) => !e)}
-        style={{ fontWeight: 700, color: '#ef4444', marginBottom: expanded ? 6 : 0, fontSize: 9, cursor: 'pointer', userSelect: 'none' }}
-      >
-        ADVISORIES {expanded ? '▾' : '▸'}
-      </div>
-
-      {expanded && (
-        advisories.length === 0 ? (
-          <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}>
-            No issues detected
+      return (
+        <div
+          style={{
+            padding: '8px 10px',
+            borderRadius: 4,
+            background: 'rgba(239,68,68,0.06)',
+            border: '1px solid rgba(239,68,68,0.2)',
+            fontSize: 10,
+            marginBottom: 8
+          }}
+        >
+          <div
+            onClick={() => setExpanded((e) => !e)}
+            style={{
+              fontWeight: 700,
+              color: '#ef4444',
+              marginBottom: expanded ? 6 : 0,
+              fontSize: 9,
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+          >
+            ADVISORIES {expanded ? '▾' : '▸'}
           </div>
-        ) : (
-          <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-            {advisories.map((a) => (
-              <li key={a.ruleId} style={{ marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                  <span style={{
-                    fontSize: 8, fontWeight: 700, color: severityColor(a.severity),
-                    textTransform: 'uppercase', letterSpacing: '0.05em',
-                  }}>
-                    {a.severity}
-                  </span>
-                  <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--cb-text-primary)' }}>
-                    {a.title}
-                  </span>
-                </div>
-                <div style={{ fontSize: 8, color: 'var(--cb-text-secondary)', lineHeight: 1.5 }}>
-                  {a.detail}
-                </div>
-              </li>
+
+          {expanded &&
+            (advisories.length === 0 ? (
+              <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}>
+                No issues detected
+              </div>
+            ) : (
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                {advisories.map((a) => (
+                  <li key={a.ruleId} style={{ marginBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                      <span
+                        style={{
+                          fontSize: 8,
+                          fontWeight: 700,
+                          color: severityColor(a.severity),
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}
+                      >
+                        {a.severity}
+                      </span>
+                      <span
+                        style={{ fontSize: 9, fontWeight: 600, color: 'var(--cb-text-primary)' }}
+                      >
+                        {a.title}
+                      </span>
+                    </div>
+                    <div
+                      style={{ fontSize: 8, color: 'var(--cb-text-secondary)', lineHeight: 1.5 }}
+                    >
+                      {a.detail}
+                    </div>
+                  </li>
+                ))}
+              </ul>
             ))}
-          </ul>
-        )
-      )}
-    </div>
-  )
-})()}
+        </div>
+      )
+    })()
+}
 ```
 
 - [ ] **Step 5: Run the Inspector tests**
@@ -952,6 +1009,7 @@ npm run typecheck && npm test
 ```
 
 Expected outcome:
+
 - typecheck exits 0
 - All tests pass (~930 total)
 - `flag('OP_INTELLIGENCE') = false` → Inspector unchanged (covered by test)
