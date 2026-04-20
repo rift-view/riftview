@@ -138,3 +138,29 @@ describe('R3 foundation: canvas primitives', () => {
     expect(s).toMatch(/\.action-rail\s*\{/)
   })
 })
+
+describe('R4 foundation: inspector primitives', () => {
+  test('defines inspector header + title', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.insp-header\s*\{/)
+    expect(s).toMatch(/\.insp-title\s*\{/)
+  })
+  test('defines inspector section + label + rows', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.insp-section\s*\{/)
+    expect(s).toMatch(/\.insp-label\s*\{/)
+    expect(s).toMatch(/\.insp-rows\s*\{/)
+    expect(s).toMatch(/\.insp-row\s*\{/)
+    expect(s).toMatch(/\.insp-row \.k\s*\{/)
+    expect(s).toMatch(/\.insp-row \.v\s*\{/)
+  })
+  test('defines inspector metric tiles', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.insp-metrics\s*\{/)
+    expect(s).toMatch(/\.insp-metric\s*\{/)
+  })
+  test('defines critical advisory variant', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.advisory-card--critical\s*\{/)
+  })
+})

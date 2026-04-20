@@ -785,3 +785,118 @@
   color: var(--fg-dim);
   font-style: italic;
 }
+
+/* ---------- INSPECTOR (editorial right panel) ---------- */
+
+.insp-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+}
+.insp-header .eyebrow { margin-bottom: 2px; }
+.insp-header .pill { align-self: flex-start; margin-top: var(--space-2xs); }
+
+.insp-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.1;
+  color: var(--bone-50);
+  word-break: break-word;
+}
+
+.insp-section {
+  padding: 0 var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.insp-section > .hairline {
+  margin-top: var(--space-sm);
+}
+
+.insp-label {
+  padding-bottom: var(--space-2xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-loud);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  font-weight: 500;
+}
+
+.insp-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.insp-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 4px 0;
+  border-bottom: 1px solid oklch(0.19 0.008 30);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.insp-row:last-child { border-bottom: 0; }
+.insp-row .k {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: var(--tracking-loud);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  font-weight: 500;
+}
+.insp-row .v {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--bone-100);
+  text-align: right;
+  word-break: break-word;
+}
+
+.insp-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: var(--space-2xs);
+  margin-top: var(--space-2xs);
+}
+.insp-metric {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2xs) var(--space-xs);
+  background: var(--bg-elev-1);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.insp-metric .label {
+  font-size: var(--text-micro);
+  color: var(--fg-muted);
+}
+.insp-metric .value {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--bone-50);
+  letter-spacing: var(--tracking-snug);
+  line-height: 1.1;
+}
+
+.advisory-card--critical {
+  background: oklch(0.60 0.20 28 / 0.08);
+  border-color: oklch(0.60 0.20 28 / 0.30);
+  border-left-color: var(--fault-500);
+}
+.advisory-card--critical .advisory-title {
+  color: var(--fault-500);
+}
+
+.insp-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin-top: var(--space-2xs);
+}
