@@ -18,12 +18,19 @@ import type { CloudNode } from '../../types/cloud'
 const saveAnnotationsMock = vi.fn().mockResolvedValue(undefined)
 const analyzeIamMock = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
 const getNodeHistoryMock = vi.fn().mockResolvedValue([])
+const fetchMetricsMock = vi
+  .fn()
+  .mockResolvedValue([
+    { name: 'CPU', value: 12, unit: '%' },
+    { name: 'MEM', value: 340, unit: 'MB' }
+  ])
 
 Object.defineProperty(window, 'riftview', {
   value: {
     saveAnnotations: saveAnnotationsMock,
     analyzeIam: analyzeIamMock,
-    getNodeHistory: getNodeHistoryMock
+    getNodeHistory: getNodeHistoryMock,
+    fetchMetrics: fetchMetricsMock
   },
   writable: true,
   configurable: true
@@ -59,36 +66,22 @@ const EC2_RUNNING: CloudNode = {
   metadata: { instanceType: 't3.medium', vpcId: 'vpc-1' }
 }
 
-const S3_BUCKET: CloudNode = {
-  id: 'bucket-logs',
-  type: 's3',
-  label: 'my-logs-bucket',
-  status: 'active',
-  region: 'us-east-1',
-  metadata: {}
-}
-
 const SQS_NO_DLQ: CloudNode = {
   id: 'sqs-orders',
   type: 'sqs',
   label: 'orders-queue',
   status: 'active',
   region: 'us-east-1',
-  metadata: {} // no redrivePolicy → will trigger sqs-no-dlq advisory
+  metadata: { hasDlq: false } // triggers sqs-no-dlq advisory
 }
 
-const EC2_WITH_METRICS: CloudNode = {
-  id: 'i-metrics',
-  type: 'ec2',
-  label: 'metrics-box',
-  status: 'running',
+const LAMBDA_WITH_METRICS: CloudNode = {
+  id: 'fn-metrics',
+  type: 'lambda',
+  label: 'metrics-fn',
+  status: 'active',
   region: 'us-east-1',
-  metadata: {
-    cwMetrics: {
-      cpuPct: 12,
-      fetchedAt: Date.now()
-    }
-  }
+  metadata: { functionName: 'metrics-fn', timeout: 30, memorySize: 1024 }
 }
 
 beforeEach(() => {
@@ -212,14 +205,15 @@ describe('Inspector rift advisories', () => {
 // ── METRICS TILES ─────────────────────────────────────────────────────────
 
 describe('Inspector rift metrics', () => {
-  it('renders .insp-metrics with .insp-metric tiles when CW metrics present', () => {
-    selectNode(EC2_WITH_METRICS)
-    const { container } = renderInspector()
+  it('renders .insp-metrics with .insp-metric tiles when CW metrics fetched', async () => {
+    selectNode(LAMBDA_WITH_METRICS)
+    const { container, findByText } = renderInspector()
+    // fetchMetrics resolves asynchronously — wait for the first metric label
+    await findByText('CPU')
     const grid = container.querySelector('.insp-metrics')
     expect(grid).not.toBeNull()
     const tiles = grid!.querySelectorAll('.insp-metric')
     expect(tiles.length).toBeGreaterThan(0)
-    // each tile has a label and a value
     const first = tiles[0] as HTMLElement
     expect(first.querySelector('.label')).not.toBeNull()
     expect(first.querySelector('.value')).not.toBeNull()
@@ -250,29 +244,32 @@ describe('Inspector rift action buttons', () => {
 
 describe('Inspector rift blast radius', () => {
   it('when blast radius is active, direction badges use .pill', () => {
-    const sgNode: CloudNode = {
-      id: 'sg-1',
-      type: 'sg',
-      label: 'web-sg',
+    const lambda: CloudNode = {
+      id: 'fn-root',
+      type: 'lambda',
+      label: 'root-fn',
       status: 'active',
       region: 'us-east-1',
-      metadata: {}
+      metadata: { functionName: 'root-fn', timeout: 30 },
+      integrations: [{ targetId: 'q-down', edgeType: 'trigger' }]
     }
-    const ec2Linked: CloudNode = {
-      ...EC2_RUNNING,
-      id: 'i-linked',
-      metadata: { securityGroupIds: ['sg-1'] }
+    const queue: CloudNode = {
+      id: 'q-down',
+      type: 'sqs',
+      label: 'down-queue',
+      status: 'active',
+      region: 'us-east-1',
+      metadata: { hasDlq: true }
     }
-    useCloudStore.setState({ nodes: [sgNode, ec2Linked], importedNodes: [] })
+    useCloudStore.setState({ nodes: [lambda, queue], importedNodes: [] })
     useUIStore.setState({
-      selectedNodeId: 'sg-1',
+      selectedNodeId: 'fn-root',
       annotations: {},
       selectedEdgeId: null,
       selectedEdgeInfo: null,
-      blastRadiusId: 'sg-1'
+      blastRadiusId: 'fn-root'
     })
     const { container } = renderInspector()
-    // the BLAST RADIUS section exists
     const sections = container.querySelectorAll('.insp-section')
     const blast = Array.from(sections).find((s) =>
       /BLAST RADIUS/i.test(s.querySelector('.insp-label')?.textContent ?? '')
