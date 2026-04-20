@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { useCloudStore, Settings } from '../store/cloud'
-import type { Theme } from '../types/cloud'
-import { applyTheme } from '../utils/applyTheme'
 
 interface SettingsPanelProps {
   onClose: () => void
@@ -21,7 +19,6 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps): React.JS
   const handleSave = async (): Promise<void> => {
     try {
       await saveSettings(local)
-      applyTheme(local.theme)
     } finally {
       onClose()
     }
@@ -61,19 +58,6 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps): React.JS
     fontFamily: 'monospace',
     fontSize: 11,
     marginBottom: 16
-  }
-
-  const THEME_META: Record<Theme, { label: string; accent: string }> = {
-    dark: { label: 'Dark', accent: '#FF9900' },
-    light: { label: 'Light', accent: '#e07800' },
-    solarized: { label: 'Solarized Dark', accent: '#2aa198' },
-    'rose-pine': { label: 'Rosé Pine', accent: '#eb6f92' },
-    catppuccin: { label: 'Catppuccin Mocha', accent: '#fab387' },
-    'solarized-light': { label: 'Solarized Light', accent: '#268bd2' },
-    'github-light': { label: 'GitHub Light', accent: '#0969da' },
-    'nord-light': { label: 'Nord Light', accent: '#5e81ac' },
-    'gruvbox-dark': { label: 'Gruvbox Dark', accent: '#fe8019' },
-    'gruvbox-light': { label: 'Gruvbox Light', accent: '#d65d0e' }
   }
 
   return (
@@ -118,57 +102,6 @@ export default function SettingsPanel({ onClose }: SettingsPanelProps): React.JS
           <option value="60">60s</option>
           <option value="manual">Manual only</option>
         </select>
-
-        {/* Theme */}
-        <div style={{ marginBottom: 16 }}>
-          <div
-            style={{
-              fontSize: 9,
-              color: 'var(--fg-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              marginBottom: 6
-            }}
-          >
-            Theme
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {(Object.entries(THEME_META) as [Theme, { label: string; accent: string }][]).map(
-              ([t, { label, accent }]) => (
-                <button
-                  key={t}
-                  onClick={() => setLocal((f) => ({ ...f, theme: t }))}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '4px 10px',
-                    borderRadius: 3,
-                    border: `1px solid ${local.theme === t ? accent : 'var(--border)'}`,
-                    background: local.theme === t ? 'var(--ember-glow)' : 'transparent',
-                    color: local.theme === t ? accent : 'var(--bone-200)',
-                    fontFamily: 'monospace',
-                    fontSize: 10,
-                    cursor: 'pointer',
-                    textAlign: 'left'
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      background: accent,
-                      flexShrink: 0,
-                      display: 'inline-block'
-                    }}
-                  />
-                  {label}
-                </button>
-              )
-            )}
-          </div>
-        </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <button
