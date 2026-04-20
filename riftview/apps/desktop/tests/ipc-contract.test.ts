@@ -70,9 +70,14 @@ vi.mock('../src/main/terraform/index', () => ({
 vi.mock('../src/main/terraform/provider', () => ({
   buildLocalStackProvider: vi.fn().mockReturnValue('')
 }))
-vi.mock('../src/main/aws/tfstate/parser', () => ({
-  parseTfState: vi.fn().mockReturnValue([])
-}))
+vi.mock('@riftview/shared', async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>
+  return {
+    ...actual,
+    parseTfState: vi.fn().mockReturnValue([]),
+    parseTfStateModules: vi.fn().mockReturnValue([])
+  }
+})
 vi.mock('../src/main/aws/iam/fetcher', () => ({
   fetchEc2IamData: vi.fn().mockResolvedValue([]),
   fetchLambdaIamData: vi.fn().mockResolvedValue([]),

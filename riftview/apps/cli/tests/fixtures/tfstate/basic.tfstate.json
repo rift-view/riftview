@@ -1,0 +1,44 @@
+{
+  "version": 4,
+  "terraform_version": "1.7.0",
+  "resources": [
+    {
+      "type": "aws_vpc",
+      "name": "main",
+      "instances": [
+        {
+          "attributes": {
+            "id": "vpc-managed",
+            "cidr_block": "10.0.0.0/16",
+            "tags": { "Name": "managed-vpc" }
+          }
+        }
+      ]
+    },
+    {
+      "type": "aws_lambda_function",
+      "name": "api",
+      "instances": [
+        {
+          "attributes": {
+            "function_name": "fn-managed",
+            "runtime": "nodejs20.x",
+            "timeout": 30
+          }
+        }
+      ]
+    },
+    {
+      "type": "aws_s3_bucket",
+      "name": "only_in_tf",
+      "instances": [
+        {
+          "attributes": {
+            "id": "bucket-tf-only",
+            "bucket": "bucket-tf-only"
+          }
+        }
+      ]
+    }
+  ]
+}
