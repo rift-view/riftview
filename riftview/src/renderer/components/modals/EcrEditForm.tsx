@@ -1,29 +1,10 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { CloudNode } from '../../types/cloud'
 import type { EcrEditParams } from '../../types/edit'
 
 interface Props {
   node: CloudNode
   onChange: (p: EcrEditParams) => void
-}
-
-const inp: React.CSSProperties = {
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: '1px solid var(--border)',
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-}
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
 }
 
 export default function EcrEditForm({ node, onChange }: Props): React.JSX.Element {
@@ -39,39 +20,37 @@ export default function EcrEditForm({ node, onChange }: Props): React.JSX.Elemen
     onChange({ resource: 'ecr-repo', repositoryName, imageTagMutability: mut, scanOnPush: sop })
 
   return (
-    <div>
-      <div style={lbl}>Repository Name</div>
-      <input style={{ ...inp, opacity: 0.6 }} value={repositoryName} readOnly />
-      <div style={lbl}>Image Tag Mutability</div>
-      <select
-        style={inp}
-        value={imageTagMutability}
-        onChange={(e) => {
-          const v = e.target.value as 'MUTABLE' | 'IMMUTABLE'
-          setImageTagMutability(v)
-          emit(v, scanOnPush)
-        }}
-      >
-        <option value="MUTABLE">MUTABLE</option>
-        <option value="IMMUTABLE">IMMUTABLE</option>
-      </select>
-      <div style={{ ...lbl, marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div className="form-group">
+      <div className="form-field">
+        <span className="label">Repository Name</span>
+        <input className="form-input" style={{ opacity: 0.6 }} value={repositoryName} readOnly />
+      </div>
+      <div className="form-field">
+        <span className="label">Image Tag Mutability</span>
+        <select
+          className="form-select"
+          value={imageTagMutability}
+          onChange={(e) => {
+            const v = e.target.value as 'MUTABLE' | 'IMMUTABLE'
+            setImageTagMutability(v)
+            emit(v, scanOnPush)
+          }}
+        >
+          <option value="MUTABLE">MUTABLE</option>
+          <option value="IMMUTABLE">IMMUTABLE</option>
+        </select>
+      </div>
+      <label className="form-checkbox">
         <input
           type="checkbox"
-          id="ecr-scan-on-push"
           checked={scanOnPush}
           onChange={(e) => {
             setScanOnPush(e.target.checked)
             emit(imageTagMutability, e.target.checked)
           }}
         />
-        <label
-          htmlFor="ecr-scan-on-push"
-          style={{ fontSize: 9, color: 'var(--fg-muted)', textTransform: 'uppercase' }}
-        >
-          Scan on Push
-        </label>
-      </div>
+        Scan on Push
+      </label>
     </div>
   )
 }

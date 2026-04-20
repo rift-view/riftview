@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { CloudNode } from '../../types/cloud'
 import type { RdsEditParams } from '../../types/edit'
 
@@ -6,26 +6,6 @@ interface Props {
   node: CloudNode
   onChange: (p: RdsEditParams) => void
 }
-
-const sel: React.CSSProperties = {
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: '1px solid var(--border)',
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-}
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
-}
-const row: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }
 
 export default function RdsEditForm({ node, onChange }: Props): React.JSX.Element {
   const [cls, setCls] = useState((node.metadata.dbInstanceClass as string) ?? 'db.t3.micro')
@@ -42,23 +22,25 @@ export default function RdsEditForm({ node, onChange }: Props): React.JSX.Elemen
     })
 
   return (
-    <div>
-      <div style={lbl}>Instance class</div>
-      <select
-        style={sel}
-        value={cls}
-        onChange={(e) => {
-          setCls(e.target.value)
-          emit({ dbInstanceClass: e.target.value })
-        }}
-      >
-        {['db.t3.micro', 'db.t3.small', 'db.m5.large'].map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-      </select>
-      <label style={row}>
+    <div className="form-group">
+      <div className="form-field">
+        <span className="label">Instance class</span>
+        <select
+          className="form-select"
+          value={cls}
+          onChange={(e) => {
+            setCls(e.target.value)
+            emit({ dbInstanceClass: e.target.value })
+          }}
+        >
+          {['db.t3.micro', 'db.t3.small', 'db.m5.large'].map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
+      <label className="form-checkbox">
         <input
           type="checkbox"
           checked={multiAZ}
@@ -67,9 +49,9 @@ export default function RdsEditForm({ node, onChange }: Props): React.JSX.Elemen
             emit({ multiAZ: e.target.checked })
           }}
         />
-        <span style={{ fontSize: 10, color: 'var(--bone-200)' }}>Multi-AZ</span>
+        Multi-AZ
       </label>
-      <label style={row}>
+      <label className="form-checkbox">
         <input
           type="checkbox"
           checked={delProt}
@@ -78,7 +60,7 @@ export default function RdsEditForm({ node, onChange }: Props): React.JSX.Elemen
             emit({ deletionProtection: e.target.checked })
           }}
         />
-        <span style={{ fontSize: 10, color: 'var(--bone-200)' }}>Deletion protection</span>
+        Deletion protection
       </label>
     </div>
   )

@@ -7,35 +7,6 @@ interface Props {
   onChange: (p: SsmEditParams) => void
 }
 
-const inp: React.CSSProperties = {
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: '1px solid var(--border)',
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-}
-const inpDisabled: React.CSSProperties = { ...inp, opacity: 0.5, cursor: 'not-allowed' }
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
-}
-const notice: React.CSSProperties = {
-  fontSize: 9,
-  color: '#f59e0b',
-  background: 'rgba(245,158,11,0.1)',
-  border: '1px solid rgba(245,158,11,0.3)',
-  borderRadius: 3,
-  padding: '4px 6px',
-  marginTop: 4
-}
-
 export default function SsmEditForm({ node, onChange }: Props): React.JSX.Element {
   const paramName = node.label
   const existingType = (node.metadata.type as string) ?? 'String'
@@ -60,49 +31,70 @@ export default function SsmEditForm({ node, onChange }: Props): React.JSX.Elemen
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div>
-      <div style={lbl}>Parameter Name</div>
-      <input style={{ ...inp, opacity: 0.6 }} value={paramName} readOnly />
+    <div className="form-group">
+      <div className="form-field">
+        <span className="label">Parameter Name</span>
+        <input className="form-input" style={{ opacity: 0.6 }} value={paramName} readOnly />
+      </div>
 
-      <div style={lbl}>Type</div>
-      <input style={{ ...inp, opacity: 0.6 }} value={existingType} readOnly />
+      <div className="form-field">
+        <span className="label">Type</span>
+        <input className="form-input" style={{ opacity: 0.6 }} value={existingType} readOnly />
+      </div>
 
-      <div style={lbl}>Value {isSecure ? '' : '*'}</div>
-      {isSecure ? (
-        <>
+      <div className="form-field">
+        <span className="label">Value</span>
+        {isSecure ? (
+          <>
+            <input
+              className="form-input"
+              style={{ opacity: 0.5, cursor: 'not-allowed' }}
+              value=""
+              placeholder="(SecureString — cannot display)"
+              disabled
+            />
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--text-micro)',
+                color: 'var(--ember-400)',
+                background: 'oklch(0.73 0.170 50 / 0.08)',
+                border: '1px solid oklch(0.73 0.170 50 / 0.30)',
+                borderLeft: '2px solid var(--ember-500)',
+                borderRadius: 'var(--radius-sm)',
+                padding: '4px 8px',
+                marginTop: 4
+              }}
+            >
+              SecureString values cannot be edited here. To rotate a SecureString, use the AWS
+              Console or CLI directly.
+            </div>
+          </>
+        ) : (
           <input
-            style={inpDisabled}
-            value=""
-            placeholder="(SecureString — cannot display)"
-            disabled
+            className="form-input"
+            value={value}
+            placeholder="parameter value"
+            onChange={(e) => {
+              setValue(e.target.value)
+              emit(e.target.value, description)
+            }}
           />
-          <div style={notice}>
-            SecureString values cannot be edited here. To rotate a SecureString, use the AWS Console
-            or CLI directly.
-          </div>
-        </>
-      ) : (
+        )}
+      </div>
+
+      <div className="form-field">
+        <span className="label">Description</span>
         <input
-          style={inp}
-          value={value}
-          placeholder="parameter value"
+          className="form-input"
+          value={description}
+          placeholder="Optional description"
           onChange={(e) => {
-            setValue(e.target.value)
-            emit(e.target.value, description)
+            setDescription(e.target.value)
+            emit(value, e.target.value)
           }}
         />
-      )}
-
-      <div style={lbl}>Description</div>
-      <input
-        style={inp}
-        value={description}
-        placeholder="Optional description"
-        onChange={(e) => {
-          setDescription(e.target.value)
-          emit(value, e.target.value)
-        }}
-      />
+      </div>
     </div>
   )
 }
