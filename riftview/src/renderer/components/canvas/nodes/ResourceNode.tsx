@@ -218,7 +218,7 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
       data-node-type={d.nodeType}
       data-node-id={id}
       className={cx(
-        'resource-node rift-node',
+        'rift-node',
         selected && 'rift-node--focused',
         (d.status === 'pending' || d.status === 'creating') && 'rift-node--pending',
         d.status === 'error' && 'rift-node--error',
