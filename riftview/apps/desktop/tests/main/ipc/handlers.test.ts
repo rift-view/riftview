@@ -4,10 +4,14 @@ vi.mock('electron', () => ({
   ipcMain: { handle: vi.fn(), on: vi.fn() },
   BrowserWindow: vi.fn()
 }))
-vi.mock('../../../src/main/aws/credentials', () => ({
-  listProfiles: vi.fn().mockReturnValue([{ name: 'default' }]),
-  getDefaultRegion: vi.fn().mockReturnValue('us-east-1')
-}))
+vi.mock('@riftview/shared', async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>
+  return {
+    ...actual,
+    listProfiles: vi.fn().mockReturnValue([{ name: 'default' }]),
+    getDefaultRegion: vi.fn().mockReturnValue('us-east-1')
+  }
+})
 vi.mock('../../../src/main/aws/client', () => ({
   createClients: vi.fn().mockReturnValue({})
 }))
