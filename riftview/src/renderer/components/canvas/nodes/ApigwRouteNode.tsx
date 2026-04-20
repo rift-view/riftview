@@ -6,15 +6,11 @@ interface ApigwRouteNodeData {
   path?: string
   hasLambda?: boolean
   dimmed?: boolean
+  integrationLabel?: string
 }
 
-const METHOD_COLORS: Record<string, string> = {
-  GET: '#22c55e',
-  POST: '#3b82f6',
-  PUT: '#f97316',
-  PATCH: '#eab308',
-  DELETE: '#ef4444',
-  ANY: '#6b7280'
+function cx(...parts: Array<string | false | null | undefined>): string {
+  return parts.filter(Boolean).join(' ')
 }
 
 export function ApigwRouteNode({ data, selected }: NodeProps): React.JSX.Element {
@@ -23,27 +19,20 @@ export function ApigwRouteNode({ data, selected }: NodeProps): React.JSX.Element
   // Parse method + path from label if not provided directly
   const label = d.label ?? ''
   const spaceIdx = label.indexOf(' ')
-  const method = d.method ?? (spaceIdx >= 0 ? label.slice(0, spaceIdx) : label)
+  const method = (d.method ?? (spaceIdx >= 0 ? label.slice(0, spaceIdx) : label)).toUpperCase()
   const path = d.path ?? (spaceIdx >= 0 ? label.slice(spaceIdx + 1) : '/')
 
-  const methodColor = METHOD_COLORS[method.toUpperCase()] ?? '#6b7280'
+  const integrationLabel = d.integrationLabel ?? (d.hasLambda ? 'λ lambda' : 'no integration')
 
   return (
     <div
+      data-selected={selected}
+      data-node-type="apigw-route"
+      className={cx('rift-node', selected && 'rift-node--focused')}
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        background: 'var(--cb-bg-panel)',
-        border: `${selected ? '2px' : '1px'} solid ${methodColor}55`,
-        borderLeft: `3px solid ${methodColor}`,
-        borderRadius: 4,
-        padding: '4px 8px',
-        fontFamily: 'monospace',
-        height: 36,
         boxSizing: 'border-box',
         minWidth: 140,
-        boxShadow: selected ? `0 0 8px ${methodColor}44` : 'none',
+        padding: '8px 10px 9px',
         opacity: d.dimmed ? 0.25 : 1,
         filter: d.dimmed ? 'grayscale(60%)' : 'none',
         transition: 'opacity 0.2s, filter 0.2s'
@@ -54,39 +43,47 @@ export function ApigwRouteNode({ data, selected }: NodeProps): React.JSX.Element
       <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Right} style={{ opacity: 0 }} />
 
-      {/* Method badge */}
-      <span
-        style={{
-          background: `${methodColor}22`,
-          border: `1px solid ${methodColor}66`,
-          borderRadius: 3,
-          padding: '1px 4px',
-          fontSize: 8,
-          fontWeight: 700,
-          color: methodColor,
-          flexShrink: 0,
-          letterSpacing: '0.05em'
-        }}
-      >
-        {method}
-      </span>
+      <div className="rift-node-eye">API ROUTE</div>
 
-      {/* Path */}
-      <span
+      <div
+        className="rift-node-title"
+        title={`${method} ${path}`}
         style={{
-          fontSize: 9,
-          color: 'var(--cb-text-muted)',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          flex: 1
+          display: 'flex',
+          alignItems: 'center'
         }}
       >
-        {path}
-      </span>
+        <span className="route-method">{method}</span>
+        <span
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            minWidth: 0
+          }}
+        >
+          {path}
+        </span>
+      </div>
 
-      {/* Lambda indicator */}
-      {d.hasLambda && <span style={{ fontSize: 9, color: '#64b5f6', flexShrink: 0 }}>λ</span>}
+      <hr className="rift-node-rule" />
+
+      <div className="rift-node-meta">
+        <span className="dot -neutral" aria-hidden="true" />
+        <span
+          title={integrationLabel}
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {integrationLabel}
+        </span>
+      </div>
     </div>
   )
 }
