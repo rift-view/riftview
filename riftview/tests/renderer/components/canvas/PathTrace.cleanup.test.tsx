@@ -20,6 +20,7 @@ vi.mock('@xyflow/react', () => ({
     <div data-testid="reactflow">{children}</div>
   ),
   Background: () => null,
+  BackgroundVariant: { Lines: 'lines', Dots: 'dots', Cross: 'cross' },
   MiniMap: () => null,
   useReactFlow: () => ({ fitView: vi.fn(), setNodes: vi.fn() })
 }))
