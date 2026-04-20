@@ -27,7 +27,6 @@ describe('DriftNotificationBanner', () => {
       settings: {
         deleteConfirmStyle: 'type-to-confirm',
         scanInterval: 30,
-        theme: 'dark',
         showRegionIndicators: true,
         regionColors: {},
         showScanErrorBadges: true,
@@ -91,7 +90,6 @@ describe('DriftNotificationBanner', () => {
       settings: {
         deleteConfirmStyle: 'type-to-confirm',
         scanInterval: 30,
-        theme: 'dark',
         showRegionIndicators: true,
         regionColors: {},
         showScanErrorBadges: true,
