@@ -739,3 +739,49 @@
   line-height: 1;
 }
 .action-rail .btn-glyph:hover { color: var(--bone-50); background: var(--ink-800); }
+
+/* ---------- ROUTE METHOD CHIP ---------- */
+
+.route-method {
+  display: inline-block;
+  padding: 1px 4px;
+  margin-right: 6px;
+  background: var(--ink-850);
+  border: 1px solid var(--ink-700);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ember-400);
+}
+
+/* ---------- STICKY NOTE (warm paper) ---------- */
+
+.rift-sticky {
+  background: var(--ink-850);
+  color: var(--bone-100);
+  border: 1px solid var(--ink-700);
+  border-left: 2px solid var(--ember-500);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.5;
+  min-width: 160px;
+  min-height: 48px;
+  box-shadow: 0 8px 20px -10px oklch(0 0 0 / 0.4);
+  position: relative;
+}
+.rift-sticky-body {
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--bone-100);
+}
+.rift-sticky-body:empty::before {
+  content: 'Note…';
+  color: var(--fg-dim);
+  font-style: italic;
+}

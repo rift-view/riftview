@@ -6,16 +6,36 @@ interface ApigwNodeData {
   collapsed?: boolean
   onToggleCollapse?: () => void
   dimmed?: boolean
+  routeCount?: number
+  metadata?: Record<string, unknown>
 }
 
-export function ApigwNode({ data }: NodeProps): React.JSX.Element {
+function cx(...parts: Array<string | false | null | undefined>): string {
+  return parts.filter(Boolean).join(' ')
+}
+
+export function ApigwNode({ data, selected }: NodeProps): React.JSX.Element {
   const d = data as unknown as ApigwNodeData
+  const m = d.metadata ?? {}
+  const endpointType = d.endpoint ?? (m.endpointType as string | undefined) ?? 'HTTP'
+  const routeCount =
+    typeof d.routeCount === 'number'
+      ? d.routeCount
+      : typeof m.routeCount === 'number'
+        ? (m.routeCount as number)
+        : undefined
+
+  const metaParts: string[] = [endpointType]
+  if (routeCount !== undefined) {
+    metaParts.push(`${routeCount} route${routeCount === 1 ? '' : 's'}`)
+  }
+
   return (
     <div
+      data-selected={selected}
+      data-node-type="apigw"
+      className={cx('rift-node', selected && 'rift-node--focused')}
       style={{
-        background: 'rgba(139, 92, 246, 0.04)',
-        border: '1px solid rgba(139, 92, 246, 0.5)',
-        borderRadius: 8,
         // width/height: 100% fills the React Flow wrapper in TopologyView
         // (wrapper gets explicit style.width/height from buildFlowNodes).
         // In GraphView the wrapper auto-sizes, so minWidth/minHeight take over.
@@ -24,42 +44,35 @@ export function ApigwNode({ data }: NodeProps): React.JSX.Element {
         boxSizing: 'border-box',
         minWidth: Math.max(280, d.label.length * 8 + 120),
         minHeight: 80,
-        fontFamily: 'monospace',
+        padding: '10px 12px',
         overflow: 'hidden',
         opacity: d.dimmed ? 0.25 : 1,
         filter: d.dimmed ? 'grayscale(60%)' : 'none',
         transition: 'opacity 0.2s, filter 0.2s'
       }}
     >
-      {/* Header bar */}
       <div
         style={{
-          background: 'rgba(139, 92, 246, 0.12)',
-          borderBottom: '1px solid rgba(139, 92, 246, 0.3)',
-          padding: '5px 10px',
           display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          height: 32,
-          boxSizing: 'border-box'
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 8
         }}
       >
-        <span style={{ color: '#8b5cf6', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em' }}>
-          ⚡ API GW
-        </span>
-        <span
-          style={{
-            color: '#c4b5fd',
-            fontSize: 10,
-            fontWeight: 600,
-            flex: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {d.label}
-        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="rift-node-eye">API GATEWAY</div>
+          <div
+            className="rift-node-title"
+            title={d.label}
+            style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {d.label}
+          </div>
+        </div>
         <button
           onClick={(e) => {
             e.stopPropagation()
@@ -70,7 +83,8 @@ export function ApigwNode({ data }: NodeProps): React.JSX.Element {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: '#c4b5fd',
+            color: 'var(--fg-muted)',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             padding: '0 2px',
             lineHeight: 1,
@@ -79,6 +93,13 @@ export function ApigwNode({ data }: NodeProps): React.JSX.Element {
         >
           {d.collapsed ? '▸' : '▾'}
         </button>
+      </div>
+
+      <hr className="rift-node-rule" />
+
+      <div className="rift-node-meta">
+        <span className="dot -neutral" aria-hidden="true" />
+        <span>{metaParts.join(' · ')}</span>
       </div>
     </div>
   )
