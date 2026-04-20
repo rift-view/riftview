@@ -324,3 +324,92 @@
   border-radius: var(--radius-sm);
 }
 .btn-sm svg { width: 0.9em; height: 0.9em; }
+
+/* ---------- TOPBAR CHROME ---------- */
+
+.rift-topbar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  height: 48px;
+  padding: 0 var(--space-sm);
+  background: oklch(0.13 0.008 30 / 0.85);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border-bottom: 1px solid var(--ink-800);
+  flex-shrink: 0;
+  position: relative;
+  z-index: var(--z-sticky);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bone-50);
+  user-select: none;
+}
+.wordmark img {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  display: block;
+}
+
+/* Dropdown menu used by Topbar Import/Export/Add-region */
+
+.rift-dropdown-menu {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  min-width: 170px;
+  box-shadow: 0 10px 30px -10px oklch(0 0 0 / 0.5);
+}
+
+.rift-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  width: 100%;
+  text-align: left;
+  background: var(--bg-elev-2);
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0.4rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--fg);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-swift);
+}
+.rift-dropdown-item:last-child { border-bottom: 0; }
+.rift-dropdown-item:hover:not(:disabled) { background: var(--bg-elev-1); }
+.rift-dropdown-item:disabled {
+  color: var(--fg-dim);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Region chip */
+
+.region-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--bg-elev-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  color: var(--fg-strong);
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+}
