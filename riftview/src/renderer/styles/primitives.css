@@ -413,3 +413,56 @@
   letter-spacing: 0.02em;
   line-height: 1.5;
 }
+
+/* ---------- STATUSBAR ---------- */
+
+.rift-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 28px;
+  padding: 0 var(--space-sm);
+  background: var(--ink-950);
+  border-top: 1px solid var(--ink-800);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: var(--tracking-loud);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  gap: var(--space-md);
+}
+.rift-statusbar .cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+.statusbar-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5ch;
+}
+.statusbar-pair .k { color: var(--fg-dim); }
+.statusbar-pair .v { color: var(--bone-200); }
+.statusbar-pair .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--moss-500);
+  box-shadow: 0 0 5px var(--moss-500);
+}
+.statusbar-pair.-scanning .dot {
+  background: var(--ember-500);
+  box-shadow: 0 0 5px var(--ember-500);
+  animation: rift-pulse 1.2s infinite;
+}
+.statusbar-pair.-clickable {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+.statusbar-pair.-clickable:hover .v {
+  color: var(--ember-400);
+}
