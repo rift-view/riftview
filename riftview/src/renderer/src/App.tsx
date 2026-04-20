@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useIpc } from '../hooks/useIpc'
 import { useScanner } from '../hooks/useScanner'
 import { Topbar } from '../components/Topbar'
+import { Statusbar } from '../components/Statusbar'
 import { Sidebar } from '../components/Sidebar'
 import { CloudCanvas } from '../components/canvas/CloudCanvas'
 import { Inspector } from '../components/Inspector'
@@ -229,12 +230,18 @@ export default function App(): React.JSX.Element | null {
 
   return (
     <div
-      className="flex flex-col h-screen w-screen overflow-hidden"
-      style={{ background: 'var(--cb-bg-app)' }}
+      className="h-screen w-screen overflow-hidden"
+      style={{
+        display: 'grid',
+        gridTemplateRows: 'auto auto 1fr auto',
+        background: 'var(--cb-bg-app)'
+      }}
     >
       <Topbar onScan={triggerScan} fixCount={fixCount} />
-      {errorMessage && <ErrorBanner message={errorMessage} onDismiss={() => setError(null)} />}
-      <div className="flex flex-1 overflow-hidden">
+      {errorMessage ? (
+        <ErrorBanner message={errorMessage} onDismiss={() => setError(null)} />
+      ) : null}
+      <div className="flex overflow-hidden" style={{ minHeight: 0 }}>
         <div
           style={{
             width: sidebarWidth,
@@ -265,6 +272,7 @@ export default function App(): React.JSX.Element | null {
           />
         </div>
       </div>
+      <Statusbar />
       <CreateModal />
       <SearchPalette
         open={searchOpen}
