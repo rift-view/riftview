@@ -10,31 +10,36 @@ interface VpcNodeData {
 
 export function VpcNode({ data }: NodeProps): React.JSX.Element {
   const d = data as unknown as VpcNodeData
+  const labelParts = [`VPC · ${d.label}`]
+  if (d.cidr && !d.collapsed) labelParts.push(d.cidr)
+  if (d.collapsed && d.childCount !== undefined) labelParts.push(`${d.childCount} resources`)
+
   return (
     <div
+      className="rift-vpc"
       style={{
-        background: 'rgba(25, 118, 210, 0.04)',
-        border: '2px solid rgba(25, 118, 210, 0.65)',
-        borderRadius: 8,
         minWidth: 200,
         minHeight: d.collapsed ? 48 : 120,
-        fontFamily: 'monospace',
-        overflow: 'hidden',
         width: '100%',
         height: '100%',
         boxSizing: 'border-box'
       }}
     >
-      {/* Header bar — drag handle */}
+      <span className="rift-container-label">{labelParts.join(' · ')}</span>
+
+      {/* Invisible drag handle along the top edge */}
       <div
         className="cb-zone-drag-handle"
         style={{
-          background: 'rgba(25, 118, 210, 0.15)',
-          borderBottom: '1px solid rgba(25, 118, 210, 0.4)',
-          padding: '5px 10px',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 24,
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          justifyContent: 'flex-end',
+          paddingRight: 8,
           cursor: 'move'
         }}
         title="Drag header to move VPC"
@@ -50,35 +55,15 @@ export function VpcNode({ data }: NodeProps): React.JSX.Element {
               border: 'none',
               cursor: 'pointer',
               padding: '0 2px',
-              color: '#90caf9',
+              color: 'var(--fg-muted)',
+              fontFamily: 'var(--font-mono)',
               fontSize: 10,
               lineHeight: 1
             }}
+            title={d.collapsed ? 'Expand VPC' : 'Collapse VPC'}
           >
             {d.collapsed ? '▶' : '▼'}
           </button>
-        )}
-        <span style={{ color: '#1976D2', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em' }}>
-          VPC
-        </span>
-        <span
-          style={{
-            color: '#90caf9',
-            fontSize: 10,
-            fontWeight: 600,
-            flex: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {d.label}
-        </span>
-        {d.collapsed && d.childCount !== undefined && (
-          <span style={{ color: '#1976D280', fontSize: 9 }}>{d.childCount} resources</span>
-        )}
-        {!d.collapsed && d.cidr && (
-          <span style={{ color: '#1976D280', fontSize: 9 }}>{d.cidr}</span>
         )}
       </div>
     </div>
