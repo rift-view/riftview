@@ -8,93 +8,55 @@ interface AboutModalProps {
 }
 
 export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
-  const overlay: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.75)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 300
-  }
-
-  const dialog: React.CSSProperties = {
-    background: 'var(--ink-900)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 8,
-    padding: '28px 32px',
-    width: 380,
-    fontFamily: 'monospace',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 0
-  }
-
   return (
     <div
-      style={overlay}
+      className="modal-backdrop"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
       }}
       tabIndex={-1}
+      style={{ zIndex: 300 }}
     >
-      <div style={dialog}>
-        {/* App name */}
-        <div
-          style={{
-            fontSize: 22,
-            fontWeight: 700,
-            color: 'var(--accent)',
-            letterSpacing: '0.04em',
-            marginBottom: 6
-          }}
-        >
-          RiftView
+      <div className="modal modal--sm">
+        <div className="modal-head">
+          <div className="modal-head-text">
+            <span className="eyebrow">ABOUT</span>
+            <h2 className="modal-title">RiftView</h2>
+            <div className="form-helper" style={{ marginTop: 4 }}>
+              Visual AWS infrastructure — scan, visualize, build.
+            </div>
+          </div>
+          <button className="modal-close" onClick={onClose} title="Close">
+            ×
+          </button>
         </div>
-
-        {/* Tagline */}
-        <div style={{ fontSize: 12, color: 'var(--bone-200)', marginBottom: 4 }}>
-          Visual AWS infrastructure — scan, visualize, build.
-        </div>
-
-        {/* Version */}
-        <div style={{ fontSize: 11, color: 'var(--fg-muted)', marginBottom: 16 }}>
-          v{APP_VERSION}
-        </div>
-
-        {/* GitHub */}
-        <div style={{ fontSize: 11, color: 'var(--bone-200)', marginBottom: 18 }}>
-          github.com/juliushamm/riftview
-        </div>
-
-        {/* Separator */}
-        <div style={{ borderTop: '1px solid var(--border)', marginBottom: 14 }} />
-
-        {/* Disclaimer */}
-        <div
-          style={{ fontSize: 9, color: 'var(--fg-muted)', lineHeight: 1.6, marginBottom: 22 }}
-        >
-          Not affiliated with, endorsed by, or sponsored by Amazon Web Services. AWS and all related
-          marks are trademarks of Amazon.com, Inc.
-        </div>
-
-        {/* Close button */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button
-            autoFocus
-            onClick={onClose}
+        <div className="modal-body">
+          <div className="insp-rows">
+            <div className="insp-row">
+              <span className="k">VERSION</span>
+              <span className="v">{APP_VERSION}</span>
+            </div>
+            <div className="insp-row">
+              <span className="k">REPO</span>
+              <span className="v">github.com/juliushamm/riftview</span>
+            </div>
+          </div>
+          <hr className="hairline" style={{ margin: '12px 0' }} />
+          <p
             style={{
-              background: 'var(--ink-850)',
-              border: '1px solid var(--border)',
-              borderRadius: 4,
-              padding: '4px 18px',
-              color: 'var(--bone-200)',
-              fontFamily: 'monospace',
               fontSize: 11,
-              cursor: 'pointer'
+              color: 'var(--fg-muted)',
+              lineHeight: 1.6,
+              fontFamily: 'var(--font-body)'
             }}
           >
+            Not affiliated with, endorsed by, or sponsored by Amazon Web Services. AWS and all
+            related marks are trademarks of Amazon.com, Inc.
+          </p>
+        </div>
+        <div className="modal-foot">
+          <button autoFocus onClick={onClose} className="btn btn-sm btn-ghost">
             Close
           </button>
         </div>

@@ -27,28 +27,9 @@ export default function SidebarFilterDialog({
 }: SidebarFilterDialogProps): React.JSX.Element {
   const label = TYPE_LABELS[type] ?? type.toUpperCase()
 
-  const overlay: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 200
-  }
-
-  const dialog: React.CSSProperties = {
-    background: 'var(--ink-900)',
-    border: '1px solid var(--accent)',
-    borderRadius: 8,
-    padding: 20,
-    width: 300,
-    fontFamily: 'monospace'
-  }
-
   return (
     <div
-      style={overlay}
+      className="modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -56,47 +37,28 @@ export default function SidebarFilterDialog({
         if (e.key === 'Escape') onClose()
       }}
       tabIndex={-1}
+      style={{ zIndex: 200 }}
     >
-      <div style={dialog}>
-        <div
-          style={{ color: 'var(--accent)', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}
-        >
-          Filter to [{label}] only?
+      <div className="modal modal--sm">
+        <div className="modal-head">
+          <div className="modal-head-text">
+            <span className="eyebrow">FILTER</span>
+            <h2 className="modal-title">[{label}] only?</h2>
+          </div>
+          <button className="modal-close" onClick={onClose} title="Close">
+            ×
+          </button>
         </div>
-        <div style={{ color: 'var(--bone-200)', fontSize: 10, marginBottom: 16 }}>
-          {count} node{count === 1 ? '' : 's'} will be highlighted
+        <div className="modal-body">
+          <div className="form-helper">
+            {count} node{count === 1 ? '' : 's'} will be highlighted
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'var(--ink-850)',
-              border: '1px solid var(--border)',
-              borderRadius: 3,
-              padding: '4px 14px',
-              color: 'var(--fg-muted)',
-              fontFamily: 'monospace',
-              fontSize: 11,
-              cursor: 'pointer'
-            }}
-          >
+        <div className="modal-foot">
+          <button onClick={onClose} className="btn btn-sm btn-ghost">
             Cancel
           </button>
-          <button
-            autoFocus
-            onClick={onConfirm}
-            style={{
-              background: 'var(--accent)',
-              border: '1px solid var(--accent)',
-              borderRadius: 3,
-              padding: '4px 14px',
-              color: '#000',
-              fontFamily: 'monospace',
-              fontSize: 11,
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
+          <button autoFocus onClick={onConfirm} className="btn btn-sm btn-primary">
             Apply Filter
           </button>
         </div>
