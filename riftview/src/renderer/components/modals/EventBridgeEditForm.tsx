@@ -1,29 +1,10 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { CloudNode } from '../../types/cloud'
 import type { EventBridgeEditParams } from '../../types/edit'
 
 interface Props {
   node: CloudNode
   onChange: (p: EventBridgeEditParams) => void
-}
-
-const inp: React.CSSProperties = {
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: '1px solid var(--border)',
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-}
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
 }
 
 export default function EventBridgeEditForm({ node, onChange }: Props): React.JSX.Element {
@@ -34,20 +15,25 @@ export default function EventBridgeEditForm({ node, onChange }: Props): React.JS
     onChange({ resource: 'eventbridge-bus', busName, description: desc })
 
   return (
-    <div>
-      <div style={lbl}>Bus Name</div>
-      <input style={{ ...inp, opacity: 0.6 }} value={busName} readOnly />
-      <div style={lbl}>Description (max 512 chars)</div>
-      <textarea
-        style={{ ...inp, height: 60, resize: 'vertical' }}
-        value={description}
-        maxLength={512}
-        placeholder="Optional description"
-        onChange={(e) => {
-          setDescription(e.target.value)
-          emit(e.target.value)
-        }}
-      />
+    <div className="form-group">
+      <div className="form-field">
+        <span className="label">Bus Name</span>
+        <input className="form-input" style={{ opacity: 0.6 }} value={busName} readOnly />
+      </div>
+      <div className="form-field">
+        <span className="label">Description (max 512 chars)</span>
+        <textarea
+          className="form-textarea"
+          style={{ minHeight: 60 }}
+          value={description}
+          maxLength={512}
+          placeholder="Optional description"
+          onChange={(e) => {
+            setDescription(e.target.value)
+            emit(e.target.value)
+          }}
+        />
+      </div>
     </div>
   )
 }

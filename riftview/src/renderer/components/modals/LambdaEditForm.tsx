@@ -1,29 +1,10 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { CloudNode } from '../../types/cloud'
 import type { LambdaEditParams } from '../../types/edit'
 
 interface Props {
   node: CloudNode
   onChange: (p: LambdaEditParams) => void
-}
-
-const inp: React.CSSProperties = {
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: '1px solid var(--border)',
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-}
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
 }
 
 export default function LambdaEditForm({ node, onChange }: Props): React.JSX.Element {
@@ -59,36 +40,43 @@ export default function LambdaEditForm({ node, onChange }: Props): React.JSX.Ele
     })
 
   return (
-    <div>
-      <div style={lbl}>Memory (MB)</div>
-      <input
-        type="number"
-        style={inp}
-        value={memory}
-        onChange={(e) => {
-          setMemory(Number(e.target.value))
-          emit({ memorySize: Number(e.target.value) })
-        }}
-      />
-      <div style={lbl}>Timeout (s)</div>
-      <input
-        type="number"
-        style={inp}
-        value={timeout}
-        onChange={(e) => {
-          setTimeout(Number(e.target.value))
-          emit({ timeout: Number(e.target.value) })
-        }}
-      />
-      <div style={lbl}>Environment variables (KEY=value, one per line)</div>
-      <textarea
-        style={{ ...inp, height: 60, resize: 'vertical' }}
-        value={envStr}
-        onChange={(e) => {
-          setEnvStr(e.target.value)
-          emit({ environment: parseEnv(e.target.value) })
-        }}
-      />
+    <div className="form-group">
+      <div className="form-field">
+        <span className="label">Memory (MB)</span>
+        <input
+          className="form-input"
+          type="number"
+          value={memory}
+          onChange={(e) => {
+            setMemory(Number(e.target.value))
+            emit({ memorySize: Number(e.target.value) })
+          }}
+        />
+      </div>
+      <div className="form-field">
+        <span className="label">Timeout (s)</span>
+        <input
+          className="form-input"
+          type="number"
+          value={timeout}
+          onChange={(e) => {
+            setTimeout(Number(e.target.value))
+            emit({ timeout: Number(e.target.value) })
+          }}
+        />
+      </div>
+      <div className="form-field">
+        <span className="label">Environment variables (KEY=value, one per line)</span>
+        <textarea
+          className="form-textarea"
+          style={{ minHeight: 60 }}
+          value={envStr}
+          onChange={(e) => {
+            setEnvStr(e.target.value)
+            emit({ environment: parseEnv(e.target.value) })
+          }}
+        />
+      </div>
     </div>
   )
 }
