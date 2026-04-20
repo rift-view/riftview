@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { useCloudStore, createCloudStore } from '../cloud'
 import { useCliStore } from '../cli'
 import { useUIStore } from '../ui'
-import type { Theme, NodeType } from '../../types/cloud'
+import type { NodeType } from '../../types/cloud'
 
 beforeEach(() => {
   useCloudStore.setState({
@@ -321,21 +321,7 @@ describe('scanErrors', () => {
   })
 })
 
-describe('theme defaults', () => {
-  it('DEFAULT_SETTINGS includes theme: dark', () => {
-    const store = createCloudStore()
-    expect(store.getState().settings.theme).toBe('dark')
-  })
-
-  it('Theme type includes all five values', () => {
-    const themes: Theme[] = ['dark', 'light', 'solarized', 'rose-pine', 'catppuccin']
-    themes.forEach((t) => {
-      const store = createCloudStore()
-      store.setState((s) => ({ settings: { ...s.settings, theme: t } }))
-      expect(store.getState().settings.theme).toBe(t)
-    })
-  })
-
+describe('setting defaults', () => {
   it('DEFAULT_SETTINGS includes showScanErrorBadges: true', () => {
     const store = createCloudStore()
     expect(store.getState().settings.showScanErrorBadges).toBe(true)

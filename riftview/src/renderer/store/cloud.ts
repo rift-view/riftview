@@ -8,7 +8,6 @@ import type {
   ScanError,
   Settings
 } from '../types/cloud'
-import { applyTheme } from '../utils/applyTheme'
 import { applyDriftToState } from '../utils/compareDrift'
 import { useUIStore } from '../store/ui'
 
@@ -17,7 +16,6 @@ export type { Settings }
 const DEFAULT_SETTINGS: Settings = {
   deleteConfirmStyle: 'type-to-confirm',
   scanInterval: 30,
-  theme: 'dark',
   showRegionIndicators: true,
   regionColors: {},
   showScanErrorBadges: true,
@@ -143,7 +141,6 @@ export const useCloudStore = create<CloudState>((set) => ({
 
   loadSettings: async () => {
     const s = await window.riftview.getSettings()
-    applyTheme(s.theme ?? 'dark')
     set({ settings: s })
   },
   saveSettings: async (s: Settings) => {

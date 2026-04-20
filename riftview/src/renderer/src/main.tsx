@@ -11,9 +11,7 @@ import '../styles/tokens.css'
 import '../styles/motion.css'
 import '../styles/primitives.css'
 
-// Existing styles (kept through R7; removed in R8).
 import './assets/main.css'
-import '../styles/themes.css'
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
