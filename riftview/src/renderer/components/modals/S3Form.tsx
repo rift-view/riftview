@@ -7,20 +7,6 @@ interface Props {
   showErrors?: boolean
 }
 
-function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
-  return {
-    width: '100%',
-    background: 'var(--ink-900)',
-    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--border)'}`,
-    borderRadius: 3,
-    padding: '3px 6px',
-    color: 'var(--fg)',
-    fontFamily: 'monospace',
-    fontSize: 10,
-    boxSizing: 'border-box' as const
-  }
-}
-
 export function S3Form({ onChange, showErrors = false }: Props): React.JSX.Element {
   const currentRegion = useCloudStore((s) => s.region)
   const [bucketName, setBucketName] = useState('')
@@ -37,45 +23,34 @@ export function S3Form({ onChange, showErrors = false }: Props): React.JSX.Eleme
     onChange({ resource: 's3', ...next })
   }
 
-  const labelStyle: React.CSSProperties = {
-    color: 'var(--fg-muted)',
-    fontSize: '9px',
-    marginBottom: '3px',
-    display: 'block',
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em'
-  }
+  const nameInvalid = showErrors && !bucketName.trim()
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      <label>
-        <span style={labelStyle}>Bucket Name</span>
+    <div className="form-group">
+      <div className={'form-field' + (nameInvalid ? ' -invalid' : '')}>
+        <span className="label">Bucket Name</span>
         <input
-          style={fieldStyle(bucketName, showErrors)}
+          className="form-input"
           value={bucketName}
           onChange={(e) => update({ bucketName: e.target.value })}
           placeholder="my-unique-bucket-name"
         />
-      </label>
-      <label>
-        <span style={labelStyle}>Region</span>
+      </div>
+      <div className="form-field">
+        <span className="label">Region</span>
         <input
-          style={fieldStyle(region, false)}
+          className="form-input"
           value={region}
           onChange={(e) => update({ region: e.target.value })}
         />
-      </label>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+      </div>
+      <label className="form-checkbox">
         <input
           type="checkbox"
           checked={blockPublicAccess}
           onChange={(e) => update({ blockPublicAccess: e.target.checked })}
         />
-        <span
-          style={{ color: 'var(--bone-200)', fontSize: '11px', fontFamily: 'monospace' }}
-        >
-          Block all public access
-        </span>
+        Block all public access
       </label>
     </div>
   )

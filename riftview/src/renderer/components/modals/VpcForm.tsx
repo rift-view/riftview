@@ -6,20 +6,6 @@ interface Props {
   showErrors?: boolean
 }
 
-function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
-  return {
-    width: '100%',
-    background: 'var(--ink-900)',
-    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--border)'}`,
-    borderRadius: 3,
-    padding: '3px 6px',
-    color: 'var(--fg)',
-    fontFamily: 'monospace',
-    fontSize: 10,
-    boxSizing: 'border-box' as const
-  }
-}
-
 export function VpcForm({ onChange, showErrors = false }: Props): React.JSX.Element {
   const [name, setName] = useState('')
   const [cidr, setCidr] = useState('10.0.0.0/16')
@@ -35,46 +21,40 @@ export function VpcForm({ onChange, showErrors = false }: Props): React.JSX.Elem
     onChange({ resource: 'vpc', ...next })
   }
 
-  const labelStyle: React.CSSProperties = {
-    color: 'var(--fg-muted)',
-    fontSize: '9px',
-    marginBottom: '3px',
-    display: 'block',
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em'
-  }
+  const nameInvalid = showErrors && !name.trim()
+  const cidrInvalid = showErrors && !cidr.trim()
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      <label>
-        <span style={labelStyle}>Name</span>
+    <div className="form-group">
+      <div className={'form-field' + (nameInvalid ? ' -invalid' : '')}>
+        <span className="label">Name</span>
         <input
-          style={fieldStyle(name, showErrors)}
+          className="form-input"
           value={name}
           onChange={(e) => update({ name: e.target.value })}
           placeholder="my-vpc"
         />
-      </label>
-      <label>
-        <span style={labelStyle}>CIDR Block</span>
+      </div>
+      <div className={'form-field' + (cidrInvalid ? ' -invalid' : '')}>
+        <span className="label">CIDR Block</span>
         <input
-          style={fieldStyle(cidr, showErrors)}
+          className="form-input"
           value={cidr}
           onChange={(e) => update({ cidr: e.target.value })}
           placeholder="10.0.0.0/16"
         />
-      </label>
-      <label>
-        <span style={labelStyle}>Tenancy</span>
+      </div>
+      <div className="form-field">
+        <span className="label">Tenancy</span>
         <select
-          style={fieldStyle(tenancy, false)}
+          className="form-select"
           value={tenancy}
           onChange={(e) => update({ tenancy: e.target.value as 'default' | 'dedicated' })}
         >
           <option value="default">default</option>
           <option value="dedicated">dedicated</option>
         </select>
-      </label>
+      </div>
     </div>
   )
 }
