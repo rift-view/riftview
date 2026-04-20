@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { CloudNode } from '../../types/cloud'
 import type { S3EditParams } from '../../types/edit'
 
@@ -6,8 +6,6 @@ interface Props {
   node: CloudNode
   onChange: (p: S3EditParams) => void
 }
-
-const row: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }
 
 export default function S3EditForm({ node, onChange }: Props): React.JSX.Element {
   const [versioning, setVersioning] = useState(!!node.metadata.versioning)
@@ -17,8 +15,8 @@ export default function S3EditForm({ node, onChange }: Props): React.JSX.Element
     onChange({ resource: 's3', versioning, blockPublicAccess: blockPublic, ...overrides })
 
   return (
-    <div>
-      <label style={row}>
+    <div className="form-group">
+      <label className="form-checkbox">
         <input
           type="checkbox"
           checked={versioning}
@@ -27,9 +25,9 @@ export default function S3EditForm({ node, onChange }: Props): React.JSX.Element
             emit({ versioning: e.target.checked })
           }}
         />
-        <span style={{ fontSize: 10, color: 'var(--bone-200)' }}>Versioning</span>
+        Versioning
       </label>
-      <label style={row}>
+      <label className="form-checkbox">
         <input
           type="checkbox"
           checked={blockPublic}
@@ -38,7 +36,7 @@ export default function S3EditForm({ node, onChange }: Props): React.JSX.Element
             emit({ blockPublicAccess: e.target.checked })
           }}
         />
-        <span style={{ fontSize: 10, color: 'var(--bone-200)' }}>Block public access</span>
+        Block public access
       </label>
     </div>
   )

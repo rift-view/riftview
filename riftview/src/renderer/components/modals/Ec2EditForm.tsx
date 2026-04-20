@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { CloudNode } from '../../types/cloud'
 import type { Ec2EditParams } from '../../types/edit'
 import { useCloudStore } from '../../store/cloud'
@@ -6,26 +6,6 @@ import { useCloudStore } from '../../store/cloud'
 interface Props {
   node: CloudNode
   onChange: (p: Ec2EditParams) => void
-}
-
-const inp: React.CSSProperties = {
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: '1px solid var(--border)',
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-}
-const sel = inp
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
 }
 
 export default function Ec2EditForm({ node, onChange }: Props): React.JSX.Element {
@@ -52,47 +32,46 @@ export default function Ec2EditForm({ node, onChange }: Props): React.JSX.Elemen
   }
 
   return (
-    <div>
-      <div style={lbl}>Name</div>
-      <input
-        style={inp}
-        value={name}
-        onChange={(e) => {
-          setName(e.target.value)
-          emit({ name: e.target.value })
-        }}
-      />
-      <div style={lbl}>Instance type</div>
-      <select
-        style={sel}
-        value={instType}
-        onChange={(e) => {
-          setInstType(e.target.value)
-          emit({ instanceType: e.target.value })
-        }}
-      >
-        {['t3.micro', 't3.small', 't3.medium', 't3.large', 'm5.large', 'm5.xlarge', 'c5.large'].map(
-          (t) => (
+    <div className="form-group">
+      <div className="form-field">
+        <span className="label">Name</span>
+        <input
+          className="form-input"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value)
+            emit({ name: e.target.value })
+          }}
+        />
+      </div>
+      <div className="form-field">
+        <span className="label">Instance type</span>
+        <select
+          className="form-select"
+          value={instType}
+          onChange={(e) => {
+            setInstType(e.target.value)
+            emit({ instanceType: e.target.value })
+          }}
+        >
+          {[
+            't3.micro',
+            't3.small',
+            't3.medium',
+            't3.large',
+            'm5.large',
+            'm5.xlarge',
+            'c5.large'
+          ].map((t) => (
             <option key={t}>{t}</option>
-          )
-        )}
-      </select>
+          ))}
+        </select>
+      </div>
       {sgs.length > 0 && (
-        <>
-          <div style={lbl}>Security groups</div>
+        <div className="form-field">
+          <span className="label">Security groups</span>
           {sgs.map((sg) => (
-            <label
-              key={sg.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                marginTop: 4,
-                fontSize: 10,
-                color: 'var(--bone-200)',
-                cursor: 'pointer'
-              }}
-            >
+            <label key={sg.id} className="form-checkbox">
               <input
                 type="checkbox"
                 checked={sgIds.includes(sg.id)}
@@ -101,7 +80,7 @@ export default function Ec2EditForm({ node, onChange }: Props): React.JSX.Elemen
               {sg.label} ({sg.id})
             </label>
           ))}
-        </>
+        </div>
       )}
     </div>
   )

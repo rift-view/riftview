@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { CloudNode } from '../../types/cloud'
 import type { VpcEditParams } from '../../types/edit'
 
@@ -6,25 +6,6 @@ interface Props {
   node: CloudNode
   onChange: (p: VpcEditParams) => void
   showErrors?: boolean
-}
-
-const inputStyle = (err: boolean): React.CSSProperties => ({
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: `1px solid ${err ? '#ff5f57' : 'var(--border)'}`,
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-})
-const label: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
 }
 
 export default function VpcEditForm({ node, onChange, showErrors }: Props): React.JSX.Element {
@@ -35,14 +16,14 @@ export default function VpcEditForm({ node, onChange, showErrors }: Props): Reac
     onChange({ resource: 'vpc', name: v })
   }
 
+  const invalid = !!(showErrors && !name.trim())
+
   return (
-    <div>
-      <div style={label}>Name</div>
-      <input
-        style={inputStyle(!!(showErrors && !name.trim()))}
-        value={name}
-        onChange={(e) => update(e.target.value)}
-      />
+    <div className="form-group">
+      <div className={'form-field' + (invalid ? ' -invalid' : '')}>
+        <span className="label">Name</span>
+        <input className="form-input" value={name} onChange={(e) => update(e.target.value)} />
+      </div>
     </div>
   )
 }
