@@ -86,6 +86,7 @@ describe('R1 foundation: primitives.css', () => {
     expect(s).toMatch(/\.btn-primary\s*\{/)
     expect(s).toMatch(/\.btn-ghost\s*\{/)
     expect(s).toMatch(/\.btn-link\s*\{/)
+    expect(s).toMatch(/\.btn-sm\s*\{/)
   })
 })
 

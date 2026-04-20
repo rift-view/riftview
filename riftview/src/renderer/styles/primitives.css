@@ -315,3 +315,12 @@
   border-radius: var(--radius-sm);
   opacity: 0.85;
 }
+
+/* ---------- BUTTON SIZE VARIANT ---------- */
+
+.btn-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+}
+.btn-sm svg { width: 0.9em; height: 0.9em; }
