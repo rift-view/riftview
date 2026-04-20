@@ -23,17 +23,13 @@ export function StickyNoteNode({ data, selected }: NodeProps): React.JSX.Element
   return (
     <div
       data-selected={selected}
+      data-sticky-id={d.noteId}
+      className="rift-sticky"
       style={{
-        background: '#fef08a',
-        border: `${selected ? '2px' : '1px'} solid #ca8a04`,
-        borderRadius: 4,
-        boxShadow: selected ? '0 0 8px rgba(202,138,4,0.5)' : '2px 2px 6px rgba(0,0,0,0.25)',
-        fontFamily: 'monospace',
-        minWidth: 160,
-        minHeight: 100,
         width: 180,
-        position: 'relative',
-        padding: 0
+        boxShadow: selected
+          ? '0 0 0 1px var(--ember-500), 0 8px 20px -10px oklch(0 0 0 / 0.4)'
+          : undefined
       }}
     >
       <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
@@ -41,19 +37,16 @@ export function StickyNoteNode({ data, selected }: NodeProps): React.JSX.Element
       <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Right} style={{ opacity: 0 }} />
 
-      {/* Header bar */}
+      {/* Header row — NOTE eyebrow + delete glyph */}
       <div
         style={{
-          background: '#fde047',
-          borderBottom: '1px solid #ca8a04',
-          borderRadius: '3px 3px 0 0',
-          padding: '3px 6px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          marginBottom: 6
         }}
       >
-        <span style={{ fontSize: 9, color: '#92400e', fontWeight: 700, letterSpacing: '0.05em' }}>
+        <span className="rift-node-eye" style={{ color: 'var(--ember-400)', marginBottom: 0 }}>
           NOTE
         </span>
         <button
@@ -65,7 +58,8 @@ export function StickyNoteNode({ data, selected }: NodeProps): React.JSX.Element
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: '#b45309',
+            color: 'var(--fg-muted)',
+            fontFamily: 'var(--font-mono)',
             fontSize: 10,
             lineHeight: 1,
             padding: '0 2px'
@@ -76,26 +70,27 @@ export function StickyNoteNode({ data, selected }: NodeProps): React.JSX.Element
         </button>
       </div>
 
-      {/* Editable content */}
+      {/* Editable content — textarea stays to preserve existing behaviour */}
       <textarea
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={handleBlur}
-        placeholder="Type a note..."
+        placeholder="Note…"
         rows={4}
-        className="nodrag"
+        className="nodrag rift-sticky-body"
         style={{
           width: '100%',
           background: 'transparent',
           border: 'none',
           outline: 'none',
           resize: 'none',
-          padding: '6px 8px',
-          fontFamily: 'monospace',
-          fontSize: 10,
-          color: '#1c1917',
+          padding: 0,
+          fontFamily: 'var(--font-body)',
+          fontSize: 12,
+          lineHeight: 1.5,
+          color: 'var(--bone-100)',
           boxSizing: 'border-box',
-          minHeight: 80
+          minHeight: 56
         }}
       />
     </div>
