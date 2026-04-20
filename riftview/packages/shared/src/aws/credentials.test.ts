@@ -11,7 +11,7 @@ vi.mock('node:os', () => ({
 
 import * as fs from 'node:fs'
 import * as os from 'node:os'
-import { listProfiles, getDefaultRegion } from '../../../src/main/aws/credentials'
+import { listProfiles, getDefaultRegion } from './credentials'
 
 describe('listProfiles', () => {
   beforeEach(() => {
