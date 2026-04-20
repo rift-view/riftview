@@ -134,40 +134,36 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
         <div className="modal-head">
           <div className="modal-head-text">
             <span className="eyebrow">EDIT</span>
-            <h2 className="modal-title">
-              {RESOURCE_LABELS[node.type] ?? node.type}
-            </h2>
+            <h2 className="modal-title">{RESOURCE_LABELS[node.type] ?? node.type}</h2>
           </div>
           <button className="modal-close" onClick={onClose} disabled={isRunning} title="Close">
             ×
           </button>
         </div>
         <div className="modal-body">
-
-        {node.type === 'vpc' && (
-          <VpcEditForm node={node} onChange={handleChange} showErrors={showErrors} />
-        )}
-        {node.type === 'ec2' && <Ec2EditForm node={node} onChange={handleChange} />}
-        {node.type === 'security-group' && <SgEditForm node={node} onChange={handleChange} />}
-        {node.type === 'rds' && <RdsEditForm node={node} onChange={handleChange} />}
-        {node.type === 's3' && <S3EditForm node={node} onChange={handleChange} />}
-        {node.type === 'lambda' && <LambdaEditForm node={node} onChange={handleChange} />}
-        {node.type === 'alb' && (
-          <AlbEditForm node={node} onChange={handleChange} showErrors={showErrors} />
-        )}
-        {node.type === 'cloudfront' && <CloudFrontEditForm node={node} onChange={handleChange} />}
-        {node.type === 'apigw' && <ApigwEditForm node={node} onChange={handleChange} />}
-        {node.type === 'eventbridge-bus' && (
-          <EventBridgeEditForm node={node} onChange={handleChange} />
-        )}
-        {node.type === 'sqs' && <SqsEditForm node={node} onChange={handleChange} />}
-        {node.type === 'sns' && <SnsEditForm node={node} onChange={handleChange} />}
-        {node.type === 'ecr-repo' && <EcrEditForm node={node} onChange={handleChange} />}
-        {node.type === 'secret' && <SecretEditForm node={node} onChange={handleChange} />}
-        {node.type === 'dynamo' && <DynamoEditForm node={node} onChange={handleChange} />}
-        {node.type === 'ssm-param' && <SsmEditForm node={node} onChange={handleChange} />}
-        {node.type === 'sfn' && <SfnEditForm node={node} onChange={handleChange} />}
-
+          {node.type === 'vpc' && (
+            <VpcEditForm node={node} onChange={handleChange} showErrors={showErrors} />
+          )}
+          {node.type === 'ec2' && <Ec2EditForm node={node} onChange={handleChange} />}
+          {node.type === 'security-group' && <SgEditForm node={node} onChange={handleChange} />}
+          {node.type === 'rds' && <RdsEditForm node={node} onChange={handleChange} />}
+          {node.type === 's3' && <S3EditForm node={node} onChange={handleChange} />}
+          {node.type === 'lambda' && <LambdaEditForm node={node} onChange={handleChange} />}
+          {node.type === 'alb' && (
+            <AlbEditForm node={node} onChange={handleChange} showErrors={showErrors} />
+          )}
+          {node.type === 'cloudfront' && <CloudFrontEditForm node={node} onChange={handleChange} />}
+          {node.type === 'apigw' && <ApigwEditForm node={node} onChange={handleChange} />}
+          {node.type === 'eventbridge-bus' && (
+            <EventBridgeEditForm node={node} onChange={handleChange} />
+          )}
+          {node.type === 'sqs' && <SqsEditForm node={node} onChange={handleChange} />}
+          {node.type === 'sns' && <SnsEditForm node={node} onChange={handleChange} />}
+          {node.type === 'ecr-repo' && <EcrEditForm node={node} onChange={handleChange} />}
+          {node.type === 'secret' && <SecretEditForm node={node} onChange={handleChange} />}
+          {node.type === 'dynamo' && <DynamoEditForm node={node} onChange={handleChange} />}
+          {node.type === 'ssm-param' && <SsmEditForm node={node} onChange={handleChange} />}
+          {node.type === 'sfn' && <SfnEditForm node={node} onChange={handleChange} />}
         </div>
         <div className="modal-foot">
           <button disabled={isRunning} onClick={onClose} className="btn btn-sm btn-ghost">

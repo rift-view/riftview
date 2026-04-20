@@ -10,10 +10,7 @@ export function Onboarding(): React.JSX.Element {
       <p className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>
         The incident diagnostic layer AWS doesn&apos;t have.
       </p>
-      <p
-        className="text-[11px] max-w-sm"
-        style={{ color: 'var(--fg-muted)', lineHeight: 1.6 }}
-      >
+      <p className="text-[11px] max-w-sm" style={{ color: 'var(--fg-muted)', lineHeight: 1.6 }}>
         Connect your AWS account to see your infrastructure as a live, connected graph — so you
         understand blast radius before the 3am page, not during it.
       </p>
@@ -21,10 +18,7 @@ export function Onboarding(): React.JSX.Element {
         className="rounded p-4 text-left max-w-sm"
         style={{ background: 'var(--ink-900)', border: '1px solid var(--border-strong)' }}
       >
-        <div
-          className="text-[10px] mb-3"
-          style={{ color: 'var(--bone-200)', fontSize: 13 }}
-        >
+        <div className="text-[10px] mb-3" style={{ color: 'var(--bone-200)', fontSize: 13 }}>
           New to AWS CLI? Run this in your terminal first:
         </div>
         <code

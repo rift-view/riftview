@@ -40,18 +40,13 @@ export default function DeleteDialog({
       tabIndex={-1}
       style={{ zIndex: 200 }}
     >
-      <div
-        className="modal modal--sm"
-        style={{ borderLeft: '2px solid var(--fault-500)' }}
-      >
+      <div className="modal modal--sm" style={{ borderLeft: '2px solid var(--fault-500)' }}>
         <div className="modal-head">
           <div className="modal-head-text">
             <span className="eyebrow" style={{ color: 'var(--fault-500)' }}>
               DELETE
             </span>
-            <h2 className="modal-title">
-              {RESOURCE_LABELS[node.type] ?? node.type}?
-            </h2>
+            <h2 className="modal-title">{RESOURCE_LABELS[node.type] ?? node.type}?</h2>
           </div>
           <button className="modal-close" onClick={onClose} title="Close">
             ×

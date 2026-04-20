@@ -37,34 +37,34 @@ describe('demoMode', () => {
     })
 
     it('masks 12-digit account IDs', () => {
-      expect(redact('arn:aws:iam::123456789012:user/julius'))
-        .toBe('arn:aws:iam::************:user/julius')
+      expect(redact('arn:aws:iam::123456789012:user/julius')).toBe(
+        'arn:aws:iam::************:user/julius'
+      )
     })
 
     it('masks AKIA access keys', () => {
       // AKIAZZ1111ZZ2222ZZ33 = 20 chars, fits AKIA[0-9A-Z]{16} pattern.
-      expect(redact('key=AKIAZZ1111ZZ2222ZZ33 value'))
-        .toBe('key=AKIA**************** value')
+      expect(redact('key=AKIAZZ1111ZZ2222ZZ33 value')).toBe('key=AKIA**************** value')
     })
 
     it('masks ASIA session keys', () => {
-      expect(redact('ASIAZZ1111ZZ2222ZZ33'))
-        .toBe('ASIA****************')
+      expect(redact('ASIAZZ1111ZZ2222ZZ33')).toBe('ASIA****************')
     })
 
     it('masks IPv4 addresses', () => {
-      expect(redact('Instance at 10.0.1.42 on the VPC'))
-        .toBe('Instance at ***.***.***.*** on the VPC')
+      expect(redact('Instance at 10.0.1.42 on the VPC')).toBe(
+        'Instance at ***.***.***.*** on the VPC'
+      )
     })
 
     it('masks long hex blobs (potential credentials)', () => {
-      expect(redact('token=a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6'))
-        .toBe('token=[redacted]')
+      expect(redact('token=a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6')).toBe('token=[redacted]')
     })
 
     it('leaves non-sensitive text untouched', () => {
-      expect(redact('Lambda my-fn region us-east-1 status running'))
-        .toBe('Lambda my-fn region us-east-1 status running')
+      expect(redact('Lambda my-fn region us-east-1 status running')).toBe(
+        'Lambda my-fn region us-east-1 status running'
+      )
     })
 
     it('redactKeepSuffix preserves last 4 chars by default', () => {

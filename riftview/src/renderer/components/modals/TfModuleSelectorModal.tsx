@@ -79,9 +79,7 @@ export default function TfModuleSelectorModal({
                     display: 'flex',
                     padding: '7px 12px',
                     borderBottom: idx < modules.length - 1 ? '1px solid var(--border)' : 'none',
-                    background: checked[m.name]
-                      ? 'oklch(0.73 0.17 50 / 0.06)'
-                      : 'transparent',
+                    background: checked[m.name] ? 'oklch(0.73 0.17 50 / 0.06)' : 'transparent',
                     width: '100%',
                     boxSizing: 'border-box'
                   }}
@@ -91,13 +89,8 @@ export default function TfModuleSelectorModal({
                     checked={checked[m.name] ?? false}
                     onChange={() => toggle(m.name)}
                   />
-                  <span style={{ flex: 1, color: 'var(--bone-100)', fontSize: 12 }}>
-                    {m.name}
-                  </span>
-                  <span
-                    className="pill pill-neutral"
-                    style={{ padding: '1px 6px', fontSize: 9 }}
-                  >
+                  <span style={{ flex: 1, color: 'var(--bone-100)', fontSize: 12 }}>{m.name}</span>
+                  <span className="pill pill-neutral" style={{ padding: '1px 6px', fontSize: 9 }}>
                     {m.resourceCount} resource{m.resourceCount !== 1 ? 's' : ''}
                   </span>
                 </label>

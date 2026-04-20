@@ -49,11 +49,17 @@ function contrastRatio(fg: string, bg: string): number {
   const l1 = luminance(hexToRgb(fg))
   const l2 = luminance(hexToRgb(bg))
   const lighter = Math.max(l1, l2)
-  const darker  = Math.min(l1, l2)
+  const darker = Math.min(l1, l2)
   return (lighter + 0.05) / (darker + 0.05)
 }
 
-const LIGHT_THEMES = ['light', 'solarized-light', 'github-light', 'nord-light', 'gruvbox-light'] as const
+const LIGHT_THEMES = [
+  'light',
+  'solarized-light',
+  'github-light',
+  'nord-light',
+  'gruvbox-light'
+] as const
 
 describe('Light theme WCAG AA contrast audit', () => {
   for (const name of LIGHT_THEMES) {

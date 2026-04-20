@@ -75,7 +75,9 @@ export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Elem
           className="form-input"
           value={amiId}
           onChange={(e) => update({ amiId: e.target.value })}
-          placeholder={isLocal ? 'ami-xxxxxxxx  (must exist in LocalStack)' : 'ami-0abcdef1234567890'}
+          placeholder={
+            isLocal ? 'ami-xxxxxxxx  (must exist in LocalStack)' : 'ami-0abcdef1234567890'
+          }
         />
       </div>
       <div className="form-field">

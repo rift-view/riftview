@@ -231,10 +231,7 @@ export function Sidebar(): React.JSX.Element {
         return (
           <div key={cat.label} className="side-group">
             {/* Category header */}
-            <div
-              className="side-group-label"
-              onClick={() => toggleCategory(cat.label)}
-            >
+            <div className="side-group-label" onClick={() => toggleCategory(cat.label)}>
               <span className="label">
                 {isExpanded ? '⊟' : '⊞'} {cat.label}
               </span>
@@ -288,10 +285,7 @@ export function Sidebar(): React.JSX.Element {
                 {isManagement && (ssmGroups.length > 0 || ssmErrTooltip) && (
                   <>
                     {ssmErrTooltip && (
-                      <div
-                        className="px-2.5 text-[9px] font-mono"
-                        style={{ color: '#f59e0b' }}
-                      >
+                      <div className="px-2.5 text-[9px] font-mono" style={{ color: '#f59e0b' }}>
                         <span title={ssmErrTooltip}>⚠ SSM error</span>
                       </div>
                     )}
@@ -299,12 +293,7 @@ export function Sidebar(): React.JSX.Element {
                       if (groupNodes.length === 1) {
                         const node = groupNodes[0]
                         return (
-                          <div
-                            key={node.id}
-                            className="side-item"
-                            title={node.label}
-                            role="button"
-                          >
+                          <div key={node.id} className="side-item" title={node.label} role="button">
                             <span className="side-item-name truncate">⬡ {node.label}</span>
                           </div>
                         )

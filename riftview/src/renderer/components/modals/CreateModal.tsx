@@ -329,83 +329,79 @@ export function CreateModal(): React.JSX.Element | null {
         <div className="modal-head">
           <div className="modal-head-text">
             <span className="eyebrow">NEW RESOURCE</span>
-            <h2 className="modal-title">
-              {TITLES[activeCreate.resource] ?? 'New Resource'}
-            </h2>
+            <h2 className="modal-title">{TITLES[activeCreate.resource] ?? 'New Resource'}</h2>
           </div>
           <button className="modal-close" onClick={handleCancel} title="Close">
             ×
           </button>
         </div>
         <div className="modal-body">
-
-        {activeCreate.resource === 'vpc' && (
-          <VpcForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'ec2' && (
-          <Ec2Form onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'sg' && (
-          <SgForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 's3' && (
-          <S3Form onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'rds' && (
-          <RdsForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'lambda' && (
-          <LambdaForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'alb' && (
-          <AlbForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'acm' && (
-          <AcmForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'cloudfront' && (
-          <CloudFrontForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'apigw' && (
-          <ApigwForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'apigw-route' && (
-          <ApigwRouteForm onChange={handleChange} showErrors={showErrors} apiId={parentApiId} />
-        )}
-        {activeCreate.resource === 'sqs' && (
-          <SqsForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'sns' && (
-          <SnsForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'dynamo' && (
-          <DynamoForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'secret' && (
-          <SecretForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'ecr' && (
-          <EcrForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'sfn' && (
-          <SfnForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'eventbridge-bus' && (
-          <EventBusForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'r53-zone' && (
-          <R53CreateForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'ssm-param' && (
-          <SsmCreateForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'subnet' && (
-          <SubnetCreateForm onChange={handleChange} showErrors={showErrors} />
-        )}
-        {activeCreate.resource === 'igw' && (
-          <IgwCreateForm onChange={handleChange} showErrors={showErrors} />
-        )}
-
+          {activeCreate.resource === 'vpc' && (
+            <VpcForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'ec2' && (
+            <Ec2Form onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'sg' && (
+            <SgForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 's3' && (
+            <S3Form onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'rds' && (
+            <RdsForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'lambda' && (
+            <LambdaForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'alb' && (
+            <AlbForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'acm' && (
+            <AcmForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'cloudfront' && (
+            <CloudFrontForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'apigw' && (
+            <ApigwForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'apigw-route' && (
+            <ApigwRouteForm onChange={handleChange} showErrors={showErrors} apiId={parentApiId} />
+          )}
+          {activeCreate.resource === 'sqs' && (
+            <SqsForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'sns' && (
+            <SnsForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'dynamo' && (
+            <DynamoForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'secret' && (
+            <SecretForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'ecr' && (
+            <EcrForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'sfn' && (
+            <SfnForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'eventbridge-bus' && (
+            <EventBusForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'r53-zone' && (
+            <R53CreateForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'ssm-param' && (
+            <SsmCreateForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'subnet' && (
+            <SubnetCreateForm onChange={handleChange} showErrors={showErrors} />
+          )}
+          {activeCreate.resource === 'igw' && (
+            <IgwCreateForm onChange={handleChange} showErrors={showErrors} />
+          )}
         </div>
         <div className="modal-foot">
           <button onClick={handleCancel} className="btn btn-sm btn-ghost">

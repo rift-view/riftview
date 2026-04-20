@@ -519,10 +519,7 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
             size={1}
             color="var(--canvas-grid-dot)"
           />
-          <MiniMap
-            style={{ background: 'var(--ink-950)' }}
-            nodeColor="var(--border-strong)"
-          />
+          <MiniMap style={{ background: 'var(--ink-950)' }} nodeColor="var(--border-strong)" />
         </ReactFlow>
       </div>
     </div>

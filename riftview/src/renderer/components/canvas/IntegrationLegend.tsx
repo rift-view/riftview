@@ -40,9 +40,7 @@ export default function IntegrationLegend(): React.JSX.Element | null {
           marginBottom: 6
         }}
       >
-        <span style={{ color: 'var(--bone-200)', fontWeight: 600 }}>
-          Integration Edges
-        </span>
+        <span style={{ color: 'var(--bone-200)', fontWeight: 600 }}>Integration Edges</span>
         <button
           onClick={() => setDismissed(true)}
           title="Dismiss"

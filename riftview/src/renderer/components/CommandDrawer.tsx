@@ -156,7 +156,9 @@ export function CommandDrawer(): React.JSX.Element {
               key={i}
               style={{ color: 'var(--bone-200)', fontFamily: 'var(--font-mono)', fontSize: 12 }}
             >
-              <span className="c-prompt" style={{ marginRight: 6 }}>$</span>
+              <span className="c-prompt" style={{ marginRight: 6 }}>
+                $
+              </span>
               {line}
             </div>
           ))}
@@ -338,10 +340,7 @@ export function CommandDrawer(): React.JSX.Element {
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             fontFamily: 'var(--font-mono)',
-            color:
-              commandPreview.length > 0 || running
-                ? 'var(--bone-100)'
-                : 'var(--fg-muted)'
+            color: commandPreview.length > 0 || running ? 'var(--bone-100)' : 'var(--fg-muted)'
           }}
         >
           {statusText}
@@ -373,31 +372,19 @@ export function CommandDrawer(): React.JSX.Element {
         )}
 
         {(showSuccess || showError) && (
-          <button
-            onClick={handleCollapse}
-            className="btn-link"
-            style={{ fontSize: 11 }}
-          >
+          <button onClick={handleCollapse} className="btn-link" style={{ fontSize: 11 }}>
             ✕
           </button>
         )}
 
         {cliOutput.length > 0 && !expanded && (
-          <button
-            onClick={() => setExpanded(true)}
-            className="btn-link"
-            style={{ fontSize: 9 }}
-          >
+          <button onClick={() => setExpanded(true)} className="btn-link" style={{ fontSize: 9 }}>
             ▲
           </button>
         )}
 
         {expanded && (
-          <button
-            onClick={() => setExpanded(false)}
-            className="btn-link"
-            style={{ fontSize: 9 }}
-          >
+          <button onClick={() => setExpanded(false)} className="btn-link" style={{ fontSize: 9 }}>
             ▼
           </button>
         )}

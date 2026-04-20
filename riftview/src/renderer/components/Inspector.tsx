@@ -51,7 +51,13 @@ function DriftDiffTable({
 
   return (
     <>
-      <div style={{ fontWeight: 700, color: 'var(--moss-500)', marginBottom: diffs.length > 0 ? 6 : 0 }}>
+      <div
+        style={{
+          fontWeight: 700,
+          color: 'var(--moss-500)',
+          marginBottom: diffs.length > 0 ? 6 : 0
+        }}
+      >
         ✓ MATCHED
         {diffs.length > 0 ? ` — ${diffs.length} difference${diffs.length === 1 ? '' : 's'}` : ''}
       </div>
@@ -226,7 +232,9 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
           </div>
 
           {allAdvisories.length === 0 ? (
-            <div style={{ fontSize: 11, color: 'var(--moss-500)', fontWeight: 700, marginBottom: 12 }}>
+            <div
+              style={{ fontSize: 11, color: 'var(--moss-500)', fontWeight: 700, marginBottom: 12 }}
+            >
               ✓ All clear
             </div>
           ) : groupByRule ? (
@@ -419,7 +427,14 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
             style={{ animation: 'cb-top-risks-fade 300ms ease-out both' }}
           >
             {allAdvisories.length === 0 ? (
-              <div style={{ fontSize: 11, color: 'var(--moss-500)', fontWeight: 700, marginBottom: 12 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: 'var(--moss-500)',
+                  fontWeight: 700,
+                  marginBottom: 12
+                }}
+              >
                 ✓ All clear
               </div>
             ) : (
@@ -587,10 +602,7 @@ function Row({
   return (
     <div className="insp-row">
       <span className="k">{k}</span>
-      <span
-        className="v"
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-      >
+      <span className="v" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
         <span style={{ wordBreak: 'break-all' }}>{v}</span>
         {copyable && (
           <button
@@ -708,7 +720,6 @@ export function Inspector({
       return
     }
     if (!METRIC_TYPES.has(node.type as NodeType)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCwMetrics([])
       return
     }
@@ -742,11 +753,7 @@ export function Inspector({
       }}
     >
       {!node && selectedEdgeInfo ? (
-        <EdgeView
-          info={selectedEdgeInfo}
-          nodes={nodes}
-          importedNodes={importedNodes}
-        />
+        <EdgeView info={selectedEdgeInfo} nodes={nodes} importedNodes={importedNodes} />
       ) : !node ? (
         <FirstScanSummary nodes={nodes} />
       ) : (
@@ -778,9 +785,7 @@ export function Inspector({
               style={{ margin: '0 var(--space-md) var(--space-sm)' }}
             >
               <div className="advisory-title">✕ MISSING — read-only</div>
-              <div className="advisory-body">
-                Declared in Terraform but not found in live AWS.
-              </div>
+              <div className="advisory-body">Declared in Terraform but not found in live AWS.</div>
             </div>
           )}
 
@@ -1068,8 +1073,7 @@ export function Inspector({
                           <div
                             key={a.ruleId}
                             className={
-                              'advisory-card' +
-                              (isCritical ? ' advisory-card--critical' : '')
+                              'advisory-card' + (isCritical ? ' advisory-card--critical' : '')
                             }
                           >
                             <div className="advisory-title">
@@ -1236,9 +1240,7 @@ export function Inspector({
             <div className="insp-actions">
               <button
                 onClick={() => toggleLockNode(node.id)}
-                className={
-                  'btn btn-sm ' + (lockedNodes.has(node.id) ? 'btn-primary' : 'btn-ghost')
-                }
+                className={'btn btn-sm ' + (lockedNodes.has(node.id) ? 'btn-primary' : 'btn-ghost')}
               >
                 {lockedNodes.has(node.id) ? '⊠ Locked' : '◈ Lock'}
               </button>
@@ -1426,7 +1428,15 @@ export function Inspector({
             ) : (
               <div className="insp-rows">
                 {nodeHistory.slice(0, 10).map((entry, i) => (
-                  <div key={i} className="insp-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gridTemplateColumns: '1fr' }}>
+                  <div
+                    key={i}
+                    className="insp-row"
+                    style={{
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      gridTemplateColumns: '1fr'
+                    }}
+                  >
                     <span className="k">↳ {relativeTime(entry.timestamp)}</span>
                     <div style={{ paddingLeft: 10, marginTop: 2, width: '100%' }}>
                       {entry.changes.map((c, j) => (
@@ -1530,20 +1540,19 @@ function EdgeView({
         </div>
       ) : (
         <>
-          {info.data &&
-            Object.keys(info.data).filter((k) => k !== 'isIntegration').length > 0 && (
-              <div className="insp-section">
-                <div className="insp-label">METADATA</div>
-                <div className="insp-rows">
-                  {Object.entries(info.data)
-                    .filter(([k]) => k !== 'isIntegration')
-                    .map(([k, v]) => (
-                      <Row key={k} k={fieldLabel(k)} v={String(v ?? '—')} />
-                    ))}
-                </div>
-                <hr className="hairline" />
+          {info.data && Object.keys(info.data).filter((k) => k !== 'isIntegration').length > 0 && (
+            <div className="insp-section">
+              <div className="insp-label">METADATA</div>
+              <div className="insp-rows">
+                {Object.entries(info.data)
+                  .filter(([k]) => k !== 'isIntegration')
+                  .map(([k, v]) => (
+                    <Row key={k} k={fieldLabel(k)} v={String(v ?? '—')} />
+                  ))}
               </div>
-            )}
+              <hr className="hairline" />
+            </div>
+          )}
           {info.label && (
             <Section label="LABEL">
               <Row k="LABEL" v={info.label} />
@@ -1718,7 +1727,9 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
 
   // API Gateway
   if (node.type === 'apigw') {
-    const routeCount = nodes.filter((n) => n.type === 'apigw-route' && n.parentId === node.id).length
+    const routeCount = nodes.filter(
+      (n) => n.type === 'apigw-route' && n.parentId === node.id
+    ).length
     return (
       <div className="insp-section">
         <div className="insp-label">API</div>
@@ -1726,9 +1737,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
           <Row
             k="ENDPOINT"
             v={(node.metadata.endpoint as string) || '—'}
-            copyable={
-              node.metadata.endpoint ? (node.metadata.endpoint as string) : undefined
-            }
+            copyable={node.metadata.endpoint ? (node.metadata.endpoint as string) : undefined}
           />
           <Row k="PROTOCOL" v="HTTP" />
           <Row
@@ -1774,9 +1783,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
           <Row
             k="TARGET"
             v={(node.metadata.lambdaArn as string | undefined) ?? '(no integration)'}
-            copyable={
-              node.metadata.lambdaArn ? (node.metadata.lambdaArn as string) : undefined
-            }
+            copyable={node.metadata.lambdaArn ? (node.metadata.lambdaArn as string) : undefined}
           />
         </div>
         {!isImported && (
@@ -1802,10 +1809,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
       },
       {
         k: 'MEMORY',
-        v:
-          node.metadata.memorySize != null
-            ? `${String(node.metadata.memorySize)} MB`
-            : undefined
+        v: node.metadata.memorySize != null ? `${String(node.metadata.memorySize)} MB` : undefined
       }
     ].filter((r) => r.v)
     return (
@@ -1848,9 +1852,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
                   if (result.ok) {
                     useUIStore.getState().openTerminal(node.id, result.sessionId)
                   } else {
-                    useUIStore
-                      .getState()
-                      .showToast(`Terminal failed: ${result.error}`, 'error')
+                    useUIStore.getState().showToast(`Terminal failed: ${result.error}`, 'error')
                   }
                 }}
                 className="btn btn-sm btn-ghost"
@@ -1879,11 +1881,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
               <Row k="INSTANCE" v={node.metadata.instanceClass} />
             )}
           {typeof node.metadata.endpoint === 'string' && node.metadata.endpoint && (
-            <Row
-              k="ENDPOINT"
-              v={node.metadata.endpoint}
-              copyable={node.metadata.endpoint}
-            />
+            <Row k="ENDPOINT" v={node.metadata.endpoint} copyable={node.metadata.endpoint} />
           )}
         </div>
         {!isImported && (
@@ -2066,9 +2064,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
                   if (result.ok) {
                     useUIStore.getState().openTerminal(node.id, result.sessionId)
                   } else {
-                    useUIStore
-                      .getState()
-                      .showToast(`Terminal failed: ${result.error}`, 'error')
+                    useUIStore.getState().showToast(`Terminal failed: ${result.error}`, 'error')
                   }
                 }}
                 className="btn btn-sm btn-ghost"
@@ -2111,11 +2107,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
         <div className="insp-label">REPOSITORY</div>
         <div className="insp-rows">
           {typeof node.metadata.uri === 'string' && node.metadata.uri && (
-            <Row
-              k="URI"
-              v={node.metadata.uri}
-              copyable={node.metadata.uri}
-            />
+            <Row k="URI" v={node.metadata.uri} copyable={node.metadata.uri} />
           )}
         </div>
         {editDelete}
@@ -2142,11 +2134,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
             <Row key={r.k} k={r.k} v={r.v!} />
           ))}
           {typeof node.metadata.endpoint === 'string' && node.metadata.endpoint && (
-            <Row
-              k="ENDPOINT"
-              v={node.metadata.endpoint}
-              copyable={node.metadata.endpoint}
-            />
+            <Row k="ENDPOINT" v={node.metadata.endpoint} copyable={node.metadata.endpoint} />
           )}
         </div>
         {editDelete}

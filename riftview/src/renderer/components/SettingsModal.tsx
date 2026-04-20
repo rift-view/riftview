@@ -354,9 +354,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                 <div style={noteStyle}>
                   Selected regions are used when &quot;Scan All Selected&quot; is triggered.
                   Currently scanning:{' '}
-                  <strong style={{ color: 'var(--fg)' }}>
-                    {useCloudStore.getState().region}
-                  </strong>
+                  <strong style={{ color: 'var(--fg)' }}>{useCloudStore.getState().region}</strong>
                 </div>
 
                 <div
