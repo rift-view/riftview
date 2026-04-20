@@ -11,20 +11,6 @@ interface Props {
 
 const BLANK_RULE: Rule = { protocol: 'tcp', fromPort: 443, toPort: 443, cidr: '0.0.0.0/0' }
 
-function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
-  return {
-    width: '100%',
-    background: 'var(--ink-900)',
-    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--border)'}`,
-    borderRadius: 3,
-    padding: '3px 6px',
-    color: 'var(--fg)',
-    fontFamily: 'monospace',
-    fontSize: 10,
-    boxSizing: 'border-box' as const
-  }
-}
-
 export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
   const vpcs = nodes.filter((n) => n.type === 'vpc')
@@ -60,48 +46,30 @@ export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Eleme
     onChange({ resource: 'sg', name, description, vpcId, inboundRules: next })
   }
 
-  const ruleInputStyle: React.CSSProperties = {
-    background: 'var(--ink-900)',
-    border: '1px solid var(--border)',
-    borderRadius: '3px',
-    padding: '4px 6px',
-    color: 'var(--fg)',
-    fontFamily: 'monospace',
-    fontSize: '11px'
-  }
-  const labelStyle: React.CSSProperties = {
-    color: 'var(--fg-muted)',
-    fontSize: '9px',
-    marginBottom: '3px',
-    display: 'block',
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em'
-  }
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      <label>
-        <span style={labelStyle}>Name</span>
+    <div className="form-group">
+      <div className={'form-field' + (showErrors && !name.trim() ? ' -invalid' : '')}>
+        <span className="label">Name</span>
         <input
-          style={fieldStyle(name, showErrors)}
+          className="form-input"
           value={name}
           onChange={(e) => updateTop({ name: e.target.value })}
           placeholder="web-sg"
         />
-      </label>
-      <label>
-        <span style={labelStyle}>Description</span>
+      </div>
+      <div className={'form-field' + (showErrors && !description.trim() ? ' -invalid' : '')}>
+        <span className="label">Description</span>
         <input
-          style={fieldStyle(description, showErrors)}
+          className="form-input"
           value={description}
           onChange={(e) => updateTop({ description: e.target.value })}
           placeholder="Web tier security group"
         />
-      </label>
-      <label>
-        <span style={labelStyle}>VPC</span>
+      </div>
+      <div className={'form-field' + (showErrors && !vpcId.trim() ? ' -invalid' : '')}>
+        <span className="label">VPC</span>
         <select
-          style={fieldStyle(vpcId, showErrors)}
+          className="form-select"
           value={vpcId}
           onChange={(e) => updateTop({ vpcId: e.target.value })}
         >
@@ -112,16 +80,17 @@ export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Eleme
             </option>
           ))}
         </select>
-      </label>
-      <div>
-        <span style={labelStyle}>Inbound Rules</span>
+      </div>
+      <div className="form-field">
+        <span className="label">Inbound Rules</span>
         {rules.map((rule, i) => (
           <div
             key={i}
-            style={{ display: 'flex', gap: '4px', marginBottom: '4px', alignItems: 'center' }}
+            style={{ display: 'flex', gap: 4, marginBottom: 4, alignItems: 'center' }}
           >
             <select
-              style={{ ...ruleInputStyle, width: '70px' }}
+              className="form-select"
+              style={{ width: 80 }}
               value={rule.protocol}
               onChange={(e) => updateRule(i, { protocol: e.target.value as Rule['protocol'] })}
             >
@@ -131,53 +100,40 @@ export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Eleme
               <option value="-1">All</option>
             </select>
             <input
-              style={{ ...ruleInputStyle, width: '50px' }}
+              className="form-input"
+              style={{ width: 64 }}
               type="number"
               value={rule.fromPort}
               onChange={(e) => updateRule(i, { fromPort: Number(e.target.value) })}
               placeholder="from"
             />
-            <span style={{ color: 'var(--fg-muted)', fontSize: '10px' }}>–</span>
+            <span style={{ color: 'var(--fg-muted)', fontSize: 10 }}>–</span>
             <input
-              style={{ ...ruleInputStyle, width: '50px' }}
+              className="form-input"
+              style={{ width: 64 }}
               type="number"
               value={rule.toPort}
               onChange={(e) => updateRule(i, { toPort: Number(e.target.value) })}
               placeholder="to"
             />
             <input
-              style={{ ...ruleInputStyle, flex: 1 }}
+              className="form-input"
+              style={{ flex: 1 }}
               value={rule.cidr}
               onChange={(e) => updateRule(i, { cidr: e.target.value })}
               placeholder="0.0.0.0/0"
             />
             <button
+              type="button"
               onClick={() => removeRule(i)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--fg-muted)',
-                cursor: 'pointer',
-                fontSize: '12px'
-              }}
+              className="btn btn-sm btn-ghost"
+              style={{ padding: '2px 6px' }}
             >
               ✕
             </button>
           </div>
         ))}
-        <button
-          onClick={addRule}
-          style={{
-            background: 'var(--ink-850)',
-            border: '1px solid var(--border)',
-            borderRadius: '3px',
-            color: 'var(--bone-200)',
-            cursor: 'pointer',
-            fontSize: '10px',
-            padding: '3px 8px',
-            fontFamily: 'monospace'
-          }}
-        >
+        <button type="button" onClick={addRule} className="btn btn-sm btn-ghost" style={{ marginTop: 6 }}>
           + Add Rule
         </button>
       </div>

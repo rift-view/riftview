@@ -9,20 +9,6 @@ interface Props {
   showErrors?: boolean
 }
 
-function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
-  return {
-    width: '100%',
-    background: 'var(--ink-900)',
-    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--border)'}`,
-    borderRadius: 3,
-    padding: '3px 6px',
-    color: 'var(--fg)',
-    fontFamily: 'monospace',
-    fontSize: 10,
-    boxSizing: 'border-box' as const
-  }
-}
-
 export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
   const keyPairs = useCloudStore((s) => s.keyPairs)
@@ -69,42 +55,33 @@ export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Elem
     update({ securityGroupIds: next })
   }
 
-  const labelStyle: React.CSSProperties = {
-    color: 'var(--fg-muted)',
-    fontSize: '9px',
-    marginBottom: '3px',
-    display: 'block',
-    textTransform: 'uppercase',
-    letterSpacing: '0.08em'
-  }
-  const nonRequiredStyle: React.CSSProperties = fieldStyle('_nonempty_', false)
+  const nameInvalid = showErrors && !name.trim()
+  const amiInvalid = showErrors && !amiId.trim()
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      <label>
-        <span style={labelStyle}>Name</span>
+    <div className="form-group">
+      <div className={'form-field' + (nameInvalid ? ' -invalid' : '')}>
+        <span className="label">Name</span>
         <input
-          style={fieldStyle(name, showErrors)}
+          className="form-input"
           value={name}
           onChange={(e) => update({ name: e.target.value })}
           placeholder="web-server"
         />
-      </label>
-      <label>
-        <span style={labelStyle}>AMI ID</span>
+      </div>
+      <div className={'form-field' + (amiInvalid ? ' -invalid' : '')}>
+        <span className="label">AMI ID</span>
         <input
-          style={fieldStyle(amiId, showErrors)}
+          className="form-input"
           value={amiId}
           onChange={(e) => update({ amiId: e.target.value })}
-          placeholder={
-            isLocal ? 'ami-xxxxxxxx  (must exist in LocalStack)' : 'ami-0abcdef1234567890'
-          }
+          placeholder={isLocal ? 'ami-xxxxxxxx  (must exist in LocalStack)' : 'ami-0abcdef1234567890'}
         />
-      </label>
-      <label>
-        <span style={labelStyle}>Instance Type</span>
+      </div>
+      <div className="form-field">
+        <span className="label">Instance Type</span>
         <select
-          style={fieldStyle(instanceType, showErrors)}
+          className="form-select"
           value={instanceType}
           onChange={(e) => update({ instanceType: e.target.value })}
         >
@@ -114,13 +91,13 @@ export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Elem
             </option>
           ))}
         </select>
-      </label>
-      <label>
-        <span style={labelStyle}>Key Pair</span>
+      </div>
+      <div className="form-field">
+        <span className="label">Key Pair</span>
         <select
+          className="form-select"
           value={keyName}
           onChange={(e) => update({ keyName: e.target.value })}
-          style={nonRequiredStyle}
         >
           <option value="">— select key pair —</option>
           {keyPairs.map((kp) => (
@@ -129,11 +106,11 @@ export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Elem
             </option>
           ))}
         </select>
-      </label>
-      <label>
-        <span style={labelStyle}>VPC (for subnet filtering)</span>
+      </div>
+      <div className="form-field">
+        <span className="label">VPC (for subnet filtering)</span>
         <select
-          style={nonRequiredStyle}
+          className="form-select"
           value={selectedVpc}
           onChange={(e) => setSelectedVpc(e.target.value)}
         >
@@ -144,11 +121,11 @@ export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Elem
             </option>
           ))}
         </select>
-      </label>
-      <label>
-        <span style={labelStyle}>Subnet</span>
+      </div>
+      <div className="form-field">
+        <span className="label">Subnet</span>
         <select
-          style={nonRequiredStyle}
+          className="form-select"
           value={subnetId}
           onChange={(e) => update({ subnetId: e.target.value })}
         >
@@ -159,41 +136,24 @@ export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Elem
             </option>
           ))}
         </select>
-      </label>
-      <div>
-        <span style={labelStyle}>Security Groups</span>
+      </div>
+      <div className="form-field">
+        <span className="label">Security Groups</span>
         {sgs.length === 0 ? (
-          <div style={{ color: 'var(--fg-muted)', fontSize: '10px' }}>
-            No security groups found
-          </div>
+          <div className="form-helper">No security groups found</div>
         ) : (
-          sgs.map((sg) => (
-            <label
-              key={sg.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                marginBottom: '3px',
-                cursor: 'pointer'
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={securityGroupIds.includes(sg.id)}
-                onChange={() => toggleSg(sg.id)}
-              />
-              <span
-                style={{
-                  color: 'var(--bone-200)',
-                  fontSize: '10px',
-                  fontFamily: 'monospace'
-                }}
-              >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {sgs.map((sg) => (
+              <label key={sg.id} className="form-checkbox">
+                <input
+                  type="checkbox"
+                  checked={securityGroupIds.includes(sg.id)}
+                  onChange={() => toggleSg(sg.id)}
+                />
                 {sg.label}
-              </span>
-            </label>
-          ))
+              </label>
+            ))}
+          </div>
         )}
       </div>
     </div>

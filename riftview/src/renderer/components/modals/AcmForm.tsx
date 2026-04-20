@@ -6,35 +6,6 @@ interface Props {
   showErrors?: boolean
 }
 
-const inp = (err: boolean): React.CSSProperties => ({
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: `1px solid ${err ? '#ff5f57' : 'var(--border)'}`,
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-})
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
-}
-const btnSm: React.CSSProperties = {
-  background: 'var(--ink-850)',
-  border: '1px solid var(--border)',
-  borderRadius: 2,
-  padding: '2px 6px',
-  color: 'var(--fg-muted)',
-  fontFamily: 'monospace',
-  fontSize: 9,
-  cursor: 'pointer'
-}
-
 export function AcmForm({ onChange, showErrors }: Props): React.JSX.Element {
   const [form, setForm] = useState<Omit<AcmParams, 'resource'>>({
     domainName: '',
@@ -57,69 +28,74 @@ export function AcmForm({ onChange, showErrors }: Props): React.JSX.Element {
     update('subjectAlternativeNames', filtered)
   }
 
-  return (
-    <div>
-      <div style={lbl}>Primary Domain *</div>
-      <input
-        style={inp(err && !form.domainName.trim())}
-        value={form.domainName}
-        placeholder="example.com"
-        onChange={(e) => update('domainName', e.target.value)}
-      />
+  const domainInvalid = err && !form.domainName.trim()
 
-      <div style={lbl}>Validation Method</div>
-      <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
-        {(['DNS', 'EMAIL'] as const).map((method) => (
-          <label
-            key={method}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              fontSize: 10,
-              color: 'var(--bone-200)',
-              cursor: 'pointer'
-            }}
-          >
-            <input
-              type="radio"
-              name="validationMethod"
-              value={method}
-              checked={form.validationMethod === method}
-              onChange={() => update('validationMethod', method)}
-            />
-            {method}
-          </label>
-        ))}
+  return (
+    <div className="form-group">
+      <div className={'form-field' + (domainInvalid ? ' -invalid' : '')}>
+        <span className="label">Primary Domain *</span>
+        <input
+          className="form-input"
+          value={form.domainName}
+          placeholder="example.com"
+          onChange={(e) => update('domainName', e.target.value)}
+        />
       </div>
 
-      <div style={lbl}>Subject Alternative Names</div>
-      {sansInput.map((san, i) => (
-        <div key={i} style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-          <input
-            style={{ ...inp(false), flex: 1 }}
-            value={san}
-            placeholder="*.example.com"
-            onChange={(e) => {
-              const next = [...sansInput]
-              next[i] = e.target.value
-              updateSans(next)
-            }}
-          />
-          <button
-            style={btnSm}
-            onClick={() => {
-              const next = sansInput.filter((_, j) => j !== i)
-              updateSans(next.length > 0 ? next : [''])
-            }}
-          >
-            ✕
-          </button>
+      <div className="form-field">
+        <span className="label">Validation Method</span>
+        <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+          {(['DNS', 'EMAIL'] as const).map((method) => (
+            <label key={method} className="form-checkbox">
+              <input
+                type="radio"
+                name="validationMethod"
+                value={method}
+                checked={form.validationMethod === method}
+                onChange={() => update('validationMethod', method)}
+              />
+              {method}
+            </label>
+          ))}
         </div>
-      ))}
-      <button style={{ ...btnSm, marginTop: 6 }} onClick={() => updateSans([...sansInput, ''])}>
-        + Add SAN
-      </button>
+      </div>
+
+      <div className="form-field">
+        <span className="label">Subject Alternative Names</span>
+        {sansInput.map((san, i) => (
+          <div key={i} style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+            <input
+              className="form-input"
+              style={{ flex: 1 }}
+              value={san}
+              placeholder="*.example.com"
+              onChange={(e) => {
+                const next = [...sansInput]
+                next[i] = e.target.value
+                updateSans(next)
+              }}
+            />
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => {
+                const next = sansInput.filter((_, j) => j !== i)
+                updateSans(next.length > 0 ? next : [''])
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="btn btn-sm btn-ghost"
+          style={{ marginTop: 6 }}
+          onClick={() => updateSans([...sansInput, ''])}
+        >
+          + Add SAN
+        </button>
+      </div>
     </div>
   )
 }

@@ -7,27 +7,6 @@ interface Props {
   showErrors?: boolean
 }
 
-const inp = (err: boolean): React.CSSProperties => ({
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: `1px solid ${err ? '#ff5f57' : 'var(--border)'}`,
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-})
-const sel = (err: boolean): React.CSSProperties => ({ ...inp(err), cursor: 'pointer' })
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
-}
-const row: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }
-
 export function RdsForm({ onChange, showErrors }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
   const vpcs = nodes.filter((n) => n.type === 'vpc')
@@ -54,58 +33,72 @@ export function RdsForm({ onChange, showErrors }: Props): React.JSX.Element {
   const err = showErrors ?? false
 
   return (
-    <div>
-      <div style={lbl}>DB instance identifier *</div>
-      <input
-        style={inp(err && !form.identifier)}
-        value={form.identifier}
-        onChange={(e) => update('identifier', e.target.value)}
-      />
-      <div style={lbl}>Engine</div>
-      <select
-        style={sel(false)}
-        value={form.engine}
-        onChange={(e) => update('engine', e.target.value as RdsParams['engine'])}
-      >
-        <option value="mysql">MySQL</option>
-        <option value="postgres">PostgreSQL</option>
-        <option value="mariadb">MariaDB</option>
-      </select>
-      <div style={lbl}>Instance class</div>
-      <select
-        style={sel(false)}
-        value={form.instanceClass}
-        onChange={(e) => update('instanceClass', e.target.value)}
-      >
-        {['db.t3.micro', 'db.t3.small', 'db.m5.large'].map((c) => (
-          <option key={c}>{c}</option>
-        ))}
-      </select>
-      <div style={lbl}>Master username *</div>
-      <input
-        style={inp(err && !form.masterUsername)}
-        value={form.masterUsername}
-        onChange={(e) => update('masterUsername', e.target.value)}
-      />
-      <div style={lbl}>Master password *</div>
-      <input
-        type="password"
-        style={inp(err && !form.masterPassword)}
-        value={form.masterPassword}
-        onChange={(e) => update('masterPassword', e.target.value)}
-      />
-      <div style={lbl}>Allocated storage (GB)</div>
-      <input
-        type="number"
-        style={inp(false)}
-        value={form.allocatedStorage}
-        onChange={(e) => update('allocatedStorage', Number(e.target.value))}
-      />
-      {vpcs.length > 0 && (
-        <>
-          <div style={lbl}>VPC *</div>
+    <div className="form-group">
+      <div className={'form-field' + (err && !form.identifier ? ' -invalid' : '')}>
+        <span className="label">DB instance identifier *</span>
+        <input
+          className="form-input"
+          value={form.identifier}
+          onChange={(e) => update('identifier', e.target.value)}
+        />
+      </div>
+      <div className="form-grid-2">
+        <div className="form-field">
+          <span className="label">Engine</span>
           <select
-            style={sel(err && !form.vpcId)}
+            className="form-select"
+            value={form.engine}
+            onChange={(e) => update('engine', e.target.value as RdsParams['engine'])}
+          >
+            <option value="mysql">MySQL</option>
+            <option value="postgres">PostgreSQL</option>
+            <option value="mariadb">MariaDB</option>
+          </select>
+        </div>
+        <div className="form-field">
+          <span className="label">Instance class</span>
+          <select
+            className="form-select"
+            value={form.instanceClass}
+            onChange={(e) => update('instanceClass', e.target.value)}
+          >
+            {['db.t3.micro', 'db.t3.small', 'db.m5.large'].map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className={'form-field' + (err && !form.masterUsername ? ' -invalid' : '')}>
+        <span className="label">Master username *</span>
+        <input
+          className="form-input"
+          value={form.masterUsername}
+          onChange={(e) => update('masterUsername', e.target.value)}
+        />
+      </div>
+      <div className={'form-field' + (err && !form.masterPassword ? ' -invalid' : '')}>
+        <span className="label">Master password *</span>
+        <input
+          className="form-input"
+          type="password"
+          value={form.masterPassword}
+          onChange={(e) => update('masterPassword', e.target.value)}
+        />
+      </div>
+      <div className="form-field">
+        <span className="label">Allocated storage (GB)</span>
+        <input
+          className="form-input"
+          type="number"
+          value={form.allocatedStorage}
+          onChange={(e) => update('allocatedStorage', Number(e.target.value))}
+        />
+      </div>
+      {vpcs.length > 0 && (
+        <div className="form-field">
+          <span className="label">VPC *</span>
+          <select
+            className="form-select"
             value={form.vpcId}
             onChange={(e) => update('vpcId', e.target.value)}
           >
@@ -116,29 +109,31 @@ export function RdsForm({ onChange, showErrors }: Props): React.JSX.Element {
               </option>
             ))}
           </select>
-        </>
+        </div>
       )}
-      <div style={lbl}>DB Subnet Group</div>
-      <input
-        style={inp(false)}
-        value={form.dbSubnetGroupName ?? ''}
-        onChange={(e) => update('dbSubnetGroupName', e.target.value)}
-      />
-      <label style={row}>
+      <div className="form-field">
+        <span className="label">DB Subnet Group</span>
+        <input
+          className="form-input"
+          value={form.dbSubnetGroupName ?? ''}
+          onChange={(e) => update('dbSubnetGroupName', e.target.value)}
+        />
+      </div>
+      <label className="form-checkbox">
         <input
           type="checkbox"
           checked={form.multiAZ}
           onChange={(e) => update('multiAZ', e.target.checked)}
         />
-        <span style={{ fontSize: 10, color: 'var(--bone-200)' }}>Multi-AZ</span>
+        Multi-AZ
       </label>
-      <label style={row}>
+      <label className="form-checkbox">
         <input
           type="checkbox"
           checked={form.publiclyAccessible}
           onChange={(e) => update('publiclyAccessible', e.target.checked)}
         />
-        <span style={{ fontSize: 10, color: 'var(--bone-200)' }}>Publicly accessible</span>
+        Publicly accessible
       </label>
     </div>
   )
