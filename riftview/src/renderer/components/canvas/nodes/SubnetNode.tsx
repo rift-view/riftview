@@ -10,34 +10,35 @@ interface SubnetNodeData {
 
 export function SubnetNode({ data }: NodeProps): React.JSX.Element {
   const d = data as unknown as SubnetNodeData
-  const color = d.isPublic ? '#4CAF50' : '#78909c'
-  const tag = d.isPublic ? 'PUBLIC' : 'PRIVATE'
+  const subnetType = d.isPublic ? 'Public' : 'Private'
+  const labelParts = [`${subnetType} · ${d.label}`]
+  if (d.az && !d.collapsed) labelParts.push(d.az)
 
   return (
     <div
+      className="rift-subnet"
       style={{
-        background: `${color}10`,
-        border: `1.5px dashed ${color}88`,
-        borderRadius: 6,
         minWidth: 140,
         minHeight: d.collapsed ? 32 : 80,
-        fontFamily: 'monospace',
-        overflow: 'hidden',
-        height: '100%'
+        height: '100%',
+        boxSizing: 'border-box'
       }}
     >
-      {/* Header — drag handle */}
+      <span className="rift-container-label">{labelParts.join(' · ')}</span>
+
+      {/* Invisible drag handle along the top edge */}
       <div
         className="cb-zone-drag-handle"
         style={{
-          background: `${color}14`,
-          borderBottom: d.collapsed ? 'none' : `1px solid ${color}44`,
-          padding: '4px 8px',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 24,
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
-          height: 32,
-          boxSizing: 'border-box',
+          justifyContent: 'flex-end',
+          paddingRight: 6,
           cursor: 'move'
         }}
         title="Drag header to move subnet"
@@ -52,48 +53,16 @@ export function SubnetNode({ data }: NodeProps): React.JSX.Element {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: color,
+              color: 'var(--fg-muted)',
+              fontFamily: 'var(--font-mono)',
               fontSize: 10,
               padding: '0 2px',
-              lineHeight: 1,
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center'
+              lineHeight: 1
             }}
             title={d.collapsed ? 'Expand subnet' : 'Collapse subnet'}
           >
             {d.collapsed ? '▶' : '▼'}
           </button>
-        )}
-        <span
-          style={{
-            color: color,
-            fontSize: 8,
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            background: `${color}22`,
-            border: `1px solid ${color}44`,
-            borderRadius: 2,
-            padding: '1px 4px',
-            flexShrink: 0
-          }}
-        >
-          {tag}
-        </span>
-        <span
-          style={{
-            color: `${color}cc`,
-            fontSize: 9,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            flex: 1
-          }}
-        >
-          {d.label}
-        </span>
-        {d.az && !d.collapsed && (
-          <span style={{ color: `${color}80`, fontSize: 8, flexShrink: 0 }}>{d.az}</span>
         )}
       </div>
     </div>
