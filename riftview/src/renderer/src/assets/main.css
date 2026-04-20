@@ -177,14 +177,6 @@ code {
   50%       { opacity: 1;   transform: scale(1.2); }
 }
 
-@keyframes crt-on {
-  0%   { background: #000;                       opacity: 1; }
-  18%  { background: rgba(160, 255, 160, 0.95);  opacity: 1; }
-  32%  { background: rgba(60,  200, 60,  0.85);  opacity: 1; }
-  60%  { background: #000;                       opacity: 1; }
-  100% { background: #000;                       opacity: 0; }
-}
-
 /* ── Top Risks reveal animation ──────────────────────────────────────────── */
 
 @keyframes cb-top-risks-fade {
