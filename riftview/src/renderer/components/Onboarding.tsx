@@ -1,103 +1,168 @@
+const PERMISSIONS = [
+  'ec2:Describe*',
+  'elasticloadbalancing:Describe*',
+  'lambda:List*, lambda:Get*',
+  's3:ListAllMyBuckets, s3:GetBucketLocation, s3:GetBucketTagging',
+  'rds:Describe*',
+  'cloudfront:List*, cloudfront:Get*',
+  'acm:ListCertificates, acm:DescribeCertificate',
+  'apigateway:GET',
+  'sqs:ListQueues, sqs:GetQueueAttributes',
+  'secretsmanager:ListSecrets, secretsmanager:DescribeSecret',
+  'ecr:DescribeRepositories',
+  'sns:ListTopics, sns:GetTopicAttributes',
+  'dynamodb:ListTables, dynamodb:DescribeTable',
+  'ssm:DescribeParameters',
+  'route53:ListHostedZones, route53:ListResourceRecordSets',
+  'states:ListStateMachines, states:DescribeStateMachine',
+  'events:ListEventBuses',
+  'ses:ListIdentities',
+  'cognito-idp:ListUserPools',
+  'kinesis:ListStreams, kinesis:DescribeStream',
+  'ecs:ListClusters, ecs:DescribeClusters',
+  'elasticache:DescribeCacheClusters',
+  'eks:ListClusters, eks:DescribeCluster',
+  'es:ListDomainNames, es:DescribeElasticsearchDomains',
+  'kafka:ListClusters, kafka:DescribeCluster',
+  'sts:GetCallerIdentity'
+]
+
 export function Onboarding(): React.JSX.Element {
   return (
     <div
-      className="flex flex-col items-center justify-center h-full gap-4 text-center"
-      style={{ fontFamily: 'monospace' }}
+      className="onb"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: 'var(--space-md)',
+        maxWidth: 540,
+        margin: '0 auto',
+        padding: 'var(--space-md) var(--space-sm)'
+      }}
     >
-      <div className="text-3xl font-bold tracking-tighter" style={{ color: 'var(--accent)' }}>
-        RIFTVIEW
-      </div>
-      <p className="text-sm font-semibold" style={{ color: 'var(--fg)' }}>
+      <span className="eyebrow">WELCOME TO RIFTVIEW</span>
+      <h1 className="empty-state-title">
         The incident diagnostic layer AWS doesn&apos;t have.
-      </p>
-      <p className="text-[11px] max-w-sm" style={{ color: 'var(--fg-muted)', lineHeight: 1.6 }}>
+      </h1>
+      <p
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--text-sm)',
+          color: 'var(--bone-200)',
+          lineHeight: 1.6,
+          margin: 0
+        }}
+      >
         Connect your AWS account to see your infrastructure as a live, connected graph — so you
         understand blast radius before the 3am page, not during it.
       </p>
-      <div
-        className="rounded p-4 text-left max-w-sm"
-        style={{ background: 'var(--ink-900)', border: '1px solid var(--border-strong)' }}
+
+      <hr className="hairline" style={{ width: '100%' }} />
+
+      <section
+        style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2xs)', width: '100%' }}
       >
-        <div className="text-[10px] mb-3" style={{ color: 'var(--bone-200)', fontSize: 13 }}>
+        <span className="label">STEP 1 — AWS CLI</span>
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-sm)',
+            color: 'var(--bone-200)',
+            lineHeight: 1.6,
+            margin: 0
+          }}
+        >
           New to AWS CLI? Run this in your terminal first:
-        </div>
+        </p>
         <code
           style={{
-            fontFamily: 'monospace',
-            background: 'var(--ink-850)',
-            padding: '4px 8px',
-            borderRadius: 3,
-            fontSize: 12,
-            color: 'var(--accent)',
             display: 'inline-block',
-            marginBottom: 10
+            fontFamily: 'var(--font-mono)',
+            fontSize: 'var(--text-xs)',
+            color: 'var(--ember-400)',
+            background: 'var(--ink-900)',
+            border: '1px solid var(--border)',
+            padding: '4px 8px',
+            borderRadius: 'var(--radius-sm)',
+            alignSelf: 'flex-start'
           }}
         >
           aws configure
         </code>
-        <div className="text-[10px]" style={{ color: 'var(--bone-200)', fontSize: 13 }}>
-          Then enter your profile name below (default: &quot;default&quot;).
-        </div>
-        <div className="text-[10px] mt-3" style={{ color: 'var(--fg-muted)' }}>
-          Then restart RiftView.
-        </div>
-      </div>
+      </section>
+
+      <hr className="hairline" style={{ width: '100%' }} />
+
+      <section
+        style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2xs)', width: '100%' }}
+      >
+        <span className="label">STEP 2 — PROFILE</span>
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-sm)',
+            color: 'var(--bone-200)',
+            lineHeight: 1.6,
+            margin: 0
+          }}
+        >
+          Enter your profile name in Settings (default: &quot;default&quot;), then restart RiftView
+          to scan your account.
+        </p>
+      </section>
+
+      <hr className="hairline" style={{ width: '100%' }} />
+
       <details
-        className="rounded text-left max-w-sm w-full"
-        style={{ background: 'var(--ink-900)', border: '1px solid var(--border-strong)' }}
+        style={{
+          width: '100%',
+          background: 'var(--ink-900)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)'
+        }}
       >
         <summary
-          className="text-[10px] cursor-pointer select-none px-4 py-3"
           style={{
-            color: 'var(--bone-200)',
-            listStyle: 'none',
+            cursor: 'pointer',
+            userSelect: 'none',
+            padding: 'var(--space-2xs) var(--space-sm)',
             display: 'flex',
             alignItems: 'center',
             gap: 6
           }}
         >
-          <span style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 10 }}>▶</span>
-          Required AWS Permissions
+          <span className="eyebrow">Required AWS Permissions</span>
         </summary>
-        <div className="px-4 pb-4" style={{ borderTop: '1px solid var(--border)' }}>
-          <div className="text-[9px] mt-3 mb-2" style={{ color: 'var(--fg-muted)' }}>
-            Attach these read-only actions to your IAM user or role:
-          </div>
-          <ul
-            className="text-[9px] leading-relaxed"
-            style={{ color: 'var(--bone-200)', listStyle: 'none', padding: 0, margin: 0 }}
+        <div
+          style={{
+            padding: 'var(--space-2xs) var(--space-sm) var(--space-sm)',
+            borderTop: '1px solid var(--border)'
+          }}
+        >
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--text-xs)',
+              color: 'var(--bone-200)',
+              margin: '0 0 var(--space-2xs) 0'
+            }}
           >
-            {[
-              'ec2:Describe*',
-              'elasticloadbalancing:Describe*',
-              'lambda:List*, lambda:Get*',
-              's3:ListAllMyBuckets, s3:GetBucketLocation, s3:GetBucketTagging',
-              'rds:Describe*',
-              'cloudfront:List*, cloudfront:Get*',
-              'acm:ListCertificates, acm:DescribeCertificate',
-              'apigateway:GET',
-              'sqs:ListQueues, sqs:GetQueueAttributes',
-              'secretsmanager:ListSecrets, secretsmanager:DescribeSecret',
-              'ecr:DescribeRepositories',
-              'sns:ListTopics, sns:GetTopicAttributes',
-              'dynamodb:ListTables, dynamodb:DescribeTable',
-              'ssm:DescribeParameters',
-              'route53:ListHostedZones, route53:ListResourceRecordSets',
-              'states:ListStateMachines, states:DescribeStateMachine',
-              'events:ListEventBuses',
-              'ses:ListIdentities',
-              'cognito-idp:ListUserPools',
-              'kinesis:ListStreams, kinesis:DescribeStream',
-              'ecs:ListClusters, ecs:DescribeClusters',
-              'elasticache:DescribeCacheClusters',
-              'eks:ListClusters, eks:DescribeCluster',
-              'es:ListDomainNames, es:DescribeElasticsearchDomains',
-              'kafka:ListClusters, kafka:DescribeCluster',
-              'sts:GetCallerIdentity'
-            ].map((perm) => (
-              <li key={perm} style={{ padding: '1px 0', color: 'var(--accent)' }}>
-                {perm}
-              </li>
+            Attach these read-only actions to your IAM user or role:
+          </p>
+          <ul
+            style={{
+              listStyle: 'none',
+              padding: 0,
+              margin: 0,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 'var(--text-xs)',
+              color: 'var(--ember-400)',
+              lineHeight: 1.7
+            }}
+          >
+            {PERMISSIONS.map((perm) => (
+              <li key={perm}>{perm}</li>
             ))}
           </ul>
         </div>

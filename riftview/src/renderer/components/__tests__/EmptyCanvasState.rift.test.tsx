@@ -46,6 +46,7 @@ describe('EmptyCanvasState rift shape', () => {
     })
 
     it('renders the Open Settings CTA as a .btn .btn-primary', () => {
+      render(<EmptyCanvasState />)
       const btn = screen.getByRole('button', { name: /open settings/i })
       expect(btn).toHaveClass('btn')
       expect(btn).toHaveClass('btn-primary')
