@@ -15,6 +15,26 @@ import { buildAdvisoryRemediation } from '../utils/buildAdvisoryRemediations'
 import { buildBlastRadius, directionSymbol } from '../utils/blastRadius'
 import { redact } from '../utils/demoMode'
 
+interface CloudMetric {
+  name: string
+  value: number
+  unit: string
+}
+const METRIC_TYPES = new Set<NodeType>(['lambda', 'rds', 'ecs'])
+
+function statusPillClass(status: string): string {
+  if (status === 'running' || status === 'active') return 'pill pill-ok'
+  if (status === 'error') return 'pill pill-danger'
+  if (status === 'unknown' || status === 'imported' || status === 'stopped')
+    return 'pill pill-neutral'
+  // pending, creating, deleting → default (ember pulse)
+  return 'pill'
+}
+
+function typeEyebrow(type: string): string {
+  return type.replace(/-/g, ' ').toUpperCase()
+}
+
 function DriftDiffTable({
   metadata,
   tfMetadata
@@ -31,70 +51,52 @@ function DriftDiffTable({
 
   return (
     <>
-      <div style={{ fontWeight: 700, color: '#22c55e', marginBottom: diffs.length > 0 ? 6 : 0 }}>
+      <div style={{ fontWeight: 700, color: 'var(--moss-500)', marginBottom: diffs.length > 0 ? 6 : 0 }}>
         ✓ MATCHED
         {diffs.length > 0 ? ` — ${diffs.length} difference${diffs.length === 1 ? '' : 's'}` : ''}
       </div>
       {diffs.length === 0 ? (
-        <div style={{ color: '#4ade80', fontSize: 10 }}>No differences detected</div>
+        <div style={{ color: 'var(--moss-500)', fontSize: 10 }}>No differences detected</div>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 1,
-            background: 'rgba(0,0,0,0.3)',
-            borderRadius: 3,
-            overflow: 'hidden',
-            fontSize: 9
-          }}
-        >
-          <div
-            style={{
-              padding: '3px 6px',
-              color: '#6b7280',
-              fontWeight: 700,
-              fontSize: 8,
-              background: 'rgba(0,0,0,0.2)'
-            }}
-          >
-            LIVE
+        <div className="diff" style={{ fontSize: 9 }}>
+          <div className="diff-head">
+            <span>LIVE</span>
+            <span>TERRAFORM</span>
           </div>
-          <div
-            style={{
-              padding: '3px 6px',
-              color: '#7c3aed',
-              fontWeight: 700,
-              fontSize: 8,
-              background: 'rgba(0,0,0,0.2)'
-            }}
-          >
-            TERRAFORM
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+            {diffs.map((k) => (
+              <React.Fragment key={k}>
+                <div
+                  style={{
+                    padding: '3px 6px',
+                    background: 'oklch(0 0 0 / 0.15)',
+                    borderTop: '1px solid oklch(1 0 0 / 0.05)'
+                  }}
+                >
+                  <div className="label" style={{ fontSize: 7 }}>
+                    {k}
+                  </div>
+                  <div style={{ color: 'oklch(0.80 0.15 28)' }}>
+                    {redact(String(metadata[k] ?? '—'))}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    padding: '3px 6px',
+                    background: 'oklch(0 0 0 / 0.15)',
+                    borderTop: '1px solid oklch(1 0 0 / 0.05)'
+                  }}
+                >
+                  <div className="label" style={{ fontSize: 7 }}>
+                    {k}
+                  </div>
+                  <div style={{ color: 'var(--moss-500)' }}>
+                    {redact(String(tfMetadata[k] ?? '—'))}
+                  </div>
+                </div>
+              </React.Fragment>
+            ))}
           </div>
-          {diffs.map((k) => (
-            <React.Fragment key={k}>
-              <div
-                style={{
-                  padding: '3px 6px',
-                  background: 'rgba(0,0,0,0.15)',
-                  borderTop: '1px solid rgba(255,255,255,0.05)'
-                }}
-              >
-                <div style={{ color: '#6b7280', fontSize: 7, marginBottom: 1 }}>{k}</div>
-                <div style={{ color: '#fca5a5' }}>{redact(String(metadata[k] ?? '—'))}</div>
-              </div>
-              <div
-                style={{
-                  padding: '3px 6px',
-                  background: 'rgba(0,0,0,0.15)',
-                  borderTop: '1px solid rgba(255,255,255,0.05)'
-                }}
-              >
-                <div style={{ color: '#6b7280', fontSize: 7, marginBottom: 1 }}>{k}</div>
-                <div style={{ color: '#86efac' }}>{redact(String(tfMetadata[k] ?? '—'))}</div>
-              </div>
-            </React.Fragment>
-          ))}
         </div>
       )}
     </>
@@ -110,12 +112,8 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
   const [groupByRule, setGroupByRule] = useState(false)
   const [showAll, setShowAll] = useState(false)
 
-  // Memoized: only re-runs when the nodes array reference changes.
-  // Must be called before any early return to satisfy Rules of Hooks.
   const allAdvisories = useMemo(() => nodes.flatMap((n) => analyzeNode(n)), [nodes])
 
-  // Rule-grouped: one entry per unique ruleId, severity-escalated, sorted critical-first.
-  // Called unconditionally to satisfy Rules of Hooks.
   const ruleGroups = useMemo(() => {
     const map = new Map<
       string,
@@ -139,7 +137,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
 
   if (nodes.length === 0 || !lastScannedAt) {
     return (
-      <div className="text-[9px] text-center mt-8" style={{ color: 'var(--fg-muted)' }}>
+      <div className="label" style={{ textAlign: 'center', marginTop: 32, padding: 16 }}>
         {scanStatus === 'scanning' ? 'Scanning…' : 'Click a resource to inspect'}
       </div>
     )
@@ -148,7 +146,6 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
   const criticals = allAdvisories.filter((a) => a.severity === 'critical')
   const warnings = allAdvisories.filter((a) => a.severity === 'warning')
 
-  // Sorted queue: criticals first, then warnings, then info (stable within each group)
   const sortedAdvisories = [
     ...criticals,
     ...warnings,
@@ -156,9 +153,9 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
   ]
 
   const severityDotColor = (severity: Advisory['severity']): string => {
-    if (severity === 'critical') return '#ef4444'
-    if (severity === 'warning') return '#f59e0b'
-    return '#60a5fa'
+    if (severity === 'critical') return 'var(--fault-500)'
+    if (severity === 'warning') return 'var(--ember-500)'
+    return 'oklch(0.72 0.15 240)'
   }
 
   const severityLabel = (severity: Advisory['severity']): string => {
@@ -167,42 +164,28 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
     return 'INFO'
   }
 
-  // Top 3 ranked by severity
   const topRisks = sortedAdvisories.slice(0, 3)
 
   return (
-    <div style={{ padding: '12px 10px', fontFamily: 'monospace' }}>
+    <div style={{ padding: '12px 10px', fontFamily: 'var(--font-mono)' }}>
       {showAll ? (
-        /* ── Full advisory list view ── */
         <>
-          {/* Header with back button + group toggle */}
           <div
+            className="insp-label"
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              color: 'var(--fg-muted)',
-              marginBottom: 8,
               borderBottom: '1px solid var(--border)',
+              marginBottom: 8,
               paddingBottom: 6
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <button
+                className="btn btn-sm btn-ghost"
                 onClick={() => setShowAll(false)}
-                style={{
-                  fontSize: 9,
-                  padding: '1px 5px',
-                  borderRadius: 3,
-                  background: '#334155',
-                  color: '#94a3b8',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'monospace'
-                }}
+                style={{ padding: '1px 6px', fontSize: 9 }}
               >
                 ← Top risks
               </button>
@@ -218,23 +201,18 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                       padding: '1px 5px',
                       borderRadius: 8,
                       background:
-                        criticals.length > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
-                      color: criticals.length > 0 ? '#ef4444' : '#f59e0b'
+                        criticals.length > 0
+                          ? 'oklch(0.60 0.20 28 / 0.15)'
+                          : 'oklch(0.73 0.17 50 / 0.15)',
+                      color: criticals.length > 0 ? 'var(--fault-500)' : 'var(--ember-500)'
                     }}
                   >
                     {allAdvisories.length}
                   </span>
                   <button
+                    className="btn btn-sm btn-ghost"
                     onClick={() => setGroupByRule((v) => !v)}
-                    style={{
-                      fontSize: 10,
-                      padding: '1px 6px',
-                      borderRadius: 3,
-                      background: '#334155',
-                      color: '#94a3b8',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
+                    style={{ padding: '1px 6px', fontSize: 10 }}
                   >
                     {groupByRule ? 'By Rule' : 'By Node'}
                   </button>
@@ -243,17 +221,15 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
             </div>
           </div>
 
-          {/* Resource count line */}
           <div style={{ fontSize: 9, color: 'var(--fg-muted)', marginBottom: 10 }}>
             {nodes.length} resource{nodes.length !== 1 ? 's' : ''} scanned
           </div>
 
           {allAdvisories.length === 0 ? (
-            <div style={{ fontSize: 11, color: '#22c55e', fontWeight: 700, marginBottom: 12 }}>
+            <div style={{ fontSize: 11, color: 'var(--moss-500)', fontWeight: 700, marginBottom: 12 }}>
               ✓ All clear
             </div>
           ) : groupByRule ? (
-            /* ── By-Rule view ── */
             <div
               style={{
                 overflowY: 'auto',
@@ -283,7 +259,9 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                       borderRadius: 4,
                       background: severityDotColor(group.severity),
                       display: 'inline-block',
-                      ...(group.severity === 'critical' ? { boxShadow: '0 0 5px #ef4444' } : {})
+                      ...(group.severity === 'critical'
+                        ? { boxShadow: '0 0 5px var(--fault-500)' }
+                        : {})
                     }}
                   />
                   <span
@@ -314,7 +292,6 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
               ))}
             </div>
           ) : (
-            /* ── By-Node view ── */
             <div
               style={{
                 overflowY: 'auto',
@@ -343,8 +320,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                       cursor: 'pointer'
                     }}
                     onMouseEnter={(e) => {
-                      ;(e.currentTarget as HTMLDivElement).style.background =
-                        'var(--ink-850)'
+                      ;(e.currentTarget as HTMLDivElement).style.background = 'var(--ink-850)'
                     }}
                     onMouseLeave={(e) => {
                       ;(e.currentTarget as HTMLDivElement).style.background = 'transparent'
@@ -359,7 +335,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                         background: dotColor,
                         display: 'inline-block',
                         ...(advisory.severity === 'critical'
-                          ? { boxShadow: '0 0 5px #ef4444' }
+                          ? { boxShadow: '0 0 5px var(--fault-500)' }
                           : {})
                       }}
                     />
@@ -397,18 +373,10 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                           e.stopPropagation()
                           selectNode(advisory.nodeId)
                         }}
-                        style={{
-                          fontSize: 8,
-                          fontFamily: 'monospace',
-                          cursor: 'pointer',
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--accent)',
-                          flexShrink: 0,
-                          padding: '0 2px'
-                        }}
+                        className="btn-link"
+                        style={{ fontSize: 8 }}
                       >
-                        Fix →
+                        Fix
                       </button>
                     )}
                   </div>
@@ -422,20 +390,15 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
           </div>
         </>
       ) : (
-        /* ── Top Risks view (default post-scan) ── */
         <>
-          {/* Header */}
           <div
+            className="insp-label"
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              color: 'var(--fg-muted)',
-              marginBottom: 8,
               borderBottom: '1px solid var(--border)',
+              marginBottom: 8,
               paddingBottom: 6
             }}
           >
@@ -443,30 +406,20 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
             {allAdvisories.length > 0 && (
               <button
                 onClick={() => setShowAll(true)}
-                style={{
-                  fontSize: 9,
-                  padding: '1px 5px',
-                  borderRadius: 3,
-                  background: 'none',
-                  color: 'var(--accent)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: 'monospace',
-                  letterSpacing: '0.05em'
-                }}
+                className="btn btn-sm btn-ghost"
+                style={{ fontSize: 9, padding: '1px 6px' }}
               >
                 View all →
               </button>
             )}
           </div>
 
-          {/* Fade-in container — key re-mounts on each new scan to replay animation */}
           <div
             key={lastScannedAt?.getTime()}
             style={{ animation: 'cb-top-risks-fade 300ms ease-out both' }}
           >
             {allAdvisories.length === 0 ? (
-              <div style={{ fontSize: 11, color: '#22c55e', fontWeight: 700, marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: 'var(--moss-500)', fontWeight: 700, marginBottom: 12 }}>
                 ✓ All clear
               </div>
             ) : (
@@ -495,14 +448,12 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                           cursor: 'pointer'
                         }}
                         onMouseEnter={(e) => {
-                          ;(e.currentTarget as HTMLDivElement).style.background =
-                            'var(--ink-850)'
+                          ;(e.currentTarget as HTMLDivElement).style.background = 'var(--ink-850)'
                         }}
                         onMouseLeave={(e) => {
                           ;(e.currentTarget as HTMLDivElement).style.background = 'transparent'
                         }}
                       >
-                        {/* Severity + title line */}
                         <div
                           style={{
                             display: 'flex',
@@ -523,7 +474,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                                 display: 'inline-block',
                                 flexShrink: 0,
                                 ...(advisory.severity === 'critical'
-                                  ? { boxShadow: '0 0 5px #ef4444' }
+                                  ? { boxShadow: '0 0 5px var(--fault-500)' }
                                   : {})
                               }}
                             />
@@ -558,22 +509,13 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                                 e.stopPropagation()
                                 selectNode(advisory.nodeId)
                               }}
-                              style={{
-                                fontSize: 8,
-                                fontFamily: 'monospace',
-                                cursor: 'pointer',
-                                background: 'none',
-                                border: 'none',
-                                color: 'var(--accent)',
-                                flexShrink: 0,
-                                padding: '0 0 0 4px'
-                              }}
+                              className="btn-link"
+                              style={{ fontSize: 8 }}
                             >
-                              Fix →
+                              Fix
                             </button>
                           )}
                         </div>
-                        {/* Detail line */}
                         <div
                           style={{
                             fontSize: 8,
@@ -592,7 +534,6 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                   })}
                 </div>
 
-                {/* Footer */}
                 <div style={{ fontSize: 8, color: 'var(--fg-muted)', textAlign: 'center' }}>
                   {topRisks.length} of {allAdvisories.length} advisor
                   {allAdvisories.length !== 1 ? 'ies' : 'y'} shown · {nodes.length} resource
@@ -631,6 +572,58 @@ function relativeTime(iso: string): string {
 function truncate(s: string, max = 40): string {
   return s.length > max ? s.slice(0, max) + '…' : s
 }
+
+// ── helpers: row rendering primitives ─────────────────────────────────────
+
+function Row({
+  k,
+  v,
+  copyable
+}: {
+  k: string
+  v: string | React.ReactNode
+  copyable?: string
+}): React.JSX.Element {
+  return (
+    <div className="insp-row">
+      <span className="k">{k}</span>
+      <span
+        className="v"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+      >
+        <span style={{ wordBreak: 'break-all' }}>{v}</span>
+        {copyable && (
+          <button
+            onClick={() => void navigator.clipboard.writeText(copyable)}
+            title="Copy"
+            className="btn btn-sm btn-ghost"
+            style={{ padding: '0 4px', fontSize: 8, lineHeight: 1 }}
+          >
+            ⎘
+          </button>
+        )}
+      </span>
+    </div>
+  )
+}
+
+function Section({
+  label,
+  children
+}: {
+  label: string
+  children: React.ReactNode
+}): React.JSX.Element {
+  return (
+    <div className="insp-section">
+      <div className="insp-label">{label}</div>
+      <div className="insp-rows">{children}</div>
+      <hr className="hairline" />
+    </div>
+  )
+}
+
+// ── Inspector ─────────────────────────────────────────────────────────────
 
 interface InspectorProps {
   onDelete: (node: CloudNode) => void
@@ -675,11 +668,11 @@ export function Inspector({
   const [remediateState, setRemediateState] = useState<RemediateState>('idle')
   const [advisoriesExpanded, setAdvisoriesExpanded] = useState(true)
   const [nodeHistory, setNodeHistory] = useState<HistoryEntry[]>([])
+  const [cwMetrics, setCwMetrics] = useState<CloudMetric[]>([])
 
   // Navigation between nodes that have advisories (OP_INTELLIGENCE)
   const advisoryNavigation = useMemo(() => {
     const withIssues = nodes.filter((n) => analyzeNode(n).length > 0)
-    // Sort: nodes with any critical advisory first, then rest
     const sorted = [...withIssues].sort((a, b) => {
       const aHasCritical = analyzeNode(a).some((x) => x.severity === 'critical') ? 0 : 1
       const bHasCritical = analyzeNode(b).some((x) => x.severity === 'critical') ? 0 : 1
@@ -707,212 +700,73 @@ export function Inspector({
       })
   }, [selectedId])
 
+  // CloudWatch metrics — lambda, rds, ecs only
+  useEffect(() => {
+    if (!node) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCwMetrics([])
+      return
+    }
+    if (!METRIC_TYPES.has(node.type as NodeType)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCwMetrics([])
+      return
+    }
+    if (!window.riftview?.fetchMetrics) return
+    const m = node.metadata ?? {}
+    const resourceId: string = (() => {
+      if (node.type === 'lambda') return (m.functionName as string | undefined) ?? node.label
+      if (node.type === 'rds') return (m.dbInstanceId as string | undefined) ?? node.label
+      return (
+        ((m.clusterName as string | undefined) ?? '') +
+        '/' +
+        ((m.serviceName as string | undefined) ?? '')
+      )
+    })()
+    const profile = useCloudStore.getState().profile
+    const region = node.region ?? useCloudStore.getState().region
+    window.riftview
+      .fetchMetrics({ nodeId: node.id, nodeType: node.type, resourceId, region, profile })
+      .then(setCwMetrics)
+      .catch(() => setCwMetrics([]))
+  }, [node])
+
   const IAM_SUPPORTED_TYPES: NodeType[] = ['ec2', 'lambda', 's3']
-
-  const STATUS_COLORS: Record<string, string> = {
-    running: '#28c840',
-    stopped: '#ff5f57',
-    pending: '#febc2e',
-    error: '#ff5f57',
-    unknown: '#666'
-  }
-
-  const btnBase: React.CSSProperties = {
-    flex: 1,
-    background: 'var(--ink-850)',
-    borderRadius: 2,
-    padding: '3px 0',
-    fontFamily: 'monospace',
-    fontSize: 9,
-    cursor: 'pointer'
-  }
 
   return (
     <div
-      className="p-3 overflow-y-auto h-full"
+      className="overflow-y-auto h-full"
       style={{
         background: 'var(--ink-900)',
-        borderLeft: '1px solid var(--border-strong)',
-        fontFamily: 'monospace'
+        borderLeft: '1px solid var(--border-strong)'
       }}
     >
       {!node && selectedEdgeInfo ? (
-        <>
-          <div
-            className="text-[9px] font-bold mb-2 pb-1"
-            style={{ color: 'var(--accent)', borderBottom: '1px solid var(--border-strong)' }}
-          >
-            EDGE · Selected
-          </div>
-          <div className="mb-3">
-            <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
-              TYPE
-            </div>
-            <div className="text-[9px] break-all" style={{ color: 'var(--fg)' }}>
-              {edgeTypeLabel(selectedEdgeInfo.id, selectedEdgeInfo.data)}
-            </div>
-          </div>
-          {(() => {
-            const srcNode =
-              nodes.find((n) => n.id === selectedEdgeInfo.source) ??
-              importedNodes.find((n) => n.id === selectedEdgeInfo.source)
-            const tgtNode =
-              nodes.find((n) => n.id === selectedEdgeInfo.target) ??
-              importedNodes.find((n) => n.id === selectedEdgeInfo.target)
-            return (
-              <>
-                <div className="mb-3">
-                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
-                    SOURCE
-                  </div>
-                  <div className="text-[9px] break-all" style={{ color: 'var(--fg)' }}>
-                    {srcNode ? srcNode.label : selectedEdgeInfo.source}
-                  </div>
-                  {srcNode && (
-                    <div className="text-[8px]" style={{ color: 'var(--fg-muted)' }}>
-                      {srcNode.type.toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div className="mb-3">
-                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
-                    TARGET
-                  </div>
-                  <div className="text-[9px] break-all" style={{ color: 'var(--fg)' }}>
-                    {tgtNode ? tgtNode.label : selectedEdgeInfo.target}
-                  </div>
-                  {tgtNode && (
-                    <div className="text-[8px]" style={{ color: 'var(--fg-muted)' }}>
-                      {tgtNode.type.toUpperCase()}
-                    </div>
-                  )}
-                </div>
-              </>
-            )
-          })()}
-          {(selectedEdgeInfo.data as { isCustom?: boolean } | undefined)?.isCustom ? (
-            <div className="mt-3">
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px'
-                }}
-              >
-                CUSTOM EDGE
-              </div>
-              <div className="mb-2">
-                <div className="text-[7px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
-                  LABEL
-                </div>
-                <input
-                  value={(selectedEdgeInfo.data as { label?: string } | undefined)?.label ?? ''}
-                  onChange={(e) => {
-                    useUIStore.getState().updateCustomEdgeLabel(selectedEdgeInfo.id, e.target.value)
-                    void window.riftview.saveCustomEdges(useUIStore.getState().customEdges)
-                  }}
-                  placeholder="add label…"
-                  style={{
-                    fontSize: 9,
-                    fontFamily: 'monospace',
-                    width: '100%',
-                    background: 'var(--ink-850)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--fg)',
-                    borderRadius: 3,
-                    padding: '2px 5px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-              <button
-                onClick={() => {
-                  useUIStore.getState().removeCustomEdge(selectedEdgeInfo.id)
-                  void window.riftview.saveCustomEdges(useUIStore.getState().customEdges)
-                  useUIStore.getState().selectEdge(null)
-                }}
-                style={{
-                  fontSize: 9,
-                  fontFamily: 'monospace',
-                  cursor: 'pointer',
-                  background: 'rgba(239,68,68,0.1)',
-                  border: '1px solid rgba(239,68,68,0.4)',
-                  color: '#ef4444',
-                  borderRadius: 3,
-                  padding: '2px 8px',
-                  width: '100%'
-                }}
-              >
-                Delete edge
-              </button>
-            </div>
-          ) : (
-            <>
-              {selectedEdgeInfo.data &&
-                Object.keys(selectedEdgeInfo.data).filter((k) => k !== 'isIntegration').length >
-                  0 && (
-                  <div>
-                    <div
-                      className="text-[8px] mb-2"
-                      style={{
-                        color: 'var(--fg-muted)',
-                        borderTop: '1px solid var(--border-strong)',
-                        paddingTop: '6px',
-                        marginTop: 16,
-                        marginBottom: 6
-                      }}
-                    >
-                      METADATA
-                    </div>
-                    {Object.entries(selectedEdgeInfo.data)
-                      .filter(([k]) => k !== 'isIntegration')
-                      .map(([k, v]) => (
-                        <div key={k} className="mb-1.5">
-                          <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                            {fieldLabel(k)}
-                          </div>
-                          <div
-                            className="text-[8px] break-all"
-                            style={{ color: 'var(--bone-200)' }}
-                          >
-                            {String(v ?? '—')}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              {selectedEdgeInfo.label && (
-                <div className="mb-3">
-                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
-                    LABEL
-                  </div>
-                  <div className="text-[9px]" style={{ color: 'var(--fg)' }}>
-                    {selectedEdgeInfo.label}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </>
+        <EdgeView
+          info={selectedEdgeInfo}
+          nodes={nodes}
+          importedNodes={importedNodes}
+        />
       ) : !node ? (
         <FirstScanSummary nodes={nodes} />
       ) : (
         <>
-          {/* drift banners float to top when driftStatus is set */}
+          {/* Header: eyebrow → title → pill → hairline */}
+          <div className="insp-header">
+            <div className="eyebrow">{typeEyebrow(node.type)}</div>
+            <div className="insp-title">{redact(node.label)}</div>
+            <span className={statusPillClass(node.status)}>
+              <span className="dot" />
+              {node.status}
+            </span>
+          </div>
+          <hr className="hairline" />
+
+          {/* Drift banners */}
           {node.driftStatus === 'unmanaged' && (
-            <div
-              style={{
-                padding: '8px 10px',
-                borderRadius: 4,
-                background: 'rgba(245,158,11,0.1)',
-                border: '1px solid rgba(245,158,11,0.4)',
-                fontSize: 11,
-                marginBottom: 8
-              }}
-            >
-              <div style={{ fontWeight: 700, color: '#f59e0b', marginBottom: 3 }}>! UNMANAGED</div>
-              <div style={{ color: '#d97706', lineHeight: 1.5 }}>
+            <div className="advisory-card" style={{ margin: '0 var(--space-md) var(--space-sm)' }}>
+              <div className="advisory-title">! UNMANAGED</div>
+              <div className="advisory-body">
                 Not tracked in Terraform. Consider adding to your tfstate.
               </div>
             </div>
@@ -920,19 +774,11 @@ export function Inspector({
 
           {node.driftStatus === 'missing' && (
             <div
-              style={{
-                padding: '8px 10px',
-                borderRadius: 4,
-                background: 'rgba(239,68,68,0.1)',
-                border: '1px solid rgba(239,68,68,0.4)',
-                fontSize: 11,
-                marginBottom: 8
-              }}
+              className="advisory-card advisory-card--critical"
+              style={{ margin: '0 var(--space-md) var(--space-sm)' }}
             >
-              <div style={{ fontWeight: 700, color: '#ef4444', marginBottom: 3 }}>
-                ✕ MISSING — read-only
-              </div>
-              <div style={{ color: '#dc2626', lineHeight: 1.5 }}>
+              <div className="advisory-title">✕ MISSING — read-only</div>
+              <div className="advisory-body">
                 Declared in Terraform but not found in live AWS.
               </div>
             </div>
@@ -941,19 +787,19 @@ export function Inspector({
           {node.driftStatus === 'matched' && (
             <div
               style={{
+                margin: '0 var(--space-md) var(--space-sm)',
                 padding: '8px 10px',
                 borderRadius: 4,
-                background: 'rgba(34,197,94,0.08)',
-                border: '1px solid rgba(34,197,94,0.3)',
-                fontSize: 11,
-                marginBottom: 8
+                background: 'oklch(0.68 0.10 145 / 0.08)',
+                border: '1px solid oklch(0.68 0.10 145 / 0.30)',
+                fontSize: 11
               }}
             >
               <DriftDiffTable metadata={node.metadata} tfMetadata={node.tfMetadata ?? {}} />
             </div>
           )}
 
-          {/* BLAST RADIUS section — active when this node is the blast source */}
+          {/* BLAST RADIUS section */}
           {blastRadiusId === node.id &&
             (() => {
               const result = buildBlastRadius(nodes, node.id)
@@ -995,25 +841,20 @@ export function Inspector({
                 void navigator.clipboard.writeText(lines.join('\n'))
               }
 
-              const dirRow = (
+              const renderDir = (
                 dir: 'upstream' | 'both' | 'downstream',
-                label: string,
-                color: string
+                label: string
               ): React.JSX.Element | null => {
                 if (grouped[dir].length === 0) return null
                 return (
-                  <div key={dir} style={{ marginBottom: 6 }}>
-                    <div
-                      style={{
-                        fontSize: 8,
-                        color,
-                        letterSpacing: '0.08em',
-                        marginBottom: 3,
-                        fontWeight: 700
-                      }}
-                    >
-                      {directionSymbol(dir === 'both' ? 'both' : dir)} {label} (
-                      {grouped[dir].length})
+                  <React.Fragment key={dir}>
+                    <div className="insp-row">
+                      <span className="k">
+                        <span className="pill pill-neutral" style={{ padding: '1px 6px' }}>
+                          {directionSymbol(dir === 'both' ? 'both' : dir)} {label}
+                        </span>
+                      </span>
+                      <span className="v">{grouped[dir].length}</span>
                     </div>
                     {grouped[dir].map((m) => {
                       const n = nodes.find((x) => x.id === m.id)
@@ -1021,132 +862,69 @@ export function Inspector({
                         <div
                           key={m.id}
                           onClick={() => selectNode(m.id)}
+                          className="insp-row"
                           style={{
-                            display: 'flex',
-                            alignItems: 'baseline',
-                            gap: 6,
-                            padding: '2px 6px',
-                            borderRadius: 3,
                             cursor: 'pointer',
-                            fontSize: 9,
                             background: m.id === selectedId ? 'var(--ink-800)' : undefined
                           }}
                         >
-                          <span
-                            style={{ color: 'var(--fg-muted)', fontSize: 8, minWidth: 20 }}
-                          >
-                            h{m.hop}
-                          </span>
-                          <span
-                            style={{
-                              color: 'var(--fg)',
-                              flex: 1,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                          >
+                          <span className="k">h{m.hop}</span>
+                          <span className="v" style={{ textAlign: 'right' }}>
                             {n?.label ?? m.id}
-                          </span>
-                          <span style={{ color: 'var(--fg-muted)', fontSize: 8 }}>
-                            {n?.type ?? ''}
-                          </span>
-                          {m.edgeTypes.length > 0 && (
-                            <span
-                              style={{
-                                color: 'var(--fg-muted)',
-                                fontSize: 8,
-                                fontStyle: 'italic'
-                              }}
-                            >
-                              {m.edgeTypes.join(',')}
+                            <span style={{ color: 'var(--fg-muted)', marginLeft: 6 }}>
+                              {n?.type ?? ''}
                             </span>
-                          )}
+                          </span>
                         </div>
                       )
                     })}
-                  </div>
+                  </React.Fragment>
                 )
               }
 
               return (
-                <div
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: 4,
-                    background: 'rgba(245,158,11,0.08)',
-                    border: '1px solid rgba(245,158,11,0.4)',
-                    fontSize: 10,
-                    marginBottom: 8
-                  }}
-                >
+                <div className="insp-section">
                   <div
+                    className="insp-label"
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 6
+                      justifyContent: 'space-between'
                     }}
                   >
-                    <div
-                      style={{
-                        fontWeight: 700,
-                        color: '#f59e0b',
-                        fontSize: 9,
-                        letterSpacing: '0.08em'
-                      }}
-                    >
-                      BLAST RADIUS
-                    </div>
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    <span>BLAST RADIUS</span>
+                    <span className="insp-actions" style={{ margin: 0 }}>
                       <button
                         onClick={copyMarkdown}
-                        style={{
-                          background: 'none',
-                          border: '1px solid rgba(245,158,11,0.4)',
-                          color: '#f59e0b',
-                          fontFamily: 'monospace',
-                          fontSize: 8,
-                          padding: '1px 6px',
-                          borderRadius: 3,
-                          cursor: 'pointer'
-                        }}
+                        className="btn btn-sm btn-ghost"
                         title="Copy as Markdown (Slack-ready)"
                       >
                         COPY
                       </button>
                       <button
                         onClick={() => setBlastRadiusId(null)}
-                        style={{
-                          background: 'none',
-                          border: '1px solid rgba(245,158,11,0.4)',
-                          color: '#f59e0b',
-                          fontFamily: 'monospace',
-                          fontSize: 8,
-                          padding: '1px 6px',
-                          borderRadius: 3,
-                          cursor: 'pointer'
-                        }}
+                        className="btn btn-sm btn-ghost"
                         title="Clear blast radius"
                       >
                         CLEAR
                       </button>
-                    </div>
+                    </span>
                   </div>
                   <div style={{ fontSize: 9, color: 'var(--bone-200)', marginBottom: 6 }}>
                     ↑{result.upstreamCount} upstream · ↓{result.downstreamCount} downstream · max{' '}
                     {result.maxHops} hop{result.maxHops === 1 ? '' : 's'}
                   </div>
                   {result.members.size === 1 ? (
-                    <div
-                      style={{ fontSize: 9, color: 'var(--fg-muted)', fontStyle: 'italic' }}
-                    >
+                    <div style={{ fontSize: 9, color: 'var(--fg-muted)', fontStyle: 'italic' }}>
                       No known dependencies. This node has no integration edges.
                     </div>
                   ) : (
                     <>
-                      {dirRow('upstream', 'UPSTREAM', '#60a5fa')}
-                      {dirRow('both', 'BIDIRECTIONAL', '#a78bfa')}
-                      {dirRow('downstream', 'DOWNSTREAM', '#f59e0b')}
+                      <div className="insp-rows">
+                        {renderDir('upstream', 'UPSTREAM')}
+                        {renderDir('both', 'BIDIRECTIONAL')}
+                        {renderDir('downstream', 'DOWNSTREAM')}
+                      </div>
                       <div
                         style={{
                           fontSize: 8,
@@ -1159,11 +937,12 @@ export function Inspector({
                       </div>
                     </>
                   )}
+                  <hr className="hairline" />
                 </div>
               )
             })()}
 
-          {/* REMEDIATE section — unmanaged + matched only */}
+          {/* REMEDIATE section */}
           {(node.driftStatus === 'unmanaged' || node.driftStatus === 'matched') &&
             (() => {
               const safeNode = node as CloudNode
@@ -1182,27 +961,16 @@ export function Inspector({
               }
 
               return (
-                <div
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: 4,
-                    background: 'rgba(167,139,250,0.07)',
-                    border: '1px solid rgba(167,139,250,0.3)',
-                    fontSize: 10,
-                    marginBottom: 8
-                  }}
-                >
-                  <div style={{ fontWeight: 700, color: '#a78bfa', marginBottom: 6, fontSize: 9 }}>
-                    REMEDIATE
-                  </div>
+                <div className="insp-section">
+                  <div className="insp-label">REMEDIATE</div>
 
                   {safeNode.driftStatus === 'unmanaged' && (
-                    <div style={{ color: '#f59e0b', marginBottom: 6, fontSize: 9 }}>
+                    <div style={{ color: 'var(--ember-500)', marginBottom: 6, fontSize: 9 }}>
                       ⚠ Unmanaged — not in baseline.
                     </div>
                   )}
                   {safeNode.driftStatus === 'matched' && hasCommands && (
-                    <div style={{ color: '#86efac', marginBottom: 6, fontSize: 9 }}>
+                    <div style={{ color: 'var(--moss-500)', marginBottom: 6, fontSize: 9 }}>
                       ↺ Apply baseline values.
                     </div>
                   )}
@@ -1218,10 +986,10 @@ export function Inspector({
                               key={i}
                               title={full}
                               style={{
-                                fontFamily: 'monospace',
+                                fontFamily: 'var(--font-mono)',
                                 fontSize: 8,
                                 color: 'var(--bone-200)',
-                                background: 'rgba(0,0,0,0.3)',
+                                background: 'oklch(0 0 0 / 0.3)',
                                 borderRadius: 2,
                                 padding: '2px 5px',
                                 marginBottom: 2,
@@ -1236,188 +1004,112 @@ export function Inspector({
                         })}
                       </div>
 
-                      <div style={{ color: '#f59e0b', fontSize: 8, marginBottom: 6 }}>
+                      <div style={{ color: 'var(--ember-500)', fontSize: 8, marginBottom: 6 }}>
                         ⚠ This will modify live AWS infrastructure.
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div className="insp-actions">
                         <button
                           onClick={() => void handleRemediate()}
                           disabled={remediateState === 'running' || !onRemediate}
-                          style={{
-                            background:
-                              remediateState === 'running'
-                                ? 'rgba(107,114,128,0.3)'
-                                : 'rgba(167,139,250,0.15)',
-                            border: '1px solid rgba(167,139,250,0.5)',
-                            borderRadius: 3,
-                            padding: '3px 10px',
-                            color: remediateState === 'running' ? '#6b7280' : '#a78bfa',
-                            fontFamily: 'monospace',
-                            fontSize: 9,
-                            cursor:
-                              remediateState === 'running' || !onRemediate
-                                ? 'not-allowed'
-                                : 'pointer'
-                          }}
+                          className="btn btn-sm btn-primary"
                         >
                           {remediateState === 'running' ? 'Executing…' : 'Execute'}
                         </button>
                         {remediateState === 'done-ok' && (
-                          <span style={{ color: '#4ade80', fontSize: 9 }}>✓ Done</span>
+                          <span style={{ color: 'var(--moss-500)', fontSize: 9 }}>✓ Done</span>
                         )}
                         {(remediateState as string).startsWith('done-err') && (
-                          <span style={{ color: '#f87171', fontSize: 9 }}>
+                          <span style={{ color: 'var(--fault-500)', fontSize: 9 }}>
                             ✗ Failed (exit {remediateState.split(':')[1]})
                           </span>
                         )}
                       </div>
                     </>
                   ) : (
-                    <div
-                      style={{ color: 'var(--fg-muted)', fontSize: 9, fontStyle: 'italic' }}
-                    >
+                    <div style={{ color: 'var(--fg-muted)', fontSize: 9, fontStyle: 'italic' }}>
                       Manual remediation required — diff contains unsupported field types.
                     </div>
                   )}
+                  <hr className="hairline" />
                 </div>
               )
             })()}
 
-          {/* ADVISORIES section + next/prev navigation (always-on since OP_INTELLIGENCE launch) */}
+          {/* ADVISORIES section */}
           {(() => {
             const rawAdvisories = analyzeNode(node as CloudNode)
             const severityOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 }
             const advisories: Advisory[] = [...rawAdvisories].sort(
               (a, b) => (severityOrder[a.severity] ?? 9) - (severityOrder[b.severity] ?? 9)
             )
-            const severityColor = (s: string): string =>
-              s === 'critical' ? '#ef4444' : s === 'warning' ? '#f59e0b' : '#60a5fa'
 
             return (
-              <div
-                style={{
-                  padding: '8px 10px',
-                  borderRadius: 4,
-                  background: 'rgba(239,68,68,0.06)',
-                  border: '1px solid rgba(239,68,68,0.2)',
-                  fontSize: 10,
-                  marginBottom: 8
-                }}
-              >
+              <div className="insp-section">
                 <div
+                  className="insp-label"
                   onClick={() => setAdvisoriesExpanded((e) => !e)}
-                  style={{
-                    fontWeight: 700,
-                    color: '#ef4444',
-                    marginBottom: advisoriesExpanded ? 6 : 0,
-                    fontSize: 9,
-                    cursor: 'pointer',
-                    userSelect: 'none'
-                  }}
+                  style={{ cursor: 'pointer', userSelect: 'none' }}
                 >
                   ADVISORIES {advisoriesExpanded ? '▾' : '▸'}
                 </div>
 
                 {advisoriesExpanded &&
                   (advisories.length === 0 ? (
-                    <div
-                      style={{ color: 'var(--fg-muted)', fontSize: 9, fontStyle: 'italic' }}
-                    >
+                    <div style={{ color: 'var(--fg-muted)', fontSize: 9, fontStyle: 'italic' }}>
                       No issues detected
                     </div>
                   ) : (
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {advisories.map((a) => {
                         const fixCmds = buildAdvisoryRemediation(a, node.id)
+                        const isCritical = a.severity === 'critical'
                         return (
                           <div
                             key={a.ruleId}
-                            style={{
-                              marginBottom: 8,
-                              paddingBottom: 8,
-                              borderBottom: '1px solid rgba(255,255,255,0.05)'
-                            }}
+                            className={
+                              'advisory-card' +
+                              (isCritical ? ' advisory-card--critical' : '')
+                            }
                           >
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                justifyContent: 'space-between',
-                                gap: 6
-                              }}
-                            >
-                              <div style={{ flex: 1 }}>
-                                <div
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 5,
-                                    marginBottom: 2
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      fontSize: 8,
-                                      fontWeight: 700,
-                                      color: severityColor(a.severity),
-                                      textTransform: 'uppercase',
-                                      letterSpacing: '0.05em'
-                                    }}
-                                  >
-                                    {a.severity}
-                                  </span>
-                                  <span
-                                    style={{
-                                      fontSize: 9,
-                                      fontWeight: 600,
-                                      color: 'var(--fg)'
-                                    }}
-                                  >
-                                    {a.title}
-                                  </span>
-                                </div>
-                                <div
-                                  style={{
-                                    fontSize: 8,
-                                    color: 'var(--bone-200)',
-                                    lineHeight: 1.5
-                                  }}
-                                >
-                                  {a.detail}
-                                </div>
-                              </div>
-                              {fixCmds && onRemediate && (
-                                <button
-                                  onClick={() => void onRemediate(node as CloudNode, fixCmds)}
-                                  style={{
-                                    background: 'rgba(239,68,68,0.1)',
-                                    border: '1px solid rgba(239,68,68,0.4)',
-                                    borderRadius: 3,
-                                    color: '#ef4444',
-                                    cursor: 'pointer',
-                                    fontFamily: 'monospace',
-                                    fontSize: 8,
-                                    padding: '2px 6px',
-                                    flexShrink: 0,
-                                    whiteSpace: 'nowrap'
-                                  }}
-                                  title={`Fix: aws ${fixCmds[0].join(' ')}`}
-                                >
-                                  Fix
-                                </button>
-                              )}
+                            <div className="advisory-title">
+                              <span
+                                className="label"
+                                style={{
+                                  color: isCritical
+                                    ? 'var(--fault-500)'
+                                    : a.severity === 'warning'
+                                      ? 'var(--ember-500)'
+                                      : 'oklch(0.72 0.15 240)',
+                                  marginRight: 6,
+                                  textTransform: 'none'
+                                }}
+                              >
+                                {a.severity}
+                              </span>
+                              {a.title}
                             </div>
+                            <div className="advisory-body">{a.detail}</div>
+                            {fixCmds && onRemediate && (
+                              <button
+                                onClick={() => void onRemediate(node as CloudNode, fixCmds)}
+                                className="advisory-fix"
+                                title={`Fix: aws ${fixCmds[0].join(' ')}`}
+                              >
+                                Fix with CLI
+                              </button>
+                            )}
                           </div>
                         )
                       })}
                     </div>
                   ))}
+                <hr className="hairline" />
               </div>
             )
           })()}
 
-          {/* Advisory next/prev navigation strip (always-on since OP_INTELLIGENCE launch) */}
+          {/* Advisory next/prev navigation strip */}
           {advisoryNavigation &&
             advisoryNavigation.sorted.length > 1 &&
             advisoryNavigation.currentIdx !== -1 &&
@@ -1425,36 +1117,22 @@ export function Inspector({
               const { sorted, currentIdx } = advisoryNavigation
               const prevNode = currentIdx > 0 ? sorted[currentIdx - 1] : null
               const nextNode = currentIdx < sorted.length - 1 ? sorted[currentIdx + 1] : null
-              const btnStyle = (disabled: boolean): React.CSSProperties => ({
-                background: 'none',
-                border: 'none',
-                fontFamily: 'monospace',
-                fontSize: 8,
-                cursor: disabled ? 'default' : 'pointer',
-                color: 'var(--fg-muted)',
-                opacity: disabled ? 0.35 : 1,
-                padding: '2px 4px'
-              })
               return (
                 <div
+                  className="insp-section"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     fontSize: 8,
-                    fontFamily: 'monospace',
-                    color: 'var(--fg-muted)',
-                    marginBottom: 8,
-                    padding: '4px 6px',
-                    borderRadius: 3,
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid var(--border)'
+                    fontFamily: 'var(--font-mono)',
+                    color: 'var(--fg-muted)'
                   }}
                 >
                   <button
                     disabled={!prevNode}
                     onClick={() => prevNode && selectNode(prevNode.id)}
-                    style={btnStyle(!prevNode)}
+                    className="btn btn-sm btn-ghost"
                   >
                     ← Prev
                   </button>
@@ -1464,7 +1142,7 @@ export function Inspector({
                   <button
                     disabled={!nextNode}
                     onClick={() => nextNode && selectNode(nextNode.id)}
-                    style={btnStyle(!nextNode)}
+                    className="btn btn-sm btn-ghost"
                   >
                     Next →
                   </button>
@@ -1472,1534 +1150,132 @@ export function Inspector({
               )
             })()}
 
-          {/* node type header */}
-          <div
-            className="text-[9px] font-bold mb-2 pb-1"
-            style={{ color: 'var(--accent)', borderBottom: '1px solid var(--border-strong)' }}
-          >
-            {node.type.toUpperCase()} · Selected
-          </div>
-
           {/* fallback imported banner (only when no driftStatus) */}
           {!node.driftStatus && isImported && (
-            <div
-              style={{
-                padding: '6px 10px',
-                borderRadius: 4,
-                background: 'var(--bg-elev-2)',
-                border: '1px solid var(--border)',
-                fontSize: 11,
-                color: 'var(--fg-muted)',
-                marginBottom: 8
-              }}
-            >
-              Imported from Terraform — read-only
+            <div style={{ margin: '0 var(--space-md) var(--space-sm)' }}>
+              <div
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: 4,
+                  background: 'var(--bg-elev-2)',
+                  border: '1px solid var(--border)',
+                  fontSize: 11,
+                  color: 'var(--fg-muted)'
+                }}
+              >
+                Imported from Terraform — read-only
+              </div>
             </div>
           )}
 
           {isImported && node.type === 'unknown' && (
-            <div style={{ fontSize: 11, color: '#f59e0b', marginBottom: 8 }}>
+            <div
+              style={{
+                margin: '0 var(--space-md) var(--space-sm)',
+                fontSize: 11,
+                color: 'var(--ember-500)'
+              }}
+            >
               Unsupported Terraform resource type:{' '}
               {String(node.metadata?.unsupportedTfType ?? 'unknown')}
             </div>
           )}
 
-          <button
-            onClick={() => toggleLockNode(node.id)}
-            style={{
-              width: '100%',
-              marginBottom: 8,
-              background: 'var(--ink-850)',
-              border: `1px solid ${lockedNodes.has(node.id) ? '#febc2e' : 'var(--border)'}`,
-              borderRadius: 2,
-              padding: '3px 0',
-              color: lockedNodes.has(node.id) ? '#febc2e' : 'var(--fg-muted)',
-              fontFamily: 'monospace',
-              fontSize: 9,
-              cursor: 'pointer'
-            }}
-          >
-            {lockedNodes.has(node.id) ? '⊠ Locked' : '◈ Lock'}
-          </button>
-
-          {/* AWS Console deep link */}
-          {(() => {
-            const consoleUrl = buildConsoleUrl(node)
-            if (!consoleUrl) return null
-            return (
-              <button
-                onClick={() => window.open(consoleUrl, '_blank')}
-                style={{
-                  width: '100%',
-                  background: 'var(--ink-850)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 3,
-                  color: 'var(--fg-muted)',
-                  fontFamily: 'monospace',
-                  fontSize: 9,
-                  cursor: 'pointer',
-                  padding: '4px 8px',
-                  textAlign: 'left',
-                  marginBottom: 8,
-                  letterSpacing: '0.03em'
-                }}
-              >
-                ⎋ Open in AWS Console ↗
-              </button>
-            )
-          })()}
-
-          {[
-            { key: 'ID', val: node.id },
-            { key: 'NAME', val: node.label },
-            { key: 'REGION', val: node.region }
-          ].map(({ key, val }) => (
-            <div key={key} className="mb-3">
-              <div className="flex items-center gap-1 mb-0.5">
-                <span className="text-[8px]" style={{ color: 'var(--fg-muted)' }}>
-                  {key}
-                </span>
-                {key === 'ID' && (
-                  <button
-                    onClick={() => void navigator.clipboard.writeText(val)}
-                    title="Copy to clipboard"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: 'var(--fg-muted)',
-                      fontSize: 8,
-                      padding: '0 1px',
-                      lineHeight: 1
-                    }}
-                  >
-                    ⧉
-                  </button>
-                )}
-              </div>
-              <div className="text-[9px] break-all" style={{ color: 'var(--fg)' }}>
-                {redact(val)}
-              </div>
-            </div>
-          ))}
-
-          <div className="mb-3">
-            <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
-              STATE
-            </div>
-            <div className="flex items-center gap-1">
-              <div
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ background: STATUS_COLORS[node.status] ?? '#666' }}
-              />
-              <span className="text-[9px]" style={{ color: STATUS_COLORS[node.status] ?? '#666' }}>
-                {node.status}
-              </span>
-            </div>
-          </div>
-
-          <div className="mb-3">
-            <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
-              EST. COST
-            </div>
-            <div style={{ fontSize: 9, color: 'var(--fg-muted)', marginTop: 2 }}>
-              {formatPrice(getMonthlyEstimate(node.type, node.region ?? 'us-east-1'))}
-            </div>
-          </div>
-
-          {/* ACM-specific metadata */}
-          {node.type === 'acm' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                METADATA
-              </div>
-              {[
-                { k: 'domainName', v: node.metadata.domainName as string },
-                { k: 'validationMethod', v: node.metadata.validationMethod as string },
-                { k: 'inUseBy', v: `${(node.metadata.inUseBy as string[]).length} resource(s)` }
-              ].map(({ k, v }) => (
-                <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" title={k} style={{ color: 'var(--fg-muted)' }}>
-                    {fieldLabel(k)}
-                  </div>
-                  <div
-                    className="text-[8px] break-all"
-                    style={{ color: 'var(--bone-200)' }}
-                  >
-                    {v ?? '—'}
-                  </div>
-                </div>
-              ))}
-
-              {/* CNAME records for pending DNS validation */}
-              {node.status === 'pending' &&
-                (node.metadata.cnameRecords as Array<{ name: string; value: string }>).length >
-                  0 && (
-                  <div style={{ marginTop: 8 }}>
-                    <div
-                      className="text-[8px] mb-1"
-                      style={{ color: 'var(--fg-muted)', textTransform: 'uppercase' }}
-                    >
-                      DNS Validation CNAMEs
-                    </div>
-                    {(node.metadata.cnameRecords as Array<{ name: string; value: string }>).map(
-                      (rec, i) => (
-                        <div key={i} style={{ marginBottom: 6, fontSize: 8 }}>
-                          <div style={{ color: 'var(--fg-muted)', marginBottom: 1 }}>Name</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <span
-                              style={{
-                                color: 'var(--bone-200)',
-                                wordBreak: 'break-all',
-                                flex: 1
-                              }}
-                            >
-                              {rec.name}
-                            </span>
-                            <button
-                              onClick={() => navigator.clipboard.writeText(rec.name)}
-                              style={{
-                                ...btnBase,
-                                flex: 'none',
-                                padding: '1px 4px',
-                                border: '1px solid var(--border)',
-                                color: 'var(--fg-muted)',
-                                fontSize: 8
-                              }}
-                            >
-                              ⎘
-                            </button>
-                          </div>
-                          <div
-                            style={{ color: 'var(--fg-muted)', marginBottom: 1, marginTop: 3 }}
-                          >
-                            Value
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <span
-                              style={{
-                                color: 'var(--bone-200)',
-                                wordBreak: 'break-all',
-                                flex: 1
-                              }}
-                            >
-                              {rec.value}
-                            </span>
-                            <button
-                              onClick={() => navigator.clipboard.writeText(rec.value)}
-                              style={{
-                                ...btnBase,
-                                flex: 'none',
-                                padding: '1px 4px',
-                                border: '1px solid var(--border)',
-                                color: 'var(--fg-muted)',
-                                fontSize: 8
-                              }}
-                            >
-                              ⎘
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    )}
-                  </div>
-                )}
-
-              {acmDeleteError && (
-                <div style={{ marginTop: 6, fontSize: 8, color: '#ff5f57' }}>{acmDeleteError}</div>
-              )}
-
-              {!isImported && (
-                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button
-                    onClick={() => {
-                      const inUseBy = node.metadata.inUseBy as string[]
-                      if (inUseBy.length > 0) {
-                        setAcmDeleteError(`Cannot delete: in use by ${inUseBy.length} resource(s)`)
-                        return
-                      }
-                      setAcmDeleteError(null)
-                      onDelete(node)
-                    }}
-                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                  >
-                    ✕ Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* CloudFront-specific metadata */}
-          {node.type === 'cloudfront' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                METADATA
-              </div>
-              {[
-                { k: 'domainName', v: node.metadata.domainName as string },
-                { k: 'origins', v: `${(node.metadata.origins as unknown[]).length} origin(s)` },
-                { k: 'priceClass', v: node.metadata.priceClass as string },
-                { k: 'certArn', v: (node.metadata.certArn as string | undefined) ?? 'default' },
-                { k: 'defaultRootObject', v: (node.metadata.defaultRootObject as string) || '—' }
-              ].map(({ k, v }) => (
-                <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" title={k} style={{ color: 'var(--fg-muted)' }}>
-                    {fieldLabel(k)}
-                  </div>
-                  <div
-                    className="text-[8px] break-all"
-                    style={{ color: 'var(--bone-200)' }}
-                  >
-                    {v}
-                  </div>
-                </div>
-              ))}
-
-              {!isImported && (
-                <>
-                  <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                    <button
-                      onClick={() => onEdit(node)}
-                      style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                    >
-                      ✎ Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(node)}
-                      style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                    >
-                      ✕ Delete
-                    </button>
-                  </div>
-
-                  {/* Invalidate cache quick action */}
-                  <div style={{ marginTop: 10 }}>
-                    <div
-                      style={{
-                        fontSize: 8,
-                        color: 'var(--fg-muted)',
-                        textTransform: 'uppercase',
-                        marginBottom: 4
-                      }}
-                    >
-                      Invalidate Cache
-                    </div>
-                    <input
-                      value={invalidatePath}
-                      onChange={(e) => setInvalidatePath(e.target.value)}
-                      style={{
-                        width: '100%',
-                        background: 'var(--ink-900)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 2,
-                        padding: '2px 5px',
-                        color: 'var(--fg)',
-                        fontFamily: 'monospace',
-                        fontSize: 9,
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                    <button
-                      onClick={() => onQuickAction(node, 'invalidate', { path: invalidatePath })}
-                      style={{
-                        ...btnBase,
-                        border: '1px solid #a78bfa',
-                        color: '#a78bfa',
-                        width: '100%',
-                        marginTop: 4
-                      }}
-                    >
-                      Invalidate
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* API Gateway specific metadata */}
-          {node.type === 'apigw' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                METADATA
-              </div>
-              <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                  ENDPOINT
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {/* IDENTITY section */}
+          <Section label="IDENTITY">
+            <Row k="ID" v={redact(node.id)} copyable={node.id} />
+            <Row k="NAME" v={redact(node.label)} />
+            <Row k="REGION" v={node.region} />
+            <Row
+              k="STATE"
+              v={
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   <span
-                    className="text-[8px] break-all"
-                    style={{ color: 'var(--bone-200)', flex: 1 }}
-                  >
-                    {(node.metadata.endpoint as string) || '—'}
-                  </span>
-                  {!!node.metadata.endpoint && (
-                    <button
-                      onClick={() =>
-                        navigator.clipboard.writeText(node.metadata.endpoint as string)
-                      }
-                      style={{
-                        background: 'var(--ink-850)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 2,
-                        padding: '1px 4px',
-                        color: 'var(--fg-muted)',
-                        fontFamily: 'monospace',
-                        fontSize: 8,
-                        cursor: 'pointer',
-                        flexShrink: 0
-                      }}
-                    >
-                      ⎘
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                  PROTOCOL
-                </div>
-                <div className="text-[8px]" style={{ color: 'var(--bone-200)' }}>
-                  HTTP
-                </div>
-              </div>
-              <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                  CORS ORIGINS
-                </div>
-                <div className="text-[8px] break-all" style={{ color: 'var(--bone-200)' }}>
-                  {((node.metadata.corsOrigins as string[]) ?? []).join(', ') || '(none)'}
-                </div>
-              </div>
-              <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                  ROUTES
-                </div>
-                <div className="text-[8px]" style={{ color: 'var(--bone-200)' }}>
-                  {nodes.filter((n) => n.type === 'apigw-route' && n.parentId === node.id).length}
-                </div>
-              </div>
-              {!isImported && (
-                <>
-                  <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                    <button
-                      onClick={() => onEdit(node)}
-                      style={{
-                        flex: 1,
-                        background: 'var(--ink-850)',
-                        border: '1px solid #64b5f6',
-                        borderRadius: 2,
-                        padding: '3px 0',
-                        color: '#64b5f6',
-                        fontFamily: 'monospace',
-                        fontSize: 9,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ✎ Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(node)}
-                      style={{
-                        flex: 1,
-                        background: 'var(--ink-850)',
-                        border: '1px solid #ff5f57',
-                        borderRadius: 2,
-                        padding: '3px 0',
-                        color: '#ff5f57',
-                        fontFamily: 'monospace',
-                        fontSize: 9,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ✕ Delete
-                    </button>
+                    className={
+                      node.status === 'error'
+                        ? 'dot -err'
+                        : node.status === 'stopped'
+                          ? 'dot -neutral'
+                          : node.status === 'pending' || node.status === 'deleting'
+                            ? 'dot -pending'
+                            : 'dot -ok'
+                    }
+                  />
+                  {node.status}
+                </span>
+              }
+            />
+            <Row
+              k="EST. COST"
+              v={formatPrice(getMonthlyEstimate(node.type, node.region ?? 'us-east-1'))}
+            />
+          </Section>
+
+          {/* METRICS section — lambda/rds/ecs only, when CW data fetched */}
+          {cwMetrics.length > 0 && (
+            <div className="insp-section">
+              <div className="insp-label">METRICS</div>
+              <div className="insp-metrics">
+                {cwMetrics.map((m) => (
+                  <div key={m.name} className="insp-metric">
+                    <div className="label">{m.name}</div>
+                    <div className="value">
+                      {m.value}
+                      <span style={{ fontSize: 10, color: 'var(--fg-muted)' }}>{m.unit}</span>
+                    </div>
                   </div>
-                  <div style={{ marginTop: 4, fontSize: 8, color: 'var(--fg-muted)' }}>
-                    Deletes all routes in this API.
-                  </div>
-                  <button
-                    onClick={() => {
-                      setActiveCreate({ resource: 'apigw-route', view: 'topology' })
-                      if (onAddRoute) onAddRoute(node.id)
-                    }}
-                    style={{
-                      width: '100%',
-                      marginTop: 8,
-                      background: 'var(--ink-850)',
-                      border: '1px solid #8b5cf6',
-                      borderRadius: 2,
-                      padding: '3px 0',
-                      color: '#8b5cf6',
-                      fontFamily: 'monospace',
-                      fontSize: 9,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    + Add Route
-                  </button>
-                </>
-              )}
+                ))}
+              </div>
+              <hr className="hairline" />
             </div>
           )}
 
-          {/* API Gateway Route specific metadata */}
-          {node.type === 'apigw-route' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                METADATA
-              </div>
-              {[
-                { k: 'METHOD', v: node.metadata.method as string },
-                { k: 'PATH', v: node.metadata.path as string },
-                {
-                  k: 'API',
-                  v: (() => {
-                    const api = nodes.find((n) => n.id === node.metadata.apiId)
-                    return api ? api.label : (node.metadata.apiId as string)
-                  })()
-                },
-                {
-                  k: 'TARGET',
-                  v: (node.metadata.lambdaArn as string | undefined) ?? '(no integration)'
+          {/* ACTIONS section */}
+          <div className="insp-section">
+            <div className="insp-label">ACTIONS</div>
+            <div className="insp-actions">
+              <button
+                onClick={() => toggleLockNode(node.id)}
+                className={
+                  'btn btn-sm ' + (lockedNodes.has(node.id) ? 'btn-primary' : 'btn-ghost')
                 }
-              ].map(({ k, v }) => (
-                <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                    {k}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span
-                      className="text-[8px] break-all"
-                      style={{ color: 'var(--bone-200)', flex: 1 }}
-                    >
-                      {v || '—'}
-                    </span>
-                    {k === 'TARGET' && !!node.metadata.lambdaArn && (
-                      <button
-                        onClick={() =>
-                          navigator.clipboard.writeText(node.metadata.lambdaArn as string)
-                        }
-                        style={{
-                          background: 'var(--ink-850)',
-                          border: '1px solid var(--border)',
-                          borderRadius: 2,
-                          padding: '1px 4px',
-                          color: 'var(--fg-muted)',
-                          fontFamily: 'monospace',
-                          fontSize: 8,
-                          cursor: 'pointer',
-                          flexShrink: 0
-                        }}
-                      >
-                        ⎘
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {!isImported && (
-                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button
-                    onClick={() => onDelete(node)}
-                    style={{
-                      flex: 1,
-                      background: 'var(--ink-850)',
-                      border: '1px solid #ff5f57',
-                      borderRadius: 2,
-                      padding: '3px 0',
-                      color: '#ff5f57',
-                      fontFamily: 'monospace',
-                      fontSize: 9,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ✕ Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Lambda-specific metadata */}
-          {node.type === 'lambda' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
               >
-                METADATA
-              </div>
-              {[
-                { k: 'RUNTIME', v: node.metadata.runtime as string | undefined },
-                { k: 'HANDLER', v: node.metadata.handler as string | undefined },
-                {
-                  k: 'TIMEOUT',
-                  v: node.metadata.timeout != null ? `${String(node.metadata.timeout)}s` : undefined
-                },
-                {
-                  k: 'MEMORY',
-                  v:
-                    node.metadata.memorySize != null
-                      ? `${String(node.metadata.memorySize)} MB`
-                      : undefined
-                }
-              ]
-                .filter(({ v }) => v)
-                .map(({ k, v }) => (
-                  <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                      {k}
-                    </div>
-                    <div
-                      className="text-[8px] break-all"
-                      style={{ color: 'var(--bone-200)' }}
-                    >
-                      {v}
-                    </div>
-                  </div>
-                ))}
-              {!isImported && (
-                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
+                {lockedNodes.has(node.id) ? '⊠ Locked' : '◈ Lock'}
+              </button>
+              {(() => {
+                const consoleUrl = buildConsoleUrl(node)
+                if (!consoleUrl) return null
+                return (
                   <button
-                    onClick={() => onEdit(node)}
-                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
+                    onClick={() => window.open(consoleUrl, '_blank')}
+                    className="btn btn-sm btn-ghost"
                   >
-                    ✎ Edit
+                    ⎋ AWS Console ↗
                   </button>
-                  <button
-                    onClick={() => onDelete(node)}
-                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                  >
-                    ✕ Delete
-                  </button>
-                </div>
-              )}
+                )
+              })()}
             </div>
-          )}
+            <hr className="hairline" />
+          </div>
 
-          {/* ECS-specific metadata */}
-          {node.type === 'ecs' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                METADATA
-              </div>
-              {[
-                { k: 'CLUSTER', v: node.metadata.clusterName as string | undefined },
-                { k: 'LAUNCH TYPE', v: node.metadata.launchType as string | undefined },
-                { k: 'DESIRED', v: String(node.metadata.desiredCount ?? '—') },
-                { k: 'RUNNING', v: String(node.metadata.runningCount ?? '—') }
-              ].map(({ k, v }) => (
-                <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                    {k}
-                  </div>
-                  <div
-                    className="text-[8px] break-all"
-                    style={{ color: 'var(--bone-200)' }}
-                  >
-                    {v || '—'}
-                  </div>
-                </div>
-              ))}
-              {!isImported && (
-                <div style={{ marginTop: 8 }}>
-                  <div
-                    style={{
-                      fontSize: 8,
-                      color: 'var(--fg-muted)',
-                      textTransform: 'uppercase',
-                      marginBottom: 4
-                    }}
-                  >
-                    Quick actions
-                  </div>
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                    <button
-                      onClick={async () => {
-                        const instanceId = (node.metadata?.taskArn as string) ?? node.id
-                        const profile = useCloudStore.getState().profile
-                        const result = await window.riftview.startTerminal({
-                          instanceId,
-                          region: node.region,
-                          profile
-                        })
-                        if (result.ok) {
-                          useUIStore.getState().openTerminal(node.id, result.sessionId)
-                        } else {
-                          useUIStore
-                            .getState()
-                            .showToast(`Terminal failed: ${result.error}`, 'error')
-                        }
-                      }}
-                      style={{
-                        background: 'var(--ink-850)',
-                        border: '1px solid #34d399',
-                        borderRadius: 2,
-                        padding: '2px 8px',
-                        color: '#34d399',
-                        fontFamily: 'monospace',
-                        fontSize: 9,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Open Terminal
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Per-type METADATA section */}
+          {renderMetadataSection({
+            node: node as CloudNode,
+            nodes,
+            importedNodes,
+            isImported,
+            invalidatePath,
+            setInvalidatePath,
+            acmDeleteError,
+            setAcmDeleteError,
+            onEdit,
+            onDelete,
+            onQuickAction,
+            onAddRoute,
+            setActiveCreate
+          })}
 
-          {/* RDS-specific metadata */}
-          {node.type === 'rds' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                METADATA
-              </div>
-              {[
-                { k: 'ENGINE', v: node.metadata.engine as string | undefined },
-                { k: 'INSTANCE', v: node.metadata.instanceClass as string | undefined }
-              ]
-                .filter(({ v }) => v)
-                .map(({ k, v }) => (
-                  <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                      {k}
-                    </div>
-                    <div
-                      className="text-[8px] break-all"
-                      style={{ color: 'var(--bone-200)' }}
-                    >
-                      {v}
-                    </div>
-                  </div>
-                ))}
-              {typeof node.metadata.endpoint === 'string' && node.metadata.endpoint && (
-                <div className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                    ENDPOINT
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span
-                      className="text-[8px] break-all"
-                      style={{ color: 'var(--bone-200)', flex: 1 }}
-                    >
-                      {node.metadata.endpoint}
-                    </span>
-                    <button
-                      onClick={() =>
-                        navigator.clipboard.writeText(node.metadata.endpoint as string)
-                      }
-                      style={{
-                        background: 'var(--ink-850)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 2,
-                        padding: '1px 4px',
-                        color: 'var(--fg-muted)',
-                        fontFamily: 'monospace',
-                        fontSize: 8,
-                        cursor: 'pointer',
-                        flexShrink: 0
-                      }}
-                    >
-                      ⎘
-                    </button>
-                  </div>
-                </div>
-              )}
-              {!isImported && (
-                <>
-                  <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                    <button
-                      onClick={() => onEdit(node)}
-                      style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                    >
-                      ✎ Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(node)}
-                      style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                    >
-                      ✕ Delete
-                    </button>
-                  </div>
-                  <div style={{ marginTop: 8 }}>
-                    <div
-                      style={{
-                        fontSize: 8,
-                        color: 'var(--fg-muted)',
-                        textTransform: 'uppercase',
-                        marginBottom: 4
-                      }}
-                    >
-                      Quick actions
-                    </div>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                      {node.status !== 'stopped' && (
-                        <button
-                          onClick={() => onQuickAction(node, 'stop')}
-                          style={{
-                            background: 'var(--ink-850)',
-                            border: '1px solid #febc2e',
-                            borderRadius: 2,
-                            padding: '2px 8px',
-                            color: '#febc2e',
-                            fontFamily: 'monospace',
-                            fontSize: 9,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Stop
-                        </button>
-                      )}
-                      {node.status === 'stopped' && (
-                        <button
-                          onClick={() => onQuickAction(node, 'start')}
-                          style={{
-                            background: 'var(--ink-850)',
-                            border: '1px solid #28c840',
-                            borderRadius: 2,
-                            padding: '2px 8px',
-                            color: '#28c840',
-                            fontFamily: 'monospace',
-                            fontSize: 9,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Start
-                        </button>
-                      )}
-                      <button
-                        onClick={() => onQuickAction(node, 'reboot')}
-                        style={{
-                          background: 'var(--ink-850)',
-                          border: '1px solid #64b5f6',
-                          borderRadius: 2,
-                          padding: '2px 8px',
-                          color: '#64b5f6',
-                          fontFamily: 'monospace',
-                          fontSize: 9,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Reboot
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* SQS-specific metadata */}
-          {node.type === 'sqs' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                QUEUE STATS
-              </div>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}
-              >
-                {[
-                  {
-                    k: 'MESSAGES',
-                    v: node.metadata.messages != null ? String(node.metadata.messages) : '—'
-                  },
-                  {
-                    k: 'IN FLIGHT',
-                    v: node.metadata.inFlight != null ? String(node.metadata.inFlight) : '—'
-                  }
-                ].map(({ k, v }) => (
-                  <div
-                    key={k}
-                    style={{
-                      background: 'var(--ink-850)',
-                      borderRadius: 3,
-                      padding: '4px 6px',
-                      border: '1px solid var(--border)'
-                    }}
-                  >
-                    <div style={{ fontSize: 7, color: 'var(--fg-muted)', marginBottom: 2 }}>
-                      {k}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        color: 'var(--fg)',
-                        fontFamily: 'monospace'
-                      }}
-                    >
-                      {v}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {node.label.endsWith('.fifo') && (
-                <div style={{ fontSize: 8, color: '#a78bfa', marginBottom: 6 }}>FIFO queue</div>
-              )}
-              {!isImported && (
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button
-                    onClick={() => onEdit(node)}
-                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                  >
-                    ✎ Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(node)}
-                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                  >
-                    ✕ Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* DynamoDB-specific metadata */}
-          {node.type === 'dynamo' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                TABLE STATS
-              </div>
-              {[
-                { k: 'BILLING', v: node.metadata.billingMode as string | undefined },
-                {
-                  k: 'ITEMS',
-                  v:
-                    node.metadata.itemCount != null
-                      ? Number(node.metadata.itemCount).toLocaleString()
-                      : undefined
-                },
-                {
-                  k: 'SIZE',
-                  v:
-                    node.metadata.sizeBytes != null
-                      ? `${(Number(node.metadata.sizeBytes) / 1024 / 1024).toFixed(1)} MB`
-                      : undefined
-                }
-              ]
-                .filter(({ v }) => v)
-                .map(({ k, v }) => (
-                  <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                      {k}
-                    </div>
-                    <div className="text-[8px]" style={{ color: 'var(--bone-200)' }}>
-                      {v}
-                    </div>
-                  </div>
-                ))}
-              {!isImported && (
-                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button
-                    onClick={() => onEdit(node)}
-                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                  >
-                    ✎ Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(node)}
-                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                  >
-                    ✕ Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* EC2-specific metadata */}
-          {node.type === 'ec2' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                INSTANCE
-              </div>
-              {[
-                { k: 'TYPE', v: node.metadata.instanceType as string | undefined },
-                { k: 'AMI', v: node.metadata.ami as string | undefined },
-                { k: 'PRIVATE IP', v: node.metadata.privateIp as string | undefined },
-                { k: 'PUBLIC IP', v: node.metadata.publicIp as string | undefined }
-              ]
-                .filter(({ v }) => v)
-                .map(({ k, v }) => (
-                  <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                      {k}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <span
-                        className="text-[8px]"
-                        style={{ color: 'var(--bone-200)', flex: 1 }}
-                      >
-                        {v}
-                      </span>
-                      {(k === 'PRIVATE IP' || k === 'PUBLIC IP') && (
-                        <button
-                          onClick={() => navigator.clipboard.writeText(v!)}
-                          title="Copy"
-                          style={{
-                            background: 'var(--ink-850)',
-                            border: '1px solid var(--border)',
-                            borderRadius: 2,
-                            padding: '1px 4px',
-                            color: 'var(--fg-muted)',
-                            fontFamily: 'monospace',
-                            fontSize: 8,
-                            cursor: 'pointer',
-                            flexShrink: 0
-                          }}
-                        >
-                          ⎘
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              {Array.isArray(node.metadata.securityGroupIds) &&
-                (node.metadata.securityGroupIds as string[]).length > 0 && (
-                  <div className="mb-1.5">
-                    <div
-                      className="text-[7px]"
-                      style={{ color: 'var(--fg-muted)', marginBottom: 3 }}
-                    >
-                      SECURITY GROUPS
-                    </div>
-                    {(node.metadata.securityGroupIds as string[]).map((sgId) => {
-                      const sgNode = [...nodes, ...importedNodes].find((n) => n.id === sgId)
-                      return (
-                        <div
-                          key={sgId}
-                          style={{
-                            fontSize: 8,
-                            color: '#c084fc',
-                            cursor: 'pointer',
-                            marginBottom: 2
-                          }}
-                          onClick={() => {
-                            useUIStore.getState().selectNode(sgId)
-                            window.dispatchEvent(
-                              new CustomEvent('riftview:fitnode', { detail: { nodeId: sgId } })
-                            )
-                          }}
-                          title={`Go to ${sgNode?.label ?? sgId}`}
-                        >
-                          ↗ {sgNode?.label ?? sgId}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              {!isImported && (
-                <>
-                  <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                    <button
-                      onClick={() => onEdit(node)}
-                      style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                    >
-                      ✎ Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(node)}
-                      style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                    >
-                      ✕ Delete
-                    </button>
-                  </div>
-                  <div style={{ marginTop: 8 }}>
-                    <div
-                      style={{
-                        fontSize: 8,
-                        color: 'var(--fg-muted)',
-                        textTransform: 'uppercase',
-                        marginBottom: 4
-                      }}
-                    >
-                      Quick actions
-                    </div>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                      {node.status !== 'stopped' && (
-                        <button
-                          onClick={() => onQuickAction(node, 'stop')}
-                          style={{
-                            background: 'var(--ink-850)',
-                            border: '1px solid #febc2e',
-                            borderRadius: 2,
-                            padding: '2px 8px',
-                            color: '#febc2e',
-                            fontFamily: 'monospace',
-                            fontSize: 9,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Stop
-                        </button>
-                      )}
-                      {node.status === 'stopped' && (
-                        <button
-                          onClick={() => onQuickAction(node, 'start')}
-                          style={{
-                            background: 'var(--ink-850)',
-                            border: '1px solid #28c840',
-                            borderRadius: 2,
-                            padding: '2px 8px',
-                            color: '#28c840',
-                            fontFamily: 'monospace',
-                            fontSize: 9,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Start
-                        </button>
-                      )}
-                      <button
-                        onClick={() => onQuickAction(node, 'reboot')}
-                        style={{
-                          background: 'var(--ink-850)',
-                          border: '1px solid #64b5f6',
-                          borderRadius: 2,
-                          padding: '2px 8px',
-                          color: '#64b5f6',
-                          fontFamily: 'monospace',
-                          fontSize: 9,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Reboot
-                      </button>
-                      <button
-                        onClick={async () => {
-                          const instanceId = (node.metadata?.instanceId as string) ?? node.id
-                          const profile = useCloudStore.getState().profile
-                          const result = await window.riftview.startTerminal({
-                            instanceId,
-                            region: node.region,
-                            profile
-                          })
-                          if (result.ok) {
-                            useUIStore.getState().openTerminal(node.id, result.sessionId)
-                          } else {
-                            useUIStore
-                              .getState()
-                              .showToast(`Terminal failed: ${result.error}`, 'error')
-                          }
-                        }}
-                        style={{
-                          background: 'var(--ink-850)',
-                          border: '1px solid #34d399',
-                          borderRadius: 2,
-                          padding: '2px 8px',
-                          color: '#34d399',
-                          fontFamily: 'monospace',
-                          fontSize: 9,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Open Terminal
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* SNS-specific metadata */}
-          {node.type === 'sns' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                TOPIC
-              </div>
-              <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                  SUBSCRIBERS
-                </div>
-                <div className="text-[8px]" style={{ color: 'var(--bone-200)' }}>
-                  {node.metadata.subscriptionCount != null
-                    ? String(node.metadata.subscriptionCount)
-                    : '—'}
-                </div>
-              </div>
-              {!isImported && (
-                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button
-                    onClick={() => onEdit(node)}
-                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                  >
-                    ✎ Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(node)}
-                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                  >
-                    ✕ Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ECR-specific metadata */}
-          {node.type === 'ecr-repo' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                REPOSITORY
-              </div>
-              {typeof node.metadata.uri === 'string' && node.metadata.uri && (
-                <div className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                    URI
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span
-                      className="text-[8px] break-all"
-                      style={{ color: 'var(--bone-200)', flex: 1 }}
-                    >
-                      {node.metadata.uri as string}
-                    </span>
-                    <button
-                      onClick={() => navigator.clipboard.writeText(node.metadata.uri as string)}
-                      title="Copy URI"
-                      style={{
-                        background: 'var(--ink-850)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 2,
-                        padding: '1px 4px',
-                        color: 'var(--fg-muted)',
-                        fontFamily: 'monospace',
-                        fontSize: 8,
-                        cursor: 'pointer',
-                        flexShrink: 0
-                      }}
-                    >
-                      ⎘
-                    </button>
-                  </div>
-                </div>
-              )}
-              {!isImported && (
-                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button
-                    onClick={() => onEdit(node)}
-                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                  >
-                    ✎ Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(node)}
-                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                  >
-                    ✕ Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ElastiCache-specific metadata */}
-          {node.type === 'elasticache' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                CACHE
-              </div>
-              {[
-                { k: 'ENGINE', v: node.metadata.engine as string | undefined },
-                { k: 'NODE TYPE', v: node.metadata.nodeType as string | undefined },
-                {
-                  k: 'CLUSTERS',
-                  v: node.metadata.numCaches != null ? String(node.metadata.numCaches) : undefined
-                }
-              ]
-                .filter(({ v }) => v)
-                .map(({ k, v }) => (
-                  <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                      {k}
-                    </div>
-                    <div className="text-[8px]" style={{ color: 'var(--bone-200)' }}>
-                      {v}
-                    </div>
-                  </div>
-                ))}
-              {typeof node.metadata.endpoint === 'string' && node.metadata.endpoint && (
-                <div className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                    ENDPOINT
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span
-                      className="text-[8px] break-all"
-                      style={{ color: 'var(--bone-200)', flex: 1 }}
-                    >
-                      {node.metadata.endpoint as string}
-                    </span>
-                    <button
-                      onClick={() =>
-                        navigator.clipboard.writeText(node.metadata.endpoint as string)
-                      }
-                      title="Copy endpoint"
-                      style={{
-                        background: 'var(--ink-850)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 2,
-                        padding: '1px 4px',
-                        color: 'var(--fg-muted)',
-                        fontFamily: 'monospace',
-                        fontSize: 8,
-                        cursor: 'pointer',
-                        flexShrink: 0
-                      }}
-                    >
-                      ⎘
-                    </button>
-                  </div>
-                </div>
-              )}
-              {!isImported && (
-                <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                  <button
-                    onClick={() => onEdit(node)}
-                    style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                  >
-                    ✎ Edit
-                  </button>
-                  <button
-                    onClick={() => onDelete(node)}
-                    style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                  >
-                    ✕ Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* EKS-specific metadata */}
-          {node.type === 'eks' && (
-            <div>
-              <div
-                className="text-[8px] mb-2"
-                style={{
-                  color: 'var(--fg-muted)',
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: '6px',
-                  marginTop: 16,
-                  marginBottom: 6
-                }}
-              >
-                CLUSTER
-              </div>
-              {[
-                { k: 'VERSION', v: node.metadata.version as string | undefined },
-                { k: 'ENDPOINT', v: node.metadata.endpoint as string | undefined }
-              ]
-                .filter(({ v }) => v)
-                .map(({ k, v }) => (
-                  <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
-                      {k}
-                    </div>
-                    <div
-                      className="text-[8px] break-all"
-                      style={{ color: 'var(--bone-200)' }}
-                    >
-                      {v}
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-
-          {/* Default metadata + buttons for all other node types */}
-          {node.type !== 'acm' &&
-            node.type !== 'cloudfront' &&
-            node.type !== 'apigw' &&
-            node.type !== 'apigw-route' &&
-            node.type !== 'lambda' &&
-            node.type !== 'ecs' &&
-            node.type !== 'rds' &&
-            node.type !== 'sqs' &&
-            node.type !== 'dynamo' &&
-            node.type !== 'sns' &&
-            node.type !== 'ecr-repo' &&
-            node.type !== 'elasticache' &&
-            node.type !== 'eks' &&
-            node.type !== 'ec2' && (
-              <>
-                {Object.entries(node.metadata).length > 0 && (
-                  <div>
-                    <div
-                      className="text-[8px] mb-2"
-                      style={{
-                        color: 'var(--fg-muted)',
-                        borderTop: '1px solid var(--border-strong)',
-                        paddingTop: '6px',
-                        marginTop: 16,
-                        marginBottom: 6
-                      }}
-                    >
-                      METADATA
-                    </div>
-                    {Object.entries(node.metadata)
-                      .slice(0, 6)
-                      .map(([k, v]) => (
-                        <div key={k} className="mb-1.5">
-                          <div
-                            className="text-[7px]"
-                            title={k}
-                            style={{ color: 'var(--fg-muted)' }}
-                          >
-                            {fieldLabel(k)}
-                          </div>
-                          <div
-                            className="text-[8px] break-all"
-                            style={{ color: 'var(--bone-200)' }}
-                          >
-                            {String(v ?? '—')}
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                )}
-
-                {!isImported && (
-                  <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                    <button
-                      onClick={() => onEdit(node)}
-                      style={{ ...btnBase, border: '1px solid #64b5f6', color: '#64b5f6' }}
-                    >
-                      ✎ Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(node)}
-                      style={{ ...btnBase, border: '1px solid #ff5f57', color: '#ff5f57' }}
-                    >
-                      ✕ Delete
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-
-          {/* Connections panel — outgoing + incoming integration edges */}
+          {/* Connections */}
           {(() => {
             const allNodes = [...nodes, ...importedNodes]
             const outgoing = (node.integrations ?? []).map((integ) => {
@@ -3015,165 +1291,88 @@ export function Inspector({
                 )
             )
             if (outgoing.length === 0 && incoming.length === 0) return null
-            const edgeColor = (t: string): string =>
-              t === 'trigger' ? '#a78bfa' : t === 'subscription' ? '#34d399' : '#60a5fa'
-            const ConnRow = ({
-              src,
-              label,
-              label2,
-              edgeType,
-              onClick
-            }: {
-              src?: CloudNode
-              label: string
-              label2?: string
-              edgeType: string
-              onClick: () => void
-            }): React.JSX.Element => (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  gap: 5,
-                  marginBottom: 4,
-                  cursor: 'pointer'
-                }}
-                onClick={onClick}
-                title={`Select ${label}`}
-              >
-                <span
-                  style={{
-                    fontSize: 6,
-                    color: edgeColor(edgeType),
-                    fontWeight: 700,
-                    minWidth: 40,
-                    textTransform: 'uppercase',
-                    flexShrink: 0
-                  }}
-                >
-                  {edgeType}
-                </span>
-                <span
-                  style={{
-                    fontSize: 9,
-                    color: src ? 'var(--fg)' : 'var(--fg-muted)',
-                    wordBreak: 'break-all',
-                    flex: 1
-                  }}
-                >
-                  {label}
-                </span>
-                {label2 && (
-                  <span style={{ fontSize: 7, color: 'var(--fg-muted)', flexShrink: 0 }}>
-                    {label2}
-                  </span>
-                )}
-              </div>
-            )
             return (
-              <div
-                style={{
-                  marginTop: 12,
-                  borderTop: '1px solid var(--border-strong)',
-                  paddingTop: 8
-                }}
-              >
-                {outgoing.length > 0 && (
-                  <>
+              <div className="insp-section">
+                <div className="insp-label">CONNECTIONS</div>
+                <div className="insp-rows">
+                  {outgoing.map(({ integ, target }, i) => (
                     <div
-                      style={{
-                        fontSize: 8,
-                        color: 'var(--fg-muted)',
-                        textTransform: 'uppercase',
-                        marginBottom: 6
+                      key={`out-${i}`}
+                      className="insp-row"
+                      style={{ cursor: target ? 'pointer' : 'default' }}
+                      onClick={() => {
+                        if (!target) return
+                        useUIStore.getState().selectNode(target.id)
+                        window.dispatchEvent(
+                          new CustomEvent('riftview:fitnode', {
+                            detail: { nodeId: target.id }
+                          })
+                        )
                       }}
                     >
-                      Outgoing ({outgoing.length})
+                      <span className="k">→ {integ.edgeType}</span>
+                      <span className="v">
+                        {target
+                          ? target.label
+                          : (integ.targetId.split('/').pop() ?? integ.targetId)}
+                        {target?.type && (
+                          <span style={{ color: 'var(--fg-muted)', marginLeft: 6 }}>
+                            {target.type}
+                          </span>
+                        )}
+                      </span>
                     </div>
-                    {outgoing.map(({ integ, target }, i) => (
-                      <ConnRow
-                        key={i}
-                        src={target}
-                        label={
-                          target
-                            ? target.label
-                            : (integ.targetId.split('/').pop() ?? integ.targetId)
-                        }
-                        label2={target?.type}
-                        edgeType={integ.edgeType}
+                  ))}
+                  {incoming.map((src, i) => {
+                    const e = (src.integrations ?? []).find(
+                      (edge) => resolveIntegrationTargetId(allNodes, edge.targetId) === node.id
+                    )!
+                    return (
+                      <div
+                        key={`in-${i}`}
+                        className="insp-row"
+                        style={{ cursor: 'pointer' }}
                         onClick={() => {
-                          if (!target) return
-                          useUIStore.getState().selectNode(target.id)
+                          useUIStore.getState().selectNode(src.id)
                           window.dispatchEvent(
-                            new CustomEvent('riftview:fitnode', { detail: { nodeId: target.id } })
+                            new CustomEvent('riftview:fitnode', { detail: { nodeId: src.id } })
                           )
                         }}
-                      />
-                    ))}
-                  </>
-                )}
-                {incoming.length > 0 && (
-                  <>
-                    <div
-                      style={{
-                        fontSize: 8,
-                        color: 'var(--fg-muted)',
-                        textTransform: 'uppercase',
-                        marginBottom: 6,
-                        marginTop: outgoing.length > 0 ? 8 : 0
-                      }}
-                    >
-                      Incoming ({incoming.length})
-                    </div>
-                    {incoming.map((src, i) => {
-                      const e = (src.integrations ?? []).find(
-                        (edge) => resolveIntegrationTargetId(allNodes, edge.targetId) === node.id
-                      )!
-                      return (
-                        <ConnRow
-                          key={i}
-                          src={src}
-                          label={src.label}
-                          label2={src.type}
-                          edgeType={e.edgeType}
-                          onClick={() => {
-                            useUIStore.getState().selectNode(src.id)
-                            window.dispatchEvent(
-                              new CustomEvent('riftview:fitnode', { detail: { nodeId: src.id } })
-                            )
-                          }}
-                        />
-                      )
-                    })}
-                  </>
-                )}
+                      >
+                        <span className="k">← {e.edgeType}</span>
+                        <span className="v">
+                          {src.label}
+                          <span style={{ color: 'var(--fg-muted)', marginLeft: 6 }}>
+                            {src.type}
+                          </span>
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+                <hr className="hairline" />
               </div>
             )
           })()}
 
-          {/* IAM Permissions — EC2, Lambda, S3 only, hidden for imported nodes */}
+          {/* IAM Permissions — EC2, Lambda, S3 only */}
           {node && IAM_SUPPORTED_TYPES.includes(node.type as NodeType) && !isImported && (
-            <IamAdvisor node={node} />
+            <div className="insp-section">
+              <IamAdvisor node={node} />
+            </div>
           )}
 
-          {/* Notes section — always shown for any selected node */}
-          <div
-            style={{ marginTop: 12, borderTop: '1px solid var(--border-strong)', paddingTop: 8 }}
-          >
+          {/* NOTES section */}
+          <div className="insp-section">
             <div
+              className="insp-label"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 4
+                justifyContent: 'space-between'
               }}
             >
-              <div
-                className="text-[8px]"
-                style={{ color: 'var(--fg-muted)', textTransform: 'uppercase' }}
-              >
-                Notes
-              </div>
+              <span>NOTES</span>
               {annotations[node.id] && (
                 <button
                   onClick={() => {
@@ -3182,16 +1381,9 @@ export function Inspector({
                     delete next[node.id]
                     void window.riftview.saveAnnotations(next)
                   }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--fg-muted)',
-                    cursor: 'pointer',
-                    fontSize: 9,
-                    padding: 0,
-                    lineHeight: 1
-                  }}
+                  className="btn btn-sm btn-ghost"
                   title="Clear note"
+                  style={{ padding: '0 4px' }}
                 >
                   ✕
                 </button>
@@ -3214,63 +1406,795 @@ export function Inspector({
                 borderRadius: 2,
                 padding: '4px 6px',
                 color: 'var(--fg)',
-                fontFamily: 'monospace',
+                fontFamily: 'var(--font-mono)',
                 fontSize: 9,
                 resize: 'vertical',
                 boxSizing: 'border-box',
                 outline: 'none'
               }}
             />
+            <hr className="hairline" />
           </div>
 
-          {/* HISTORY section — per-node change log */}
-          <div
-            style={{ marginTop: 12, borderTop: '1px solid var(--border-strong)', paddingTop: 8 }}
-          >
-            <div
-              style={{
-                fontSize: 8,
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                color: 'var(--fg-muted)',
-                textTransform: 'uppercase',
-                marginBottom: 6
-              }}
-            >
-              History
-            </div>
+          {/* HISTORY section */}
+          <div className="insp-section">
+            <div className="insp-label">HISTORY</div>
             {nodeHistory.length === 0 ? (
               <div style={{ fontSize: 9, color: 'var(--fg-muted)', fontStyle: 'italic' }}>
                 No changes recorded yet
               </div>
             ) : (
-              nodeHistory.slice(0, 10).map((entry, i) => (
-                <div key={i} style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 8, color: 'var(--fg-muted)', marginBottom: 3 }}>
-                    ↳ {relativeTime(entry.timestamp)}
-                  </div>
-                  {entry.changes.map((c, j) => (
-                    <div
-                      key={j}
-                      style={{
-                        fontSize: 8,
-                        color: 'var(--bone-200)',
-                        paddingLeft: 10,
-                        marginBottom: 1
-                      }}
-                    >
-                      <span style={{ color: 'var(--fg-muted)' }}>{c.field}:</span>{' '}
-                      <span style={{ color: '#fca5a5' }}>{truncate(c.before)}</span>
-                      {' → '}
-                      <span style={{ color: '#86efac' }}>{truncate(c.after)}</span>
+              <div className="insp-rows">
+                {nodeHistory.slice(0, 10).map((entry, i) => (
+                  <div key={i} className="insp-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gridTemplateColumns: '1fr' }}>
+                    <span className="k">↳ {relativeTime(entry.timestamp)}</span>
+                    <div style={{ paddingLeft: 10, marginTop: 2, width: '100%' }}>
+                      {entry.changes.map((c, j) => (
+                        <div
+                          key={j}
+                          style={{
+                            fontSize: 8,
+                            color: 'var(--bone-200)',
+                            marginBottom: 1
+                          }}
+                        >
+                          <span style={{ color: 'var(--fg-muted)' }}>{c.field}:</span>{' '}
+                          <span style={{ color: 'oklch(0.80 0.15 28)' }}>{truncate(c.before)}</span>
+                          {' → '}
+                          <span style={{ color: 'var(--moss-500)' }}>{truncate(c.after)}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ))
+                  </div>
+                ))}
+              </div>
             )}
+            <hr className="hairline" />
           </div>
         </>
       )}
     </div>
+  )
+}
+
+// ── Edge view ─────────────────────────────────────────────────────────────
+
+function EdgeView({
+  info,
+  nodes,
+  importedNodes
+}: {
+  info: NonNullable<ReturnType<typeof useUIStore.getState>['selectedEdgeInfo']>
+  nodes: CloudNode[]
+  importedNodes: CloudNode[]
+}): React.JSX.Element {
+  const srcNode =
+    nodes.find((n) => n.id === info.source) ?? importedNodes.find((n) => n.id === info.source)
+  const tgtNode =
+    nodes.find((n) => n.id === info.target) ?? importedNodes.find((n) => n.id === info.target)
+  const isCustom = (info.data as { isCustom?: boolean } | undefined)?.isCustom
+
+  return (
+    <>
+      <div className="insp-header">
+        <div className="eyebrow">EDGE</div>
+        <div className="insp-title">{edgeTypeLabel(info.id, info.data)}</div>
+      </div>
+      <hr className="hairline" />
+      <Section label="ENDPOINTS">
+        <Row k="SOURCE" v={srcNode ? srcNode.label : info.source} />
+        {srcNode && <Row k="SRC TYPE" v={srcNode.type.toUpperCase()} />}
+        <Row k="TARGET" v={tgtNode ? tgtNode.label : info.target} />
+        {tgtNode && <Row k="TGT TYPE" v={tgtNode.type.toUpperCase()} />}
+      </Section>
+
+      {isCustom ? (
+        <div className="insp-section">
+          <div className="insp-label">CUSTOM EDGE</div>
+          <div style={{ marginBottom: 8 }}>
+            <div className="k" style={{ fontSize: 7, marginBottom: 2 }}>
+              LABEL
+            </div>
+            <input
+              value={(info.data as { label?: string } | undefined)?.label ?? ''}
+              onChange={(e) => {
+                useUIStore.getState().updateCustomEdgeLabel(info.id, e.target.value)
+                void window.riftview.saveCustomEdges(useUIStore.getState().customEdges)
+              }}
+              placeholder="add label…"
+              style={{
+                fontSize: 9,
+                fontFamily: 'var(--font-mono)',
+                width: '100%',
+                background: 'var(--ink-850)',
+                border: '1px solid var(--border)',
+                color: 'var(--fg)',
+                borderRadius: 3,
+                padding: '2px 5px',
+                outline: 'none'
+              }}
+            />
+          </div>
+          <button
+            onClick={() => {
+              useUIStore.getState().removeCustomEdge(info.id)
+              void window.riftview.saveCustomEdges(useUIStore.getState().customEdges)
+              useUIStore.getState().selectEdge(null)
+            }}
+            className="btn btn-sm btn-ghost"
+            style={{ color: 'var(--fault-500)', borderColor: 'var(--fault-500)' }}
+          >
+            Delete edge
+          </button>
+          <hr className="hairline" />
+        </div>
+      ) : (
+        <>
+          {info.data &&
+            Object.keys(info.data).filter((k) => k !== 'isIntegration').length > 0 && (
+              <div className="insp-section">
+                <div className="insp-label">METADATA</div>
+                <div className="insp-rows">
+                  {Object.entries(info.data)
+                    .filter(([k]) => k !== 'isIntegration')
+                    .map(([k, v]) => (
+                      <Row key={k} k={fieldLabel(k)} v={String(v ?? '—')} />
+                    ))}
+                </div>
+                <hr className="hairline" />
+              </div>
+            )}
+          {info.label && (
+            <Section label="LABEL">
+              <Row k="LABEL" v={info.label} />
+            </Section>
+          )}
+        </>
+      )}
+    </>
+  )
+}
+
+// ── Per-type metadata rendering ───────────────────────────────────────────
+
+interface RenderMetadataArgs {
+  node: CloudNode
+  nodes: CloudNode[]
+  importedNodes: CloudNode[]
+  isImported: boolean
+  invalidatePath: string
+  setInvalidatePath: (v: string) => void
+  acmDeleteError: string | null
+  setAcmDeleteError: (v: string | null) => void
+  onEdit: (n: CloudNode) => void
+  onDelete: (n: CloudNode) => void
+  onQuickAction: (
+    n: CloudNode,
+    action: 'stop' | 'start' | 'reboot' | 'invalidate',
+    meta?: { path?: string }
+  ) => void
+  onAddRoute?: (apiId: string) => void
+  setActiveCreate: ReturnType<typeof useUIStore.getState>['setActiveCreate']
+}
+
+function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
+  const {
+    node,
+    nodes,
+    importedNodes,
+    isImported,
+    invalidatePath,
+    setInvalidatePath,
+    acmDeleteError,
+    setAcmDeleteError,
+    onEdit,
+    onDelete,
+    onQuickAction,
+    onAddRoute,
+    setActiveCreate
+  } = args
+
+  const editDelete = !isImported && (
+    <div className="insp-actions">
+      <button onClick={() => onEdit(node)} className="btn btn-sm btn-ghost">
+        ✎ Edit
+      </button>
+      <button onClick={() => onDelete(node)} className="btn btn-sm btn-ghost">
+        ✕ Delete
+      </button>
+    </div>
+  )
+
+  // ACM
+  if (node.type === 'acm') {
+    return (
+      <div className="insp-section">
+        <div className="insp-label">CERTIFICATE</div>
+        <div className="insp-rows">
+          <Row k="DOMAIN" v={(node.metadata.domainName as string) ?? '—'} />
+          <Row k="VALIDATION" v={(node.metadata.validationMethod as string) ?? '—'} />
+          <Row
+            k="IN USE BY"
+            v={`${((node.metadata.inUseBy as string[] | undefined) ?? []).length} resource(s)`}
+          />
+        </div>
+        {node.status === 'pending' &&
+          ((node.metadata.cnameRecords as Array<{ name: string; value: string }> | undefined)
+            ?.length ?? 0) > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <div className="label" style={{ marginBottom: 4 }}>
+                DNS Validation CNAMEs
+              </div>
+              {(node.metadata.cnameRecords as Array<{ name: string; value: string }>).map(
+                (rec, i) => (
+                  <div key={i} style={{ marginBottom: 6, fontSize: 8 }}>
+                    <Row k="NAME" v={rec.name} copyable={rec.name} />
+                    <Row k="VALUE" v={rec.value} copyable={rec.value} />
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        {acmDeleteError && (
+          <div style={{ marginTop: 6, fontSize: 8, color: 'var(--fault-500)' }}>
+            {acmDeleteError}
+          </div>
+        )}
+        {!isImported && (
+          <div className="insp-actions">
+            <button
+              onClick={() => {
+                const inUseBy = (node.metadata.inUseBy as string[] | undefined) ?? []
+                if (inUseBy.length > 0) {
+                  setAcmDeleteError(`Cannot delete: in use by ${inUseBy.length} resource(s)`)
+                  return
+                }
+                setAcmDeleteError(null)
+                onDelete(node)
+              }}
+              className="btn btn-sm btn-ghost"
+            >
+              ✕ Delete
+            </button>
+          </div>
+        )}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // CloudFront
+  if (node.type === 'cloudfront') {
+    return (
+      <div className="insp-section">
+        <div className="insp-label">DISTRIBUTION</div>
+        <div className="insp-rows">
+          <Row k="DOMAIN" v={(node.metadata.domainName as string) ?? '—'} />
+          <Row
+            k="ORIGINS"
+            v={`${((node.metadata.origins as unknown[] | undefined) ?? []).length} origin(s)`}
+          />
+          <Row k="PRICE CLASS" v={(node.metadata.priceClass as string) ?? '—'} />
+          <Row k="CERT ARN" v={(node.metadata.certArn as string | undefined) ?? 'default'} />
+          <Row k="ROOT OBJECT" v={(node.metadata.defaultRootObject as string) || '—'} />
+        </div>
+        {!isImported && (
+          <>
+            {editDelete}
+            <div style={{ marginTop: 10 }}>
+              <div className="label" style={{ marginBottom: 4 }}>
+                Invalidate Cache
+              </div>
+              <input
+                value={invalidatePath}
+                onChange={(e) => setInvalidatePath(e.target.value)}
+                style={{
+                  width: '100%',
+                  background: 'var(--ink-900)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 2,
+                  padding: '2px 5px',
+                  color: 'var(--fg)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 9,
+                  boxSizing: 'border-box'
+                }}
+              />
+              <div className="insp-actions" style={{ marginTop: 4 }}>
+                <button
+                  onClick={() => onQuickAction(node, 'invalidate', { path: invalidatePath })}
+                  className="btn btn-sm btn-primary"
+                >
+                  Invalidate
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // API Gateway
+  if (node.type === 'apigw') {
+    const routeCount = nodes.filter((n) => n.type === 'apigw-route' && n.parentId === node.id).length
+    return (
+      <div className="insp-section">
+        <div className="insp-label">API</div>
+        <div className="insp-rows">
+          <Row
+            k="ENDPOINT"
+            v={(node.metadata.endpoint as string) || '—'}
+            copyable={
+              node.metadata.endpoint ? (node.metadata.endpoint as string) : undefined
+            }
+          />
+          <Row k="PROTOCOL" v="HTTP" />
+          <Row
+            k="CORS"
+            v={((node.metadata.corsOrigins as string[] | undefined) ?? []).join(', ') || '(none)'}
+          />
+          <Row k="ROUTES" v={String(routeCount)} />
+        </div>
+        {!isImported && (
+          <>
+            {editDelete}
+            <div style={{ marginTop: 4, fontSize: 8, color: 'var(--fg-muted)' }}>
+              Deletes all routes in this API.
+            </div>
+            <div className="insp-actions">
+              <button
+                onClick={() => {
+                  setActiveCreate({ resource: 'apigw-route', view: 'topology' })
+                  if (onAddRoute) onAddRoute(node.id)
+                }}
+                className="btn btn-sm btn-primary"
+              >
+                + Add Route
+              </button>
+            </div>
+          </>
+        )}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // API Gateway Route
+  if (node.type === 'apigw-route') {
+    const api = nodes.find((n) => n.id === node.metadata.apiId)
+    return (
+      <div className="insp-section">
+        <div className="insp-label">ROUTE</div>
+        <div className="insp-rows">
+          <Row k="METHOD" v={(node.metadata.method as string) ?? '—'} />
+          <Row k="PATH" v={(node.metadata.path as string) ?? '—'} />
+          <Row k="API" v={api ? api.label : (node.metadata.apiId as string)} />
+          <Row
+            k="TARGET"
+            v={(node.metadata.lambdaArn as string | undefined) ?? '(no integration)'}
+            copyable={
+              node.metadata.lambdaArn ? (node.metadata.lambdaArn as string) : undefined
+            }
+          />
+        </div>
+        {!isImported && (
+          <div className="insp-actions">
+            <button onClick={() => onDelete(node)} className="btn btn-sm btn-ghost">
+              ✕ Delete
+            </button>
+          </div>
+        )}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // Lambda
+  if (node.type === 'lambda') {
+    const rows = [
+      { k: 'RUNTIME', v: node.metadata.runtime as string | undefined },
+      { k: 'HANDLER', v: node.metadata.handler as string | undefined },
+      {
+        k: 'TIMEOUT',
+        v: node.metadata.timeout != null ? `${String(node.metadata.timeout)}s` : undefined
+      },
+      {
+        k: 'MEMORY',
+        v:
+          node.metadata.memorySize != null
+            ? `${String(node.metadata.memorySize)} MB`
+            : undefined
+      }
+    ].filter((r) => r.v)
+    return (
+      <div className="insp-section">
+        <div className="insp-label">FUNCTION</div>
+        <div className="insp-rows">
+          {rows.map((r) => (
+            <Row key={r.k} k={r.k} v={r.v!} />
+          ))}
+        </div>
+        {editDelete}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // ECS
+  if (node.type === 'ecs') {
+    return (
+      <div className="insp-section">
+        <div className="insp-label">SERVICE</div>
+        <div className="insp-rows">
+          <Row k="CLUSTER" v={(node.metadata.clusterName as string) ?? '—'} />
+          <Row k="LAUNCH TYPE" v={(node.metadata.launchType as string) ?? '—'} />
+          <Row k="DESIRED" v={String(node.metadata.desiredCount ?? '—')} />
+          <Row k="RUNNING" v={String(node.metadata.runningCount ?? '—')} />
+        </div>
+        {!isImported && (
+          <>
+            <div className="insp-actions">
+              <button
+                onClick={async () => {
+                  const instanceId = (node.metadata?.taskArn as string) ?? node.id
+                  const profile = useCloudStore.getState().profile
+                  const result = await window.riftview.startTerminal({
+                    instanceId,
+                    region: node.region,
+                    profile
+                  })
+                  if (result.ok) {
+                    useUIStore.getState().openTerminal(node.id, result.sessionId)
+                  } else {
+                    useUIStore
+                      .getState()
+                      .showToast(`Terminal failed: ${result.error}`, 'error')
+                  }
+                }}
+                className="btn btn-sm btn-ghost"
+              >
+                ⬚ Open Terminal
+              </button>
+            </div>
+          </>
+        )}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // RDS
+  if (node.type === 'rds') {
+    return (
+      <div className="insp-section">
+        <div className="insp-label">DATABASE</div>
+        <div className="insp-rows">
+          {typeof node.metadata.engine === 'string' && node.metadata.engine !== '' && (
+            <Row k="ENGINE" v={node.metadata.engine} />
+          )}
+          {typeof node.metadata.instanceClass === 'string' &&
+            node.metadata.instanceClass !== '' && (
+              <Row k="INSTANCE" v={node.metadata.instanceClass} />
+            )}
+          {typeof node.metadata.endpoint === 'string' && node.metadata.endpoint && (
+            <Row
+              k="ENDPOINT"
+              v={node.metadata.endpoint}
+              copyable={node.metadata.endpoint}
+            />
+          )}
+        </div>
+        {!isImported && (
+          <>
+            {editDelete}
+            <div className="insp-actions" style={{ marginTop: 8 }}>
+              {node.status !== 'stopped' && (
+                <button
+                  onClick={() => onQuickAction(node, 'stop')}
+                  className="btn btn-sm btn-ghost"
+                >
+                  Stop
+                </button>
+              )}
+              {node.status === 'stopped' && (
+                <button
+                  onClick={() => onQuickAction(node, 'start')}
+                  className="btn btn-sm btn-primary"
+                >
+                  Start
+                </button>
+              )}
+              <button
+                onClick={() => onQuickAction(node, 'reboot')}
+                className="btn btn-sm btn-ghost"
+              >
+                Reboot
+              </button>
+            </div>
+          </>
+        )}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // SQS
+  if (node.type === 'sqs') {
+    return (
+      <div className="insp-section">
+        <div className="insp-label">QUEUE STATS</div>
+        <div className="insp-metrics">
+          <div className="insp-metric">
+            <div className="label">MESSAGES</div>
+            <div className="value">
+              {node.metadata.messages != null ? String(node.metadata.messages) : '—'}
+            </div>
+          </div>
+          <div className="insp-metric">
+            <div className="label">IN FLIGHT</div>
+            <div className="value">
+              {node.metadata.inFlight != null ? String(node.metadata.inFlight) : '—'}
+            </div>
+          </div>
+        </div>
+        {node.label.endsWith('.fifo') && (
+          <div style={{ fontSize: 8, color: 'var(--oxide-400)', marginTop: 6 }}>FIFO queue</div>
+        )}
+        {editDelete}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // DynamoDB
+  if (node.type === 'dynamo') {
+    const rows = [
+      { k: 'BILLING', v: node.metadata.billingMode as string | undefined },
+      {
+        k: 'ITEMS',
+        v:
+          node.metadata.itemCount != null
+            ? Number(node.metadata.itemCount).toLocaleString()
+            : undefined
+      },
+      {
+        k: 'SIZE',
+        v:
+          node.metadata.sizeBytes != null
+            ? `${(Number(node.metadata.sizeBytes) / 1024 / 1024).toFixed(1)} MB`
+            : undefined
+      }
+    ].filter((r) => r.v)
+    return (
+      <div className="insp-section">
+        <div className="insp-label">TABLE</div>
+        <div className="insp-rows">
+          {rows.map((r) => (
+            <Row key={r.k} k={r.k} v={r.v!} />
+          ))}
+        </div>
+        {editDelete}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // EC2
+  if (node.type === 'ec2') {
+    const rows = [
+      { k: 'TYPE', v: node.metadata.instanceType as string | undefined },
+      { k: 'AMI', v: node.metadata.ami as string | undefined },
+      { k: 'PRIVATE IP', v: node.metadata.privateIp as string | undefined },
+      { k: 'PUBLIC IP', v: node.metadata.publicIp as string | undefined }
+    ].filter((r) => r.v)
+    const sgIds = (node.metadata.securityGroupIds as string[] | undefined) ?? []
+    return (
+      <div className="insp-section">
+        <div className="insp-label">INSTANCE</div>
+        <div className="insp-rows">
+          {rows.map((r) => {
+            const copyable = r.k === 'PRIVATE IP' || r.k === 'PUBLIC IP' ? r.v! : undefined
+            return <Row key={r.k} k={r.k} v={r.v!} copyable={copyable} />
+          })}
+        </div>
+        {sgIds.length > 0 && (
+          <>
+            <div className="label" style={{ marginTop: 8, marginBottom: 4 }}>
+              SECURITY GROUPS
+            </div>
+            <div className="insp-rows">
+              {sgIds.map((sgId) => {
+                const sgNode = [...nodes, ...importedNodes].find((n) => n.id === sgId)
+                return (
+                  <div
+                    key={sgId}
+                    className="insp-row"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      useUIStore.getState().selectNode(sgId)
+                      window.dispatchEvent(
+                        new CustomEvent('riftview:fitnode', { detail: { nodeId: sgId } })
+                      )
+                    }}
+                    title={`Go to ${sgNode?.label ?? sgId}`}
+                  >
+                    <span className="k">↗</span>
+                    <span className="v">{sgNode?.label ?? sgId}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+        {!isImported && (
+          <>
+            {editDelete}
+            <div className="insp-actions" style={{ marginTop: 8 }}>
+              {node.status !== 'stopped' && (
+                <button
+                  onClick={() => onQuickAction(node, 'stop')}
+                  className="btn btn-sm btn-ghost"
+                >
+                  Stop
+                </button>
+              )}
+              {node.status === 'stopped' && (
+                <button
+                  onClick={() => onQuickAction(node, 'start')}
+                  className="btn btn-sm btn-primary"
+                >
+                  Start
+                </button>
+              )}
+              <button
+                onClick={() => onQuickAction(node, 'reboot')}
+                className="btn btn-sm btn-ghost"
+              >
+                Reboot
+              </button>
+              <button
+                onClick={async () => {
+                  const instanceId = (node.metadata?.instanceId as string) ?? node.id
+                  const profile = useCloudStore.getState().profile
+                  const result = await window.riftview.startTerminal({
+                    instanceId,
+                    region: node.region,
+                    profile
+                  })
+                  if (result.ok) {
+                    useUIStore.getState().openTerminal(node.id, result.sessionId)
+                  } else {
+                    useUIStore
+                      .getState()
+                      .showToast(`Terminal failed: ${result.error}`, 'error')
+                  }
+                }}
+                className="btn btn-sm btn-ghost"
+              >
+                ⬚ Open Terminal
+              </button>
+            </div>
+          </>
+        )}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // SNS
+  if (node.type === 'sns') {
+    return (
+      <div className="insp-section">
+        <div className="insp-label">TOPIC</div>
+        <div className="insp-rows">
+          <Row
+            k="SUBSCRIBERS"
+            v={
+              node.metadata.subscriptionCount != null
+                ? String(node.metadata.subscriptionCount)
+                : '—'
+            }
+          />
+        </div>
+        {editDelete}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // ECR
+  if (node.type === 'ecr-repo') {
+    return (
+      <div className="insp-section">
+        <div className="insp-label">REPOSITORY</div>
+        <div className="insp-rows">
+          {typeof node.metadata.uri === 'string' && node.metadata.uri && (
+            <Row
+              k="URI"
+              v={node.metadata.uri}
+              copyable={node.metadata.uri}
+            />
+          )}
+        </div>
+        {editDelete}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // ElastiCache
+  if (node.type === 'elasticache') {
+    const rows = [
+      { k: 'ENGINE', v: node.metadata.engine as string | undefined },
+      { k: 'NODE TYPE', v: node.metadata.nodeType as string | undefined },
+      {
+        k: 'CLUSTERS',
+        v: node.metadata.numCaches != null ? String(node.metadata.numCaches) : undefined
+      }
+    ].filter((r) => r.v)
+    return (
+      <div className="insp-section">
+        <div className="insp-label">CACHE</div>
+        <div className="insp-rows">
+          {rows.map((r) => (
+            <Row key={r.k} k={r.k} v={r.v!} />
+          ))}
+          {typeof node.metadata.endpoint === 'string' && node.metadata.endpoint && (
+            <Row
+              k="ENDPOINT"
+              v={node.metadata.endpoint}
+              copyable={node.metadata.endpoint}
+            />
+          )}
+        </div>
+        {editDelete}
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // EKS
+  if (node.type === 'eks') {
+    const rows = [
+      { k: 'VERSION', v: node.metadata.version as string | undefined },
+      { k: 'ENDPOINT', v: node.metadata.endpoint as string | undefined }
+    ].filter((r) => r.v)
+    return (
+      <div className="insp-section">
+        <div className="insp-label">CLUSTER</div>
+        <div className="insp-rows">
+          {rows.map((r) => (
+            <Row key={r.k} k={r.k} v={r.v!} />
+          ))}
+        </div>
+        <hr className="hairline" />
+      </div>
+    )
+  }
+
+  // Default fallback
+  const entries = Object.entries(node.metadata).slice(0, 6)
+  return (
+    <>
+      {entries.length > 0 && (
+        <div className="insp-section">
+          <div className="insp-label">METADATA</div>
+          <div className="insp-rows">
+            {entries.map(([k, v]) => (
+              <Row key={k} k={fieldLabel(k)} v={String(v ?? '—')} />
+            ))}
+          </div>
+          <hr className="hairline" />
+        </div>
+      )}
+      {editDelete && (
+        <div className="insp-section">
+          {editDelete}
+          <hr className="hairline" />
+        </div>
+      )}
+    </>
   )
 }
