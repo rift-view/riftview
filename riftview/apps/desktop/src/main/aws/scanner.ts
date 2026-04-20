@@ -4,10 +4,9 @@ import path from 'path'
 import { IPC } from '../ipc/channels'
 import { createClients } from './client'
 import type { CloudNode, ScanDelta } from '@riftview/shared'
-import { markStandaloneNodes, scanOnce } from '@riftview/shared'
+import { classifyScanError, markStandaloneNodes, scanOnce } from '@riftview/shared'
 import { describeKeyPairs } from './services/ec2'
 import { pluginRegistry } from '../plugin/index'
-import { classifyScanError } from './classifyScanError'
 
 // --- Per-node change history ---
 interface FieldChange {

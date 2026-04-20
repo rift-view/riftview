@@ -8,5 +8,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "ini": "^6.0.0"
   }
 }
