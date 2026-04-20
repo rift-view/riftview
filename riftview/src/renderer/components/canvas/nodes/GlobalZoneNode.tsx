@@ -4,30 +4,17 @@ import type { NodeProps } from '@xyflow/react'
 export function GlobalZoneNode(_props: NodeProps): React.JSX.Element {
   return (
     <div
+      className="rift-zone"
       style={{
-        background: 'rgba(255,255,255,0.02)',
-        border: '1px dashed var(--cb-border)',
-        borderRadius: 8,
         minWidth: 200,
         minHeight: 80,
-        fontFamily: 'monospace',
-        overflow: 'hidden',
+        width: '100%',
+        height: '100%',
+        boxSizing: 'border-box',
         pointerEvents: 'none'
       }}
     >
-      {/* Header bar */}
-      <div
-        style={{
-          padding: '5px 10px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6
-        }}
-      >
-        <span style={{ fontSize: 9, color: 'var(--cb-text-muted)', letterSpacing: '0.08em' }}>
-          🌐 GLOBAL / EDGE
-        </span>
-      </div>
+      <span className="rift-container-label">Global · Edge</span>
     </div>
   )
 }

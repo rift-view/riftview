@@ -8,57 +8,54 @@ interface RegionZoneData {
 
 export function RegionZoneNode({ id, data }: NodeProps): React.JSX.Element {
   const d = data as unknown as RegionZoneData
-  const borderColor = d.color ?? 'rgba(255,153,0,0.4)'
-  const bgColor = d.color ? 'rgba(255,255,255,0.015)' : 'rgba(255,153,0,0.05)'
-  const labelColor = d.color ?? 'rgba(255,153,0,0.8)'
+  const resizerColor = d.color ?? 'var(--container-vpc-stroke)'
   return (
     <div
+      className="rift-zone"
       style={{
-        background: bgColor,
-        border: `2px solid ${borderColor}`,
-        borderRadius: 8,
         minWidth: 200,
         minHeight: 80,
-        fontFamily: 'monospace',
-        overflow: 'hidden',
         width: '100%',
         height: '100%',
         boxSizing: 'border-box'
       }}
     >
       <NodeResizer
-        color={borderColor}
+        color={resizerColor}
         minWidth={200}
         minHeight={80}
         onResizeEnd={(_e, params) => d.onResizeEnd(id, params.width, params.height)}
       />
+      <span className="rift-container-label">
+        {d.color && (
+          <span
+            style={{
+              display: 'inline-block',
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: d.color,
+              marginRight: 6,
+              verticalAlign: 'middle'
+            }}
+          />
+        )}
+        {`Region · ${d.label}`}
+      </span>
+
+      {/* Invisible drag handle along the top edge */}
       <div
         className="cb-zone-drag-handle"
         style={{
-          padding: '5px 10px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 24,
           cursor: 'move'
         }}
         title="Drag header to move zone"
-      >
-        {d.color && (
-          <span
-            style={{ width: 8, height: 8, borderRadius: '50%', background: d.color, flexShrink: 0 }}
-          />
-        )}
-        <span
-          style={{
-            fontSize: 9,
-            color: labelColor,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase'
-          }}
-        >
-          {`⬡ ${d.label}`}
-        </span>
-      </div>
+      />
     </div>
   )
 }
