@@ -131,8 +131,8 @@ export function registerHandlers(win: BrowserWindow): void {
     }
   })
 
-  ipcMain.handle(IPC.THEME_OVERRIDES, () => {
-    const file = path.join(app.getPath('userData'), 'theme.json')
+  ipcMain.handle(IPC.STYLE_OVERRIDES, () => {
+    const file = path.join(app.getPath('userData'), 'overrides.json')
     try {
       const raw = fs.readFileSync(file, 'utf-8')
       return JSON.parse(raw) as Record<string, string>

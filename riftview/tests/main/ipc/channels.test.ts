@@ -12,8 +12,8 @@ describe('IPC channel constants', () => {
     expect(IPC.CONN_STATUS).toBe('conn:status')
   })
 
-  it('defines THEME_OVERRIDES channel', () => {
-    expect(IPC.THEME_OVERRIDES).toBe('theme:overrides')
+  it('defines STYLE_OVERRIDES channel', () => {
+    expect(IPC.STYLE_OVERRIDES).toBe('style:overrides')
   })
 
   it('defines PLUGIN_METADATA channel', () => {
