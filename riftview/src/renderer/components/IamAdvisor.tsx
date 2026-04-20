@@ -6,10 +6,16 @@ interface IamAdvisorProps {
   node: CloudNode
 }
 
+const SEVERITY_VARIANT: Record<IamSeverity, string> = {
+  critical: 'advisory-card advisory-card--critical',
+  warning: 'advisory-card',
+  info: 'advisory-card'
+}
+
 const SEVERITY_COLOR: Record<IamSeverity, string> = {
-  critical: '#ef4444',
-  warning: '#f59e0b',
-  info: '#3b82f6'
+  critical: 'var(--fault-500)',
+  warning: 'var(--ember-500)',
+  info: 'oklch(0.72 0.15 240)'
 }
 
 const SEVERITY_LABEL: Record<IamSeverity, string> = {
@@ -21,13 +27,7 @@ const SEVERITY_LABEL: Record<IamSeverity, string> = {
 function FindingRow({ finding }: { finding: IamFinding }): React.JSX.Element {
   const [expanded, setExpanded] = useState(false)
   return (
-    <div
-      style={{
-        borderLeft: `3px solid ${SEVERITY_COLOR[finding.severity]}`,
-        paddingLeft: 8,
-        marginBottom: 6
-      }}
-    >
+    <div className={SEVERITY_VARIANT[finding.severity]} style={{ marginBottom: 6 }}>
       <div
         style={{
           display: 'flex',
@@ -38,30 +38,31 @@ function FindingRow({ finding }: { finding: IamFinding }): React.JSX.Element {
         onClick={() => finding.statement && setExpanded((e) => !e)}
       >
         <span
+          className="label"
           style={{
-            fontSize: 9,
-            fontWeight: 700,
             color: SEVERITY_COLOR[finding.severity],
-            letterSpacing: '0.05em',
-            minWidth: 50
+            minWidth: 50,
+            fontSize: 9
           }}
         >
           {SEVERITY_LABEL[finding.severity]}
         </span>
-        <span style={{ fontSize: 11, color: 'var(--fg)', flex: 1 }}>
+        <span className="advisory-title" style={{ flex: 1, marginBottom: 0 }}>
           {finding.title}
         </span>
         {finding.statement && (
-          <span style={{ fontSize: 9, color: 'var(--fg-muted)' }}>{expanded ? '▲' : '▼'}</span>
+          <span className="label" style={{ fontSize: 9 }}>
+            {expanded ? '▲' : '▼'}
+          </span>
         )}
       </div>
       {finding.policyName && (
-        <div style={{ fontSize: 9, color: 'var(--fg-muted)', marginTop: 2 }}>
+        <div className="advisory-body" style={{ marginTop: 4, marginBottom: 0 }}>
           Policy: {finding.policyName}
         </div>
       )}
       {finding.detail && (
-        <div style={{ fontSize: 10, color: 'var(--fg-muted)', marginTop: 2 }}>
+        <div className="advisory-body" style={{ marginTop: 2, marginBottom: 0 }}>
           {finding.detail}
         </div>
       )}
@@ -72,10 +73,11 @@ function FindingRow({ finding }: { finding: IamFinding }): React.JSX.Element {
             background: 'var(--bg-elev-2)',
             padding: '6px 8px',
             borderRadius: 4,
-            marginTop: 4,
+            marginTop: 6,
             overflowX: 'auto',
             maxHeight: 200,
-            color: 'var(--fg-muted)'
+            color: 'var(--fg-muted)',
+            fontFamily: 'var(--font-mono)'
           }}
         >
           {JSON.stringify(JSON.parse(finding.statement), null, 2)}
@@ -107,10 +109,10 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
   }
 
   return (
-    <div style={{ marginTop: 12, borderTop: '1px solid var(--border-strong)', paddingTop: 8 }}>
-      {/* Section header with toggle */}
+    <div>
       <button
         onClick={() => setOpen((o) => !o)}
+        className="insp-label"
         style={{
           width: '100%',
           display: 'flex',
@@ -120,75 +122,43 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
           border: 'none',
           padding: 0,
           cursor: 'pointer',
-          marginBottom: open ? 8 : 0
+          marginBottom: open ? 8 : 0,
+          textAlign: 'left'
         }}
         aria-expanded={open}
       >
-        <span style={{ fontSize: 9, color: 'var(--fg-muted)' }}>{open ? '▼' : '▶'}</span>
-        <span
-          style={{
-            fontSize: 8,
-            fontWeight: 700,
-            color: 'var(--fg-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em'
-          }}
-        >
-          IAM Permissions
-        </span>
+        <span>{open ? '▼' : '▶'}</span>
+        <span>IAM PERMISSIONS</span>
       </button>
 
       {open && (
         <div>
-          {/* Analyze button — first run */}
           {!loading && !hasRun && (
             <button
               onClick={runAnalysis}
-              style={{
-                width: '100%',
-                background: 'var(--ink-850)',
-                border: '1px solid var(--accent)',
-                borderRadius: 2,
-                padding: '3px 0',
-                color: 'var(--accent)',
-                fontFamily: 'monospace',
-                fontSize: 9,
-                cursor: 'pointer'
-              }}
+              className="btn btn-sm btn-primary"
+              style={{ width: '100%' }}
             >
               Analyze
             </button>
           )}
 
-          {/* Loading state */}
           {loading && (
             <div style={{ fontSize: 11, color: 'var(--fg-muted)' }}>
-              Analyzing IAM policies...
+              Analyzing IAM policies…
             </div>
           )}
 
-          {/* Error state */}
           {!loading && result?.error && (
-            <div
-              style={{
-                fontSize: 11,
-                color: '#f59e0b',
-                padding: '6px 8px',
-                borderRadius: 4,
-                background: 'rgba(245,158,11,0.1)',
-                border: '1px solid rgba(245,158,11,0.3)',
-                marginBottom: 6
-              }}
-            >
-              Analysis failed — check permissions
+            <div className="advisory-card" style={{ marginBottom: 6 }}>
+              <div className="advisory-title">Analysis failed — check permissions</div>
             </div>
           )}
 
-          {/* Results */}
           {!loading && result && !result.error && (
             <>
               {result.findings.length === 0 ? (
-                <div style={{ fontSize: 11, color: '#10b981' }}>No issues found</div>
+                <div style={{ fontSize: 11, color: 'var(--moss-500)' }}>No issues found</div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {result.findings.map((f, i) => (
@@ -199,20 +169,11 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
             </>
           )}
 
-          {/* Re-analyze button — shown after first run, when not loading */}
           {hasRun && !loading && (
             <button
               onClick={runAnalysis}
-              style={{
-                marginTop: 6,
-                background: 'none',
-                border: 'none',
-                color: 'var(--fg-muted)',
-                fontFamily: 'monospace',
-                fontSize: 9,
-                cursor: 'pointer',
-                padding: 0
-              }}
+              className="btn btn-sm btn-ghost"
+              style={{ marginTop: 6, width: '100%' }}
             >
               Re-analyze
             </button>
