@@ -90,20 +90,6 @@ describe('R1 foundation: primitives.css', () => {
   })
 })
 
-describe('R1 foundation: compat.css shim', () => {
-  test('maps --cb-* vars to new palette', () => {
-    const s = css('compat.css')
-    expect(s).toContain('--cb-bg-app')
-    expect(s).toContain('--cb-bg-panel')
-    expect(s).toContain('--cb-accent')
-    expect(s).toContain('--cb-text-primary')
-    expect(s).toContain('--cb-border')
-    expect(s).toMatch(/var\(--ink-/)
-    expect(s).toMatch(/var\(--bone-/)
-    expect(s).toMatch(/var\(--ember-/)
-  })
-})
-
 describe('R1 foundation: wired into main.tsx', () => {
   test('main.tsx imports the new style files', () => {
     const main = readFileSync(
@@ -113,7 +99,6 @@ describe('R1 foundation: wired into main.tsx', () => {
     expect(main).toContain("'../styles/tokens.css'")
     expect(main).toContain("'../styles/motion.css'")
     expect(main).toContain("'../styles/primitives.css'")
-    expect(main).toContain("'../styles/compat.css'")
     expect(main).toContain('@fontsource')
   })
   test('logo asset present', () => {
