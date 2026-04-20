@@ -1,12 +1,10 @@
 import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
 
+// Monorepo root vitest config.
+// Delegates to each workspace's vitest.config.ts via the `projects` field.
+// See apps/desktop/vitest.config.ts for desktop test setup.
 export default defineConfig({
-  plugins: [react()],
   test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./tests/setup.ts'],
-    css: true
+    projects: ['apps/*', 'packages/*']
   }
 })
