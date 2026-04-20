@@ -1,10 +1,15 @@
 // Commander chosen (v12) — small, typed, zero-dep. Supports subcommands,
 // negation flags, and exitOverride/configureOutput for CI-friendly testing.
 import { Command, Option } from 'commander'
+import { registerScan, type ScanDeps } from './commands/scan'
 import { registerVersion } from './commands/version'
 import { PKG_VERSION } from './version-constant'
 
-export function buildProgram(): Command {
+export interface BuildProgramOptions {
+  scan?: ScanDeps
+}
+
+export function buildProgram(opts: BuildProgramOptions = {}): Command {
   const program = new Command()
   program
     .name('riftview')
@@ -16,8 +21,9 @@ export function buildProgram(): Command {
     .allowExcessArguments(false)
 
   registerVersion(program)
+  registerScan(program, opts.scan)
 
-  // Subcommands coming in later tasks: scan, risks, drift, diff.
+  // Subcommands coming in later tasks: risks, drift, diff.
 
   return program
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { classifyScanError } from '../../../src/main/aws/classifyScanError'
+import { classifyScanError } from './classifyScanError'
 
 describe('classifyScanError', () => {
   it('classifies expired SSO session as credentials-expired', () => {
