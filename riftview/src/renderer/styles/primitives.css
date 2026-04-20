@@ -900,3 +900,173 @@
   gap: var(--space-2xs);
   margin-top: var(--space-2xs);
 }
+
+/* ---------- MODAL SHELL ---------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: oklch(0 0 0 / 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal, 500);
+}
+
+.modal {
+  background: var(--bg-elev-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 40px 80px -30px oklch(0 0 0 / 0.7);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal--sm { width: 380px; }
+.modal--md { width: 480px; }
+.modal--lg { width: 640px; }
+.modal--xl { width: 820px; }
+
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+  border-bottom: 1px solid var(--border);
+}
+.modal-head .eyebrow { margin-bottom: 2px; }
+.modal-head-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: var(--tracking-tight);
+  color: var(--bone-50);
+}
+.modal-close {
+  background: transparent;
+  border: 0;
+  color: var(--fg-muted);
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color var(--dur-fast) var(--ease-swift), background var(--dur-fast) var(--ease-swift);
+}
+.modal-close:hover { color: var(--bone-50); background: var(--bg-elev-2); }
+
+.modal-body {
+  padding: var(--space-md);
+  overflow-y: auto;
+  flex: 1;
+  color: var(--bone-100);
+  font-family: var(--font-body);
+}
+
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2xs);
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--border);
+  background: var(--bg-elev-1);
+}
+
+/* ---------- FORM PRIMITIVES ---------- */
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  margin-bottom: var(--space-sm);
+}
+.form-field .label { margin-bottom: 0; }
+
+.form-input,
+.form-select,
+.form-textarea {
+  background: var(--ink-900);
+  border: 1px solid var(--ink-700);
+  border-radius: var(--radius-sm);
+  color: var(--bone-100);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  padding: 0.5rem 0.625rem;
+  line-height: 1.3;
+  outline: none;
+  transition:
+    border-color var(--dur-fast) var(--ease-swift),
+    box-shadow var(--dur-fast) var(--ease-swift);
+  width: 100%;
+  box-sizing: border-box;
+}
+.form-textarea { resize: vertical; min-height: 60px; font-family: var(--font-mono); font-size: var(--text-sm); }
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color: var(--ember-500);
+  box-shadow: 0 0 0 1px var(--ember-500);
+}
+.form-input::placeholder,
+.form-textarea::placeholder { color: var(--fg-dim); }
+
+.form-helper {
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  color: var(--bone-300, var(--fg-muted));
+}
+
+.form-error {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fault-500);
+}
+
+.form-field.-invalid .form-input,
+.form-field.-invalid .form-select,
+.form-field.-invalid .form-textarea {
+  border-color: var(--fault-500);
+  box-shadow: 0 0 0 1px var(--fault-500);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.form-group + .form-group {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+.form-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--bone-200);
+  cursor: pointer;
+}
+.form-checkbox input[type='checkbox'] {
+  accent-color: var(--ember-500);
+  width: 14px;
+  height: 14px;
+}

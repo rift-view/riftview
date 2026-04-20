@@ -164,3 +164,37 @@ describe('R4 foundation: inspector primitives', () => {
     expect(s).toMatch(/\.advisory-card--critical\s*\{/)
   })
 })
+
+describe('R6 foundation: modal + form primitives', () => {
+  test('defines modal shell classes', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.modal-backdrop\s*\{/)
+    expect(s).toMatch(/\.modal\s*\{/)
+    expect(s).toMatch(/\.modal-head\s*\{/)
+    expect(s).toMatch(/\.modal-body\s*\{/)
+    expect(s).toMatch(/\.modal-foot\s*\{/)
+    expect(s).toMatch(/\.modal-title\s*\{/)
+    expect(s).toMatch(/\.modal-close\s*\{/)
+  })
+  test('defines modal size variants', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.modal--sm\s*\{/)
+    expect(s).toMatch(/\.modal--md\s*\{/)
+    expect(s).toMatch(/\.modal--lg\s*\{/)
+  })
+  test('defines form field + input + helper + error', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.form-field\s*\{/)
+    expect(s).toMatch(/\.form-input/)
+    expect(s).toMatch(/\.form-select/)
+    expect(s).toMatch(/\.form-textarea/)
+    expect(s).toMatch(/\.form-helper\s*\{/)
+    expect(s).toMatch(/\.form-error\s*\{/)
+  })
+  test('defines invalid state + form-grid-2 + form-checkbox', () => {
+    const s = css('primitives.css')
+    expect(s).toMatch(/\.form-field\.-invalid/)
+    expect(s).toMatch(/\.form-grid-2\s*\{/)
+    expect(s).toMatch(/\.form-checkbox\s*\{/)
+  })
+})
