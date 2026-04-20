@@ -120,8 +120,8 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
   }
 
   const modal: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)',
-    border: '1px solid var(--cb-border-strong)',
+    background: 'var(--ink-900)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 8,
     width: 640,
     maxHeight: '80vh',
@@ -136,7 +136,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '14px 20px',
-    borderBottom: '1px solid var(--cb-border-strong)',
+    borderBottom: '1px solid var(--border-strong)',
     flexShrink: 0
   }
 
@@ -149,7 +149,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
 
   const sidebar: React.CSSProperties = {
     width: 130,
-    borderRight: '1px solid var(--cb-border)',
+    borderRight: '1px solid var(--border)',
     padding: '12px 0',
     flexShrink: 0,
     display: 'flex',
@@ -174,15 +174,15 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
       fontSize: 11,
       cursor: 'pointer',
       border: 'none',
-      borderLeft: active ? '2px solid var(--cb-accent)' : '2px solid transparent',
-      background: active ? 'var(--cb-accent-subtle)' : 'transparent',
-      color: active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)'
+      borderLeft: active ? '2px solid var(--accent)' : '2px solid transparent',
+      background: active ? 'var(--ember-glow)' : 'transparent',
+      color: active ? 'var(--accent)' : 'var(--bone-200)'
     }
   }
 
   const sectionLabel: React.CSSProperties = {
     fontSize: 9,
-    color: 'var(--cb-text-muted)',
+    color: 'var(--fg-muted)',
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
     marginBottom: 10
@@ -190,7 +190,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
 
   const noteStyle: React.CSSProperties = {
     fontSize: 10,
-    color: 'var(--cb-text-muted)',
+    color: 'var(--fg-muted)',
     marginTop: 14,
     lineHeight: 1.6
   }
@@ -208,22 +208,22 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    background: 'var(--cb-bg-elevated)',
-    border: '1px solid var(--cb-border-strong)',
+    background: 'var(--ink-850)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 4,
     padding: '5px 10px',
-    color: 'var(--cb-text-primary)',
+    color: 'var(--fg)',
     fontFamily: 'monospace',
     fontSize: 11,
     boxSizing: 'border-box'
   }
 
   const btnSecondary: React.CSSProperties = {
-    background: 'var(--cb-bg-elevated)',
-    border: '1px solid var(--cb-border)',
+    background: 'var(--ink-850)',
+    border: '1px solid var(--border)',
     borderRadius: 4,
     padding: '4px 14px',
-    color: 'var(--cb-text-secondary)',
+    color: 'var(--bone-200)',
     fontFamily: 'monospace',
     fontSize: 11,
     cursor: 'pointer'
@@ -256,7 +256,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
             style={{
               fontSize: 13,
               fontWeight: 700,
-              color: 'var(--cb-accent)',
+              color: 'var(--accent)',
               letterSpacing: '0.04em'
             }}
           >
@@ -301,9 +301,9 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                           gap: 10,
                           padding: '6px 12px',
                           borderRadius: 4,
-                          border: `1px solid ${active ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
-                          background: active ? 'var(--cb-accent-subtle)' : 'transparent',
-                          color: active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)',
+                          border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                          background: active ? 'var(--ember-glow)' : 'transparent',
+                          color: active ? 'var(--accent)' : 'var(--bone-200)',
                           fontFamily: 'monospace',
                           fontSize: 11,
                           cursor: 'pointer',
@@ -315,7 +315,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                             width: 8,
                             height: 8,
                             borderRadius: '50%',
-                            background: active ? 'var(--cb-accent)' : 'var(--cb-border-strong)',
+                            background: active ? 'var(--accent)' : 'var(--border-strong)',
                             flexShrink: 0
                           }}
                         />
@@ -325,7 +325,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                             style={{
                               marginLeft: 'auto',
                               fontSize: 9,
-                              color: 'var(--cb-accent)',
+                              color: 'var(--accent)',
                               opacity: 0.75
                             }}
                           >
@@ -340,8 +340,8 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                   To add a profile, run{' '}
                   <code
                     style={{
-                      color: 'var(--cb-text-primary)',
-                      background: 'var(--cb-bg-elevated)',
+                      color: 'var(--fg)',
+                      background: 'var(--ink-850)',
                       padding: '1px 4px',
                       borderRadius: 3
                     }}
@@ -370,21 +370,21 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                           cursor: 'pointer',
                           padding: '4px 8px',
                           borderRadius: 4,
-                          border: `1px solid ${checked ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
-                          background: checked ? 'var(--cb-accent-subtle)' : 'transparent'
+                          border: `1px solid ${checked ? 'var(--accent)' : 'var(--border)'}`,
+                          background: checked ? 'var(--ember-glow)' : 'transparent'
                         }}
                       >
                         <input
                           type="checkbox"
                           checked={checked}
                           onChange={(): void => toggleRegion(region)}
-                          style={{ accentColor: 'var(--cb-accent)', cursor: 'pointer' }}
+                          style={{ accentColor: 'var(--accent)', cursor: 'pointer' }}
                         />
                         <span
                           style={{
                             fontFamily: 'monospace',
                             fontSize: 11,
-                            color: checked ? 'var(--cb-accent)' : 'var(--cb-text-secondary)'
+                            color: checked ? 'var(--accent)' : 'var(--bone-200)'
                           }}
                         >
                           {region}
@@ -396,13 +396,13 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                 <div style={noteStyle}>
                   Selected regions are used when &quot;Scan All Selected&quot; is triggered.
                   Currently scanning:{' '}
-                  <strong style={{ color: 'var(--cb-text-primary)' }}>
+                  <strong style={{ color: 'var(--fg)' }}>
                     {useCloudStore.getState().region}
                   </strong>
                 </div>
 
                 <div
-                  style={{ marginTop: 16, borderTop: '1px solid var(--cb-border)', paddingTop: 12 }}
+                  style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 12 }}
                 >
                   <div style={sectionLabel}>Region Indicators</div>
                   <label
@@ -420,13 +420,13 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                       onChange={(e): void =>
                         handleSettingChange('showRegionIndicators', e.target.checked)
                       }
-                      style={{ accentColor: 'var(--cb-accent)', cursor: 'pointer' }}
+                      style={{ accentColor: 'var(--accent)', cursor: 'pointer' }}
                     />
                     <span
                       style={{
                         fontFamily: 'monospace',
                         fontSize: 11,
-                        color: 'var(--cb-text-secondary)'
+                        color: 'var(--bone-200)'
                       }}
                     >
                       Show region color indicators on nodes (when ≥ 2 regions active)
@@ -438,7 +438,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                       <div
                         style={{
                           fontSize: 9,
-                          color: 'var(--cb-text-muted)',
+                          color: 'var(--fg-muted)',
                           marginBottom: 8,
                           textTransform: 'uppercase',
                           letterSpacing: '0.07em'
@@ -455,7 +455,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                             style={{
                               fontFamily: 'monospace',
                               fontSize: 10,
-                              color: 'var(--cb-text-secondary)',
+                              color: 'var(--bone-200)',
                               minWidth: 120
                             }}
                           >
@@ -476,11 +476,11 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                               width: 90,
                               fontFamily: 'monospace',
                               fontSize: 10,
-                              background: 'var(--cb-bg-elevated)',
-                              border: '1px solid var(--cb-border)',
+                              background: 'var(--ink-850)',
+                              border: '1px solid var(--border)',
                               borderRadius: 3,
                               padding: '2px 6px',
-                              color: 'var(--cb-text-primary)'
+                              color: 'var(--fg)'
                             }}
                           />
                           {(settings.regionColors[r] || getRegionColor(r)) && (
@@ -490,7 +490,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                                 height: 14,
                                 borderRadius: '50%',
                                 background: settings.regionColors[r] || getRegionColor(r),
-                                border: '1px solid var(--cb-border)',
+                                border: '1px solid var(--border)',
                                 flexShrink: 0
                               }}
                             />
@@ -521,9 +521,9 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                             gap: 10,
                             padding: '6px 12px',
                             borderRadius: 4,
-                            border: `1px solid ${active ? accent : 'var(--cb-border)'}`,
-                            background: active ? 'var(--cb-accent-subtle)' : 'transparent',
-                            color: active ? accent : 'var(--cb-text-secondary)',
+                            border: `1px solid ${active ? accent : 'var(--border)'}`,
+                            background: active ? 'var(--ember-glow)' : 'transparent',
+                            color: active ? accent : 'var(--bone-200)',
                             fontFamily: 'monospace',
                             fontSize: 11,
                             cursor: 'pointer',
@@ -572,9 +572,9 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                           gap: 10,
                           padding: '6px 12px',
                           borderRadius: 4,
-                          border: `1px solid ${active ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
-                          background: active ? 'var(--cb-accent-subtle)' : 'transparent',
-                          color: active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)',
+                          border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                          background: active ? 'var(--ember-glow)' : 'transparent',
+                          color: active ? 'var(--accent)' : 'var(--bone-200)',
                           fontFamily: 'monospace',
                           fontSize: 11,
                           cursor: 'pointer',
@@ -586,7 +586,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                             width: 8,
                             height: 8,
                             borderRadius: '50%',
-                            background: active ? 'var(--cb-accent)' : 'var(--cb-border-strong)',
+                            background: active ? 'var(--accent)' : 'var(--border-strong)',
                             flexShrink: 0
                           }}
                         />
@@ -617,9 +617,9 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                           gap: 10,
                           padding: '6px 12px',
                           borderRadius: 4,
-                          border: `1px solid ${active ? 'var(--cb-accent)' : 'var(--cb-border)'}`,
-                          background: active ? 'var(--cb-accent-subtle)' : 'transparent',
-                          color: active ? 'var(--cb-accent)' : 'var(--cb-text-secondary)',
+                          border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                          background: active ? 'var(--ember-glow)' : 'transparent',
+                          color: active ? 'var(--accent)' : 'var(--bone-200)',
                           fontFamily: 'monospace',
                           fontSize: 11,
                           cursor: 'pointer',
@@ -631,7 +631,7 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                             width: 8,
                             height: 8,
                             borderRadius: '50%',
-                            background: active ? 'var(--cb-accent)' : 'var(--cb-border-strong)',
+                            background: active ? 'var(--accent)' : 'var(--border-strong)',
                             flexShrink: 0
                           }}
                         />
@@ -657,13 +657,13 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                       onChange={(e): void =>
                         handleSettingChange('showScanErrorBadges', e.target.checked)
                       }
-                      style={{ accentColor: 'var(--cb-accent)', cursor: 'pointer' }}
+                      style={{ accentColor: 'var(--accent)', cursor: 'pointer' }}
                     />
                     <span
                       style={{
                         fontFamily: 'monospace',
                         fontSize: 11,
-                        color: 'var(--cb-text-secondary)'
+                        color: 'var(--bone-200)'
                       }}
                     >
                       Show error badges in sidebar when a service scan fails
@@ -680,13 +680,13 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                       type="checkbox"
                       checked={settings.notifyOnDrift}
                       onChange={(e): void => handleSettingChange('notifyOnDrift', e.target.checked)}
-                      style={{ accentColor: 'var(--cb-accent)', cursor: 'pointer' }}
+                      style={{ accentColor: 'var(--accent)', cursor: 'pointer' }}
                     />
                     <span
                       style={{
                         fontFamily: 'monospace',
                         fontSize: 11,
-                        color: 'var(--cb-text-secondary)'
+                        color: 'var(--bone-200)'
                       }}
                     >
                       Notify when drift is detected

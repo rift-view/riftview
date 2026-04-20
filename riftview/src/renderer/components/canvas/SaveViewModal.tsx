@@ -33,8 +33,8 @@ export function SaveViewModal({ slot, initialName, onSave, onCancel }: Props): R
     >
       <div
         style={{
-          background: 'var(--cb-bg-elevated)',
-          border: '1px solid var(--cb-border-strong)',
+          background: 'var(--ink-850)',
+          border: '1px solid var(--border-strong)',
           borderRadius: '6px',
           padding: '20px 24px',
           minWidth: '280px',
@@ -42,7 +42,7 @@ export function SaveViewModal({ slot, initialName, onSave, onCancel }: Props): R
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ fontSize: 13, color: 'var(--cb-text)', marginBottom: 12 }}>
+        <div style={{ fontSize: 13, color: 'var(--fg)', marginBottom: 12 }}>
           Save View — Slot {slot + 1}
         </div>
         <input
@@ -59,10 +59,10 @@ export function SaveViewModal({ slot, initialName, onSave, onCancel }: Props): R
           style={{
             width: '100%',
             boxSizing: 'border-box',
-            background: 'var(--cb-bg)',
-            border: '1px solid var(--cb-border-strong)',
+            background: 'var(--bg)',
+            border: '1px solid var(--border-strong)',
             borderRadius: '3px',
-            color: 'var(--cb-text)',
+            color: 'var(--fg)',
             fontFamily: 'monospace',
             fontSize: '12px',
             padding: '5px 8px',
@@ -76,8 +76,8 @@ export function SaveViewModal({ slot, initialName, onSave, onCancel }: Props): R
             style={{
               ...btnBase,
               background: 'transparent',
-              border: '1px solid var(--cb-border)',
-              color: 'var(--cb-text-secondary)'
+              border: '1px solid var(--border)',
+              color: 'var(--bone-200)'
             }}
           >
             Cancel
@@ -86,9 +86,9 @@ export function SaveViewModal({ slot, initialName, onSave, onCancel }: Props): R
             onClick={() => onSave(name)}
             style={{
               ...btnBase,
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-accent)',
-              color: 'var(--cb-accent)'
+              background: 'var(--ink-850)',
+              border: '1px solid var(--accent)',
+              color: 'var(--accent)'
             }}
           >
             Save

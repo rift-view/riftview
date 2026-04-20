@@ -17,9 +17,9 @@ export function KeyboardHelpButton(): React.JSX.Element {
         width: 24,
         height: 24,
         borderRadius: 12,
-        background: 'var(--cb-bg-elevated)',
-        border: '1px solid var(--cb-border)',
-        color: 'var(--cb-text-muted)',
+        background: 'var(--ink-850)',
+        border: '1px solid var(--border)',
+        color: 'var(--fg-muted)',
         fontFamily: 'monospace',
         fontSize: 12,
         fontWeight: 700,
@@ -34,11 +34,11 @@ export function KeyboardHelpButton(): React.JSX.Element {
       }}
       onMouseEnter={(e) => {
         ;(e.currentTarget as HTMLButtonElement).style.opacity = '1'
-        ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--cb-accent)'
+        ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--accent)'
       }}
       onMouseLeave={(e) => {
         ;(e.currentTarget as HTMLButtonElement).style.opacity = '0.6'
-        ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--cb-text-muted)'
+        ;(e.currentTarget as HTMLButtonElement).style.color = 'var(--fg-muted)'
       }}
     >
       ?

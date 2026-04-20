@@ -19,8 +19,8 @@ export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
   }
 
   const dialog: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)',
-    border: '1px solid var(--cb-border-strong)',
+    background: 'var(--ink-900)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 8,
     padding: '28px 32px',
     width: 380,
@@ -45,7 +45,7 @@ export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
           style={{
             fontSize: 22,
             fontWeight: 700,
-            color: 'var(--cb-accent)',
+            color: 'var(--accent)',
             letterSpacing: '0.04em',
             marginBottom: 6
           }}
@@ -54,26 +54,26 @@ export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
         </div>
 
         {/* Tagline */}
-        <div style={{ fontSize: 12, color: 'var(--cb-text-secondary)', marginBottom: 4 }}>
+        <div style={{ fontSize: 12, color: 'var(--bone-200)', marginBottom: 4 }}>
           Visual AWS infrastructure — scan, visualize, build.
         </div>
 
         {/* Version */}
-        <div style={{ fontSize: 11, color: 'var(--cb-text-muted)', marginBottom: 16 }}>
+        <div style={{ fontSize: 11, color: 'var(--fg-muted)', marginBottom: 16 }}>
           v{APP_VERSION}
         </div>
 
         {/* GitHub */}
-        <div style={{ fontSize: 11, color: 'var(--cb-text-secondary)', marginBottom: 18 }}>
+        <div style={{ fontSize: 11, color: 'var(--bone-200)', marginBottom: 18 }}>
           github.com/juliushamm/riftview
         </div>
 
         {/* Separator */}
-        <div style={{ borderTop: '1px solid var(--cb-border)', marginBottom: 14 }} />
+        <div style={{ borderTop: '1px solid var(--border)', marginBottom: 14 }} />
 
         {/* Disclaimer */}
         <div
-          style={{ fontSize: 9, color: 'var(--cb-text-muted)', lineHeight: 1.6, marginBottom: 22 }}
+          style={{ fontSize: 9, color: 'var(--fg-muted)', lineHeight: 1.6, marginBottom: 22 }}
         >
           Not affiliated with, endorsed by, or sponsored by Amazon Web Services. AWS and all related
           marks are trademarks of Amazon.com, Inc.
@@ -85,11 +85,11 @@ export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
             autoFocus
             onClick={onClose}
             style={{
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-border)',
+              background: 'var(--ink-850)',
+              border: '1px solid var(--border)',
               borderRadius: 4,
               padding: '4px 18px',
-              color: 'var(--cb-text-secondary)',
+              color: 'var(--bone-200)',
               fontFamily: 'monospace',
               fontSize: 11,
               cursor: 'pointer'

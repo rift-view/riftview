@@ -327,8 +327,8 @@ export function CreateModal(): React.JSX.Element | null {
     zIndex: 500
   }
   const modalStyle: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)',
-    border: '1px solid var(--cb-accent)',
+    background: 'var(--ink-900)',
+    border: '1px solid var(--accent)',
     borderRadius: '6px',
     padding: '16px',
     width: '420px',
@@ -349,11 +349,11 @@ export function CreateModal(): React.JSX.Element | null {
       <div style={modalStyle}>
         <div
           style={{
-            color: 'var(--cb-accent)',
+            color: 'var(--accent)',
             fontSize: '12px',
             fontWeight: 'bold',
             marginBottom: '14px',
-            borderBottom: '1px solid var(--cb-border-strong)',
+            borderBottom: '1px solid var(--border-strong)',
             paddingBottom: '8px'
           }}
         >
@@ -434,16 +434,16 @@ export function CreateModal(): React.JSX.Element | null {
             gap: '8px',
             marginTop: '16px',
             paddingTop: '10px',
-            borderTop: '1px solid var(--cb-border-strong)'
+            borderTop: '1px solid var(--border-strong)'
           }}
         >
           <button
             onClick={handleCancel}
             style={{
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-border)',
+              background: 'var(--ink-850)',
+              border: '1px solid var(--border)',
               borderRadius: '3px',
-              color: 'var(--cb-text-secondary)',
+              color: 'var(--bone-200)',
               cursor: 'pointer',
               fontSize: '10px',
               padding: '4px 10px',
@@ -455,8 +455,8 @@ export function CreateModal(): React.JSX.Element | null {
           <button
             onClick={handleRun}
             style={{
-              background: 'var(--cb-accent)',
-              border: '1px solid var(--cb-accent)',
+              background: 'var(--accent)',
+              border: '1px solid var(--accent)',
               borderRadius: '3px',
               color: '#000',
               cursor: 'pointer',

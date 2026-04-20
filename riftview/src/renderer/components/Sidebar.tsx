@@ -207,14 +207,14 @@ export function Sidebar(): React.JSX.Element {
   return (
     <div
       className="flex flex-col py-2 overflow-y-auto h-full"
-      style={{ background: 'var(--cb-bg-panel)', borderRight: '1px solid var(--cb-border-strong)' }}
+      style={{ background: 'var(--ink-900)', borderRight: '1px solid var(--border-strong)' }}
     >
       {nodes.length === 0 && (
         <div className="px-2.5 mt-2 mb-3" style={{ fontFamily: 'monospace' }}>
-          <div className="text-[8px] leading-relaxed" style={{ color: 'var(--cb-text-muted)' }}>
+          <div className="text-[8px] leading-relaxed" style={{ color: 'var(--fg-muted)' }}>
             Scan your AWS account to get started.
           </div>
-          <div className="text-[7px] mt-1" style={{ color: 'var(--cb-text-muted)', opacity: 0.6 }}>
+          <div className="text-[7px] mt-1" style={{ color: 'var(--fg-muted)', opacity: 0.6 }}>
             Click ⟳ Scan in the toolbar
           </div>
         </div>

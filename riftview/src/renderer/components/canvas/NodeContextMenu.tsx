@@ -39,8 +39,8 @@ export default function NodeContextMenu({
     position: 'fixed',
     left: x,
     top: y,
-    background: 'var(--cb-bg-panel)',
-    border: '1px solid var(--cb-border)',
+    background: 'var(--ink-900)',
+    border: '1px solid var(--border)',
     borderRadius: 4,
     padding: '4px 0',
     fontFamily: 'monospace',
@@ -51,7 +51,7 @@ export default function NodeContextMenu({
   const item: React.CSSProperties = {
     padding: '5px 14px',
     cursor: 'pointer',
-    color: 'var(--cb-text-primary)'
+    color: 'var(--fg)'
   }
   const itemRed: React.CSSProperties = { ...item, color: '#ff5f57' }
 
@@ -70,10 +70,10 @@ export default function NodeContextMenu({
         <div
           style={{
             padding: '3px 14px 5px',
-            color: 'var(--cb-text-muted)',
+            color: 'var(--fg-muted)',
             fontSize: 9,
             textTransform: 'uppercase',
-            borderBottom: '1px solid var(--cb-border-strong)',
+            borderBottom: '1px solid var(--border-strong)',
             marginBottom: 2
           }}
         >
@@ -81,7 +81,7 @@ export default function NodeContextMenu({
         </div>
         <div
           style={item}
-          onMouseOver={(e) => (e.currentTarget.style.background = 'var(--cb-bg-elevated)')}
+          onMouseOver={(e) => (e.currentTarget.style.background = 'var(--ink-850)')}
           onMouseOut={(e) => (e.currentTarget.style.background = '')}
           onClick={handleClick(() => onEdit(node))}
         >
@@ -90,7 +90,7 @@ export default function NodeContextMenu({
         {showStopStart && node.status === 'running' && onStop && (
           <div
             style={item}
-            onMouseOver={(e) => (e.currentTarget.style.background = 'var(--cb-bg-elevated)')}
+            onMouseOver={(e) => (e.currentTarget.style.background = 'var(--ink-850)')}
             onMouseOut={(e) => (e.currentTarget.style.background = '')}
             onClick={handleClick(() => onStop(node))}
           >
@@ -100,17 +100,17 @@ export default function NodeContextMenu({
         {showStopStart && node.status === 'stopped' && onStart && (
           <div
             style={item}
-            onMouseOver={(e) => (e.currentTarget.style.background = 'var(--cb-bg-elevated)')}
+            onMouseOver={(e) => (e.currentTarget.style.background = 'var(--ink-850)')}
             onMouseOut={(e) => (e.currentTarget.style.background = '')}
             onClick={handleClick(() => onStart(node))}
           >
             ▶ Start {label}
           </div>
         )}
-        <div style={{ borderTop: '1px solid var(--cb-border-strong)', marginTop: 2 }} />
+        <div style={{ borderTop: '1px solid var(--border-strong)', marginTop: 2 }} />
         <div
           style={itemRed}
-          onMouseOver={(e) => (e.currentTarget.style.background = 'var(--cb-bg-elevated)')}
+          onMouseOver={(e) => (e.currentTarget.style.background = 'var(--ink-850)')}
           onMouseOut={(e) => (e.currentTarget.style.background = '')}
           onClick={handleClick(() => onDelete(node))}
         >

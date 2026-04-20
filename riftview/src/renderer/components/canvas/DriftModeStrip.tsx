@@ -57,8 +57,8 @@ export function DriftModeStrip(): React.JSX.Element | null {
           title={driftFilterActive ? 'Show all nodes' : 'Show only drifted nodes'}
           style={{
             ...btn,
-            border: `1px solid ${driftFilterActive ? '#ef4444' : 'var(--cb-border)'}`,
-            color: driftFilterActive ? '#ef4444' : 'var(--cb-text-muted)'
+            border: `1px solid ${driftFilterActive ? '#ef4444' : 'var(--border)'}`,
+            color: driftFilterActive ? '#ef4444' : 'var(--fg-muted)'
           }}
         >
           ⊘ Drift only
@@ -68,7 +68,7 @@ export function DriftModeStrip(): React.JSX.Element | null {
             void handleClear()
           }}
           title="Clear imported Terraform state"
-          style={{ ...btn, border: '1px solid var(--cb-border)', color: '#f59e0b' }}
+          style={{ ...btn, border: '1px solid var(--border)', color: '#f59e0b' }}
         >
           Clear TF ×
         </button>

@@ -27,7 +27,7 @@ export default function S3EditForm({ node, onChange }: Props): React.JSX.Element
             emit({ versioning: e.target.checked })
           }}
         />
-        <span style={{ fontSize: 10, color: 'var(--cb-text-secondary)' }}>Versioning</span>
+        <span style={{ fontSize: 10, color: 'var(--bone-200)' }}>Versioning</span>
       </label>
       <label style={row}>
         <input
@@ -38,7 +38,7 @@ export default function S3EditForm({ node, onChange }: Props): React.JSX.Element
             emit({ blockPublicAccess: e.target.checked })
           }}
         />
-        <span style={{ fontSize: 10, color: 'var(--cb-text-secondary)' }}>Block public access</span>
+        <span style={{ fontSize: 10, color: 'var(--bone-200)' }}>Block public access</span>
       </label>
     </div>
   )

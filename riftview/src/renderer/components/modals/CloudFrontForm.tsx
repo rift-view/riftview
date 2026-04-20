@@ -9,11 +9,11 @@ interface Props {
 
 const inp = (err: boolean): React.CSSProperties => ({
   width: '100%',
-  background: 'var(--cb-bg-panel)',
-  border: `1px solid ${err ? '#ff5f57' : 'var(--cb-border)'}`,
+  background: 'var(--ink-900)',
+  border: `1px solid ${err ? '#ff5f57' : 'var(--border)'}`,
   borderRadius: 3,
   padding: '3px 6px',
-  color: 'var(--cb-text-primary)',
+  color: 'var(--fg)',
   fontFamily: 'monospace',
   fontSize: 10,
   boxSizing: 'border-box' as const
@@ -21,17 +21,17 @@ const inp = (err: boolean): React.CSSProperties => ({
 const sel = inp
 const lbl: React.CSSProperties = {
   fontSize: 9,
-  color: 'var(--cb-text-muted)',
+  color: 'var(--fg-muted)',
   textTransform: 'uppercase',
   marginBottom: 2,
   marginTop: 8
 }
 const btnSm: React.CSSProperties = {
-  background: 'var(--cb-bg-elevated)',
-  border: '1px solid var(--cb-border)',
+  background: 'var(--ink-850)',
+  border: '1px solid var(--border)',
   borderRadius: 2,
   padding: '2px 6px',
-  color: 'var(--cb-text-muted)',
+  color: 'var(--fg-muted)',
   fontFamily: 'monospace',
   fontSize: 9,
   cursor: 'pointer'

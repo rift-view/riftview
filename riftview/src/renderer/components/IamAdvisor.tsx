@@ -48,20 +48,20 @@ function FindingRow({ finding }: { finding: IamFinding }): React.JSX.Element {
         >
           {SEVERITY_LABEL[finding.severity]}
         </span>
-        <span style={{ fontSize: 11, color: 'var(--cb-text-primary)', flex: 1 }}>
+        <span style={{ fontSize: 11, color: 'var(--fg)', flex: 1 }}>
           {finding.title}
         </span>
         {finding.statement && (
-          <span style={{ fontSize: 9, color: 'var(--cb-text-muted)' }}>{expanded ? '▲' : '▼'}</span>
+          <span style={{ fontSize: 9, color: 'var(--fg-muted)' }}>{expanded ? '▲' : '▼'}</span>
         )}
       </div>
       {finding.policyName && (
-        <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginTop: 2 }}>
+        <div style={{ fontSize: 9, color: 'var(--fg-muted)', marginTop: 2 }}>
           Policy: {finding.policyName}
         </div>
       )}
       {finding.detail && (
-        <div style={{ fontSize: 10, color: 'var(--cb-text-muted)', marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: 'var(--fg-muted)', marginTop: 2 }}>
           {finding.detail}
         </div>
       )}
@@ -69,13 +69,13 @@ function FindingRow({ finding }: { finding: IamFinding }): React.JSX.Element {
         <pre
           style={{
             fontSize: 9,
-            background: 'var(--cb-bg-secondary)',
+            background: 'var(--bg-elev-2)',
             padding: '6px 8px',
             borderRadius: 4,
             marginTop: 4,
             overflowX: 'auto',
             maxHeight: 200,
-            color: 'var(--cb-text-muted)'
+            color: 'var(--fg-muted)'
           }}
         >
           {JSON.stringify(JSON.parse(finding.statement), null, 2)}
@@ -107,7 +107,7 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
   }
 
   return (
-    <div style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}>
+    <div style={{ marginTop: 12, borderTop: '1px solid var(--border-strong)', paddingTop: 8 }}>
       {/* Section header with toggle */}
       <button
         onClick={() => setOpen((o) => !o)}
@@ -124,12 +124,12 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
         }}
         aria-expanded={open}
       >
-        <span style={{ fontSize: 9, color: 'var(--cb-text-muted)' }}>{open ? '▼' : '▶'}</span>
+        <span style={{ fontSize: 9, color: 'var(--fg-muted)' }}>{open ? '▼' : '▶'}</span>
         <span
           style={{
             fontSize: 8,
             fontWeight: 700,
-            color: 'var(--cb-text-muted)',
+            color: 'var(--fg-muted)',
             textTransform: 'uppercase',
             letterSpacing: '0.05em'
           }}
@@ -146,11 +146,11 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
               onClick={runAnalysis}
               style={{
                 width: '100%',
-                background: 'var(--cb-bg-elevated)',
-                border: '1px solid var(--cb-accent)',
+                background: 'var(--ink-850)',
+                border: '1px solid var(--accent)',
                 borderRadius: 2,
                 padding: '3px 0',
-                color: 'var(--cb-accent)',
+                color: 'var(--accent)',
                 fontFamily: 'monospace',
                 fontSize: 9,
                 cursor: 'pointer'
@@ -162,7 +162,7 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
 
           {/* Loading state */}
           {loading && (
-            <div style={{ fontSize: 11, color: 'var(--cb-text-muted)' }}>
+            <div style={{ fontSize: 11, color: 'var(--fg-muted)' }}>
               Analyzing IAM policies...
             </div>
           )}
@@ -207,7 +207,7 @@ export function IamAdvisor({ node }: IamAdvisorProps): React.JSX.Element {
                 marginTop: 6,
                 background: 'none',
                 border: 'none',
-                color: 'var(--cb-text-muted)',
+                color: 'var(--fg-muted)',
                 fontFamily: 'monospace',
                 fontSize: 9,
                 cursor: 'pointer',

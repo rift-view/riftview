@@ -139,7 +139,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
 
   if (nodes.length === 0 || !lastScannedAt) {
     return (
-      <div className="text-[9px] text-center mt-8" style={{ color: 'var(--cb-text-muted)' }}>
+      <div className="text-[9px] text-center mt-8" style={{ color: 'var(--fg-muted)' }}>
         {scanStatus === 'scanning' ? 'Scanning…' : 'Click a resource to inspect'}
       </div>
     )
@@ -184,9 +184,9 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
               fontSize: 9,
               fontWeight: 700,
               letterSpacing: '0.1em',
-              color: 'var(--cb-text-muted)',
+              color: 'var(--fg-muted)',
               marginBottom: 8,
-              borderBottom: '1px solid var(--cb-border)',
+              borderBottom: '1px solid var(--border)',
               paddingBottom: 6
             }}
           >
@@ -244,7 +244,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
           </div>
 
           {/* Resource count line */}
-          <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginBottom: 10 }}>
+          <div style={{ fontSize: 9, color: 'var(--fg-muted)', marginBottom: 10 }}>
             {nodes.length} resource{nodes.length !== 1 ? 's' : ''} scanned
           </div>
 
@@ -258,7 +258,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
               style={{
                 overflowY: 'auto',
                 maxHeight: 320,
-                border: '1px solid var(--cb-border)',
+                border: '1px solid var(--border)',
                 borderRadius: 3,
                 marginBottom: 10
               }}
@@ -272,7 +272,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                     gap: 6,
                     height: 28,
                     padding: '0 8px',
-                    borderBottom: '1px solid var(--cb-border)'
+                    borderBottom: '1px solid var(--border)'
                   }}
                 >
                   <span
@@ -290,7 +290,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                     style={{
                       fontSize: 9,
                       fontWeight: 700,
-                      color: 'var(--cb-text-primary)',
+                      color: 'var(--fg)',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -303,7 +303,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                   <span
                     style={{
                       fontSize: 8,
-                      color: 'var(--cb-text-muted)',
+                      color: 'var(--fg-muted)',
                       flexShrink: 0,
                       whiteSpace: 'nowrap'
                     }}
@@ -319,7 +319,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
               style={{
                 overflowY: 'auto',
                 maxHeight: 320,
-                border: '1px solid var(--cb-border)',
+                border: '1px solid var(--border)',
                 borderRadius: 3,
                 marginBottom: 10
               }}
@@ -339,12 +339,12 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                       gap: 6,
                       height: 28,
                       padding: '0 8px',
-                      borderBottom: '1px solid var(--cb-border)',
+                      borderBottom: '1px solid var(--border)',
                       cursor: 'pointer'
                     }}
                     onMouseEnter={(e) => {
                       ;(e.currentTarget as HTMLDivElement).style.background =
-                        'var(--cb-bg-elevated)'
+                        'var(--ink-850)'
                     }}
                     onMouseLeave={(e) => {
                       ;(e.currentTarget as HTMLDivElement).style.background = 'transparent'
@@ -366,7 +366,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                     <span
                       style={{
                         fontSize: 8,
-                        color: 'var(--cb-text-muted)',
+                        color: 'var(--fg-muted)',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -381,7 +381,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                       style={{
                         fontSize: 9,
                         fontWeight: 700,
-                        color: 'var(--cb-text-primary)',
+                        color: 'var(--fg)',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -403,7 +403,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                           cursor: 'pointer',
                           background: 'none',
                           border: 'none',
-                          color: 'var(--cb-accent)',
+                          color: 'var(--accent)',
                           flexShrink: 0,
                           padding: '0 2px'
                         }}
@@ -417,7 +417,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
             </div>
           )}
 
-          <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textAlign: 'center' }}>
+          <div style={{ fontSize: 8, color: 'var(--fg-muted)', textAlign: 'center' }}>
             Click a resource to inspect
           </div>
         </>
@@ -433,9 +433,9 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
               fontSize: 9,
               fontWeight: 700,
               letterSpacing: '0.1em',
-              color: 'var(--cb-text-muted)',
+              color: 'var(--fg-muted)',
               marginBottom: 8,
-              borderBottom: '1px solid var(--cb-border)',
+              borderBottom: '1px solid var(--border)',
               paddingBottom: 6
             }}
           >
@@ -448,7 +448,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                   padding: '1px 5px',
                   borderRadius: 3,
                   background: 'none',
-                  color: 'var(--cb-accent)',
+                  color: 'var(--accent)',
                   border: 'none',
                   cursor: 'pointer',
                   fontFamily: 'monospace',
@@ -473,7 +473,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
               <>
                 <div
                   style={{
-                    border: '1px solid var(--cb-border)',
+                    border: '1px solid var(--border)',
                     borderRadius: 3,
                     marginBottom: 8,
                     overflow: 'hidden'
@@ -491,12 +491,12 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                         onClick={() => selectNode(advisory.nodeId)}
                         style={{
                           padding: '7px 8px',
-                          borderBottom: isLast ? 'none' : '1px solid var(--cb-border)',
+                          borderBottom: isLast ? 'none' : '1px solid var(--border)',
                           cursor: 'pointer'
                         }}
                         onMouseEnter={(e) => {
                           ;(e.currentTarget as HTMLDivElement).style.background =
-                            'var(--cb-bg-elevated)'
+                            'var(--ink-850)'
                         }}
                         onMouseLeave={(e) => {
                           ;(e.currentTarget as HTMLDivElement).style.background = 'transparent'
@@ -542,7 +542,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                               style={{
                                 fontSize: 9,
                                 fontWeight: 700,
-                                color: 'var(--cb-text-primary)',
+                                color: 'var(--fg)',
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis'
@@ -564,7 +564,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                                 cursor: 'pointer',
                                 background: 'none',
                                 border: 'none',
-                                color: 'var(--cb-accent)',
+                                color: 'var(--accent)',
                                 flexShrink: 0,
                                 padding: '0 0 0 4px'
                               }}
@@ -577,7 +577,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                         <div
                           style={{
                             fontSize: 8,
-                            color: 'var(--cb-text-muted)',
+                            color: 'var(--fg-muted)',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -593,7 +593,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                 </div>
 
                 {/* Footer */}
-                <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', textAlign: 'center' }}>
+                <div style={{ fontSize: 8, color: 'var(--fg-muted)', textAlign: 'center' }}>
                   {topRisks.length} of {allAdvisories.length} advisor
                   {allAdvisories.length !== 1 ? 'ies' : 'y'} shown · {nodes.length} resource
                   {nodes.length !== 1 ? 's' : ''} scanned
@@ -719,7 +719,7 @@ export function Inspector({
 
   const btnBase: React.CSSProperties = {
     flex: 1,
-    background: 'var(--cb-bg-elevated)',
+    background: 'var(--ink-850)',
     borderRadius: 2,
     padding: '3px 0',
     fontFamily: 'monospace',
@@ -731,8 +731,8 @@ export function Inspector({
     <div
       className="p-3 overflow-y-auto h-full"
       style={{
-        background: 'var(--cb-bg-panel)',
-        borderLeft: '1px solid var(--cb-border-strong)',
+        background: 'var(--ink-900)',
+        borderLeft: '1px solid var(--border-strong)',
         fontFamily: 'monospace'
       }}
     >
@@ -740,15 +740,15 @@ export function Inspector({
         <>
           <div
             className="text-[9px] font-bold mb-2 pb-1"
-            style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}
+            style={{ color: 'var(--accent)', borderBottom: '1px solid var(--border-strong)' }}
           >
             EDGE · Selected
           </div>
           <div className="mb-3">
-            <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+            <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
               TYPE
             </div>
-            <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
+            <div className="text-[9px] break-all" style={{ color: 'var(--fg)' }}>
               {edgeTypeLabel(selectedEdgeInfo.id, selectedEdgeInfo.data)}
             </div>
           </div>
@@ -762,27 +762,27 @@ export function Inspector({
             return (
               <>
                 <div className="mb-3">
-                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
                     SOURCE
                   </div>
-                  <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
+                  <div className="text-[9px] break-all" style={{ color: 'var(--fg)' }}>
                     {srcNode ? srcNode.label : selectedEdgeInfo.source}
                   </div>
                   {srcNode && (
-                    <div className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    <div className="text-[8px]" style={{ color: 'var(--fg-muted)' }}>
                       {srcNode.type.toUpperCase()}
                     </div>
                   )}
                 </div>
                 <div className="mb-3">
-                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
                     TARGET
                   </div>
-                  <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
+                  <div className="text-[9px] break-all" style={{ color: 'var(--fg)' }}>
                     {tgtNode ? tgtNode.label : selectedEdgeInfo.target}
                   </div>
                   {tgtNode && (
-                    <div className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    <div className="text-[8px]" style={{ color: 'var(--fg-muted)' }}>
                       {tgtNode.type.toUpperCase()}
                     </div>
                   )}
@@ -795,15 +795,15 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px'
                 }}
               >
                 CUSTOM EDGE
               </div>
               <div className="mb-2">
-                <div className="text-[7px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+                <div className="text-[7px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
                   LABEL
                 </div>
                 <input
@@ -817,9 +817,9 @@ export function Inspector({
                     fontSize: 9,
                     fontFamily: 'monospace',
                     width: '100%',
-                    background: 'var(--cb-bg-elevated)',
-                    border: '1px solid var(--cb-border)',
-                    color: 'var(--cb-text-primary)',
+                    background: 'var(--ink-850)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--fg)',
                     borderRadius: 3,
                     padding: '2px 5px',
                     outline: 'none'
@@ -856,8 +856,8 @@ export function Inspector({
                     <div
                       className="text-[8px] mb-2"
                       style={{
-                        color: 'var(--cb-text-muted)',
-                        borderTop: '1px solid var(--cb-border-strong)',
+                        color: 'var(--fg-muted)',
+                        borderTop: '1px solid var(--border-strong)',
                         paddingTop: '6px',
                         marginTop: 16,
                         marginBottom: 6
@@ -869,12 +869,12 @@ export function Inspector({
                       .filter(([k]) => k !== 'isIntegration')
                       .map(([k, v]) => (
                         <div key={k} className="mb-1.5">
-                          <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                          <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                             {fieldLabel(k)}
                           </div>
                           <div
                             className="text-[8px] break-all"
-                            style={{ color: 'var(--cb-text-secondary)' }}
+                            style={{ color: 'var(--bone-200)' }}
                           >
                             {String(v ?? '—')}
                           </div>
@@ -884,10 +884,10 @@ export function Inspector({
                 )}
               {selectedEdgeInfo.label && (
                 <div className="mb-3">
-                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+                  <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
                     LABEL
                   </div>
-                  <div className="text-[9px]" style={{ color: 'var(--cb-text-primary)' }}>
+                  <div className="text-[9px]" style={{ color: 'var(--fg)' }}>
                     {selectedEdgeInfo.label}
                   </div>
                 </div>
@@ -1029,17 +1029,17 @@ export function Inspector({
                             borderRadius: 3,
                             cursor: 'pointer',
                             fontSize: 9,
-                            background: m.id === selectedId ? 'var(--cb-bg-hover)' : undefined
+                            background: m.id === selectedId ? 'var(--ink-800)' : undefined
                           }}
                         >
                           <span
-                            style={{ color: 'var(--cb-text-muted)', fontSize: 8, minWidth: 20 }}
+                            style={{ color: 'var(--fg-muted)', fontSize: 8, minWidth: 20 }}
                           >
                             h{m.hop}
                           </span>
                           <span
                             style={{
-                              color: 'var(--cb-text-primary)',
+                              color: 'var(--fg)',
                               flex: 1,
                               overflow: 'hidden',
                               textOverflow: 'ellipsis'
@@ -1047,13 +1047,13 @@ export function Inspector({
                           >
                             {n?.label ?? m.id}
                           </span>
-                          <span style={{ color: 'var(--cb-text-muted)', fontSize: 8 }}>
+                          <span style={{ color: 'var(--fg-muted)', fontSize: 8 }}>
                             {n?.type ?? ''}
                           </span>
                           {m.edgeTypes.length > 0 && (
                             <span
                               style={{
-                                color: 'var(--cb-text-muted)',
+                                color: 'var(--fg-muted)',
                                 fontSize: 8,
                                 fontStyle: 'italic'
                               }}
@@ -1132,13 +1132,13 @@ export function Inspector({
                       </button>
                     </div>
                   </div>
-                  <div style={{ fontSize: 9, color: 'var(--cb-text-secondary)', marginBottom: 6 }}>
+                  <div style={{ fontSize: 9, color: 'var(--bone-200)', marginBottom: 6 }}>
                     ↑{result.upstreamCount} upstream · ↓{result.downstreamCount} downstream · max{' '}
                     {result.maxHops} hop{result.maxHops === 1 ? '' : 's'}
                   </div>
                   {result.members.size === 1 ? (
                     <div
-                      style={{ fontSize: 9, color: 'var(--cb-text-muted)', fontStyle: 'italic' }}
+                      style={{ fontSize: 9, color: 'var(--fg-muted)', fontStyle: 'italic' }}
                     >
                       No known dependencies. This node has no integration edges.
                     </div>
@@ -1150,7 +1150,7 @@ export function Inspector({
                       <div
                         style={{
                           fontSize: 8,
-                          color: 'var(--cb-text-muted)',
+                          color: 'var(--fg-muted)',
                           marginTop: 4,
                           fontStyle: 'italic'
                         }}
@@ -1220,7 +1220,7 @@ export function Inspector({
                               style={{
                                 fontFamily: 'monospace',
                                 fontSize: 8,
-                                color: 'var(--cb-text-secondary)',
+                                color: 'var(--bone-200)',
                                 background: 'rgba(0,0,0,0.3)',
                                 borderRadius: 2,
                                 padding: '2px 5px',
@@ -1275,7 +1275,7 @@ export function Inspector({
                     </>
                   ) : (
                     <div
-                      style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}
+                      style={{ color: 'var(--fg-muted)', fontSize: 9, fontStyle: 'italic' }}
                     >
                       Manual remediation required — diff contains unsupported field types.
                     </div>
@@ -1322,7 +1322,7 @@ export function Inspector({
                 {advisoriesExpanded &&
                   (advisories.length === 0 ? (
                     <div
-                      style={{ color: 'var(--cb-text-muted)', fontSize: 9, fontStyle: 'italic' }}
+                      style={{ color: 'var(--fg-muted)', fontSize: 9, fontStyle: 'italic' }}
                     >
                       No issues detected
                     </div>
@@ -1371,7 +1371,7 @@ export function Inspector({
                                     style={{
                                       fontSize: 9,
                                       fontWeight: 600,
-                                      color: 'var(--cb-text-primary)'
+                                      color: 'var(--fg)'
                                     }}
                                   >
                                     {a.title}
@@ -1380,7 +1380,7 @@ export function Inspector({
                                 <div
                                   style={{
                                     fontSize: 8,
-                                    color: 'var(--cb-text-secondary)',
+                                    color: 'var(--bone-200)',
                                     lineHeight: 1.5
                                   }}
                                 >
@@ -1431,7 +1431,7 @@ export function Inspector({
                 fontFamily: 'monospace',
                 fontSize: 8,
                 cursor: disabled ? 'default' : 'pointer',
-                color: 'var(--cb-text-muted)',
+                color: 'var(--fg-muted)',
                 opacity: disabled ? 0.35 : 1,
                 padding: '2px 4px'
               })
@@ -1443,12 +1443,12 @@ export function Inspector({
                     justifyContent: 'space-between',
                     fontSize: 8,
                     fontFamily: 'monospace',
-                    color: 'var(--cb-text-muted)',
+                    color: 'var(--fg-muted)',
                     marginBottom: 8,
                     padding: '4px 6px',
                     borderRadius: 3,
                     background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid var(--cb-border)'
+                    border: '1px solid var(--border)'
                   }}
                 >
                   <button
@@ -1458,7 +1458,7 @@ export function Inspector({
                   >
                     ← Prev
                   </button>
-                  <span style={{ fontSize: 8, color: 'var(--cb-text-muted)' }}>
+                  <span style={{ fontSize: 8, color: 'var(--fg-muted)' }}>
                     {currentIdx + 1} / {sorted.length} nodes with issues
                   </span>
                   <button
@@ -1475,7 +1475,7 @@ export function Inspector({
           {/* node type header */}
           <div
             className="text-[9px] font-bold mb-2 pb-1"
-            style={{ color: 'var(--cb-accent)', borderBottom: '1px solid var(--cb-border-strong)' }}
+            style={{ color: 'var(--accent)', borderBottom: '1px solid var(--border-strong)' }}
           >
             {node.type.toUpperCase()} · Selected
           </div>
@@ -1486,10 +1486,10 @@ export function Inspector({
               style={{
                 padding: '6px 10px',
                 borderRadius: 4,
-                background: 'var(--cb-bg-secondary)',
-                border: '1px solid var(--cb-border)',
+                background: 'var(--bg-elev-2)',
+                border: '1px solid var(--border)',
                 fontSize: 11,
-                color: 'var(--cb-text-muted)',
+                color: 'var(--fg-muted)',
                 marginBottom: 8
               }}
             >
@@ -1509,11 +1509,11 @@ export function Inspector({
             style={{
               width: '100%',
               marginBottom: 8,
-              background: 'var(--cb-bg-elevated)',
-              border: `1px solid ${lockedNodes.has(node.id) ? '#febc2e' : 'var(--cb-border)'}`,
+              background: 'var(--ink-850)',
+              border: `1px solid ${lockedNodes.has(node.id) ? '#febc2e' : 'var(--border)'}`,
               borderRadius: 2,
               padding: '3px 0',
-              color: lockedNodes.has(node.id) ? '#febc2e' : 'var(--cb-text-muted)',
+              color: lockedNodes.has(node.id) ? '#febc2e' : 'var(--fg-muted)',
               fontFamily: 'monospace',
               fontSize: 9,
               cursor: 'pointer'
@@ -1531,10 +1531,10 @@ export function Inspector({
                 onClick={() => window.open(consoleUrl, '_blank')}
                 style={{
                   width: '100%',
-                  background: 'var(--cb-bg-elevated)',
-                  border: '1px solid var(--cb-border)',
+                  background: 'var(--ink-850)',
+                  border: '1px solid var(--border)',
                   borderRadius: 3,
-                  color: 'var(--cb-text-muted)',
+                  color: 'var(--fg-muted)',
                   fontFamily: 'monospace',
                   fontSize: 9,
                   cursor: 'pointer',
@@ -1556,7 +1556,7 @@ export function Inspector({
           ].map(({ key, val }) => (
             <div key={key} className="mb-3">
               <div className="flex items-center gap-1 mb-0.5">
-                <span className="text-[8px]" style={{ color: 'var(--cb-text-muted)' }}>
+                <span className="text-[8px]" style={{ color: 'var(--fg-muted)' }}>
                   {key}
                 </span>
                 {key === 'ID' && (
@@ -1567,7 +1567,7 @@ export function Inspector({
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: 'var(--cb-text-muted)',
+                      color: 'var(--fg-muted)',
                       fontSize: 8,
                       padding: '0 1px',
                       lineHeight: 1
@@ -1577,14 +1577,14 @@ export function Inspector({
                   </button>
                 )}
               </div>
-              <div className="text-[9px] break-all" style={{ color: 'var(--cb-text-primary)' }}>
+              <div className="text-[9px] break-all" style={{ color: 'var(--fg)' }}>
                 {redact(val)}
               </div>
             </div>
           ))}
 
           <div className="mb-3">
-            <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+            <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
               STATE
             </div>
             <div className="flex items-center gap-1">
@@ -1599,10 +1599,10 @@ export function Inspector({
           </div>
 
           <div className="mb-3">
-            <div className="text-[8px] mb-0.5" style={{ color: 'var(--cb-text-muted)' }}>
+            <div className="text-[8px] mb-0.5" style={{ color: 'var(--fg-muted)' }}>
               EST. COST
             </div>
-            <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', marginTop: 2 }}>
+            <div style={{ fontSize: 9, color: 'var(--fg-muted)', marginTop: 2 }}>
               {formatPrice(getMonthlyEstimate(node.type, node.region ?? 'us-east-1'))}
             </div>
           </div>
@@ -1613,8 +1613,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -1628,12 +1628,12 @@ export function Inspector({
                 { k: 'inUseBy', v: `${(node.metadata.inUseBy as string[]).length} resource(s)` }
               ].map(({ k, v }) => (
                 <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" title={k} style={{ color: 'var(--cb-text-muted)' }}>
+                  <div className="text-[7px]" title={k} style={{ color: 'var(--fg-muted)' }}>
                     {fieldLabel(k)}
                   </div>
                   <div
                     className="text-[8px] break-all"
-                    style={{ color: 'var(--cb-text-secondary)' }}
+                    style={{ color: 'var(--bone-200)' }}
                   >
                     {v ?? '—'}
                   </div>
@@ -1647,18 +1647,18 @@ export function Inspector({
                   <div style={{ marginTop: 8 }}>
                     <div
                       className="text-[8px] mb-1"
-                      style={{ color: 'var(--cb-text-muted)', textTransform: 'uppercase' }}
+                      style={{ color: 'var(--fg-muted)', textTransform: 'uppercase' }}
                     >
                       DNS Validation CNAMEs
                     </div>
                     {(node.metadata.cnameRecords as Array<{ name: string; value: string }>).map(
                       (rec, i) => (
                         <div key={i} style={{ marginBottom: 6, fontSize: 8 }}>
-                          <div style={{ color: 'var(--cb-text-muted)', marginBottom: 1 }}>Name</div>
+                          <div style={{ color: 'var(--fg-muted)', marginBottom: 1 }}>Name</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                             <span
                               style={{
-                                color: 'var(--cb-text-secondary)',
+                                color: 'var(--bone-200)',
                                 wordBreak: 'break-all',
                                 flex: 1
                               }}
@@ -1671,8 +1671,8 @@ export function Inspector({
                                 ...btnBase,
                                 flex: 'none',
                                 padding: '1px 4px',
-                                border: '1px solid var(--cb-border)',
-                                color: 'var(--cb-text-muted)',
+                                border: '1px solid var(--border)',
+                                color: 'var(--fg-muted)',
                                 fontSize: 8
                               }}
                             >
@@ -1680,14 +1680,14 @@ export function Inspector({
                             </button>
                           </div>
                           <div
-                            style={{ color: 'var(--cb-text-muted)', marginBottom: 1, marginTop: 3 }}
+                            style={{ color: 'var(--fg-muted)', marginBottom: 1, marginTop: 3 }}
                           >
                             Value
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                             <span
                               style={{
-                                color: 'var(--cb-text-secondary)',
+                                color: 'var(--bone-200)',
                                 wordBreak: 'break-all',
                                 flex: 1
                               }}
@@ -1700,8 +1700,8 @@ export function Inspector({
                                 ...btnBase,
                                 flex: 'none',
                                 padding: '1px 4px',
-                                border: '1px solid var(--cb-border)',
-                                color: 'var(--cb-text-muted)',
+                                border: '1px solid var(--border)',
+                                color: 'var(--fg-muted)',
                                 fontSize: 8
                               }}
                             >
@@ -1745,8 +1745,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -1762,12 +1762,12 @@ export function Inspector({
                 { k: 'defaultRootObject', v: (node.metadata.defaultRootObject as string) || '—' }
               ].map(({ k, v }) => (
                 <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" title={k} style={{ color: 'var(--cb-text-muted)' }}>
+                  <div className="text-[7px]" title={k} style={{ color: 'var(--fg-muted)' }}>
                     {fieldLabel(k)}
                   </div>
                   <div
                     className="text-[8px] break-all"
-                    style={{ color: 'var(--cb-text-secondary)' }}
+                    style={{ color: 'var(--bone-200)' }}
                   >
                     {v}
                   </div>
@@ -1796,7 +1796,7 @@ export function Inspector({
                     <div
                       style={{
                         fontSize: 8,
-                        color: 'var(--cb-text-muted)',
+                        color: 'var(--fg-muted)',
                         textTransform: 'uppercase',
                         marginBottom: 4
                       }}
@@ -1808,11 +1808,11 @@ export function Inspector({
                       onChange={(e) => setInvalidatePath(e.target.value)}
                       style={{
                         width: '100%',
-                        background: 'var(--cb-bg-panel)',
-                        border: '1px solid var(--cb-border)',
+                        background: 'var(--ink-900)',
+                        border: '1px solid var(--border)',
                         borderRadius: 2,
                         padding: '2px 5px',
-                        color: 'var(--cb-text-primary)',
+                        color: 'var(--fg)',
                         fontFamily: 'monospace',
                         fontSize: 9,
                         boxSizing: 'border-box'
@@ -1842,8 +1842,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -1852,13 +1852,13 @@ export function Inspector({
                 METADATA
               </div>
               <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                   ENDPOINT
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span
                     className="text-[8px] break-all"
-                    style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
+                    style={{ color: 'var(--bone-200)', flex: 1 }}
                   >
                     {(node.metadata.endpoint as string) || '—'}
                   </span>
@@ -1868,11 +1868,11 @@ export function Inspector({
                         navigator.clipboard.writeText(node.metadata.endpoint as string)
                       }
                       style={{
-                        background: 'var(--cb-bg-elevated)',
-                        border: '1px solid var(--cb-border)',
+                        background: 'var(--ink-850)',
+                        border: '1px solid var(--border)',
                         borderRadius: 2,
                         padding: '1px 4px',
-                        color: 'var(--cb-text-muted)',
+                        color: 'var(--fg-muted)',
                         fontFamily: 'monospace',
                         fontSize: 8,
                         cursor: 'pointer',
@@ -1885,26 +1885,26 @@ export function Inspector({
                 </div>
               </div>
               <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                   PROTOCOL
                 </div>
-                <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>
+                <div className="text-[8px]" style={{ color: 'var(--bone-200)' }}>
                   HTTP
                 </div>
               </div>
               <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                   CORS ORIGINS
                 </div>
-                <div className="text-[8px] break-all" style={{ color: 'var(--cb-text-secondary)' }}>
+                <div className="text-[8px] break-all" style={{ color: 'var(--bone-200)' }}>
                   {((node.metadata.corsOrigins as string[]) ?? []).join(', ') || '(none)'}
                 </div>
               </div>
               <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                   ROUTES
                 </div>
-                <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>
+                <div className="text-[8px]" style={{ color: 'var(--bone-200)' }}>
                   {nodes.filter((n) => n.type === 'apigw-route' && n.parentId === node.id).length}
                 </div>
               </div>
@@ -1915,7 +1915,7 @@ export function Inspector({
                       onClick={() => onEdit(node)}
                       style={{
                         flex: 1,
-                        background: 'var(--cb-bg-elevated)',
+                        background: 'var(--ink-850)',
                         border: '1px solid #64b5f6',
                         borderRadius: 2,
                         padding: '3px 0',
@@ -1931,7 +1931,7 @@ export function Inspector({
                       onClick={() => onDelete(node)}
                       style={{
                         flex: 1,
-                        background: 'var(--cb-bg-elevated)',
+                        background: 'var(--ink-850)',
                         border: '1px solid #ff5f57',
                         borderRadius: 2,
                         padding: '3px 0',
@@ -1944,7 +1944,7 @@ export function Inspector({
                       ✕ Delete
                     </button>
                   </div>
-                  <div style={{ marginTop: 4, fontSize: 8, color: 'var(--cb-text-muted)' }}>
+                  <div style={{ marginTop: 4, fontSize: 8, color: 'var(--fg-muted)' }}>
                     Deletes all routes in this API.
                   </div>
                   <button
@@ -1955,7 +1955,7 @@ export function Inspector({
                     style={{
                       width: '100%',
                       marginTop: 8,
-                      background: 'var(--cb-bg-elevated)',
+                      background: 'var(--ink-850)',
                       border: '1px solid #8b5cf6',
                       borderRadius: 2,
                       padding: '3px 0',
@@ -1978,8 +1978,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -2003,13 +2003,13 @@ export function Inspector({
                 }
               ].map(({ k, v }) => (
                 <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                  <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                     {k}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span
                       className="text-[8px] break-all"
-                      style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
+                      style={{ color: 'var(--bone-200)', flex: 1 }}
                     >
                       {v || '—'}
                     </span>
@@ -2019,11 +2019,11 @@ export function Inspector({
                           navigator.clipboard.writeText(node.metadata.lambdaArn as string)
                         }
                         style={{
-                          background: 'var(--cb-bg-elevated)',
-                          border: '1px solid var(--cb-border)',
+                          background: 'var(--ink-850)',
+                          border: '1px solid var(--border)',
                           borderRadius: 2,
                           padding: '1px 4px',
-                          color: 'var(--cb-text-muted)',
+                          color: 'var(--fg-muted)',
                           fontFamily: 'monospace',
                           fontSize: 8,
                           cursor: 'pointer',
@@ -2042,7 +2042,7 @@ export function Inspector({
                     onClick={() => onDelete(node)}
                     style={{
                       flex: 1,
-                      background: 'var(--cb-bg-elevated)',
+                      background: 'var(--ink-850)',
                       border: '1px solid #ff5f57',
                       borderRadius: 2,
                       padding: '3px 0',
@@ -2065,8 +2065,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -2092,12 +2092,12 @@ export function Inspector({
                 .filter(({ v }) => v)
                 .map(({ k, v }) => (
                   <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                       {k}
                     </div>
                     <div
                       className="text-[8px] break-all"
-                      style={{ color: 'var(--cb-text-secondary)' }}
+                      style={{ color: 'var(--bone-200)' }}
                     >
                       {v}
                     </div>
@@ -2128,8 +2128,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -2144,12 +2144,12 @@ export function Inspector({
                 { k: 'RUNNING', v: String(node.metadata.runningCount ?? '—') }
               ].map(({ k, v }) => (
                 <div key={k} className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                  <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                     {k}
                   </div>
                   <div
                     className="text-[8px] break-all"
-                    style={{ color: 'var(--cb-text-secondary)' }}
+                    style={{ color: 'var(--bone-200)' }}
                   >
                     {v || '—'}
                   </div>
@@ -2160,7 +2160,7 @@ export function Inspector({
                   <div
                     style={{
                       fontSize: 8,
-                      color: 'var(--cb-text-muted)',
+                      color: 'var(--fg-muted)',
                       textTransform: 'uppercase',
                       marginBottom: 4
                     }}
@@ -2186,7 +2186,7 @@ export function Inspector({
                         }
                       }}
                       style={{
-                        background: 'var(--cb-bg-elevated)',
+                        background: 'var(--ink-850)',
                         border: '1px solid #34d399',
                         borderRadius: 2,
                         padding: '2px 8px',
@@ -2210,8 +2210,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -2226,12 +2226,12 @@ export function Inspector({
                 .filter(({ v }) => v)
                 .map(({ k, v }) => (
                   <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                       {k}
                     </div>
                     <div
                       className="text-[8px] break-all"
-                      style={{ color: 'var(--cb-text-secondary)' }}
+                      style={{ color: 'var(--bone-200)' }}
                     >
                       {v}
                     </div>
@@ -2239,13 +2239,13 @@ export function Inspector({
                 ))}
               {typeof node.metadata.endpoint === 'string' && node.metadata.endpoint && (
                 <div className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                  <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                     ENDPOINT
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span
                       className="text-[8px] break-all"
-                      style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
+                      style={{ color: 'var(--bone-200)', flex: 1 }}
                     >
                       {node.metadata.endpoint}
                     </span>
@@ -2254,11 +2254,11 @@ export function Inspector({
                         navigator.clipboard.writeText(node.metadata.endpoint as string)
                       }
                       style={{
-                        background: 'var(--cb-bg-elevated)',
-                        border: '1px solid var(--cb-border)',
+                        background: 'var(--ink-850)',
+                        border: '1px solid var(--border)',
                         borderRadius: 2,
                         padding: '1px 4px',
-                        color: 'var(--cb-text-muted)',
+                        color: 'var(--fg-muted)',
                         fontFamily: 'monospace',
                         fontSize: 8,
                         cursor: 'pointer',
@@ -2290,7 +2290,7 @@ export function Inspector({
                     <div
                       style={{
                         fontSize: 8,
-                        color: 'var(--cb-text-muted)',
+                        color: 'var(--fg-muted)',
                         textTransform: 'uppercase',
                         marginBottom: 4
                       }}
@@ -2302,7 +2302,7 @@ export function Inspector({
                         <button
                           onClick={() => onQuickAction(node, 'stop')}
                           style={{
-                            background: 'var(--cb-bg-elevated)',
+                            background: 'var(--ink-850)',
                             border: '1px solid #febc2e',
                             borderRadius: 2,
                             padding: '2px 8px',
@@ -2319,7 +2319,7 @@ export function Inspector({
                         <button
                           onClick={() => onQuickAction(node, 'start')}
                           style={{
-                            background: 'var(--cb-bg-elevated)',
+                            background: 'var(--ink-850)',
                             border: '1px solid #28c840',
                             borderRadius: 2,
                             padding: '2px 8px',
@@ -2335,7 +2335,7 @@ export function Inspector({
                       <button
                         onClick={() => onQuickAction(node, 'reboot')}
                         style={{
-                          background: 'var(--cb-bg-elevated)',
+                          background: 'var(--ink-850)',
                           border: '1px solid #64b5f6',
                           borderRadius: 2,
                           padding: '2px 8px',
@@ -2360,8 +2360,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -2385,20 +2385,20 @@ export function Inspector({
                   <div
                     key={k}
                     style={{
-                      background: 'var(--cb-bg-elevated)',
+                      background: 'var(--ink-850)',
                       borderRadius: 3,
                       padding: '4px 6px',
-                      border: '1px solid var(--cb-border)'
+                      border: '1px solid var(--border)'
                     }}
                   >
-                    <div style={{ fontSize: 7, color: 'var(--cb-text-muted)', marginBottom: 2 }}>
+                    <div style={{ fontSize: 7, color: 'var(--fg-muted)', marginBottom: 2 }}>
                       {k}
                     </div>
                     <div
                       style={{
                         fontSize: 14,
                         fontWeight: 600,
-                        color: 'var(--cb-text-primary)',
+                        color: 'var(--fg)',
                         fontFamily: 'monospace'
                       }}
                     >
@@ -2435,8 +2435,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -2464,10 +2464,10 @@ export function Inspector({
                 .filter(({ v }) => v)
                 .map(({ k, v }) => (
                   <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                       {k}
                     </div>
-                    <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>
+                    <div className="text-[8px]" style={{ color: 'var(--bone-200)' }}>
                       {v}
                     </div>
                   </div>
@@ -2497,8 +2497,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -2515,13 +2515,13 @@ export function Inspector({
                 .filter(({ v }) => v)
                 .map(({ k, v }) => (
                   <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                       {k}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <span
                         className="text-[8px]"
-                        style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
+                        style={{ color: 'var(--bone-200)', flex: 1 }}
                       >
                         {v}
                       </span>
@@ -2530,11 +2530,11 @@ export function Inspector({
                           onClick={() => navigator.clipboard.writeText(v!)}
                           title="Copy"
                           style={{
-                            background: 'var(--cb-bg-elevated)',
-                            border: '1px solid var(--cb-border)',
+                            background: 'var(--ink-850)',
+                            border: '1px solid var(--border)',
                             borderRadius: 2,
                             padding: '1px 4px',
-                            color: 'var(--cb-text-muted)',
+                            color: 'var(--fg-muted)',
                             fontFamily: 'monospace',
                             fontSize: 8,
                             cursor: 'pointer',
@@ -2552,7 +2552,7 @@ export function Inspector({
                   <div className="mb-1.5">
                     <div
                       className="text-[7px]"
-                      style={{ color: 'var(--cb-text-muted)', marginBottom: 3 }}
+                      style={{ color: 'var(--fg-muted)', marginBottom: 3 }}
                     >
                       SECURITY GROUPS
                     </div>
@@ -2601,7 +2601,7 @@ export function Inspector({
                     <div
                       style={{
                         fontSize: 8,
-                        color: 'var(--cb-text-muted)',
+                        color: 'var(--fg-muted)',
                         textTransform: 'uppercase',
                         marginBottom: 4
                       }}
@@ -2613,7 +2613,7 @@ export function Inspector({
                         <button
                           onClick={() => onQuickAction(node, 'stop')}
                           style={{
-                            background: 'var(--cb-bg-elevated)',
+                            background: 'var(--ink-850)',
                             border: '1px solid #febc2e',
                             borderRadius: 2,
                             padding: '2px 8px',
@@ -2630,7 +2630,7 @@ export function Inspector({
                         <button
                           onClick={() => onQuickAction(node, 'start')}
                           style={{
-                            background: 'var(--cb-bg-elevated)',
+                            background: 'var(--ink-850)',
                             border: '1px solid #28c840',
                             borderRadius: 2,
                             padding: '2px 8px',
@@ -2646,7 +2646,7 @@ export function Inspector({
                       <button
                         onClick={() => onQuickAction(node, 'reboot')}
                         style={{
-                          background: 'var(--cb-bg-elevated)',
+                          background: 'var(--ink-850)',
                           border: '1px solid #64b5f6',
                           borderRadius: 2,
                           padding: '2px 8px',
@@ -2676,7 +2676,7 @@ export function Inspector({
                           }
                         }}
                         style={{
-                          background: 'var(--cb-bg-elevated)',
+                          background: 'var(--ink-850)',
                           border: '1px solid #34d399',
                           borderRadius: 2,
                           padding: '2px 8px',
@@ -2701,8 +2701,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -2711,10 +2711,10 @@ export function Inspector({
                 TOPIC
               </div>
               <div className="mb-1.5">
-                <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                   SUBSCRIBERS
                 </div>
-                <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>
+                <div className="text-[8px]" style={{ color: 'var(--bone-200)' }}>
                   {node.metadata.subscriptionCount != null
                     ? String(node.metadata.subscriptionCount)
                     : '—'}
@@ -2745,8 +2745,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -2756,13 +2756,13 @@ export function Inspector({
               </div>
               {typeof node.metadata.uri === 'string' && node.metadata.uri && (
                 <div className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                  <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                     URI
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span
                       className="text-[8px] break-all"
-                      style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
+                      style={{ color: 'var(--bone-200)', flex: 1 }}
                     >
                       {node.metadata.uri as string}
                     </span>
@@ -2770,11 +2770,11 @@ export function Inspector({
                       onClick={() => navigator.clipboard.writeText(node.metadata.uri as string)}
                       title="Copy URI"
                       style={{
-                        background: 'var(--cb-bg-elevated)',
-                        border: '1px solid var(--cb-border)',
+                        background: 'var(--ink-850)',
+                        border: '1px solid var(--border)',
                         borderRadius: 2,
                         padding: '1px 4px',
-                        color: 'var(--cb-text-muted)',
+                        color: 'var(--fg-muted)',
                         fontFamily: 'monospace',
                         fontSize: 8,
                         cursor: 'pointer',
@@ -2811,8 +2811,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -2831,23 +2831,23 @@ export function Inspector({
                 .filter(({ v }) => v)
                 .map(({ k, v }) => (
                   <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                       {k}
                     </div>
-                    <div className="text-[8px]" style={{ color: 'var(--cb-text-secondary)' }}>
+                    <div className="text-[8px]" style={{ color: 'var(--bone-200)' }}>
                       {v}
                     </div>
                   </div>
                 ))}
               {typeof node.metadata.endpoint === 'string' && node.metadata.endpoint && (
                 <div className="mb-1.5">
-                  <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                  <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                     ENDPOINT
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span
                       className="text-[8px] break-all"
-                      style={{ color: 'var(--cb-text-secondary)', flex: 1 }}
+                      style={{ color: 'var(--bone-200)', flex: 1 }}
                     >
                       {node.metadata.endpoint as string}
                     </span>
@@ -2857,11 +2857,11 @@ export function Inspector({
                       }
                       title="Copy endpoint"
                       style={{
-                        background: 'var(--cb-bg-elevated)',
-                        border: '1px solid var(--cb-border)',
+                        background: 'var(--ink-850)',
+                        border: '1px solid var(--border)',
                         borderRadius: 2,
                         padding: '1px 4px',
-                        color: 'var(--cb-text-muted)',
+                        color: 'var(--fg-muted)',
                         fontFamily: 'monospace',
                         fontSize: 8,
                         cursor: 'pointer',
@@ -2898,8 +2898,8 @@ export function Inspector({
               <div
                 className="text-[8px] mb-2"
                 style={{
-                  color: 'var(--cb-text-muted)',
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  color: 'var(--fg-muted)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: '6px',
                   marginTop: 16,
                   marginBottom: 6
@@ -2914,12 +2914,12 @@ export function Inspector({
                 .filter(({ v }) => v)
                 .map(({ k, v }) => (
                   <div key={k} className="mb-1.5">
-                    <div className="text-[7px]" style={{ color: 'var(--cb-text-muted)' }}>
+                    <div className="text-[7px]" style={{ color: 'var(--fg-muted)' }}>
                       {k}
                     </div>
                     <div
                       className="text-[8px] break-all"
-                      style={{ color: 'var(--cb-text-secondary)' }}
+                      style={{ color: 'var(--bone-200)' }}
                     >
                       {v}
                     </div>
@@ -2949,8 +2949,8 @@ export function Inspector({
                     <div
                       className="text-[8px] mb-2"
                       style={{
-                        color: 'var(--cb-text-muted)',
-                        borderTop: '1px solid var(--cb-border-strong)',
+                        color: 'var(--fg-muted)',
+                        borderTop: '1px solid var(--border-strong)',
                         paddingTop: '6px',
                         marginTop: 16,
                         marginBottom: 6
@@ -2965,13 +2965,13 @@ export function Inspector({
                           <div
                             className="text-[7px]"
                             title={k}
-                            style={{ color: 'var(--cb-text-muted)' }}
+                            style={{ color: 'var(--fg-muted)' }}
                           >
                             {fieldLabel(k)}
                           </div>
                           <div
                             className="text-[8px] break-all"
-                            style={{ color: 'var(--cb-text-secondary)' }}
+                            style={{ color: 'var(--bone-200)' }}
                           >
                             {String(v ?? '—')}
                           </div>
@@ -3056,7 +3056,7 @@ export function Inspector({
                 <span
                   style={{
                     fontSize: 9,
-                    color: src ? 'var(--cb-text-primary)' : 'var(--cb-text-muted)',
+                    color: src ? 'var(--fg)' : 'var(--fg-muted)',
                     wordBreak: 'break-all',
                     flex: 1
                   }}
@@ -3064,7 +3064,7 @@ export function Inspector({
                   {label}
                 </span>
                 {label2 && (
-                  <span style={{ fontSize: 7, color: 'var(--cb-text-muted)', flexShrink: 0 }}>
+                  <span style={{ fontSize: 7, color: 'var(--fg-muted)', flexShrink: 0 }}>
                     {label2}
                   </span>
                 )}
@@ -3074,7 +3074,7 @@ export function Inspector({
               <div
                 style={{
                   marginTop: 12,
-                  borderTop: '1px solid var(--cb-border-strong)',
+                  borderTop: '1px solid var(--border-strong)',
                   paddingTop: 8
                 }}
               >
@@ -3083,7 +3083,7 @@ export function Inspector({
                     <div
                       style={{
                         fontSize: 8,
-                        color: 'var(--cb-text-muted)',
+                        color: 'var(--fg-muted)',
                         textTransform: 'uppercase',
                         marginBottom: 6
                       }}
@@ -3117,7 +3117,7 @@ export function Inspector({
                     <div
                       style={{
                         fontSize: 8,
-                        color: 'var(--cb-text-muted)',
+                        color: 'var(--fg-muted)',
                         textTransform: 'uppercase',
                         marginBottom: 6,
                         marginTop: outgoing.length > 0 ? 8 : 0
@@ -3158,7 +3158,7 @@ export function Inspector({
 
           {/* Notes section — always shown for any selected node */}
           <div
-            style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}
+            style={{ marginTop: 12, borderTop: '1px solid var(--border-strong)', paddingTop: 8 }}
           >
             <div
               style={{
@@ -3170,7 +3170,7 @@ export function Inspector({
             >
               <div
                 className="text-[8px]"
-                style={{ color: 'var(--cb-text-muted)', textTransform: 'uppercase' }}
+                style={{ color: 'var(--fg-muted)', textTransform: 'uppercase' }}
               >
                 Notes
               </div>
@@ -3185,7 +3185,7 @@ export function Inspector({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'var(--cb-text-muted)',
+                    color: 'var(--fg-muted)',
                     cursor: 'pointer',
                     fontSize: 9,
                     padding: 0,
@@ -3209,11 +3209,11 @@ export function Inspector({
               rows={4}
               style={{
                 width: '100%',
-                background: 'var(--cb-bg-elevated)',
-                border: '1px solid var(--cb-border)',
+                background: 'var(--ink-850)',
+                border: '1px solid var(--border)',
                 borderRadius: 2,
                 padding: '4px 6px',
-                color: 'var(--cb-text-primary)',
+                color: 'var(--fg)',
                 fontFamily: 'monospace',
                 fontSize: 9,
                 resize: 'vertical',
@@ -3225,14 +3225,14 @@ export function Inspector({
 
           {/* HISTORY section — per-node change log */}
           <div
-            style={{ marginTop: 12, borderTop: '1px solid var(--cb-border-strong)', paddingTop: 8 }}
+            style={{ marginTop: 12, borderTop: '1px solid var(--border-strong)', paddingTop: 8 }}
           >
             <div
               style={{
                 fontSize: 8,
                 fontWeight: 700,
                 letterSpacing: '0.08em',
-                color: 'var(--cb-text-muted)',
+                color: 'var(--fg-muted)',
                 textTransform: 'uppercase',
                 marginBottom: 6
               }}
@@ -3240,13 +3240,13 @@ export function Inspector({
               History
             </div>
             {nodeHistory.length === 0 ? (
-              <div style={{ fontSize: 9, color: 'var(--cb-text-muted)', fontStyle: 'italic' }}>
+              <div style={{ fontSize: 9, color: 'var(--fg-muted)', fontStyle: 'italic' }}>
                 No changes recorded yet
               </div>
             ) : (
               nodeHistory.slice(0, 10).map((entry, i) => (
                 <div key={i} style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 8, color: 'var(--cb-text-muted)', marginBottom: 3 }}>
+                  <div style={{ fontSize: 8, color: 'var(--fg-muted)', marginBottom: 3 }}>
                     ↳ {relativeTime(entry.timestamp)}
                   </div>
                   {entry.changes.map((c, j) => (
@@ -3254,12 +3254,12 @@ export function Inspector({
                       key={j}
                       style={{
                         fontSize: 8,
-                        color: 'var(--cb-text-secondary)',
+                        color: 'var(--bone-200)',
                         paddingLeft: 10,
                         marginBottom: 1
                       }}
                     >
-                      <span style={{ color: 'var(--cb-text-muted)' }}>{c.field}:</span>{' '}
+                      <span style={{ color: 'var(--fg-muted)' }}>{c.field}:</span>{' '}
                       <span style={{ color: '#fca5a5' }}>{truncate(c.before)}</span>
                       {' → '}
                       <span style={{ color: '#86efac' }}>{truncate(c.after)}</span>

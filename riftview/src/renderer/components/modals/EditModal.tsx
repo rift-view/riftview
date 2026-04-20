@@ -130,8 +130,8 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
     zIndex: 200
   }
   const modal: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)',
-    border: `1px solid var(--cb-accent)`,
+    background: 'var(--ink-900)',
+    border: `1px solid var(--accent)`,
     borderRadius: 8,
     padding: 20,
     width: 360,
@@ -152,11 +152,11 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
       <div style={modal}>
         <div
           style={{
-            color: 'var(--cb-accent)',
+            color: 'var(--accent)',
             fontWeight: 'bold',
             fontSize: 13,
             marginBottom: 12,
-            borderBottom: '1px solid var(--cb-border-strong)',
+            borderBottom: '1px solid var(--border-strong)',
             paddingBottom: 8
           }}
         >
@@ -192,11 +192,11 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
             disabled={isRunning}
             onClick={onClose}
             style={{
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-border)',
+              background: 'var(--ink-850)',
+              border: '1px solid var(--border)',
               borderRadius: 3,
               padding: '4px 16px',
-              color: 'var(--cb-text-secondary)',
+              color: 'var(--bone-200)',
               fontFamily: 'monospace',
               fontSize: 11,
               cursor: 'pointer'
