@@ -1,6 +1,7 @@
 // Commander chosen (v12) — small, typed, zero-dep. Supports subcommands,
 // negation flags, and exitOverride/configureOutput for CI-friendly testing.
 import { Command, Option } from 'commander'
+import { registerDiff, type DiffDeps } from './commands/diff'
 import { registerDrift, type DriftDeps } from './commands/drift'
 import { registerRisks, type RisksDeps } from './commands/risks'
 import { registerScan, type ScanDeps } from './commands/scan'
@@ -11,6 +12,7 @@ export interface BuildProgramOptions {
   scan?: ScanDeps
   risks?: RisksDeps
   drift?: DriftDeps
+  diff?: DiffDeps
 }
 
 export function buildProgram(opts: BuildProgramOptions = {}): Command {
@@ -28,8 +30,7 @@ export function buildProgram(opts: BuildProgramOptions = {}): Command {
   registerScan(program, opts.scan)
   registerRisks(program, opts.risks)
   registerDrift(program, opts.drift)
-
-  // Subcommands coming in later tasks: diff.
+  registerDiff(program, opts.diff)
 
   return program
 }
