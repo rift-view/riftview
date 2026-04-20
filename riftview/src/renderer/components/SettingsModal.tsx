@@ -1,14 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useCloudStore } from '../store/cloud'
-import type { Settings, Theme, AwsProfile } from '../types/cloud'
-import { applyTheme } from '../utils/applyTheme'
+import type { Settings, AwsProfile } from '../types/cloud'
 import { getRegionColor } from '../utils/regionColors'
 
 interface SettingsModalProps {
   onClose: () => void
 }
 
-type TabKey = 'profile' | 'regions' | 'appearance' | 'localstack' | 'general'
+type TabKey = 'profile' | 'regions' | 'localstack' | 'general'
 
 const ALL_REGIONS: string[] = [
   'us-east-1',
@@ -23,23 +22,9 @@ const ALL_REGIONS: string[] = [
   'ap-northeast-1'
 ]
 
-const THEME_META: Record<Theme, { label: string; accent: string }> = {
-  dark: { label: 'Dark', accent: '#FF9900' },
-  light: { label: 'Light', accent: '#e07800' },
-  solarized: { label: 'Solarized Dark', accent: '#2aa198' },
-  'rose-pine': { label: 'Rosé Pine', accent: '#eb6f92' },
-  catppuccin: { label: 'Catppuccin Mocha', accent: '#fab387' },
-  'solarized-light': { label: 'Solarized Light', accent: '#2aa198' },
-  'github-light': { label: 'GitHub Light', accent: '#0969da' },
-  'nord-light': { label: 'Nord Light', accent: '#5e81ac' },
-  'gruvbox-dark': { label: 'Gruvbox Dark', accent: '#fe8019' },
-  'gruvbox-light': { label: 'Gruvbox Light', accent: '#d65d0e' }
-}
-
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'profile', label: 'Profile' },
   { key: 'regions', label: 'Regions' },
-  { key: 'appearance', label: 'Appearance' },
   { key: 'general', label: 'General' },
   { key: 'localstack', label: 'LocalStack' }
 ]
@@ -74,14 +59,6 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
   function handleProfileSelect(name: string): void {
     const next: AwsProfile = { name, endpoint: profile.endpoint }
     setProfile(next)
-  }
-
-  function handleThemeSelect(theme: Theme): void {
-    const next: Settings = { ...settings, theme }
-    applyTheme(theme)
-    saveSettings(next).catch(() => {
-      /* best-effort */
-    })
   }
 
   function handleSettingChange<K extends keyof Settings>(key: K, val: Settings[K]): void {
@@ -454,57 +431,6 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
                         </label>
                       ))}
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ── Appearance tab ── */}
-            {tab === 'appearance' && (
-              <div>
-                <div style={sectionLabel}>Theme</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {(Object.entries(THEME_META) as [Theme, { label: string; accent: string }][]).map(
-                    ([theme, { label, accent }]) => {
-                      const active = settings.theme === theme
-                      return (
-                        <button
-                          key={theme}
-                          onClick={(): void => handleThemeSelect(theme)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                            padding: '6px 12px',
-                            borderRadius: 4,
-                            border: `1px solid ${active ? accent : 'var(--border)'}`,
-                            background: active ? 'var(--ember-glow)' : 'transparent',
-                            color: active ? accent : 'var(--bone-200)',
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                            cursor: 'pointer',
-                            textAlign: 'left'
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 10,
-                              height: 10,
-                              borderRadius: '50%',
-                              background: accent,
-                              flexShrink: 0,
-                              display: 'inline-block'
-                            }}
-                          />
-                          {label}
-                          {active && (
-                            <span style={{ marginLeft: 'auto', fontSize: 9, opacity: 0.75 }}>
-                              active
-                            </span>
-                          )}
-                        </button>
-                      )
-                    }
                   )}
                 </div>
               </div>
