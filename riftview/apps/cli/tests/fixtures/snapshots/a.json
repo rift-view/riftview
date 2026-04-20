@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "command": "scan",
+  "profile": "default",
+  "regions": ["us-east-1"],
+  "timestamp": "2026-04-20T10:00:00.000Z",
+  "durationMs": 42,
+  "nodes": [
+    {
+      "id": "i-stable",
+      "type": "ec2",
+      "label": "stable",
+      "status": "running",
+      "region": "us-east-1",
+      "metadata": { "instanceType": "t3.micro" }
+    },
+    {
+      "id": "i-removed",
+      "type": "ec2",
+      "label": "to-delete",
+      "status": "running",
+      "region": "us-east-1",
+      "metadata": { "instanceType": "t3.micro" }
+    },
+    {
+      "id": "fn-changed",
+      "type": "lambda",
+      "label": "api",
+      "status": "running",
+      "region": "us-east-1",
+      "metadata": { "timeout": 10, "memorySize": 128 }
+    }
+  ],
+  "edges": [],
+  "scanErrors": [],
+  "topRisks": []
+}
