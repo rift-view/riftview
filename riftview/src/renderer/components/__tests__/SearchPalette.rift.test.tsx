@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { SearchPalette } from '../SearchPalette'
 import { useCloudStore } from '../../store/cloud'
@@ -64,10 +64,11 @@ describe('SearchPalette rift shape', () => {
     const { container } = render(
       <SearchPalette open={true} onClose={vi.fn()} onSelect={vi.fn()} />
     )
+    // Component runs setQuery('') inside a requestAnimationFrame on open.
+    // Wait for that to fire before typing, otherwise our typed value is wiped.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
     const input = container.querySelector('input') as HTMLInputElement
-    input.value = 'web'
-    input.dispatchEvent(new Event('input', { bubbles: true }))
-    // Allow re-render
+    fireEvent.change(input, { target: { value: 'web' } })
     await screen.findByText('web-1')
     const rows = container.querySelectorAll('.search-result')
     expect(rows.length).toBeGreaterThanOrEqual(2)
