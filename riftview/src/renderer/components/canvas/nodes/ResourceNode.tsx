@@ -14,72 +14,6 @@ interface CloudMetric {
 
 const METRIC_TYPES = new Set<NodeType>(['lambda', 'rds', 'ecs'])
 
-function driftStripeColor(driftStatus: import('../../../types/cloud').DriftStatus): string {
-  switch (driftStatus) {
-    case 'unmanaged':
-      return '#f59e0b'
-    case 'missing':
-      return '#ef4444'
-    case 'matched':
-      return '#22c55e'
-  }
-}
-
-function statusStripeColor(status: NodeStatus): string {
-  switch (status) {
-    case 'running':
-      return 'var(--cb-success, #22c55e)'
-    case 'stopped':
-      return 'var(--cb-text-muted, #6b7280)'
-    case 'pending':
-    case 'creating':
-      return 'var(--cb-warning, #f59e0b)'
-    case 'error':
-    case 'deleting':
-      return 'var(--cb-error, #ef4444)'
-    case 'imported':
-      return '#7c3aed'
-    case 'unknown':
-    default:
-      return 'var(--cb-border, #374151)'
-  }
-}
-
-const TYPE_BORDER = {
-  ec2: '#FF9900',
-  vpc: '#1976D2',
-  subnet: '#4CAF50',
-  rds: '#4CAF50',
-  s3: '#64b5f6',
-  lambda: '#64b5f6',
-  alb: '#FF9900',
-  'security-group': '#9c27b0',
-  igw: '#4CAF50',
-  acm: '#64b5f6',
-  cloudfront: '#FF9900',
-  apigw: '#8b5cf6',
-  'apigw-route': '#22c55e',
-  sqs: '#FF9900',
-  secret: '#22c55e',
-  'ecr-repo': '#FF9900',
-  sns: '#FF9900',
-  dynamo: '#64b5f6',
-  'ssm-param': '#22c55e',
-  'nat-gateway': '#4CAF50',
-  'r53-zone': '#FF9900',
-  sfn: '#FF9900',
-  'eventbridge-bus': '#FF9900',
-  ses: '#FF9900',
-  cognito: '#FF9900',
-  kinesis: '#8b5cf6',
-  ecs: '#FF9900',
-  elasticache: '#22c55e',
-  eks: '#FF9900',
-  opensearch: '#005EB8',
-  msk: '#FF9900',
-  unknown: '#6b7280'
-} satisfies Record<NodeType, string>
-
 const TYPE_LABEL = {
   ec2: 'EC2',
   vpc: 'VPC',
@@ -177,6 +111,30 @@ function getNodeMeta(nodeType: NodeType, m: Record<string, unknown>): string | u
   }
 }
 
+function statusDotClass(status: NodeStatus): string {
+  switch (status) {
+    case 'running':
+      return '-ok'
+    case 'pending':
+    case 'creating':
+      return '-pending'
+    case 'error':
+    case 'deleting':
+      return '-err'
+    case 'stopped':
+    case 'unknown':
+      return '-neutral'
+    case 'imported':
+      return '-warn'
+    default:
+      return '-neutral'
+  }
+}
+
+function cx(...parts: Array<string | false | null | undefined>): string {
+  return parts.filter(Boolean).join(' ')
+}
+
 export function ResourceNode({ id, data, selected, dragging }: NodeProps): React.JSX.Element {
   const d = data as unknown as ResourceNodeData
 
@@ -216,73 +174,67 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
   }, [id, d.nodeType, d.label, d.region])
 
   const pluginMeta = useUIStore.getState().pluginNodeTypes[d.nodeType]
-  const borderColor =
-    (TYPE_BORDER as Record<string, string>)[d.nodeType] ?? pluginMeta?.borderColor ?? '#555'
-  const stripeColor = d.driftStatus ? driftStripeColor(d.driftStatus) : statusStripeColor(d.status)
   const typeLabel =
     (TYPE_LABEL as Record<string, string>)[d.nodeType] ??
     pluginMeta?.label ??
     d.nodeType.toUpperCase()
   const isImported = d.status === 'imported'
   const meta = d.metadata ? getNodeMeta(d.nodeType, d.metadata) : undefined
-  const actionRail = true
-  const opIntelligence = true
 
-  const advisoryBadge =
-    opIntelligence && d.metadata
-      ? (() => {
-          const advisories = analyzeNode({
-            id,
-            type: d.nodeType,
-            label: d.label,
-            status: d.status,
-            region: d.region ?? '',
-            metadata: d.metadata
-          })
-          const critical = advisories.filter((a) => a.severity === 'critical').length
-          const warning = advisories.filter((a) => a.severity === 'warning').length
-          if (critical === 0 && warning === 0) return null
-          return { critical, warning }
-        })()
-      : null
-
-  const statusLang = true
-
-  const statusLangStyle: React.CSSProperties = statusLang
+  const advisoryBadge = d.metadata
     ? (() => {
-        switch (d.status) {
-          case 'error':
-            return { animation: 'cb-pulse-error 2s ease-in-out infinite' }
-          case 'stopped':
-            return { opacity: d.dimmed ? 0.25 : 0.5 }
-          case 'deleting':
-            return { animation: 'cb-fade-pulse 1.5s ease-in-out infinite' }
-          default:
-            return {}
-        }
+        const advisories = analyzeNode({
+          id,
+          type: d.nodeType,
+          label: d.label,
+          status: d.status,
+          region: d.region ?? '',
+          metadata: d.metadata
+        })
+        const critical = advisories.filter((a) => a.severity === 'critical').length
+        const warning = advisories.filter((a) => a.severity === 'warning').length
+        if (critical === 0 && warning === 0) return null
+        return { critical, warning }
       })()
-    : {}
+    : null
+
+  // Pending/creating states use shimmer + dim via rift-node--pending class;
+  // stopped/deleting still need their own opacity/animation tweaks.
+  const extraStyle: React.CSSProperties = (() => {
+    switch (d.status) {
+      case 'stopped':
+        return { opacity: d.dimmed ? 0.25 : 0.5 }
+      case 'deleting':
+        return { animation: 'cb-fade-pulse 1.5s ease-in-out infinite' }
+      default:
+        return {}
+    }
+  })()
 
   return (
     <div
       data-selected={selected}
       data-status={d.status}
-      className={`resource-node relative rounded${d.status === 'creating' ? ' animate-pulse' : ''}`}
+      data-node-type={d.nodeType}
+      data-node-id={id}
+      className={cx(
+        'resource-node rift-node',
+        selected && 'rift-node--focused',
+        (d.status === 'pending' || d.status === 'creating') && 'rift-node--pending',
+        d.status === 'error' && 'rift-node--error',
+        isImported && 'rift-node--imported',
+        d.status === 'creating' && 'animate-pulse'
+      )}
       style={{
-        background: 'var(--cb-bg-panel)',
-        border: `${selected ? '3px' : '2px'} ${isImported ? 'dashed' : 'solid'} ${stripeColor}`,
-        boxShadow: selected ? `0 0 10px ${stripeColor}55` : 'none',
-        fontFamily: 'monospace',
-        minWidth: 130,
-        padding: '6px 10px 6px 8px',
-        opacity: d.dimmed ? 0.25 : d.locked ? 0.6 : 1,
-        filter: d.dimmed ? 'grayscale(60%)' : d.locked ? 'grayscale(30%)' : 'none',
+        minWidth: 150,
+        opacity: d.dimmed ? 0.25 : d.locked ? 0.6 : undefined,
+        filter: d.dimmed ? 'grayscale(60%)' : d.locked ? 'grayscale(30%)' : undefined,
         transition: 'opacity 0.2s, filter 0.2s',
-        ...statusLangStyle
+        ...extraStyle
       }}
     >
       {/* STATUS_LANGUAGE shimmer — pending/creating loading sweep */}
-      {statusLang && (d.status === 'pending' || d.status === 'creating') && (
+      {(d.status === 'pending' || d.status === 'creating') && (
         <div
           style={{
             position: 'absolute',
@@ -298,15 +250,16 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
               top: 0,
               bottom: 0,
               width: '40%',
-              background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.18), transparent)',
+              background:
+                'linear-gradient(90deg, transparent, oklch(0.73 0.170 50 / 0.18), transparent)',
               animation: 'cb-shimmer 1.8s ease-in-out infinite'
             }}
           />
         </div>
       )}
 
-      {/* ACTION_RAIL — hover action strip, shown when flag on and node not being dragged */}
-      {actionRail && !dragging && (
+      {/* ACTION_RAIL — hover action strip, hidden while dragging */}
+      {!dragging && (
         <ActionRail
           node={{
             id: id,
@@ -334,7 +287,7 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
             top: 0,
             bottom: 0,
             width: 3,
-            borderRadius: '4px 0 0 4px',
+            borderRadius: 'var(--radius-md) 0 0 var(--radius-md)',
             background: d.regionColor,
             pointerEvents: 'none'
           }}
@@ -351,7 +304,7 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
             width: 7,
             height: 7,
             borderRadius: '50%',
-            background: '#f59e0b',
+            background: 'var(--ember-500)',
             pointerEvents: 'none'
           }}
           title={d.annotation}
@@ -365,9 +318,9 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
             position: 'absolute',
             top: 2,
             right: d.annotation ? 14 : 4,
-            fontFamily: 'monospace',
+            fontFamily: 'var(--font-mono)',
             fontSize: 8,
-            color: 'var(--cb-accent, #FF9900)',
+            color: 'var(--ember-400)',
             pointerEvents: 'none',
             lineHeight: 1
           }}
@@ -383,72 +336,71 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
         </span>
       )}
 
-      {/* Type label row */}
-      <div className="flex items-center justify-between mb-1">
-        <span
-          className="text-[9px] font-bold tracking-wider"
-          style={{ color: borderColor, opacity: 0.85 }}
-        >
-          {typeLabel}
-        </span>
-        {d.locked && (
-          <span style={{ fontSize: 8, color: 'var(--cb-text-muted)', marginLeft: 'auto' }}>🔒</span>
-        )}
+      {/* Eye — monospace uppercase type label */}
+      <div className="rift-node-eye">
+        {typeLabel}
+        {d.locked && <span style={{ marginLeft: 6, opacity: 0.7 }}>🔒</span>}
       </div>
 
-      {/* Resource label */}
+      {/* Title — display-font resource label */}
       <div
-        className="text-[11px] font-medium leading-tight"
+        className="rift-node-title"
         title={d.label}
         style={{
-          color: 'var(--cb-text-primary)',
-          maxWidth: 140,
+          maxWidth: 160,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          fontStyle: statusLang && d.status === 'unknown' ? 'italic' : 'normal'
+          fontStyle: d.status === 'unknown' ? 'italic' : undefined
         }}
       >
         {d.label}
       </div>
 
-      {/* Metadata hint — key attribute for reference diagram clarity */}
-      {meta && (
-        <div
-          className="mt-0.5"
-          style={{
-            fontSize: 9,
-            color: 'var(--cb-text-muted)',
-            letterSpacing: '0.03em',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            maxWidth: 140
-          }}
-          title={meta}
-        >
-          {meta}
-        </div>
-      )}
+      <hr className="rift-node-rule" />
+
+      {/* Meta row — status dot + label + optional compact detail */}
+      <div className="rift-node-meta">
+        <span className={cx('dot', statusDotClass(d.status))} aria-hidden="true" />
+        <span className="rift-node-status">{d.status}</span>
+        {meta && (
+          <>
+            <span className="sep" aria-hidden="true">
+              ·
+            </span>
+            <span
+              title={meta}
+              style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: 100
+              }}
+            >
+              {meta}
+            </span>
+          </>
+        )}
+      </div>
 
       {/* VPC badge — graph view only */}
       {d.vpcLabel && (
         <div
           className="mt-1.5 inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5"
           style={{
-            background: `${d.vpcColor ?? '#1976D2'}18`,
-            border: `1px solid ${d.vpcColor ?? '#1976D2'}55`
+            background: `${d.vpcColor ?? 'var(--oxide-400)'}18`,
+            border: `1px solid ${d.vpcColor ?? 'var(--oxide-400)'}55`
           }}
         >
           <span
             className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-            style={{ background: d.vpcColor ?? '#1976D2' }}
+            style={{ background: d.vpcColor ?? 'var(--oxide-400)' }}
           />
           <span
             className="text-[8px] tracking-wide"
             title={d.vpcLabel}
             style={{
-              color: d.vpcColor ?? '#1976D2',
+              color: d.vpcColor ?? 'var(--oxide-400)',
               maxWidth: 110,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -465,8 +417,9 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
         <div
           className="mt-1"
           style={{
+            fontFamily: 'var(--font-mono)',
             fontSize: 8,
-            color: 'var(--cb-text-muted)',
+            color: 'var(--fg-dim)',
             letterSpacing: '0.04em',
             whiteSpace: 'nowrap'
           }}
@@ -481,8 +434,9 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
           <span
             className="sns-sub-badge"
             style={{
+              fontFamily: 'var(--font-mono)',
               fontSize: 9,
-              color: '#14b8a6',
+              color: 'var(--moss-500)',
               cursor: 'default',
               letterSpacing: '0.03em',
               userSelect: 'none'
@@ -500,26 +454,27 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
           style={{
             display: 'flex',
             gap: 8,
-            marginTop: 4,
+            marginTop: 6,
             flexWrap: 'wrap',
-            borderTop: '1px solid var(--cb-border)',
-            paddingTop: 4
+            borderTop: '1px solid var(--ink-700)',
+            paddingTop: 6
           }}
         >
           {metrics.map((m) => (
             <span
               key={m.name}
               style={{
+                fontFamily: 'var(--font-mono)',
                 fontSize: 9,
-                color: 'var(--cb-text-muted)',
-                background: 'var(--cb-bg-hover)',
+                color: 'var(--fg-muted)',
+                background: 'var(--ink-800)',
                 borderRadius: 3,
                 padding: '1px 4px',
                 whiteSpace: 'nowrap'
               }}
             >
               {m.name}{' '}
-              <span style={{ color: 'var(--cb-text-secondary)', fontWeight: 600 }}>
+              <span style={{ color: 'var(--bone-200)', fontWeight: 600 }}>
                 {m.value}
                 {m.unit}
               </span>
@@ -535,14 +490,15 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
             position: 'absolute',
             top: -6,
             right: -6,
-            background: '#7c3aed',
-            color: '#fff',
+            background: 'var(--oxide-400)',
+            color: 'var(--ink-1000)',
+            fontFamily: 'var(--font-mono)',
             fontSize: 8,
             fontWeight: 700,
             padding: '1px 4px',
             borderRadius: 3,
-            fontFamily: 'monospace',
-            letterSpacing: '0.05em'
+            letterSpacing: '0.05em',
+            zIndex: 2
           }}
         >
           TF
@@ -565,11 +521,12 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
             right: isImported ? 14 : -6,
             background:
               d.driftStatus === 'unmanaged'
-                ? '#f59e0b'
+                ? 'var(--ember-500)'
                 : d.driftStatus === 'missing'
-                  ? '#ef4444'
-                  : '#22c55e',
-            color: d.driftStatus === 'unmanaged' ? '#000' : '#fff',
+                  ? 'var(--fault-500)'
+                  : 'var(--moss-500)',
+            color: d.driftStatus === 'unmanaged' ? 'var(--ink-1000)' : 'var(--bone-50)',
+            fontFamily: 'var(--font-mono)',
             fontSize: 8,
             fontWeight: 700,
             padding: '1px 4px',
@@ -581,36 +538,21 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
         </div>
       )}
 
-      {/* Advisory badge — shows OP_INTELLIGENCE findings count */}
+      {/* Advisory badge — shows OP_INTELLIGENCE findings; "!" glyph,
+          with accessible label + detailed count in title */}
       {advisoryBadge &&
         (() => {
           const parts: string[] = []
           if (advisoryBadge.critical > 0) parts.push(`${advisoryBadge.critical} critical`)
           if (advisoryBadge.warning > 0) parts.push(`${advisoryBadge.warning} warning`)
           const badgeTitle = parts.join(', ')
-          const rightOffset =
-            isImported && d.driftStatus ? 54 : isImported || d.driftStatus ? 34 : -6
           return (
             <div
+              className="advisory-badge"
+              aria-label={badgeTitle || 'advisories'}
               title={badgeTitle}
-              style={{
-                position: 'absolute',
-                top: -6,
-                right: rightOffset,
-                background: advisoryBadge.critical > 0 ? '#ef4444' : '#f59e0b',
-                color: advisoryBadge.critical > 0 ? '#fff' : '#000',
-                fontSize: 8,
-                fontWeight: 700,
-                padding: '1px 4px',
-                borderRadius: 3,
-                zIndex: 3,
-                lineHeight: 1.4,
-                pointerEvents: 'none'
-              }}
             >
-              {advisoryBadge.critical > 0
-                ? `⚠ ${advisoryBadge.critical}`
-                : `! ${advisoryBadge.warning}`}
+              !
             </div>
           )
         })()}
