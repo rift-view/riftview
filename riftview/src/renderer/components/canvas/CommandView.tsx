@@ -8,6 +8,7 @@ import {
 import {
   ReactFlow,
   Background,
+  BackgroundVariant,
   MiniMap,
   useReactFlow,
   type Edge,
@@ -21,6 +22,7 @@ import { ResourceNode } from './nodes/ResourceNode'
 import type { CloudNode, NodeType } from '../../types/cloud'
 import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
 import { buildCommandNodes, getTierForNode } from '../../utils/commandLayout'
+import { edgeStyle } from './edges/edgeStyle'
 import {
   buildBlastRadius,
   hopRingStyle,
@@ -111,11 +113,7 @@ function buildCommandEdges(cloudNodes: CloudNode[], showIntegrations: boolean): 
         targetHandle,
         type: 'smoothstep',
         animated: isTrigger,
-        style: {
-          stroke: isTrigger ? '#64b5f6' : '#4a5568',
-          strokeWidth: 1.5,
-          opacity: 0.75
-        }
+        style: { ...edgeStyle('flow', false), opacity: 0.75 }
       })
     }
   }
@@ -515,7 +513,12 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
           minZoom={0.1}
           maxZoom={2}
         >
-          <Background gap={20} color="var(--cb-border)" />
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={18}
+            size={1}
+            color="var(--canvas-grid-dot)"
+          />
           <MiniMap
             style={{ background: 'var(--cb-minimap-bg)' }}
             nodeColor="var(--cb-border-strong)"
