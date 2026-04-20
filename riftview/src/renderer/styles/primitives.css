@@ -1070,3 +1070,131 @@
   width: 14px;
   height: 14px;
 }
+
+/* ---------- R7: EMPTY STATE ---------- */
+
+.empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.empty-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xs);
+  max-width: 420px;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.empty-state-card .btn {
+  margin-top: var(--space-xs);
+}
+
+.empty-state-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: var(--tracking-tight);
+  color: var(--bone-50);
+  margin: 0;
+}
+
+.empty-state-body {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--bone-200);
+  margin: 0;
+  max-width: 36ch;
+}
+
+/* ---------- R7: KEYBOARD HELP ---------- */
+
+.kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--bone-100);
+  background: var(--ink-900);
+  border: 1px solid var(--ink-700);
+  border-radius: 3px;
+  vertical-align: baseline;
+}
+
+.modal.kbd-help {
+  width: 420px;
+}
+
+.kbd-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+.kbd-group + .kbd-group {
+  margin-top: var(--space-sm);
+}
+
+.kbd-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kbd-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2xs);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--bone-200);
+}
+.kbd-row .kbd-row-keys {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  min-width: 88px;
+}
+.kbd-row .kbd-row-desc {
+  color: var(--bone-200);
+}
+
+/* ---------- R7: TOAST ---------- */
+
+.rift-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 56px;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--bone-100);
+  background: var(--bg-elev-1);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: rift-fade-in-up var(--dur-fast) var(--ease-out);
+  z-index: 50;
+}
+
+.rift-toast--success {
+  border-left-color: var(--moss-500);
+}
+
+.rift-toast--error {
+  border-left-color: var(--fault-500);
+}
