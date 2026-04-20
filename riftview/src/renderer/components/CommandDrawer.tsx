@@ -67,7 +67,6 @@ export function CommandDrawer(): React.JSX.Element {
   async function handleRun(): Promise<void> {
     if (running || commandPreview.length === 0) return
     if (pendingCommand) {
-      // Quick action / delete / edit — commands pre-built in store
       setRunning(true)
       setExitCode(null)
       setExpanded(true)
@@ -86,7 +85,6 @@ export function CommandDrawer(): React.JSX.Element {
         setCommandPreview([])
       }
     } else {
-      // Create modal path — CommandDrawer signals modal to run
       setRunning(true)
       setExitCode(null)
       setExpanded(true)
@@ -130,32 +128,35 @@ export function CommandDrawer(): React.JSX.Element {
       : showError
         ? `[ERR ${exitCode}]`
         : commandPreview.length > 0
-          ? commandPreview[0] // show first line of multi-command preview
+          ? commandPreview[0]
           : 'Right-click canvas to create a resource'
 
   return (
     <div
+      className="term"
       style={{
-        background: 'var(--ink-900)',
-        borderTop: '1px solid var(--accent)',
-        fontFamily: 'monospace',
-        flexShrink: 0
+        borderTop: '1px solid var(--ember-700)',
+        borderRadius: 0,
+        boxShadow: 'none',
+        flexShrink: 0,
+        background: 'var(--ink-900)'
       }}
     >
-      {/* Command preview area — all lines, one per row */}
+      {/* Command preview — one line per row, shown pre-run */}
       {commandPreview.length > 0 && !running && exitCode === null && (
         <div
+          className="term-body"
           style={{
             padding: '6px 10px',
-            background: 'var(--ink-900)',
-            borderBottom: '1px solid var(--border-strong)'
+            borderBottom: '1px solid var(--ink-800)'
           }}
         >
           {commandPreview.map((line, i) => (
             <div
               key={i}
-              style={{ color: 'var(--fg)', fontFamily: 'monospace', fontSize: '12px' }}
+              style={{ color: 'var(--bone-200)', fontFamily: 'var(--font-mono)', fontSize: 12 }}
             >
+              <span className="c-prompt" style={{ marginRight: 6 }}>$</span>
               {line}
             </div>
           ))}
@@ -166,24 +167,25 @@ export function CommandDrawer(): React.JSX.Element {
       {expanded && (
         <div
           ref={logRef}
+          className="term-body"
           style={{
-            height: '120px',
+            height: 120,
             overflowY: 'auto',
             padding: '6px 10px',
-            background: 'var(--ink-900)',
-            borderBottom: '1px solid var(--border-strong)',
-            fontSize: '10px',
-            lineHeight: '1.6'
+            borderBottom: '1px solid var(--ink-800)',
+            fontSize: 10,
+            lineHeight: 1.6
           }}
         >
           {cliOutput.length === 0 ? (
-            <span style={{ color: 'var(--fg-muted)' }}>Waiting for output…</span>
+            <span className="c-dim">Waiting for output…</span>
           ) : (
             cliOutput.map((entry, i) => (
               <div
                 key={i}
+                className={entry.stream === 'stderr' ? 'c-err' : ''}
                 style={{
-                  color: entry.stream === 'stderr' ? '#febc2e' : 'var(--fg)',
+                  color: entry.stream === 'stderr' ? undefined : 'var(--bone-200)',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-all'
                 }}
@@ -199,12 +201,12 @@ export function CommandDrawer(): React.JSX.Element {
       {showLogs && (
         <div
           style={{
-            height: '160px',
+            height: 160,
             overflowY: 'auto',
-            background: 'var(--ink-900)',
-            borderBottom: '1px solid var(--border-strong)',
-            fontSize: '10px',
-            lineHeight: '1.6'
+            background: 'var(--ink-1000)',
+            borderBottom: '1px solid var(--ink-800)',
+            fontSize: 10,
+            lineHeight: 1.6
           }}
         >
           <div
@@ -213,25 +215,18 @@ export function CommandDrawer(): React.JSX.Element {
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '3px 10px',
-              borderBottom: '1px solid var(--border-strong)'
+              borderBottom: '1px solid var(--ink-800)'
             }}
           >
-            <span
-              style={{ color: 'var(--fg-muted)', fontSize: '9px', fontFamily: 'monospace' }}
-            >
-              Session Log
-            </span>
+            <span className="label">Session Log</span>
             <button
               onClick={clearLogHistory}
+              className="btn btn-sm btn-ghost"
               style={{
-                background: 'transparent',
-                border: '1px solid #ff5f57',
-                borderRadius: '2px',
-                color: '#ff5f57',
-                fontSize: '9px',
-                cursor: 'pointer',
-                fontFamily: 'monospace',
-                padding: '0px 5px'
+                fontSize: 9,
+                padding: '0 6px',
+                color: 'var(--fault-500)',
+                borderColor: 'var(--fault-500)'
               }}
             >
               ✕ Clear
@@ -239,21 +234,24 @@ export function CommandDrawer(): React.JSX.Element {
           </div>
           <div
             ref={historyRef}
-            style={{ height: 'calc(160px - 24px)', overflowY: 'auto', padding: '6px 10px' }}
+            style={{
+              height: 'calc(160px - 24px)',
+              overflowY: 'auto',
+              padding: '6px 10px'
+            }}
           >
             {logHistory.length === 0 ? (
-              <span style={{ color: 'var(--fg-muted)' }}>No commands run this session.</span>
+              <span className="c-dim">No commands run this session.</span>
             ) : (
               logHistory.map((entry, i) => (
                 <div key={i} style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                  <span
-                    style={{ color: 'var(--fg-muted)', fontSize: '9px', marginRight: '6px' }}
-                  >
+                  <span className="c-dim" style={{ marginRight: 6, fontSize: 9 }}>
                     {new Date(entry.ts).toLocaleTimeString()}
                   </span>
                   <span
+                    className={entry.stream === 'stderr' ? 'c-err' : ''}
                     style={{
-                      color: entry.stream === 'stderr' ? '#febc2e' : 'var(--fg)'
+                      color: entry.stream === 'stderr' ? undefined : 'var(--bone-200)'
                     }}
                   >
                     {entry.line}
@@ -280,17 +278,12 @@ export function CommandDrawer(): React.JSX.Element {
           {activeFilters.map((f) => (
             <span
               key={f.id}
+              className="pill"
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 3,
-                background: 'var(--ink-850)',
-                border: '1px solid var(--accent)',
-                borderRadius: 3,
-                padding: '1px 5px',
-                fontSize: 9,
-                color: 'var(--accent)',
-                fontFamily: 'monospace'
+                padding: '1px 6px',
+                borderColor: 'var(--ember-500)',
+                color: 'var(--ember-400)',
+                fontSize: 9
               }}
             >
               ⊡ {f.label}
@@ -299,11 +292,12 @@ export function CommandDrawer(): React.JSX.Element {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: 'var(--accent)',
+                  color: 'var(--ember-400)',
                   cursor: 'pointer',
                   fontSize: 10,
                   lineHeight: 1,
-                  padding: 0
+                  padding: 0,
+                  marginLeft: 4
                 }}
                 title="Clear filter"
               >
@@ -316,26 +310,37 @@ export function CommandDrawer(): React.JSX.Element {
 
       {/* Bottom strip */}
       <div
+        className="term-head"
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '6px',
-          padding: '4px 8px',
-          minHeight: '26px'
+          gap: 6,
+          padding: '4px 10px',
+          minHeight: 26,
+          background: 'var(--bg-elev-1)',
+          borderBottom: 0,
+          textTransform: 'none',
+          letterSpacing: 0
         }}
       >
-        <span style={{ color: 'var(--accent)', fontSize: '9px' }}>$</span>
+        <span className="dot" style={{ background: 'var(--fault-500)' }} />
+        <span className="dot" style={{ background: 'var(--ember-500)' }} />
+        <span className="dot" style={{ background: 'var(--moss-500)' }} />
+        <span className="c-prompt" style={{ marginLeft: 6, fontSize: 9 }}>
+          $
+        </span>
 
         <code
           style={{
-            fontSize: '9px',
+            fontSize: 9,
             flex: 1,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            fontFamily: 'var(--font-mono)',
             color:
               commandPreview.length > 0 || running
-                ? 'var(--fg)'
+                ? 'var(--bone-100)'
                 : 'var(--fg-muted)'
           }}
         >
@@ -345,17 +350,8 @@ export function CommandDrawer(): React.JSX.Element {
         {showRun && (
           <button
             onClick={handleRun}
-            style={{
-              background: '#22c55e',
-              borderRadius: '2px',
-              padding: '1px 8px',
-              color: '#000',
-              fontSize: '9px',
-              fontWeight: 'bold',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'monospace'
-            }}
+            className="btn btn-sm btn-primary"
+            style={{ fontSize: 9, padding: '1px 10px' }}
           >
             Run
           </button>
@@ -364,15 +360,12 @@ export function CommandDrawer(): React.JSX.Element {
         {running && (
           <button
             onClick={handleCancel}
+            className="btn btn-sm btn-ghost"
             style={{
-              background: 'var(--ink-850)',
-              border: '1px solid #ff5f57',
-              borderRadius: '2px',
-              padding: '1px 8px',
-              color: '#ff5f57',
-              fontSize: '9px',
-              cursor: 'pointer',
-              fontFamily: 'monospace'
+              color: 'var(--fault-500)',
+              borderColor: 'var(--fault-500)',
+              fontSize: 9,
+              padding: '1px 8px'
             }}
           >
             Cancel
@@ -382,13 +375,8 @@ export function CommandDrawer(): React.JSX.Element {
         {(showSuccess || showError) && (
           <button
             onClick={handleCollapse}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--fg-muted)',
-              fontSize: '11px',
-              cursor: 'pointer'
-            }}
+            className="btn-link"
+            style={{ fontSize: 11 }}
           >
             ✕
           </button>
@@ -397,14 +385,8 @@ export function CommandDrawer(): React.JSX.Element {
         {cliOutput.length > 0 && !expanded && (
           <button
             onClick={() => setExpanded(true)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--fg-muted)',
-              fontSize: '9px',
-              cursor: 'pointer',
-              fontFamily: 'monospace'
-            }}
+            className="btn-link"
+            style={{ fontSize: 9 }}
           >
             ▲
           </button>
@@ -413,14 +395,8 @@ export function CommandDrawer(): React.JSX.Element {
         {expanded && (
           <button
             onClick={() => setExpanded(false)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--fg-muted)',
-              fontSize: '9px',
-              cursor: 'pointer',
-              fontFamily: 'monospace'
-            }}
+            className="btn-link"
+            style={{ fontSize: 9 }}
           >
             ▼
           </button>
@@ -428,13 +404,12 @@ export function CommandDrawer(): React.JSX.Element {
 
         <button
           onClick={handleToggleLogs}
+          className="btn btn-sm btn-ghost"
           style={{
-            background: 'transparent',
-            border: 'none',
-            color: showLogs ? '#febc2e' : 'var(--fg-muted)',
-            fontSize: '9px',
-            cursor: 'pointer',
-            fontFamily: 'monospace'
+            fontSize: 9,
+            padding: '0 6px',
+            color: showLogs ? 'var(--ember-500)' : 'var(--fg-muted)',
+            borderColor: showLogs ? 'var(--ember-500)' : 'var(--border)'
           }}
         >
           ⊟ Logs

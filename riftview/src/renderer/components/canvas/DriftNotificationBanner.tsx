@@ -18,7 +18,6 @@ export function DriftNotificationBanner(): React.JSX.Element | null {
   if (driftedCount === 0) return null
   if (driftBannerDismissed) return null
 
-  // Offset below ScanErrorStrip if it is also visible
   const topOffset = scanErrors.length > 0 ? 80 : 42
 
   return (
@@ -29,9 +28,9 @@ export function DriftNotificationBanner(): React.JSX.Element | null {
         left: 0,
         right: 0,
         zIndex: 9,
-        background: 'rgba(251, 191, 36, 0.1)',
-        border: '1px solid rgba(251, 191, 36, 0.35)',
-        borderLeft: 'none',
+        background: 'oklch(0.73 0.17 50 / 0.08)',
+        border: '1px solid oklch(0.73 0.17 50 / 0.30)',
+        borderLeft: '2px solid var(--ember-500)',
         borderRight: 'none',
         padding: '4px 36px 4px 10px',
         display: 'flex',
@@ -39,55 +38,41 @@ export function DriftNotificationBanner(): React.JSX.Element | null {
         gap: 8
       }}
     >
+      <span className="eyebrow" style={{ color: 'var(--ember-500)' }}>
+        DRIFT
+      </span>
       <span
         style={{
-          fontFamily: 'monospace',
-          fontSize: '10px',
-          color: '#f59e0b',
-          lineHeight: 1.5,
+          fontFamily: 'var(--font-body)',
+          fontSize: 12,
+          color: 'var(--bone-100)',
           flex: 1
         }}
       >
-        {`⚠ ${driftedCount} resource${driftedCount === 1 ? '' : 's'} drifted from Terraform state`}
+        {`${driftedCount} resource${driftedCount === 1 ? '' : 's'} drifted from Terraform state`}
       </span>
 
       <button
         onClick={(): void => useUIStore.getState().setDriftFilterActive(true)}
         title="View drifted resources"
-        style={{
-          background: 'transparent',
-          border: '1px solid rgba(251, 191, 36, 0.5)',
-          cursor: 'pointer',
-          color: '#f59e0b',
-          fontFamily: 'monospace',
-          fontSize: '10px',
-          lineHeight: 1,
-          padding: '2px 8px',
-          borderRadius: 3
-        }}
+        className="btn btn-sm btn-ghost"
       >
         View
       </button>
 
-      {/* Dismiss button */}
       <button
         onClick={dismissDriftBanner}
         title="Dismiss"
+        className="btn-link"
         style={{
           position: 'absolute',
-          top: '4px',
-          right: '8px',
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          color: '#f59e0b',
-          fontFamily: 'monospace',
-          fontSize: '11px',
-          lineHeight: 1,
-          padding: '0 2px'
+          top: 4,
+          right: 8,
+          fontSize: 12,
+          padding: 0
         }}
       >
-        ✕
+        ×
       </button>
     </div>
   )

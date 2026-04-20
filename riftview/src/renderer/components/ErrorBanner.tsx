@@ -8,29 +8,34 @@ export function ErrorBanner({ message, onDismiss }: Props): React.JSX.Element {
     <div
       className="flex items-center gap-3 px-3 py-2 flex-shrink-0"
       style={{
-        background: 'var(--ink-850)',
-        border: '1px solid #ff5f57',
-        borderLeft: '3px solid #ff5f57',
-        fontFamily: 'monospace'
+        background: 'var(--bg-elev-1)',
+        border: '1px solid var(--border)',
+        borderLeft: '2px solid var(--fault-500)'
       }}
     >
-      <span className="text-[9px]" style={{ color: '#ff5f57' }}>
-        ⚠ AWS Error:
+      <span
+        className="eyebrow"
+        style={{ color: 'var(--fault-500)' }}
+      >
+        ERROR
       </span>
-      <span className="text-[9px] flex-1" style={{ color: 'var(--fg)' }}>
+      <span
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 12,
+          color: 'var(--bone-100)',
+          flex: 1
+        }}
+      >
         {message}
       </span>
       <button
         onClick={onDismiss}
-        className="text-[9px] px-1"
-        style={{
-          color: 'var(--fg-muted)',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer'
-        }}
+        className="btn-link"
+        style={{ fontSize: 12 }}
+        title="Dismiss"
       >
-        ✕
+        ×
       </button>
     </div>
   )

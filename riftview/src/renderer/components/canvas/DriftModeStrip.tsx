@@ -22,15 +22,6 @@ export function DriftModeStrip(): React.JSX.Element | null {
     }
   }
 
-  const btn: React.CSSProperties = {
-    fontFamily: 'monospace',
-    fontSize: 9,
-    borderRadius: 3,
-    padding: '1px 8px',
-    cursor: 'pointer',
-    background: 'transparent'
-  }
-
   return (
     <div
       style={{
@@ -40,26 +31,45 @@ export function DriftModeStrip(): React.JSX.Element | null {
         padding: '0 12px',
         height: 28,
         flexShrink: 0,
-        background: 'rgba(239,68,68,0.06)',
-        borderBottom: '1px solid rgba(239,68,68,0.2)',
-        fontFamily: 'monospace'
+        background: 'oklch(0.60 0.20 28 / 0.06)',
+        borderBottom: '1px solid oklch(0.60 0.20 28 / 0.20)'
       }}
     >
-      <span style={{ fontSize: 10, color: '#ef4444', fontWeight: 'bold', letterSpacing: '0.05em' }}>
+      <span className="eyebrow" style={{ color: 'var(--fault-500)' }}>
         ⊘ DRIFT MODE
       </span>
-      <span style={{ fontSize: 10, color: '#22c55e' }}>✓ {driftMatched} matched</span>
-      <span style={{ fontSize: 10, color: '#f59e0b' }}>! {driftUnmanaged} unmanaged</span>
-      <span style={{ fontSize: 10, color: '#ef4444' }}>✕ {driftMissing} missing</span>
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          color: 'var(--moss-500)'
+        }}
+      >
+        ✓ {driftMatched} matched
+      </span>
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          color: 'var(--ember-500)'
+        }}
+      >
+        ! {driftUnmanaged} unmanaged
+      </span>
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          color: 'var(--fault-500)'
+        }}
+      >
+        ✕ {driftMissing} missing
+      </span>
       <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
         <button
           onClick={toggleDriftFilter}
           title={driftFilterActive ? 'Show all nodes' : 'Show only drifted nodes'}
-          style={{
-            ...btn,
-            border: `1px solid ${driftFilterActive ? '#ef4444' : 'var(--border)'}`,
-            color: driftFilterActive ? '#ef4444' : 'var(--fg-muted)'
-          }}
+          className={'btn btn-sm ' + (driftFilterActive ? 'btn-primary' : 'btn-ghost')}
         >
           ⊘ Drift only
         </button>
@@ -68,7 +78,7 @@ export function DriftModeStrip(): React.JSX.Element | null {
             void handleClear()
           }}
           title="Clear imported Terraform state"
-          style={{ ...btn, border: '1px solid var(--border)', color: '#f59e0b' }}
+          className="btn btn-sm btn-ghost"
         >
           Clear TF ×
         </button>

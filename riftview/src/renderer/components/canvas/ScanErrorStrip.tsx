@@ -40,44 +40,49 @@ export function ScanErrorStrip(): React.JSX.Element | null {
         left: 0,
         right: 0,
         zIndex: 9,
-        background: 'rgba(251, 191, 36, 0.1)',
-        border: '1px solid rgba(251, 191, 36, 0.35)',
-        borderLeft: 'none',
+        background: 'oklch(0.73 0.17 50 / 0.08)',
+        border: '1px solid oklch(0.73 0.17 50 / 0.30)',
+        borderLeft: '2px solid var(--ember-500)',
         borderRight: 'none',
-        padding: '4px 36px 4px 10px',
+        padding: '6px 36px 6px 10px',
         maxHeight: '120px',
         overflowY: 'auto'
       }}
     >
-      {/* Dismiss button */}
-      <button
-        onClick={clearScanErrors}
-        title="Dismiss"
+      <div
         style={{
-          position: 'absolute',
-          top: '4px',
-          right: '8px',
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          color: '#f59e0b',
-          fontFamily: 'monospace',
-          fontSize: '11px',
-          lineHeight: 1,
-          padding: '0 2px'
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          marginBottom: 4
         }}
       >
-        ✕ Dismiss
-      </button>
+        <span className="eyebrow" style={{ color: 'var(--ember-500)' }}>
+          SCAN ERRORS
+        </span>
+        <button
+          onClick={clearScanErrors}
+          title="Dismiss"
+          className="btn-link"
+          style={{
+            position: 'absolute',
+            top: 6,
+            right: 10,
+            fontSize: 10,
+            color: 'var(--ember-500)'
+          }}
+        >
+          Dismiss ×
+        </button>
+      </div>
 
-      {/* Error rows */}
       {scanErrors.map((err, i) => (
         <div
           key={i}
           style={{
-            fontFamily: 'monospace',
-            fontSize: '10px',
-            color: '#f59e0b',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            color: 'var(--bone-200)',
             lineHeight: 1.5,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
@@ -86,28 +91,36 @@ export function ScanErrorStrip(): React.JSX.Element | null {
             alignItems: 'center'
           }}
         >
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            [{err.service}] {err.region} — {err.message}
+          <span
+            style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              color: 'var(--ember-500)',
+              marginRight: 4
+            }}
+          >
+            [{err.service}]
+          </span>
+          <span
+            style={{
+              color: 'var(--fg-muted)',
+              marginRight: 6
+            }}
+          >
+            {err.region}
+          </span>
+          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {err.message}
           </span>
           <button
             disabled={retrying.has(err.service)}
             onClick={() => {
               void handleRetry(err.service, err.region)
             }}
-            style={{
-              fontFamily: 'monospace',
-              fontSize: 9,
-              background: 'transparent',
-              border: '1px solid rgba(251,191,36,0.4)',
-              color: '#f59e0b',
-              borderRadius: 3,
-              padding: '1px 6px',
-              cursor: retrying.has(err.service) ? 'default' : 'pointer',
-              marginLeft: 8,
-              flexShrink: 0
-            }}
+            className="btn btn-sm btn-ghost"
+            style={{ marginLeft: 8, flexShrink: 0, fontSize: 9, padding: '0 6px' }}
           >
-            {retrying.has(err.service) ? '...' : 'retry'}
+            {retrying.has(err.service) ? '…' : 'retry'}
           </button>
         </div>
       ))}
