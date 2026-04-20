@@ -97,7 +97,7 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
     return () => window.removeEventListener('riftview:fitview', handler)
   }, [fitView])
 
-  // Listen for canvas export requests from TitleBar
+  // Listen for canvas export requests from Topbar
   const handleExport = useCallback(
     (e: Event) => {
       const format = (e as CustomEvent<{ format: 'clipboard' | 'file' }>).detail?.format ?? 'file'

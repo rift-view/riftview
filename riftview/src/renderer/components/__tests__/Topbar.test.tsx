@@ -154,7 +154,7 @@ describe('Topbar — endpoint input', () => {
 
 describe('Topbar — connection status indicator', () => {
   function getConnLabel(): HTMLElement | null {
-    // Match the trio used by the current TitleBar: connecting…, connected, error
+    // Match the trio used by the Topbar: connecting…, connected, error
     return (
       screen.queryByText(/^connected$/i) ??
       screen.queryByText(/^error$/i) ??
@@ -215,7 +215,7 @@ describe('Topbar — scan button', () => {
     render(<Topbar onScan={vi.fn()} />)
     const btn = screen.getByRole('button', { name: /scan/i }) as HTMLButtonElement
     expect(btn).toBeDisabled()
-    // Spinner glyph — TitleBar uses ⟳ — accept any of the reasonable spinner chars
+    // Spinner glyph — Topbar uses ⟳ — accept any of the reasonable spinner chars
     expect(btn.textContent ?? '').toMatch(/⟳|⟲|↻|◌/)
   })
 })
