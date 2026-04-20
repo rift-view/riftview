@@ -15,10 +15,6 @@ import '../styles/primitives.css'
 import './assets/main.css'
 import '../styles/themes.css'
 
-// Compat shim — must load last so --cb-* aliases beat themes.css.
-// Deleted at the end of R3.
-import '../styles/compat.css'
-
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
