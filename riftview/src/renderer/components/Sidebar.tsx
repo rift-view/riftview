@@ -202,28 +202,6 @@ export function Sidebar(): React.JSX.Element {
     return m
   }, [scanErrors, settings.showScanErrorBadges])
 
-  const serviceRowStyle: React.CSSProperties = {
-    background: 'var(--cb-bg-elevated)',
-    border: '1px solid var(--cb-border)',
-    color: 'var(--cb-text-secondary)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  }
-
-  const badgeStyle: React.CSSProperties = {
-    fontSize: 10,
-    color: 'var(--cb-text-muted)',
-    background: 'var(--cb-bg-elevated)',
-    border: '1px solid var(--cb-border)',
-    borderRadius: 9999,
-    padding: '0 5px',
-    minWidth: 16,
-    textAlign: 'center',
-    lineHeight: '14px',
-    flexShrink: 0
-  }
-
   const ssmErrTooltip = errorsByType.get('ssm-param' as NodeType)
 
   return (
@@ -251,19 +229,19 @@ export function Sidebar(): React.JSX.Element {
         const isExpanded = expandedCategories.has(cat.label)
 
         return (
-          <div key={cat.label}>
+          <div key={cat.label} className="side-group">
             {/* Category header */}
             <div
+              className="side-group-label"
               onClick={() => toggleCategory(cat.label)}
-              className="flex items-center justify-between mx-1.5 mb-0.5 px-2 py-1 rounded cursor-pointer text-[9px] font-mono uppercase tracking-widest"
-              style={{ color: 'var(--cb-text-muted)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--cb-bg-hover)')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
-              <span>
+              <span className="label">
                 {isExpanded ? '⊟' : '⊞'} {cat.label}
               </span>
-              {catCount > 0 && <span style={badgeStyle}>{catCount}</span>}
+              <span className="side-chev">
+                {catCount > 0 ? `${catCount} ` : ''}
+                {isExpanded ? '▾' : '▸'}
+              </span>
             </div>
 
             {/* Category items */}
@@ -273,13 +251,6 @@ export function Sidebar(): React.JSX.Element {
                   const count = counts[s.type] ?? 0
                   const isActive = activeFilterTypes.has(s.type)
                   const errTooltip = errorsByType.get(s.type)
-                  const activeStyle: React.CSSProperties = {
-                    ...serviceRowStyle,
-                    border: '1px solid var(--cb-accent)',
-                    color: 'var(--cb-accent)',
-                    background: 'var(--cb-bg-elevated)',
-                    cursor: 'pointer'
-                  }
                   const isScanning = scanStatus === 'scanning'
                   const staleCount = previousCounts[s.type] ?? 0
                   const showStale = isScanning && count === 0 && staleCount > 0
@@ -287,14 +258,12 @@ export function Sidebar(): React.JSX.Element {
                     <div
                       key={s.type}
                       onClick={() => handleTypeClick(s.type)}
-                      className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
-                      style={{
-                        ...(isActive ? activeStyle : serviceRowStyle),
-                        cursor: 'pointer',
-                        paddingLeft: 20
-                      }}
+                      className={`side-item ${isActive ? 'side-item--active' : ''}`.trim()}
+                      data-active={isActive ? 'true' : undefined}
+                      draggable={s.hasCreate}
+                      role="button"
                     >
-                      <span>
+                      <span className="side-item-name">
                         ⬡ {s.label}
                         {errTooltip && (
                           <span
@@ -305,9 +274,11 @@ export function Sidebar(): React.JSX.Element {
                           </span>
                         )}
                       </span>
-                      {count > 0 && <span style={badgeStyle}>{count}</span>}
+                      {count > 0 && <span className="side-count">{count}</span>}
                       {showStale && (
-                        <span style={{ ...badgeStyle, opacity: 0.4 }}>{staleCount}</span>
+                        <span className="side-count" style={{ opacity: 0.4 }}>
+                          {staleCount}
+                        </span>
                       )}
                     </div>
                   )
@@ -318,7 +289,7 @@ export function Sidebar(): React.JSX.Element {
                   <>
                     {ssmErrTooltip && (
                       <div
-                        className="mx-1.5 px-2.5 text-[9px] font-mono"
+                        className="px-2.5 text-[9px] font-mono"
                         style={{ color: '#f59e0b' }}
                       >
                         <span title={ssmErrTooltip}>⚠ SSM error</span>
@@ -330,11 +301,11 @@ export function Sidebar(): React.JSX.Element {
                         return (
                           <div
                             key={node.id}
-                            className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-pointer"
-                            style={{ ...serviceRowStyle, paddingLeft: 20 }}
+                            className="side-item"
                             title={node.label}
+                            role="button"
                           >
-                            <span className="truncate">⬡ {node.label}</span>
+                            <span className="side-item-name truncate">⬡ {node.label}</span>
                           </div>
                         )
                       }
@@ -344,19 +315,22 @@ export function Sidebar(): React.JSX.Element {
                         <div key={prefix}>
                           <div
                             onClick={() => toggleSsmGroup(prefix)}
-                            className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-pointer"
-                            style={{
-                              color: 'var(--cb-text-muted)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              paddingLeft: 20
-                            }}
+                            className="side-item"
+                            role="button"
                           >
-                            <span className="truncate">
+                            <span className="side-item-name truncate">
                               {isGroupExpanded ? '⊟' : '⊞'} {prefix}/
                             </span>
-                            <span style={badgeStyle}>{groupNodes.length}</span>
+                            <span
+                              className="side-chev"
+                              data-chevron=""
+                              aria-label={isGroupExpanded ? 'collapse' : 'expand'}
+                            >
+                              <span className="side-count" style={{ marginRight: 4 }}>
+                                {groupNodes.length}
+                              </span>
+                              {isGroupExpanded ? '▾' : '▸'}
+                            </span>
                           </div>
                           {isGroupExpanded &&
                             groupNodes
@@ -365,11 +339,12 @@ export function Sidebar(): React.JSX.Element {
                               .map((node) => (
                                 <div
                                   key={node.id}
-                                  className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-pointer"
-                                  style={{ ...serviceRowStyle, paddingLeft: 28 }}
+                                  className="side-item"
+                                  style={{ paddingLeft: 28 }}
                                   title={node.label}
+                                  role="button"
                                 >
-                                  <span className="truncate">⬡ {node.label}</span>
+                                  <span className="side-item-name truncate">⬡ {node.label}</span>
                                 </div>
                               ))}
                         </div>
@@ -385,12 +360,9 @@ export function Sidebar(): React.JSX.Element {
 
       {/* Plugin services (always shown flat, no category) */}
       {pluginServices.length > 0 && (
-        <>
-          <div
-            className="px-2.5 text-[9px] uppercase tracking-widest mt-3 mb-1"
-            style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace' }}
-          >
-            Plugins
+        <div className="side-group">
+          <div className="side-group-label">
+            <span className="label">Plugins</span>
           </div>
           {pluginServices.map(([type, meta]) => (
             <div
@@ -398,37 +370,38 @@ export function Sidebar(): React.JSX.Element {
               onClick={() => {
                 /* plugin types skip the filter for now */
               }}
-              className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
-              style={{ ...serviceRowStyle, cursor: 'pointer' }}
+              className="side-item"
+              role="button"
             >
-              <span>⬡ {meta.displayName}</span>
+              <span className="side-item-name">⬡ {meta.displayName}</span>
             </div>
           ))}
-        </>
+        </div>
       )}
 
       {/* Views */}
-      <div
-        className="px-2.5 text-[9px] uppercase tracking-widest mt-3 mb-1"
-        style={{ color: 'var(--cb-text-muted)', fontFamily: 'monospace' }}
-      >
-        Views
-      </div>
-
-      {(['topology', 'graph'] as const).map((v) => (
-        <div
-          key={v}
-          onClick={() => setView(v)}
-          className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono cursor-pointer"
-          style={{
-            background: view === v ? 'var(--cb-bg-elevated)' : 'transparent',
-            border: `1px solid ${view === v ? '#64b5f6' : 'var(--cb-border)'}`,
-            color: view === v ? '#64b5f6' : 'var(--cb-text-secondary)'
-          }}
-        >
-          {v === 'topology' ? '⊞' : '◈'} {v.charAt(0).toUpperCase() + v.slice(1)}
+      <div className="side-group">
+        <div className="side-group-label">
+          <span className="label">Views</span>
         </div>
-      ))}
+
+        <div className="flex gap-1 px-2">
+          <button
+            type="button"
+            onClick={() => setView('topology')}
+            className={`btn btn-sm ${view === 'topology' ? 'btn-primary' : 'btn-ghost'}`}
+          >
+            Topology
+          </button>
+          <button
+            type="button"
+            onClick={() => setView('graph')}
+            className={`btn btn-sm ${view === 'graph' ? 'btn-primary' : 'btn-ghost'}`}
+          >
+            Graph
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
