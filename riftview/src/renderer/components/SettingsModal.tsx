@@ -109,37 +109,6 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
     setProfile({ ...profile, endpoint: undefined })
   }
 
-  const overlay: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.75)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 300
-  }
-
-  const modal: React.CSSProperties = {
-    background: 'var(--ink-900)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 8,
-    width: 640,
-    maxHeight: '80vh',
-    display: 'flex',
-    flexDirection: 'column',
-    fontFamily: 'monospace',
-    overflow: 'hidden'
-  }
-
-  const header: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '14px 20px',
-    borderBottom: '1px solid var(--border-strong)',
-    flexShrink: 0
-  }
-
   const body: React.CSSProperties = {
     display: 'flex',
     flex: 1,
@@ -242,36 +211,25 @@ export function SettingsModal({ onClose }: SettingsModalProps): React.JSX.Elemen
 
   return (
     <div
-      style={overlay}
+      className="modal-backdrop"
       onClick={(e): void => {
         if (e.target === e.currentTarget) onClose()
       }}
       onKeyDown={handleKeyDown}
       tabIndex={-1}
+      style={{ zIndex: 300 }}
     >
-      <div style={modal}>
-        {/* Header */}
-        <div style={header}>
-          <span
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: 'var(--accent)',
-              letterSpacing: '0.04em'
-            }}
-          >
-            Settings
-          </span>
-          <button
-            onClick={onClose}
-            style={{ ...btnSecondary, padding: '2px 10px', fontSize: 12 }}
-            aria-label="Close settings"
-          >
-            ✕
+      <div className="modal modal--lg" style={{ maxHeight: '80vh' }}>
+        <div className="modal-head">
+          <div className="modal-head-text">
+            <span className="eyebrow">PREFERENCES</span>
+            <h2 className="modal-title">Settings</h2>
+          </div>
+          <button className="modal-close" onClick={onClose} aria-label="Close settings">
+            ×
           </button>
         </div>
 
-        {/* Body */}
         <div style={body}>
           {/* Sidebar */}
           <div style={sidebar}>

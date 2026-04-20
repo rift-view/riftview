@@ -324,35 +324,6 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
       })
   }
 
-  const overlay: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 200
-  }
-  const modal: React.CSSProperties = {
-    background: 'var(--ink-900)',
-    border: '1px solid var(--border)',
-    borderRadius: 8,
-    width: 760,
-    height: 520,
-    display: 'flex',
-    flexDirection: 'column',
-    fontFamily: 'monospace',
-    color: 'var(--fg)',
-    overflow: 'hidden'
-  }
-  const header: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '12px 16px',
-    borderBottom: '1px solid var(--border-strong)',
-    flexShrink: 0
-  }
   const body: React.CSSProperties = {
     display: 'flex',
     flex: 1,
@@ -394,27 +365,19 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
 
   return (
     <div
-      style={overlay}
+      className="modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
+      style={{ zIndex: 200 }}
     >
-      <div style={modal}>
-        <div style={header}>
-          <span style={{ fontSize: 13, fontWeight: 'bold', color: 'var(--accent)' }}>
-            Starter Templates
-          </span>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--fg-muted)',
-              fontSize: 16,
-              lineHeight: 1
-            }}
-          >
+      <div className="modal modal--xl" style={{ height: 520 }}>
+        <div className="modal-head">
+          <div className="modal-head-text">
+            <span className="eyebrow">STARTER</span>
+            <h2 className="modal-title">Templates</h2>
+          </div>
+          <button className="modal-close" onClick={onClose} title="Close">
             ×
           </button>
         </div>

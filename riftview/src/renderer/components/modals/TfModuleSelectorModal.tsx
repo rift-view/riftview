@@ -32,33 +32,11 @@ export default function TfModuleSelectorModal({
     onConfirm(selectedNodes)
   }
 
-  const overlay: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 200
-  }
-  const dialog: React.CSSProperties = {
-    background: 'var(--ink-900)',
-    border: '1px solid var(--border-strong)',
-    borderRadius: 8,
-    padding: 20,
-    width: 400,
-    fontFamily: 'monospace',
-    maxHeight: '80vh',
-    display: 'flex',
-    flexDirection: 'column'
-  }
-
-  // Single-module fast path — just show counts + confirm
   const isSingleModule = modules.length === 1
 
   return (
     <div
-      style={overlay}
+      className="modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel()
       }}
@@ -66,108 +44,82 @@ export default function TfModuleSelectorModal({
         if (e.key === 'Escape') onCancel()
       }}
       tabIndex={-1}
+      style={{ zIndex: 200 }}
     >
-      <div style={dialog}>
-        {/* Header */}
-        <div
-          style={{ color: 'var(--accent)', fontWeight: 'bold', fontSize: 13, marginBottom: 4 }}
-        >
-          Import Terraform State
-        </div>
-        <div style={{ color: 'var(--fg-muted)', fontSize: 10, marginBottom: 16 }}>
-          Found {modules.length} module{modules.length !== 1 ? 's' : ''} · {totalResources} total
-          resource{totalResources !== 1 ? 's' : ''}
+      <div className="modal modal--md">
+        <div className="modal-head">
+          <div className="modal-head-text">
+            <span className="eyebrow">TERRAFORM</span>
+            <h2 className="modal-title">Import State</h2>
+            <div className="form-helper" style={{ marginTop: 4 }}>
+              Found {modules.length} module{modules.length !== 1 ? 's' : ''} · {totalResources}{' '}
+              total resource{totalResources !== 1 ? 's' : ''}
+            </div>
+          </div>
+          <button className="modal-close" onClick={onCancel} title="Close">
+            ×
+          </button>
         </div>
 
-        {/* Module list — hidden when only 1 module */}
-        {!isSingleModule && (
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              marginBottom: 16,
-              border: '1px solid var(--border)',
-              borderRadius: 4
-            }}
-          >
-            {modules.map((m, idx) => (
-              <label
-                key={m.name}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '7px 12px',
-                  cursor: 'pointer',
-                  borderBottom: idx < modules.length - 1 ? '1px solid var(--border)' : 'none',
-                  background: checked[m.name] ? 'rgba(99,102,241,0.06)' : 'transparent'
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked[m.name] ?? false}
-                  onChange={() => toggle(m.name)}
-                  style={{ cursor: 'pointer', flexShrink: 0 }}
-                />
-                <span style={{ flex: 1, color: 'var(--fg)', fontSize: 11 }}>
-                  {m.name}
-                </span>
-                <span
+        <div className="modal-body">
+          {!isSingleModule && (
+            <div
+              style={{
+                border: '1px solid var(--border)',
+                borderRadius: 4,
+                overflowY: 'auto',
+                maxHeight: 280
+              }}
+            >
+              {modules.map((m, idx) => (
+                <label
+                  key={m.name}
+                  className="form-checkbox"
                   style={{
-                    fontSize: 9,
-                    color: 'var(--fg-muted)',
-                    background: 'var(--ink-850)',
-                    borderRadius: 3,
-                    padding: '1px 5px',
-                    flexShrink: 0
+                    display: 'flex',
+                    padding: '7px 12px',
+                    borderBottom: idx < modules.length - 1 ? '1px solid var(--border)' : 'none',
+                    background: checked[m.name]
+                      ? 'oklch(0.73 0.17 50 / 0.06)'
+                      : 'transparent',
+                    width: '100%',
+                    boxSizing: 'border-box'
                   }}
                 >
-                  {m.resourceCount} resource{m.resourceCount !== 1 ? 's' : ''}
-                </span>
-              </label>
-            ))}
-          </div>
-        )}
+                  <input
+                    type="checkbox"
+                    checked={checked[m.name] ?? false}
+                    onChange={() => toggle(m.name)}
+                  />
+                  <span style={{ flex: 1, color: 'var(--bone-100)', fontSize: 12 }}>
+                    {m.name}
+                  </span>
+                  <span
+                    className="pill pill-neutral"
+                    style={{ padding: '1px 6px', fontSize: 9 }}
+                  >
+                    {m.resourceCount} resource{m.resourceCount !== 1 ? 's' : ''}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
 
-        {/* Selection summary */}
-        <div style={{ color: 'var(--fg-muted)', fontSize: 9, marginBottom: 14 }}>
-          {isSingleModule
-            ? `${totalResources} resource${totalResources !== 1 ? 's' : ''} will be imported`
-            : `${selectedCount} of ${totalResources} resource${totalResources !== 1 ? 's' : ''} selected`}
+          <div className="form-helper" style={{ marginTop: 10 }}>
+            {isSingleModule
+              ? `${totalResources} resource${totalResources !== 1 ? 's' : ''} will be imported`
+              : `${selectedCount} of ${totalResources} resource${totalResources !== 1 ? 's' : ''} selected`}
+          </div>
         </div>
 
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button
-            onClick={onCancel}
-            style={{
-              background: 'var(--ink-850)',
-              border: '1px solid var(--border)',
-              borderRadius: 3,
-              padding: '4px 14px',
-              color: 'var(--bone-200)',
-              fontFamily: 'monospace',
-              fontSize: 11,
-              cursor: 'pointer'
-            }}
-          >
+        <div className="modal-foot">
+          <button onClick={onCancel} className="btn btn-sm btn-ghost">
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={noneSelected}
-            style={{
-              background: noneSelected ? 'var(--ink-850)' : 'var(--accent)',
-              border: '1px solid var(--accent)',
-              borderRadius: 3,
-              padding: '4px 14px',
-              color: noneSelected ? 'var(--accent)' : 'var(--ink-900)',
-              fontFamily: 'monospace',
-              fontSize: 11,
-              fontWeight: 'bold',
-              cursor: noneSelected ? 'not-allowed' : 'pointer',
-              opacity: noneSelected ? 0.5 : 1
-            }}
+            className="btn btn-sm btn-primary"
           >
             {isSingleModule ? `Import ${totalResources}` : `Import Selected (${selectedCount})`}
           </button>
