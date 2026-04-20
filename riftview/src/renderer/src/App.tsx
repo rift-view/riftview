@@ -125,10 +125,10 @@ export default function App(): React.JSX.Element | null {
       }
     })
 
-    window.riftview.getThemeOverrides().then((overrides) => {
+    window.riftview.getStyleOverrides().then((overrides) => {
       if (Object.keys(overrides).length === 0) return
-      const el = document.getElementById('cb-theme-overrides') ?? document.createElement('style')
-      el.id = 'cb-theme-overrides'
+      const el = document.getElementById('rift-style-overrides') ?? document.createElement('style')
+      el.id = 'rift-style-overrides'
       el.textContent = `:root { ${Object.entries(overrides)
         .map(([k, v]) => `${k}: ${v}`)
         .join('; ')} }`

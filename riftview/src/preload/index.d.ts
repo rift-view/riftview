@@ -17,7 +17,7 @@ interface Window {
     onScanKeypairs(cb: (pairs: string[]) => void): () => void
     getSettings(): Promise<import('../renderer/types/cloud').Settings>
     setSettings(s: import('../renderer/types/cloud').Settings): Promise<void>
-    getThemeOverrides(): Promise<Record<string, string>>
+    getStyleOverrides(): Promise<Record<string, string>>
     createCloudFront(
       params: import('../renderer/types/create').CloudFrontParams
     ): Promise<{ code: number }>

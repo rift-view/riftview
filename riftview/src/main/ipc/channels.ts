@@ -13,7 +13,7 @@ export const IPC = {
   SCAN_KEYPAIRS: 'scan:keypairs', // on → (keyPairs: string[])
   SETTINGS_GET: 'settings:get', // invoke → Settings
   SETTINGS_SET: 'settings:set', // invoke → void
-  THEME_OVERRIDES: 'theme:overrides',
+  STYLE_OVERRIDES: 'style:overrides',
   CF_CREATE: 'cloudfront:create', // invoke → { code: number }
   CF_UPDATE: 'cloudfront:update', // invoke → { code: number }
   CF_DELETE: 'cloudfront:delete', // invoke → { code: number }

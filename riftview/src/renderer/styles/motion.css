@@ -24,8 +24,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Replaces the existing crt-on animation (see plan R8).
-   A single 1px ember hairline sweeps top→bottom across the canvas
+/* A single 1px ember hairline sweeps top→bottom across the canvas
    on mount/profile change, then fades. */
 @keyframes rift-hairline-sweep {
   0%   { transform: translateY(-100%); opacity: 0; }

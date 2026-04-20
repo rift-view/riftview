@@ -61,17 +61,17 @@ export const LambdaUnknown: Story = () => (
   <ResourceNode {...makeProps('lambda', 'unknown', 'mystery-fn')} />
 )
 
-// --- Theme variants ---
-export const DarkTheme: Story = () => (
-  <div data-theme="dark" style={{ background: '#0f1117', padding: 24, display: 'flex', gap: 16 }}>
+// --- Surface variants ---
+export const DarkSurface: Story = () => (
+  <div style={{ background: '#0f1117', padding: 24, display: 'flex', gap: 16 }}>
     <ResourceNode {...makeProps('lambda', 'running', 'dark-fn')} />
     <ResourceNode {...makeProps('ec2', 'error', 'dark-ec2')} />
     <ResourceNode {...makeProps('rds', 'pending', 'dark-rds')} />
   </div>
 )
 
-export const LightTheme: Story = () => (
-  <div data-theme="light" style={{ background: '#f9fafb', padding: 24, display: 'flex', gap: 16 }}>
+export const LightSurface: Story = () => (
+  <div style={{ background: '#f9fafb', padding: 24, display: 'flex', gap: 16 }}>
     <ResourceNode {...makeProps('lambda', 'running', 'light-fn')} />
     <ResourceNode {...makeProps('ec2', 'error', 'light-ec2')} />
     <ResourceNode {...makeProps('rds', 'pending', 'light-rds')} />
