@@ -1,0 +1,104 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`help text snapshots > diff --help 1`] = `
+"Usage: riftview diff [options] [a] [b]
+
+diff two scan snapshots (--snapshot files from \`riftview scan\`)
+
+Arguments:
+  a           path to the baseline ScanOutput snapshot
+  b           path to the updated ScanOutput snapshot
+
+Options:
+  -h, --help  display help for command
+"
+`;
+
+exports[`help text snapshots > drift --help 1`] = `
+"Usage: riftview drift [options]
+
+compare live AWS state against a Terraform tfstate file (CI-friendly via
+--fail-on-drift)
+
+Options:
+  --state <path>    path to terraform.tfstate (or tfstate JSON)
+  --profile <name>  AWS profile to scan (default: "default")
+  --region <list>   comma-separated region list (default: profile default
+                    region)
+  --endpoint <url>  AWS endpoint override (e.g. http://localhost:4566 for
+                    LocalStack)
+  --fail-on-drift   exit 1 if any unmanaged or missing resources are found
+                    (default: false)
+  -h, --help        display help for command
+"
+`;
+
+exports[`help text snapshots > risks --help 1`] = `
+"Usage: riftview risks [options]
+
+list severity-sorted risks from a fresh scan or a saved snapshot (CI-friendly
+via --fail-on)
+
+Options:
+  --profile <name>      AWS profile to scan (default: "default")
+  --region <list>       comma-separated region list (default: profile default
+                        region)
+  --endpoint <url>      AWS endpoint override (e.g. http://localhost:4566 for
+                        LocalStack)
+  --snapshot <path>     read nodes from a scan snapshot instead of hitting AWS
+  --fail-on <severity>  exit 1 if any advisory at this severity or higher
+                        (S1=critical, S2=warning, S3=info)
+  -h, --help            display help for command
+"
+`;
+
+exports[`help text snapshots > root --help 1`] = `
+"Usage: riftview [options] [command]
+
+RiftView CLI — CI-first AWS scan, risks, drift, diff
+
+Options:
+  -v, --version      print version and exit
+  --output <format>  output format (choices: "pretty", "json", default:
+                     "pretty")
+  -h, --help         display help for command
+
+Commands:
+  version            print version info
+  scan [options]     run a full scan of the current AWS account and print a
+                     summary
+  risks [options]    list severity-sorted risks from a fresh scan or a saved
+                     snapshot (CI-friendly via --fail-on)
+  drift [options]    compare live AWS state against a Terraform tfstate file
+                     (CI-friendly via --fail-on-drift)
+  diff [a] [b]       diff two scan snapshots (--snapshot files from \`riftview
+                     scan\`)
+  help [command]     display help for command
+"
+`;
+
+exports[`help text snapshots > scan --help 1`] = `
+"Usage: riftview scan [options]
+
+run a full scan of the current AWS account and print a summary
+
+Options:
+  --profile <name>   AWS profile to scan (default: "default")
+  --region <list>    comma-separated region list (default: profile default
+                     region)
+  --snapshot <path>  write full ScanOutput JSON to <path> for later diff/risks
+  --endpoint <url>   AWS endpoint override (e.g. http://localhost:4566 for
+                     LocalStack)
+  -h, --help         display help for command
+"
+`;
+
+exports[`help text snapshots > version --help 1`] = `
+"Usage: riftview version [options]
+
+print version info
+
+Options:
+  -h, --help  display help for command
+"
+`;
