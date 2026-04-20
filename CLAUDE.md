@@ -167,6 +167,8 @@
   | Op Intelligence | ✅ Done | CloudWatch metrics overlay on Lambda/RDS/ECS, per-node change history in Inspector, SSM terminal pane with xterm.js, keyboard-first navigation (j/k/Enter/r/?/1-4) |
   | Blast Radius Polish | ✅ Done | Bidirectional BFS traversal, hop-distance rings, direction badges (● ↑ ↓ ↕), non-members opacity 0 + pointerEvents none, fitView on enter, savedViewport restore on exit, Inspector BLAST RADIUS section with grouped member list, copy-as-Markdown, click-to-re-root |
   | Outreach Readiness | 🚧 In-progress | Positioning doc, IPC boundary doc, code signing/notarization, redact-account-IDs demo mode, landing one-pager, cold email templates |
-  | M6 | Planned | Multi-cloud plugin architecture (Azure, GCP, Vercel) |
+  | M6 | Planned | Hetzner plugin — validates the multi-cloud interface beyond AWS (~1 wk) |
+  | M6.1 | Planned | Vercel plugin — projects/deployments/domains; second interface-shape check (~1 wk) |
+  | M6.5 | Planned | Azure + GCP plugins — heavy SDK-driven providers (~6–8 wk combined) |
 
   ---
