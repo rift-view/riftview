@@ -6,7 +6,10 @@ import { mapCommanderExit } from './exit-mapper'
 import { awsScanRunner } from './scan-runtime'
 
 async function run(): Promise<number> {
-  const program = buildProgram({ scan: { runner: awsScanRunner } })
+  const program = buildProgram({
+    scan: { runner: awsScanRunner },
+    risks: { runner: awsScanRunner }
+  })
   program.exitOverride()
   try {
     await program.parseAsync(process.argv)
