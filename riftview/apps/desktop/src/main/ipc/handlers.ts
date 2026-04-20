@@ -8,6 +8,13 @@ import { listProfiles, getDefaultRegion } from '@riftview/shared'
 import { createClients } from '../aws/client'
 import type { AwsClients } from '../aws/client'
 import { ResourceScanner, historyFilePath } from '../aws/scanner'
+import {
+  deleteSnapshotSafe,
+  listVersionsSafe,
+  readSnapshotSafe,
+  type Snapshot,
+  type VersionMeta
+} from '../history/index'
 import { CliEngine } from '../cli/engine'
 import { pluginRegistry } from '../plugin/index'
 import {
@@ -657,6 +664,36 @@ export function registerHandlers(win: BrowserWindow): void {
       }
     }
   )
+
+  // Snapshot history — read-only from renderer.
+  // Input validation + error isolation live in history/store.ts so malformed
+  // payloads never reach the DB layer.
+  ipcMain.handle(IPC.SNAPSHOT_LIST, (_, filter?: unknown): VersionMeta[] => {
+    try {
+      return listVersionsSafe(filter)
+    } catch (err) {
+      console.error('[ipc] snapshot:list rejected', err)
+      return []
+    }
+  })
+
+  ipcMain.handle(IPC.SNAPSHOT_READ, (_, versionId: unknown): Snapshot | null => {
+    try {
+      return readSnapshotSafe(versionId)
+    } catch (err) {
+      console.error('[ipc] snapshot:read rejected', err)
+      return null
+    }
+  })
+
+  ipcMain.handle(IPC.SNAPSHOT_DELETE, (_, versionId: unknown): { ok: boolean } => {
+    try {
+      return deleteSnapshotSafe(versionId)
+    } catch (err) {
+      console.error('[ipc] snapshot:delete rejected', err)
+      return { ok: false }
+    }
+  })
 
   // SSM terminal — start session
   ipcMain.handle(
