@@ -84,10 +84,7 @@ export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Eleme
       <div className="form-field">
         <span className="label">Inbound Rules</span>
         {rules.map((rule, i) => (
-          <div
-            key={i}
-            style={{ display: 'flex', gap: 4, marginBottom: 4, alignItems: 'center' }}
-          >
+          <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 4, alignItems: 'center' }}>
             <select
               className="form-select"
               style={{ width: 80 }}
@@ -133,7 +130,12 @@ export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Eleme
             </button>
           </div>
         ))}
-        <button type="button" onClick={addRule} className="btn btn-sm btn-ghost" style={{ marginTop: 6 }}>
+        <button
+          type="button"
+          onClick={addRule}
+          className="btn btn-sm btn-ghost"
+          style={{ marginTop: 6 }}
+        >
           + Add Rule
         </button>
       </div>

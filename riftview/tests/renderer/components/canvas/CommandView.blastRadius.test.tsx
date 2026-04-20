@@ -203,7 +203,11 @@ describe('CommandView blast radius integration', () => {
     render(<CommandView onNodeContextMenu={noop} />)
 
     const lastCall = reactFlowEdgesSpy.mock.calls[reactFlowEdgesSpy.mock.calls.length - 1]
-    const edges = lastCall[0] as { source: string; target: string; style?: { strokeWidth?: number; opacity?: number } }[]
+    const edges = lastCall[0] as {
+      source: string
+      target: string
+      style?: { strokeWidth?: number; opacity?: number }
+    }[]
     const memberEdge = edges.find((e) => e.source === 'A' && e.target === 'B')
 
     // Native edge color (set by buildCommandEdges) is preserved — just
@@ -220,7 +224,11 @@ describe('CommandView blast radius integration', () => {
     render(<CommandView onNodeContextMenu={noop} />)
 
     const lastCall = reactFlowEdgesSpy.mock.calls[reactFlowEdgesSpy.mock.calls.length - 1]
-    const edges = lastCall[0] as { source: string; target: string; style?: { strokeWidth?: number } }[]
+    const edges = lastCall[0] as {
+      source: string
+      target: string
+      style?: { strokeWidth?: number }
+    }[]
     // All edges should have default strokeWidth (not the boosted 2.5)
     const boosted = edges.filter((e) => e.style?.strokeWidth === 2.5)
     expect(boosted).toHaveLength(0)
@@ -232,7 +240,11 @@ describe('CommandView blast radius integration', () => {
     render(<CommandView onNodeContextMenu={noop} />)
 
     const lastCall = reactFlowEdgesSpy.mock.calls[reactFlowEdgesSpy.mock.calls.length - 1]
-    const edges = lastCall[0] as { source: string; target: string; style?: { pointerEvents?: string } }[]
+    const edges = lastCall[0] as {
+      source: string
+      target: string
+      style?: { pointerEvents?: string }
+    }[]
     const nonMemberEdge = edges.find((e) => e.source === 'C' && e.target === 'D')
 
     expect(nonMemberEdge?.style?.pointerEvents).toBe('none')

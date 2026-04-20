@@ -54,9 +54,7 @@ function setupRiftviewMock(overrides: Partial<RiftviewMock> = {}): void {
         connStatusHandler = null
       }
     }),
-    listTfStateModules: vi
-      .fn()
-      .mockResolvedValue({ modules: [] }),
+    listTfStateModules: vi.fn().mockResolvedValue({ modules: [] }),
     importTfState: vi.fn().mockResolvedValue({ nodes: [] }),
     exportTerraform: vi.fn().mockResolvedValue({ success: true }),
     exportPng: vi.fn().mockResolvedValue({ success: true }),
@@ -96,7 +94,9 @@ describe('Topbar — wordmark', () => {
   it('renders a logo <img> with src containing "riftview-logo" and the RIFTVIEW text', () => {
     const { container } = render(<Topbar onScan={vi.fn()} />)
     const imgs = container.querySelectorAll('img')
-    const logo = Array.from(imgs).find((img) => /riftview-logo/i.test(img.getAttribute('src') ?? ''))
+    const logo = Array.from(imgs).find((img) =>
+      /riftview-logo/i.test(img.getAttribute('src') ?? '')
+    )
     expect(logo).toBeTruthy()
     expect(screen.getByText(/RIFTVIEW/)).toBeInTheDocument()
   })
@@ -179,9 +179,7 @@ describe('Topbar — connection status indicator', () => {
     const label = screen.getByText(/^connected$/i)
     const color = (label.getAttribute('style') ?? '') + (label.className ?? '')
     // Moss-coloured: look for a moss/green token (moss class or a green hex)
-    expect(color).toMatch(
-      /moss|--ok|#28c840|#22c55e|#4ade80|rgb\(40,\s*200,\s*64\)|#16a34a/i
-    )
+    expect(color).toMatch(/moss|--ok|#28c840|#22c55e|#4ade80|rgb\(40,\s*200,\s*64\)|#16a34a/i)
   })
 
   it('invoking "error" yields a fault/red colored label', async () => {
@@ -247,11 +245,7 @@ describe('Topbar — fix count chip', () => {
 describe('Topbar — cost pill & popover', () => {
   it('shows a formatted dollar total when costed nodes are present', () => {
     useCloudStore.setState({
-      nodes: [
-        makeNode('i-1', 'ec2'),
-        makeNode('i-2', 'ec2'),
-        makeNode('b-1', 's3')
-      ]
+      nodes: [makeNode('i-1', 'ec2'), makeNode('i-2', 'ec2'), makeNode('b-1', 's3')]
     })
     render(<Topbar onScan={vi.fn()} />)
     // ec2 us-east-1 = 8.50 each, s3 = 2.30 → ~$19.30
@@ -261,11 +255,7 @@ describe('Topbar — cost pill & popover', () => {
 
   it('hovering the cost pill reveals a top-5 list with the "Top cost by node" header', async () => {
     useCloudStore.setState({
-      nodes: [
-        makeNode('i-1', 'ec2'),
-        makeNode('i-2', 'ec2'),
-        makeNode('b-1', 's3')
-      ]
+      nodes: [makeNode('i-1', 'ec2'), makeNode('i-2', 'ec2'), makeNode('b-1', 's3')]
     })
     render(<Topbar onScan={vi.fn()} />)
     const pill = screen.getByText(/~\$19\.30\/mo/)
