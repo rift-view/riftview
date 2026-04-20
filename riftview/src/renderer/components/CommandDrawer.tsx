@@ -136,8 +136,8 @@ export function CommandDrawer(): React.JSX.Element {
   return (
     <div
       style={{
-        background: 'var(--cb-bg-panel)',
-        borderTop: '1px solid var(--cb-accent)',
+        background: 'var(--ink-900)',
+        borderTop: '1px solid var(--accent)',
         fontFamily: 'monospace',
         flexShrink: 0
       }}
@@ -147,14 +147,14 @@ export function CommandDrawer(): React.JSX.Element {
         <div
           style={{
             padding: '6px 10px',
-            background: 'var(--cb-bg-panel)',
-            borderBottom: '1px solid var(--cb-border-strong)'
+            background: 'var(--ink-900)',
+            borderBottom: '1px solid var(--border-strong)'
           }}
         >
           {commandPreview.map((line, i) => (
             <div
               key={i}
-              style={{ color: 'var(--cb-text-primary)', fontFamily: 'monospace', fontSize: '12px' }}
+              style={{ color: 'var(--fg)', fontFamily: 'monospace', fontSize: '12px' }}
             >
               {line}
             </div>
@@ -170,20 +170,20 @@ export function CommandDrawer(): React.JSX.Element {
             height: '120px',
             overflowY: 'auto',
             padding: '6px 10px',
-            background: 'var(--cb-bg-panel)',
-            borderBottom: '1px solid var(--cb-border-strong)',
+            background: 'var(--ink-900)',
+            borderBottom: '1px solid var(--border-strong)',
             fontSize: '10px',
             lineHeight: '1.6'
           }}
         >
           {cliOutput.length === 0 ? (
-            <span style={{ color: 'var(--cb-text-muted)' }}>Waiting for output…</span>
+            <span style={{ color: 'var(--fg-muted)' }}>Waiting for output…</span>
           ) : (
             cliOutput.map((entry, i) => (
               <div
                 key={i}
                 style={{
-                  color: entry.stream === 'stderr' ? '#febc2e' : 'var(--cb-text-primary)',
+                  color: entry.stream === 'stderr' ? '#febc2e' : 'var(--fg)',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-all'
                 }}
@@ -201,8 +201,8 @@ export function CommandDrawer(): React.JSX.Element {
           style={{
             height: '160px',
             overflowY: 'auto',
-            background: 'var(--cb-bg-panel)',
-            borderBottom: '1px solid var(--cb-border-strong)',
+            background: 'var(--ink-900)',
+            borderBottom: '1px solid var(--border-strong)',
             fontSize: '10px',
             lineHeight: '1.6'
           }}
@@ -213,11 +213,11 @@ export function CommandDrawer(): React.JSX.Element {
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '3px 10px',
-              borderBottom: '1px solid var(--cb-border-strong)'
+              borderBottom: '1px solid var(--border-strong)'
             }}
           >
             <span
-              style={{ color: 'var(--cb-text-muted)', fontSize: '9px', fontFamily: 'monospace' }}
+              style={{ color: 'var(--fg-muted)', fontSize: '9px', fontFamily: 'monospace' }}
             >
               Session Log
             </span>
@@ -242,18 +242,18 @@ export function CommandDrawer(): React.JSX.Element {
             style={{ height: 'calc(160px - 24px)', overflowY: 'auto', padding: '6px 10px' }}
           >
             {logHistory.length === 0 ? (
-              <span style={{ color: 'var(--cb-text-muted)' }}>No commands run this session.</span>
+              <span style={{ color: 'var(--fg-muted)' }}>No commands run this session.</span>
             ) : (
               logHistory.map((entry, i) => (
                 <div key={i} style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                   <span
-                    style={{ color: 'var(--cb-text-muted)', fontSize: '9px', marginRight: '6px' }}
+                    style={{ color: 'var(--fg-muted)', fontSize: '9px', marginRight: '6px' }}
                   >
                     {new Date(entry.ts).toLocaleTimeString()}
                   </span>
                   <span
                     style={{
-                      color: entry.stream === 'stderr' ? '#febc2e' : 'var(--cb-text-primary)'
+                      color: entry.stream === 'stderr' ? '#febc2e' : 'var(--fg)'
                     }}
                   >
                     {entry.line}
@@ -273,7 +273,7 @@ export function CommandDrawer(): React.JSX.Element {
             alignItems: 'center',
             gap: 4,
             padding: '2px 8px',
-            borderTop: '1px solid var(--cb-border)',
+            borderTop: '1px solid var(--border)',
             flexWrap: 'wrap'
           }}
         >
@@ -284,12 +284,12 @@ export function CommandDrawer(): React.JSX.Element {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 3,
-                background: 'var(--cb-bg-elevated)',
-                border: '1px solid var(--cb-accent)',
+                background: 'var(--ink-850)',
+                border: '1px solid var(--accent)',
                 borderRadius: 3,
                 padding: '1px 5px',
                 fontSize: 9,
-                color: 'var(--cb-accent)',
+                color: 'var(--accent)',
                 fontFamily: 'monospace'
               }}
             >
@@ -299,7 +299,7 @@ export function CommandDrawer(): React.JSX.Element {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: 'var(--cb-accent)',
+                  color: 'var(--accent)',
                   cursor: 'pointer',
                   fontSize: 10,
                   lineHeight: 1,
@@ -324,7 +324,7 @@ export function CommandDrawer(): React.JSX.Element {
           minHeight: '26px'
         }}
       >
-        <span style={{ color: 'var(--cb-accent)', fontSize: '9px' }}>$</span>
+        <span style={{ color: 'var(--accent)', fontSize: '9px' }}>$</span>
 
         <code
           style={{
@@ -335,8 +335,8 @@ export function CommandDrawer(): React.JSX.Element {
             whiteSpace: 'nowrap',
             color:
               commandPreview.length > 0 || running
-                ? 'var(--cb-text-primary)'
-                : 'var(--cb-text-muted)'
+                ? 'var(--fg)'
+                : 'var(--fg-muted)'
           }}
         >
           {statusText}
@@ -365,7 +365,7 @@ export function CommandDrawer(): React.JSX.Element {
           <button
             onClick={handleCancel}
             style={{
-              background: 'var(--cb-bg-elevated)',
+              background: 'var(--ink-850)',
               border: '1px solid #ff5f57',
               borderRadius: '2px',
               padding: '1px 8px',
@@ -385,7 +385,7 @@ export function CommandDrawer(): React.JSX.Element {
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'var(--cb-text-muted)',
+              color: 'var(--fg-muted)',
               fontSize: '11px',
               cursor: 'pointer'
             }}
@@ -400,7 +400,7 @@ export function CommandDrawer(): React.JSX.Element {
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'var(--cb-text-muted)',
+              color: 'var(--fg-muted)',
               fontSize: '9px',
               cursor: 'pointer',
               fontFamily: 'monospace'
@@ -416,7 +416,7 @@ export function CommandDrawer(): React.JSX.Element {
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'var(--cb-text-muted)',
+              color: 'var(--fg-muted)',
               fontSize: '9px',
               cursor: 'pointer',
               fontFamily: 'monospace'
@@ -431,7 +431,7 @@ export function CommandDrawer(): React.JSX.Element {
           style={{
             background: 'transparent',
             border: 'none',
-            color: showLogs ? '#febc2e' : 'var(--cb-text-muted)',
+            color: showLogs ? '#febc2e' : 'var(--fg-muted)',
             fontSize: '9px',
             cursor: 'pointer',
             fontFamily: 'monospace'

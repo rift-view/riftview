@@ -14,11 +14,11 @@ const BLANK_RULE: Rule = { protocol: 'tcp', fromPort: 443, toPort: 443, cidr: '0
 function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
   return {
     width: '100%',
-    background: 'var(--cb-bg-panel)',
-    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--cb-border)'}`,
+    background: 'var(--ink-900)',
+    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--border)'}`,
     borderRadius: 3,
     padding: '3px 6px',
-    color: 'var(--cb-text-primary)',
+    color: 'var(--fg)',
     fontFamily: 'monospace',
     fontSize: 10,
     boxSizing: 'border-box' as const
@@ -61,16 +61,16 @@ export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Eleme
   }
 
   const ruleInputStyle: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)',
-    border: '1px solid var(--cb-border)',
+    background: 'var(--ink-900)',
+    border: '1px solid var(--border)',
     borderRadius: '3px',
     padding: '4px 6px',
-    color: 'var(--cb-text-primary)',
+    color: 'var(--fg)',
     fontFamily: 'monospace',
     fontSize: '11px'
   }
   const labelStyle: React.CSSProperties = {
-    color: 'var(--cb-text-muted)',
+    color: 'var(--fg-muted)',
     fontSize: '9px',
     marginBottom: '3px',
     display: 'block',
@@ -137,7 +137,7 @@ export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Eleme
               onChange={(e) => updateRule(i, { fromPort: Number(e.target.value) })}
               placeholder="from"
             />
-            <span style={{ color: 'var(--cb-text-muted)', fontSize: '10px' }}>–</span>
+            <span style={{ color: 'var(--fg-muted)', fontSize: '10px' }}>–</span>
             <input
               style={{ ...ruleInputStyle, width: '50px' }}
               type="number"
@@ -156,7 +156,7 @@ export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Eleme
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: 'var(--cb-text-muted)',
+                color: 'var(--fg-muted)',
                 cursor: 'pointer',
                 fontSize: '12px'
               }}
@@ -168,10 +168,10 @@ export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Eleme
         <button
           onClick={addRule}
           style={{
-            background: 'var(--cb-bg-elevated)',
-            border: '1px solid var(--cb-border)',
+            background: 'var(--ink-850)',
+            border: '1px solid var(--border)',
             borderRadius: '3px',
-            color: 'var(--cb-text-secondary)',
+            color: 'var(--bone-200)',
             cursor: 'pointer',
             fontSize: '10px',
             padding: '3px 8px',

@@ -33,8 +33,8 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
     position: 'fixed',
     top: y,
     left: x,
-    background: 'var(--cb-bg-panel)',
-    border: '1px solid var(--cb-accent)',
+    background: 'var(--ink-900)',
+    border: '1px solid var(--accent)',
     borderRadius: '4px',
     fontFamily: 'monospace',
     fontSize: '10px',
@@ -44,22 +44,22 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
   }
 
   function hoverOn(e: React.MouseEvent<HTMLDivElement>): void {
-    ;(e.currentTarget as HTMLDivElement).style.background = 'var(--cb-bg-elevated)'
-    ;(e.currentTarget as HTMLDivElement).style.color = 'var(--cb-accent)'
+    ;(e.currentTarget as HTMLDivElement).style.background = 'var(--ink-850)'
+    ;(e.currentTarget as HTMLDivElement).style.color = 'var(--accent)'
   }
   function hoverOff(e: React.MouseEvent<HTMLDivElement>): void {
     ;(e.currentTarget as HTMLDivElement).style.background = 'transparent'
-    ;(e.currentTarget as HTMLDivElement).style.color = 'var(--cb-text-secondary)'
+    ;(e.currentTarget as HTMLDivElement).style.color = 'var(--bone-200)'
   }
 
   const itemStyle: React.CSSProperties = {
     padding: '5px 10px',
-    color: 'var(--cb-text-secondary)',
+    color: 'var(--bone-200)',
     cursor: 'pointer'
   }
   const sectionLabel: React.CSSProperties = {
     padding: '4px 10px 2px',
-    color: 'var(--cb-text-muted)',
+    color: 'var(--fg-muted)',
     fontSize: '8px',
     textTransform: 'uppercase',
     letterSpacing: '0.1em'
@@ -108,7 +108,7 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
             </div>
             {view !== 'command' && (
               <div
-                style={{ ...itemStyle, borderBottom: '1px solid var(--cb-border-strong)' }}
+                style={{ ...itemStyle, borderBottom: '1px solid var(--border-strong)' }}
                 onClick={handleTidy}
                 onMouseEnter={hoverOn}
                 onMouseLeave={hoverOff}
@@ -148,8 +148,8 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
             <div
               style={{
                 ...itemStyle,
-                borderTop: '1px solid var(--cb-border-strong)',
-                color: 'var(--cb-text-muted)'
+                borderTop: '1px solid var(--border-strong)',
+                color: 'var(--fg-muted)'
               }}
               onClick={() => setPendingResource(null)}
               onMouseEnter={hoverOn}

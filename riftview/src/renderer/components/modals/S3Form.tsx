@@ -10,11 +10,11 @@ interface Props {
 function fieldStyle(value: string, showErrors: boolean): React.CSSProperties {
   return {
     width: '100%',
-    background: 'var(--cb-bg-panel)',
-    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--cb-border)'}`,
+    background: 'var(--ink-900)',
+    border: `1px solid ${showErrors && !value.trim() ? '#ff5f57' : 'var(--border)'}`,
     borderRadius: 3,
     padding: '3px 6px',
-    color: 'var(--cb-text-primary)',
+    color: 'var(--fg)',
     fontFamily: 'monospace',
     fontSize: 10,
     boxSizing: 'border-box' as const
@@ -38,7 +38,7 @@ export function S3Form({ onChange, showErrors = false }: Props): React.JSX.Eleme
   }
 
   const labelStyle: React.CSSProperties = {
-    color: 'var(--cb-text-muted)',
+    color: 'var(--fg-muted)',
     fontSize: '9px',
     marginBottom: '3px',
     display: 'block',
@@ -72,7 +72,7 @@ export function S3Form({ onChange, showErrors = false }: Props): React.JSX.Eleme
           onChange={(e) => update({ blockPublicAccess: e.target.checked })}
         />
         <span
-          style={{ color: 'var(--cb-text-secondary)', fontSize: '11px', fontFamily: 'monospace' }}
+          style={{ color: 'var(--bone-200)', fontSize: '11px', fontFamily: 'monospace' }}
         >
           Block all public access
         </span>

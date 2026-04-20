@@ -44,14 +44,14 @@ export function EmptyCanvasState(): React.JSX.Element | null {
 
   const headingStyle: React.CSSProperties = {
     fontSize: 15,
-    color: 'var(--cb-text)',
+    color: 'var(--fg)',
     marginBottom: 8,
     fontWeight: 600
   }
 
   const subStyle: React.CSSProperties = {
     fontSize: 13,
-    color: 'var(--cb-text-secondary)',
+    color: 'var(--bone-200)',
     maxWidth: 320,
     lineHeight: 1.6,
     marginBottom: 16
@@ -63,9 +63,9 @@ export function EmptyCanvasState(): React.JSX.Element | null {
     padding: '5px 16px',
     borderRadius: 4,
     cursor: 'pointer',
-    background: 'var(--cb-bg-elevated)',
-    border: '1px solid var(--cb-accent)',
-    color: 'var(--cb-accent)'
+    background: 'var(--ink-850)',
+    border: '1px solid var(--accent)',
+    color: 'var(--accent)'
   }
 
   if (!profile.name) {
@@ -91,8 +91,8 @@ export function EmptyCanvasState(): React.JSX.Element | null {
           width: w,
           height: 66,
           borderRadius: 6,
-          border: '1px solid var(--cb-border)',
-          background: 'var(--cb-bg-panel)',
+          border: '1px solid var(--border)',
+          background: 'var(--ink-900)',
           flexShrink: 0,
           position: 'relative',
           overflow: 'hidden'
@@ -115,7 +115,7 @@ export function EmptyCanvasState(): React.JSX.Element | null {
           style={{
             fontSize: 10,
             fontFamily: 'monospace',
-            color: 'var(--cb-text-muted)',
+            color: 'var(--fg-muted)',
             letterSpacing: '0.08em'
           }}
         >
@@ -128,7 +128,7 @@ export function EmptyCanvasState(): React.JSX.Element | null {
             flexDirection: 'column',
             gap: 10,
             padding: 12,
-            border: '1px dashed var(--cb-border)',
+            border: '1px dashed var(--border)',
             borderRadius: 8
           }}
         >
@@ -137,7 +137,7 @@ export function EmptyCanvasState(): React.JSX.Element | null {
               width: 60,
               height: 8,
               borderRadius: 3,
-              background: 'var(--cb-border)',
+              background: 'var(--border)',
               marginBottom: 4
             }}
           />
@@ -191,8 +191,8 @@ export function EmptyCanvasState(): React.JSX.Element | null {
           style={{
             ...btnStyle,
             marginTop: 8,
-            borderColor: 'var(--cb-border)',
-            color: 'var(--cb-text-secondary)',
+            borderColor: 'var(--border)',
+            color: 'var(--bone-200)',
             fontSize: 11
           }}
           onClick={() => window.dispatchEvent(new CustomEvent('riftview:show-templates'))}

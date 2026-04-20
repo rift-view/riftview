@@ -40,7 +40,7 @@ export default function DeleteDialog({
     zIndex: 200
   }
   const dialog: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)',
+    background: 'var(--ink-900)',
     border: '1px solid #ff5f57',
     borderRadius: 8,
     padding: 20,
@@ -61,8 +61,8 @@ export default function DeleteDialog({
         <div style={{ color: '#ff5f57', fontWeight: 'bold', fontSize: 13, marginBottom: 8 }}>
           Delete {RESOURCE_LABELS[node.type] ?? node.type}?
         </div>
-        <div style={{ color: 'var(--cb-text-secondary)', fontSize: 10, marginBottom: 4 }}>
-          Type <span style={{ color: 'var(--cb-text-primary)' }}>{node.id}</span> to confirm
+        <div style={{ color: 'var(--bone-200)', fontSize: 10, marginBottom: 4 }}>
+          Type <span style={{ color: 'var(--fg)' }}>{node.id}</span> to confirm
         </div>
         <input
           autoFocus
@@ -71,11 +71,11 @@ export default function DeleteDialog({
           onChange={(e) => setInput(e.target.value)}
           style={{
             width: '100%',
-            background: 'var(--cb-bg-panel)',
-            border: '1px solid var(--cb-border)',
+            background: 'var(--ink-900)',
+            border: '1px solid var(--border)',
             borderRadius: 3,
             padding: '4px 8px',
-            color: 'var(--cb-text-primary)',
+            color: 'var(--fg)',
             fontFamily: 'monospace',
             fontSize: 11,
             boxSizing: 'border-box',
@@ -90,7 +90,7 @@ export default function DeleteDialog({
               alignItems: 'center',
               gap: 6,
               fontSize: 10,
-              color: 'var(--cb-text-secondary)',
+              color: 'var(--bone-200)',
               marginBottom: 8,
               cursor: 'pointer'
             }}
@@ -107,7 +107,7 @@ export default function DeleteDialog({
               alignItems: 'center',
               gap: 6,
               fontSize: 10,
-              color: 'var(--cb-text-secondary)',
+              color: 'var(--bone-200)',
               marginBottom: 8,
               cursor: 'pointer'
             }}
@@ -128,7 +128,7 @@ export default function DeleteDialog({
               alignItems: 'center',
               gap: 6,
               fontSize: 10,
-              color: 'var(--cb-text-secondary)',
+              color: 'var(--bone-200)',
               marginBottom: 8,
               cursor: 'pointer'
             }}
@@ -142,7 +142,7 @@ export default function DeleteDialog({
           </label>
         )}
 
-        <div style={{ color: 'var(--cb-text-muted)', fontSize: 9, marginBottom: 12 }}>
+        <div style={{ color: 'var(--fg-muted)', fontSize: 9, marginBottom: 12 }}>
           This action cannot be undone.
         </div>
 
@@ -150,11 +150,11 @@ export default function DeleteDialog({
           <button
             onClick={onClose}
             style={{
-              background: 'var(--cb-bg-elevated)',
-              border: '1px solid var(--cb-border)',
+              background: 'var(--ink-850)',
+              border: '1px solid var(--border)',
               borderRadius: 3,
               padding: '4px 14px',
-              color: 'var(--cb-text-secondary)',
+              color: 'var(--bone-200)',
               fontFamily: 'monospace',
               fontSize: 11,
               cursor: 'pointer'

@@ -34,7 +34,7 @@ export async function exportCanvasToPng(
 
     const dataUrl = await toPng(viewport, {
       backgroundColor:
-        getComputedStyle(document.documentElement).getPropertyValue('--cb-canvas-bg').trim() ||
+        getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() ||
         '#0f1117',
       pixelRatio: 2,
       filter: (node) => {

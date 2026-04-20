@@ -334,15 +334,15 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
     zIndex: 200
   }
   const modal: React.CSSProperties = {
-    background: 'var(--cb-bg-panel)',
-    border: '1px solid var(--cb-border)',
+    background: 'var(--ink-900)',
+    border: '1px solid var(--border)',
     borderRadius: 8,
     width: 760,
     height: 520,
     display: 'flex',
     flexDirection: 'column',
     fontFamily: 'monospace',
-    color: 'var(--cb-text-primary)',
+    color: 'var(--fg)',
     overflow: 'hidden'
   }
   const header: React.CSSProperties = {
@@ -350,7 +350,7 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '12px 16px',
-    borderBottom: '1px solid var(--cb-border-strong)',
+    borderBottom: '1px solid var(--border-strong)',
     flexShrink: 0
   }
   const body: React.CSSProperties = {
@@ -360,7 +360,7 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
   }
   const sidebar: React.CSSProperties = {
     width: 200,
-    borderRight: '1px solid var(--cb-border)',
+    borderRight: '1px solid var(--border)',
     padding: '8px 0',
     overflowY: 'auto',
     flexShrink: 0
@@ -376,7 +376,7 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '8px 16px',
-    borderBottom: '1px solid var(--cb-border)',
+    borderBottom: '1px solid var(--border)',
     flexShrink: 0
   }
   const code: React.CSSProperties = {
@@ -385,8 +385,8 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
     padding: '12px 16px',
     fontSize: 11,
     lineHeight: 1.7,
-    color: 'var(--cb-text-primary)',
-    background: 'var(--cb-bg-elevated)',
+    color: 'var(--fg)',
+    background: 'var(--ink-850)',
     whiteSpace: 'pre',
     margin: 0,
     fontFamily: 'monospace'
@@ -401,7 +401,7 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
     >
       <div style={modal}>
         <div style={header}>
-          <span style={{ fontSize: 13, fontWeight: 'bold', color: 'var(--cb-accent)' }}>
+          <span style={{ fontSize: 13, fontWeight: 'bold', color: 'var(--accent)' }}>
             Starter Templates
           </span>
           <button
@@ -410,7 +410,7 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--cb-text-muted)',
+              color: 'var(--fg-muted)',
               fontSize: 16,
               lineHeight: 1
             }}
@@ -428,16 +428,16 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
                   padding: '8px 16px',
                   cursor: 'pointer',
                   fontSize: 11,
-                  background: selected === t.id ? 'var(--cb-bg-elevated)' : 'transparent',
-                  borderLeft: `2px solid ${selected === t.id ? 'var(--cb-accent)' : 'transparent'}`,
-                  color: selected === t.id ? 'var(--cb-text-primary)' : 'var(--cb-text-secondary)'
+                  background: selected === t.id ? 'var(--ink-850)' : 'transparent',
+                  borderLeft: `2px solid ${selected === t.id ? 'var(--accent)' : 'transparent'}`,
+                  color: selected === t.id ? 'var(--fg)' : 'var(--bone-200)'
                 }}
               >
                 <div style={{ fontWeight: selected === t.id ? 600 : 400 }}>{t.name}</div>
                 <div
                   style={{
                     fontSize: 9,
-                    color: 'var(--cb-text-muted)',
+                    color: 'var(--fg-muted)',
                     marginTop: 2,
                     lineHeight: 1.4
                   }}
@@ -449,7 +449,7 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
           </div>
           <div style={preview}>
             <div style={previewHeader}>
-              <span style={{ fontSize: 11, color: 'var(--cb-text-secondary)' }}>
+              <span style={{ fontSize: 11, color: 'var(--bone-200)' }}>
                 {current.name} — main.tf
               </span>
               <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -463,13 +463,13 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
                           ? '#22c55e'
                           : deployState === 'error'
                             ? '#ef4444'
-                            : 'var(--cb-bg-elevated)',
+                            : 'var(--ink-850)',
                       border: `1px solid ${
                         deployState === 'success'
                           ? '#22c55e'
                           : deployState === 'error'
                             ? '#ef4444'
-                            : 'var(--cb-border)'
+                            : 'var(--border)'
                       }`,
                       borderRadius: 3,
                       padding: '3px 12px',
@@ -477,7 +477,7 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
                       color:
                         deployState === 'success' || deployState === 'error'
                           ? '#000'
-                          : 'var(--cb-text-secondary)',
+                          : 'var(--bone-200)',
                       fontFamily: 'monospace',
                       fontSize: 10,
                       fontWeight:
@@ -499,12 +499,12 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
                 <button
                   onClick={handleCopy}
                   style={{
-                    background: copied ? '#22c55e' : 'var(--cb-bg-elevated)',
-                    border: `1px solid ${copied ? '#22c55e' : 'var(--cb-border)'}`,
+                    background: copied ? '#22c55e' : 'var(--ink-850)',
+                    border: `1px solid ${copied ? '#22c55e' : 'var(--border)'}`,
                     borderRadius: 3,
                     padding: '3px 12px',
                     cursor: 'pointer',
-                    color: copied ? '#000' : 'var(--cb-text-secondary)',
+                    color: copied ? '#000' : 'var(--bone-200)',
                     fontFamily: 'monospace',
                     fontSize: 10,
                     fontWeight: copied ? 'bold' : 'normal',
@@ -519,14 +519,14 @@ export default function TemplatesModal({ onClose }: TemplatesModalProps): React.
             {deployOutput && (
               <div
                 style={{
-                  borderTop: `1px solid ${deployState === 'error' ? '#ef4444' : deployState === 'success' ? '#22c55e' : 'var(--cb-border)'}`,
+                  borderTop: `1px solid ${deployState === 'error' ? '#ef4444' : deployState === 'success' ? '#22c55e' : 'var(--border)'}`,
                   padding: '8px 16px',
                   maxHeight: 120,
                   overflowY: 'auto',
-                  background: 'var(--cb-bg-elevated)',
+                  background: 'var(--ink-850)',
                   fontSize: 10,
                   fontFamily: 'monospace',
-                  color: deployState === 'error' ? '#ef4444' : 'var(--cb-text-secondary)',
+                  color: deployState === 'error' ? '#ef4444' : 'var(--bone-200)',
                   lineHeight: 1.5,
                   flexShrink: 0
                 }}
