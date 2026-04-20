@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildConsoleUrl } from '../buildConsoleUrl'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 function makeNode(overrides: Partial<CloudNode>): CloudNode {
   return {

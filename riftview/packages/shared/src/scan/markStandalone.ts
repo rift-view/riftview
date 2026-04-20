@@ -1,4 +1,4 @@
-import type { CloudNode } from '../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 /**
  * Tags each node with `metadata.standalone = true` if it has neither inbound

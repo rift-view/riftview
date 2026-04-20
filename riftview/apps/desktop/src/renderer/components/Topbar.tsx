@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
-import type { AwsProfile, CloudNode } from '../types/cloud'
+import type { AwsProfile, CloudNode } from '@riftview/shared'
 import type { TfModuleInfo } from '../types/tfstate'
 import TemplatesModal from './TemplatesModal'
 import TfModuleSelectorModal from './modals/TfModuleSelectorModal'

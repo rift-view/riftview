@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildDeleteCommands, buildQuickActionCommand } from '../buildDeleteCommands'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 function node(
   type: CloudNode['type'],

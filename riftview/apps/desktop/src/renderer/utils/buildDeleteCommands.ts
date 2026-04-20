@@ -1,4 +1,4 @@
-import type { CloudNode } from '../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 export interface DeleteOptions {
   skipFinalSnapshot?: boolean

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { Inspector } from '../../../src/renderer/components/Inspector'
 import { useCloudStore } from '../../../src/renderer/store/cloud'
 import { useUIStore } from '../../../src/renderer/store/ui'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 // ---- Mocks ----------------------------------------------------------------
 

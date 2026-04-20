@@ -19,16 +19,16 @@ import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
 import { ResourceNode } from './nodes/ResourceNode'
-import type { CloudNode, NodeType } from '../../types/cloud'
-import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
+import type { CloudNode, NodeType } from '@riftview/shared'
+import { resolveIntegrationTargetId } from '@riftview/shared'
 import { buildCommandNodes, getTierForNode } from '../../utils/commandLayout'
 import { edgeStyle } from './edges/edgeStyle'
+import { buildBlastRadius } from '@riftview/shared'
 import {
-  buildBlastRadius,
   hopRingStyle,
   directionSymbol,
   applyBlastRadiusToEdges
-} from '../../utils/blastRadius'
+} from '../../utils/blastRadiusEdges'
 
 // ── Layout constants (local — only needed for TierLabelNode width) ────────────
 

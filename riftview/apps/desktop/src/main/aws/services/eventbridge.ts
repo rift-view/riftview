@@ -4,7 +4,7 @@ import {
   ListRulesCommand,
   ListTargetsByRuleCommand
 } from '@aws-sdk/client-eventbridge'
-import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '@riftview/shared'
 
 const ALLOWED_TARGET_PREFIXES = [
   'arn:aws:lambda:',

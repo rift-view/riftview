@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { useCloudStore, createCloudStore } from '../cloud'
 import { useCliStore } from '../cli'
 import { useUIStore } from '../ui'
-import type { NodeType } from '../../types/cloud'
+import type { NodeType } from '@riftview/shared'
 
 beforeEach(() => {
   useCloudStore.setState({

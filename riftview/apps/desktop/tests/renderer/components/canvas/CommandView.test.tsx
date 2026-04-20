@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { buildCommandNodes, NODE_TIER } from '../../../../src/renderer/utils/commandLayout'
-import type { CloudNode } from '../../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 function makeNode(type: CloudNode['type'], id = `id-${type}`): CloudNode {
   return { id, type, label: type, status: 'running', region: 'us-east-1', metadata: {} }

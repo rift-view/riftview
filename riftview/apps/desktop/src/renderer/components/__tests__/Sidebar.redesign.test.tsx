@@ -4,7 +4,7 @@ import { Sidebar } from '../Sidebar'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
 import { useCliStore } from '../../store/cli'
-import type { NodeType, CloudNode } from '../../types/cloud'
+import type { NodeType, CloudNode } from '@riftview/shared'
 
 /**
  * VISUAL CONTRACT suite for the redesigned Sidebar.

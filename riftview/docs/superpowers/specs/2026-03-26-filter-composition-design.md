@@ -25,21 +25,23 @@ Replace the single `sidebarFilter` field with a `NodeFilter` array. All canvas o
 
 ```ts
 type NodeFilter = {
-  id: string;           // stable identifier for add/remove
-  label: string;        // human-readable, shown in CommandDrawer filter chips
-  test: (node: CloudNode) => boolean;
-};
+  id: string // stable identifier for add/remove
+  label: string // human-readable, shown in CommandDrawer filter chips
+  test: (node: CloudNode) => boolean
+}
 ```
 
 ### UIStore Changes
 
 Replace:
+
 ```ts
 sidebarFilter: NodeType | null;
 setSidebarFilter: (type: NodeType | null) => void;
 ```
 
 With:
+
 ```ts
 activeFilters: NodeFilter[];
 addFilter: (filter: NodeFilter) => void;
@@ -74,9 +76,10 @@ This OR model means filters are additive inclusions: each filter adds more visib
 **Before:** `setSidebarFilter(type)` / `setSidebarFilter(null)`
 
 **After:**
+
 ```ts
 // activate
-addFilter({ id: 'sidebar-type', label: typeLabelFor(type), test: n => n.type === type })
+addFilter({ id: 'sidebar-type', label: typeLabelFor(type), test: (n) => n.type === type })
 
 // deactivate
 removeFilter('sidebar-type')
@@ -87,13 +90,17 @@ The confirmation modal (already implemented for switching service types while a 
 ### Drift filter
 
 ```ts
-addFilter({ id: 'drift', label: 'Drifted nodes', test: n => n.driftStatus !== undefined })
+addFilter({ id: 'drift', label: 'Drifted nodes', test: (n) => n.driftStatus !== undefined })
 ```
 
 ### Region filter
 
 ```ts
-addFilter({ id: `region-${regionCode}`, label: `Region: ${regionCode}`, test: n => n.data.region === regionCode })
+addFilter({
+  id: `region-${regionCode}`,
+  label: `Region: ${regionCode}`,
+  test: (n) => n.data.region === regionCode
+})
 ```
 
 Multiple region filters can coexist with OR semantics, so selecting two regions shows nodes from either.
@@ -102,13 +109,13 @@ Multiple region filters can coexist with OR semantics, so selecting two regions 
 
 ## What Stays Unchanged
 
-| System | Change |
-|--------|--------|
-| Scan error badges (sidebar ⚠) | No change — not a canvas filter |
-| `ScanErrorStrip` banner | No change — not a canvas filter |
-| Region zone bounding boxes (`RegionZoneNode`) | No change — visual grouping, not an opacity filter |
-| Single-node selection highlight | No change — independent of filter state |
-| Confirmation modal on sidebar filter switch | Preserved — triggers when `sidebar-type` filter is active |
+| System                                        | Change                                                    |
+| --------------------------------------------- | --------------------------------------------------------- |
+| Scan error badges (sidebar ⚠)                 | No change — not a canvas filter                           |
+| `ScanErrorStrip` banner                       | No change — not a canvas filter                           |
+| Region zone bounding boxes (`RegionZoneNode`) | No change — visual grouping, not an opacity filter        |
+| Single-node selection highlight               | No change — independent of filter state                   |
+| Confirmation modal on sidebar filter switch   | Preserved — triggers when `sidebar-type` filter is active |
 
 Scan error state does not affect canvas node opacity. It surfaces only through the sidebar badge and the dismissible strip banner.
 
@@ -116,14 +123,14 @@ Scan error state does not affect canvas node opacity. It surfaces only through t
 
 ## Files That Would Change in Implementation
 
-| File | Change |
-|------|--------|
-| `src/renderer/store/ui.ts` | Replace `sidebarFilter`/`setSidebarFilter` with `activeFilters`, `addFilter`, `removeFilter`, `clearFilters` |
-| `src/renderer/components/Sidebar.tsx` | Use `addFilter`/`removeFilter('sidebar-type')` instead of `setSidebarFilter`; read `activeFilters.some(f => f.id === 'sidebar-type')` to determine active state |
-| `src/renderer/components/canvas/TopologyView.tsx` | `flowNodes` memo reads `activeFilters` instead of `sidebarFilter` to compute node opacity |
-| `src/renderer/components/canvas/GraphView.tsx` | Same as `TopologyView.tsx` |
-| `src/renderer/components/CommandDrawer.tsx` | Optionally render active filter chips (label + remove button) from `activeFilters` |
-| `src/renderer/types/cloud.ts` | No change (NodeFilter is a new type; CloudNode is unchanged) |
+| File                                              | Change                                                                                                                                                          |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/renderer/store/ui.ts`                        | Replace `sidebarFilter`/`setSidebarFilter` with `activeFilters`, `addFilter`, `removeFilter`, `clearFilters`                                                    |
+| `src/renderer/components/Sidebar.tsx`             | Use `addFilter`/`removeFilter('sidebar-type')` instead of `setSidebarFilter`; read `activeFilters.some(f => f.id === 'sidebar-type')` to determine active state |
+| `src/renderer/components/canvas/TopologyView.tsx` | `flowNodes` memo reads `activeFilters` instead of `sidebarFilter` to compute node opacity                                                                       |
+| `src/renderer/components/canvas/GraphView.tsx`    | Same as `TopologyView.tsx`                                                                                                                                      |
+| `src/renderer/components/CommandDrawer.tsx`       | Optionally render active filter chips (label + remove button) from `activeFilters`                                                                              |
+| `src/renderer/types/cloud.ts`                     | No change (NodeFilter is a new type; CloudNode is unchanged)                                                                                                    |
 
 ---
 

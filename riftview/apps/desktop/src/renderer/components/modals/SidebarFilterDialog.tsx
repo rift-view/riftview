@@ -1,5 +1,5 @@
 import React from 'react'
-import type { NodeType } from '../../types/cloud'
+import type { NodeType } from '@riftview/shared'
 
 const TYPE_LABELS: Record<string, string> = {
   vpc: 'VPC',

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { computeDelta } from '../../../src/main/aws/scanner'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 vi.mock('electron', () => ({
   BrowserWindow: vi.fn()
@@ -10,7 +10,7 @@ const makeNode = (id: string, status = 'running', label = id): CloudNode => ({
   id,
   type: 'ec2',
   label,
-  status: status as import('../../../src/renderer/types/cloud').NodeStatus,
+  status: status as import('@riftview/shared').NodeStatus,
   region: 'us-east-1',
   metadata: {}
 })

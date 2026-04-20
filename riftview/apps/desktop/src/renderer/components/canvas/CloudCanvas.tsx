@@ -13,9 +13,9 @@ import { ScanErrorStrip } from './ScanErrorStrip'
 import { DriftModeStrip } from './DriftModeStrip'
 import { EmptyCanvasState } from './EmptyCanvasState'
 import { BulkActionToolbar } from './BulkActionToolbar'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 import { exportCanvasToPng } from '../../utils/exportCanvas'
-import { analyzeNode } from '../../utils/analyzeNode'
+import { analyzeNode } from '@riftview/shared'
 
 interface Props {
   onNodeContextMenu: (node: CloudNode, x: number, y: number) => void

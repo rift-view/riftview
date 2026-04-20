@@ -97,7 +97,7 @@ export interface NodeTypeMetadata {
 export interface PluginCommandHandlers {
   buildCreate?: (resource: string, params: Record<string, unknown>) => string[][]
   buildDelete?: (node: CloudNode, opts?: Record<string, unknown>) => string[][]
-  buildEdit?:   (node: CloudNode, params: Record<string, unknown>) => string[][]
+  buildEdit?: (node: CloudNode, params: Record<string, unknown>) => string[][]
 }
 
 /**
@@ -267,6 +267,7 @@ To support plugin NodeTypes at runtime, both components add a runtime fallback l
 **Renderer store addition:** A new slice `pluginNodeTypes: Record<string, NodeTypeMetadata>` is added to `useUIStore`. The `plugin:metadata` handler in `App.tsx` calls `useUIStore.getState().setPluginNodeTypes(data)`.
 
 `ResourceNode.tsx` lookup order:
+
 1. `TYPE_BORDER[d.nodeType]` — built-in (compile-time safe, always defined for built-in types)
 2. `useUIStore.getState().pluginNodeTypes[d.nodeType]?.borderColor` — plugin-registered
 3. `'#555'` — existing fallback (no change)
@@ -314,11 +315,13 @@ The current command builders (`buildCommand.ts`, `buildDeleteCommands.ts`, `buil
 **File:** `src/renderer/utils/pluginCommands.ts`
 
 Three exported functions:
+
 - `resolveCreateCommands(resource: string, params: Record<string, unknown>): string[][]`
 - `resolveDeleteCommands(node: CloudNode, opts?: Record<string, unknown>): string[][]`
 - `resolveEditCommands(node: CloudNode, params: Record<string, unknown>): string[][]`
 
 Each checks if the resource/node type is a built-in `NodeType`:
+
 1. If yes → delegate to the existing `buildCommands` / `buildDeleteCommands` / `buildEditCommands` functions (no change to those files).
 2. If no → look up the plugin command handlers from the renderer-side plugin metadata store (populated via `plugin:metadata` IPC push, extended to include `commandSchema`).
 
@@ -339,6 +342,7 @@ Some resources use the SDK directly in the main process via dedicated IPC channe
 The `terraformGenerators` map in `generators.ts` is a `Record<NodeType, TerraformGenerator>` — exhaustive over the built-in union. It continues to be the authoritative source for built-in types.
 
 `generateTerraformFile` in `terraform/index.ts` is modified to fall back for non-built-in types:
+
 1. First attempt `terraformGenerators[node.type]` — works for built-ins.
 2. For unknown types, call `pluginRegistry.getHclGenerator(node.type)`.
 
@@ -359,7 +363,10 @@ For plugins that want a fully custom node component, `NodeTypeMetadata` gains an
 ```ts
 const pluginNodeComponents = new Map<string, React.ComponentType<NodeProps>>()
 
-export function registerPluginComponent(key: string, component: React.ComponentType<NodeProps>): void {
+export function registerPluginComponent(
+  key: string,
+  component: React.ComponentType<NodeProps>
+): void {
   pluginNodeComponents.set(key, component)
 }
 

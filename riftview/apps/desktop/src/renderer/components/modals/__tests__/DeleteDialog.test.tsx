@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import DeleteDialog from '../DeleteDialog'
-import type { CloudNode } from '../../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 const node: CloudNode = {
   id: 'vpc-0abc1234',

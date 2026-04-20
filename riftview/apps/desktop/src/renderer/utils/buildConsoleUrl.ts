@@ -1,4 +1,4 @@
-import type { CloudNode } from '../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 export function buildConsoleUrl(node: CloudNode): string | null {
   const { id, type, label, region, metadata } = node

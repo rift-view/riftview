@@ -1,5 +1,5 @@
 import { RDSClient, DescribeDBInstancesCommand } from '@aws-sdk/client-rds'
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus } from '@riftview/shared'
 
 function rdsStatusToNodeStatus(status: string | undefined): NodeStatus {
   if (status === 'available') return 'running'

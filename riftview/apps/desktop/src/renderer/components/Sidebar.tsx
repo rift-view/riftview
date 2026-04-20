@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useUIStore } from '../store/ui'
 import { useCloudStore } from '../store/cloud'
 import { useCliStore } from '../store/cli'
-import type { NodeType, CloudNode } from '../types/cloud'
+import type { NodeType, CloudNode } from '@riftview/shared'
 import { SCAN_KEY_TO_TYPE } from '../utils/scanKeyMap'
 
 type ServiceDef = { type: NodeType; label: string; hasCreate: boolean; resource?: string }

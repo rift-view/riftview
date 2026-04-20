@@ -1,5 +1,5 @@
 import type { Edge } from '@xyflow/react'
-import type { CloudNode } from '../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 import type { NodeFilter } from '../store/ui'
 
 /**

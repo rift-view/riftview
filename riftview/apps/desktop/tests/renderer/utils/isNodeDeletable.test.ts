@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { isNodeDeletable } from '../../../src/renderer/utils/isNodeDeletable'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 function makeNode(overrides: Partial<CloudNode>): CloudNode {
   return {

@@ -3,7 +3,7 @@ import {
   resolveDeleteCommands,
   registerPluginCommandHandlers
 } from '../../../src/renderer/plugin/pluginCommands'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 describe('pluginCommands — routing', () => {
   const ec2Node: CloudNode = {

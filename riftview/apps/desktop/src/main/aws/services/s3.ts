@@ -5,7 +5,7 @@ import {
   GetPublicAccessBlockCommand,
   GetBucketVersioningCommand
 } from '@aws-sdk/client-s3'
-import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '@riftview/shared'
 
 export async function listBuckets(client: S3Client, region: string): Promise<CloudNode[]> {
   try {

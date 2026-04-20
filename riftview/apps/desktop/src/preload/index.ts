@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { ScanDelta, AwsProfile, NodeType } from '../renderer/types/cloud'
+import type { ScanDelta, AwsProfile, NodeType } from '@riftview/shared'
 import type { CloudFrontParams } from '../renderer/types/create'
 import type { CloudFrontEditParams } from '../renderer/types/edit'
 import type { NodeTypeMetadata } from '../main/plugin/types'
@@ -46,8 +46,7 @@ contextBridge.exposeInMainWorld('riftview', {
   },
 
   getSettings: () => ipcRenderer.invoke(IPC.SETTINGS_GET),
-  setSettings: (s: import('../renderer/types/cloud').Settings) =>
-    ipcRenderer.invoke(IPC.SETTINGS_SET, s),
+  setSettings: (s: import('@riftview/shared').Settings) => ipcRenderer.invoke(IPC.SETTINGS_SET, s),
 
   getStyleOverrides: () => ipcRenderer.invoke(IPC.STYLE_OVERRIDES),
 
@@ -83,7 +82,7 @@ contextBridge.exposeInMainWorld('riftview', {
     ipcRenderer.invoke(IPC.CLI_RUN, [['acm', 'delete-certificate', '--certificate-arn', arn]]),
 
   // Terraform HCL export
-  exportTerraform: (nodes: import('../renderer/types/cloud').CloudNode[]) =>
+  exportTerraform: (nodes: import('@riftview/shared').CloudNode[]) =>
     ipcRenderer.invoke(IPC.TERRAFORM_EXPORT, nodes),
 
   // Terraform LocalStack deploy
@@ -116,9 +115,9 @@ contextBridge.exposeInMainWorld('riftview', {
     ipcRenderer.invoke(IPC.ANNOTATIONS_SAVE, data),
 
   // Custom edges — persisted to userData/custom-edges.json
-  loadCustomEdges: (): Promise<import('../renderer/types/cloud').CustomEdge[]> =>
+  loadCustomEdges: (): Promise<import('@riftview/shared').CustomEdge[]> =>
     ipcRenderer.invoke(IPC.CUSTOM_EDGES_LOAD),
-  saveCustomEdges: (edges: import('../renderer/types/cloud').CustomEdge[]): Promise<void> =>
+  saveCustomEdges: (edges: import('@riftview/shared').CustomEdge[]): Promise<void> =>
     ipcRenderer.invoke(IPC.CUSTOM_EDGES_SAVE, edges),
 
   // Terraform state import
@@ -145,7 +144,7 @@ contextBridge.exposeInMainWorld('riftview', {
 
   // Save baseline for drift detection
   saveBaseline: (
-    nodes: import('../renderer/types/cloud').CloudNode[],
+    nodes: import('@riftview/shared').CloudNode[],
     profileName: string,
     region: string
   ): Promise<{ ok: boolean }> =>

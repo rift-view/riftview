@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { buildCommands } from '../../../src/renderer/utils/buildCommand'
 import { buildDeleteCommands } from '../../../src/renderer/utils/buildDeleteCommands'
 import type { CreateSubnetParams, CreateIgwParams } from '../../../src/renderer/types/create'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 // ---- Subnet create CLI ------------------------------------------------
 

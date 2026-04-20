@@ -5,7 +5,7 @@
 // EC2: t3.micro on-demand. RDS: db.t3.micro on-demand. NAT: per-gateway/hr * 720h. ALB: base charge.
 // S3/Lambda/SQS/SNS etc: typical low-usage monthly cost.
 import pricing from '../assets/pricing.json'
-import type { NodeType } from '../types/cloud'
+import type { NodeType } from '@riftview/shared'
 
 export function getMonthlyEstimate(nodeType: NodeType, region: string): number | null {
   const regionMap = (pricing as Record<string, Record<string, number>>)[nodeType]

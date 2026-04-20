@@ -7,8 +7,8 @@ import type {
   ScanDelta,
   ScanError,
   Settings
-} from '../types/cloud'
-import { applyDriftToState } from '../utils/compareDrift'
+} from '@riftview/shared'
+import { applyDriftToState } from '@riftview/shared'
 import { useUIStore } from '../store/ui'
 
 export type { Settings }

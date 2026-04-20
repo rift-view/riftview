@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { computeDelta } from '../scanner'
-import type { CloudNode } from '../../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 describe('computeDelta', () => {
   it('returns empty delta for identical snapshots', () => {

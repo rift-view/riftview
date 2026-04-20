@@ -12,20 +12,21 @@
 
 ## File Structure
 
-| File | What changes |
-|------|-------------|
-| `src/renderer/types/cloud.ts` | Add `showScanErrorBadges: boolean` to `Settings` interface |
-| `src/renderer/store/cloud.ts` | Add `showScanErrorBadges: true` to module-level `DEFAULT_SETTINGS` (the test factory at line ~153 references the same const, so one edit covers both) |
-| `src/main/ipc/handlers.ts` | Add `showScanErrorBadges: true` to the main-process `DEFAULT_SETTINGS` (separate object from the renderer store) |
-| `src/renderer/components/Sidebar.tsx` | Add `SCAN_KEY_TO_TYPE` map, `errorsByType` memo, `⚠` badges on service rows and SSM section header |
-| `src/renderer/components/SettingsModal.tsx` | Add toggle for `showScanErrorBadges` in the General tab |
-| `src/renderer/components/__tests__/Sidebar.test.tsx` | New — RTL tests for badge visibility |
+| File                                                 | What changes                                                                                                                                          |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/renderer/types/cloud.ts`                        | Add `showScanErrorBadges: boolean` to `Settings` interface                                                                                            |
+| `src/renderer/store/cloud.ts`                        | Add `showScanErrorBadges: true` to module-level `DEFAULT_SETTINGS` (the test factory at line ~153 references the same const, so one edit covers both) |
+| `src/main/ipc/handlers.ts`                           | Add `showScanErrorBadges: true` to the main-process `DEFAULT_SETTINGS` (separate object from the renderer store)                                      |
+| `src/renderer/components/Sidebar.tsx`                | Add `SCAN_KEY_TO_TYPE` map, `errorsByType` memo, `⚠` badges on service rows and SSM section header                                                    |
+| `src/renderer/components/SettingsModal.tsx`          | Add toggle for `showScanErrorBadges` in the General tab                                                                                               |
+| `src/renderer/components/__tests__/Sidebar.test.tsx` | New — RTL tests for badge visibility                                                                                                                  |
 
 ---
 
 ## Task 1: Add `showScanErrorBadges` to Settings type and defaults
 
 **Files:**
+
 - Modify: `src/renderer/types/cloud.ts:79-85`
 - Modify: `src/renderer/store/cloud.ts:10-16`
 - Modify: `src/main/ipc/handlers.ts:33-39`
@@ -51,6 +52,7 @@ it('DEFAULT_SETTINGS includes showScanErrorBadges: true', () => {
 ```bash
 cd riftview && npx vitest run src/renderer/store/__tests__/cloud.test.ts 2>&1 | tail -20
 ```
+
 Expected: FAIL — property `showScanErrorBadges` is undefined
 
 - [ ] **Step 3: Add `showScanErrorBadges` to the `Settings` interface**
@@ -79,7 +81,7 @@ const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
   showRegionIndicators: true,
   regionColors: {},
-  showScanErrorBadges: true,
+  showScanErrorBadges: true
 }
 ```
 
@@ -94,7 +96,7 @@ const DEFAULT_SETTINGS = {
   theme: 'dark' as const,
   showRegionIndicators: true,
   regionColors: {} as Record<string, string>,
-  showScanErrorBadges: true,
+  showScanErrorBadges: true
 }
 ```
 
@@ -103,6 +105,7 @@ const DEFAULT_SETTINGS = {
 ```bash
 cd riftview && npx vitest run src/renderer/store/__tests__/cloud.test.ts 2>&1 | tail -10
 ```
+
 Expected: all tests pass
 
 - [ ] **Step 7: Run typecheck**
@@ -110,6 +113,7 @@ Expected: all tests pass
 ```bash
 cd riftview && npm run typecheck 2>&1 | tail -20
 ```
+
 Expected: no errors
 
 - [ ] **Step 8: Commit**
@@ -124,12 +128,14 @@ git commit -m "feat(scan-errors): add showScanErrorBadges to Settings"
 ## Task 2: Sidebar error badges
 
 **Files:**
+
 - Modify: `src/renderer/components/Sidebar.tsx`
 - Create: `src/renderer/components/__tests__/Sidebar.test.tsx`
 
 ### Background
 
 `Sidebar.tsx` renders two sections that need badges:
+
 1. **`SERVICES.map()`** (line 137) — one row per NodeType, with a `count` badge on the right. We add a `⚠` icon inline after the service label.
 2. **Parameters section** (line 166–228) — bespoke SSM group renderer, gated on `ssmGroups.length > 0`. Since an SSM scan failure returns zero params, `ssmGroups` will be empty. The section header must render (showing just the `⚠`) even when `ssmGroups` is empty.
 
@@ -137,28 +143,28 @@ The lookup map below translates `scanError.service` strings (emitted by `provide
 
 ```ts
 const SCAN_KEY_TO_TYPE: Record<string, NodeType> = {
-  'ec2:instances':       'ec2',
-  'ec2:vpcs':            'vpc',
-  'ec2:subnets':         'subnet',
+  'ec2:instances': 'ec2',
+  'ec2:vpcs': 'vpc',
+  'ec2:subnets': 'subnet',
   'ec2:security-groups': 'security-group',
-  'igw':                 'igw',
-  'nat':                 'nat-gateway',
-  'rds':                 'rds',
-  's3':                  's3',
-  'lambda':              'lambda',
-  'alb':                 'alb',
-  'acm':                 'acm',
-  'cloudfront':          'cloudfront',
-  'apigw':               'apigw',
-  'sqs':                 'sqs',
-  'secrets':             'secret',
-  'ecr':                 'ecr-repo',
-  'sns':                 'sns',
-  'dynamo':              'dynamo',
-  'ssm':                 'ssm-param',
-  'r53':                 'r53-zone',
-  'sfn':                 'sfn',
-  'eventbridge':         'eventbridge-bus',
+  igw: 'igw',
+  nat: 'nat-gateway',
+  rds: 'rds',
+  s3: 's3',
+  lambda: 'lambda',
+  alb: 'alb',
+  acm: 'acm',
+  cloudfront: 'cloudfront',
+  apigw: 'apigw',
+  sqs: 'sqs',
+  secrets: 'secret',
+  ecr: 'ecr-repo',
+  sns: 'sns',
+  dynamo: 'dynamo',
+  ssm: 'ssm-param',
+  r53: 'r53-zone',
+  sfn: 'sfn',
+  eventbridge: 'eventbridge-bus'
 }
 ```
 
@@ -184,7 +190,7 @@ const DEFAULT_SETTINGS = {
   theme: 'dark' as const,
   showRegionIndicators: true,
   regionColors: {},
-  showScanErrorBadges: true,
+  showScanErrorBadges: true
 }
 
 beforeEach(() => {
@@ -196,7 +202,7 @@ beforeEach(() => {
 describe('Sidebar scan error badges', () => {
   it('shows ⚠ on a service row when that service has a scan error', () => {
     useCloudStore.setState({
-      scanErrors: [{ service: 'ecr', region: 'us-east-1', message: 'AccessDenied' }],
+      scanErrors: [{ service: 'ecr', region: 'us-east-1', message: 'AccessDenied' }]
     })
     render(<Sidebar />)
     const badge = screen.getByTitle('[ecr] us-east-1 — AccessDenied')
@@ -213,7 +219,7 @@ describe('Sidebar scan error badges', () => {
   it('does not show ⚠ when showScanErrorBadges is false', () => {
     useCloudStore.setState({
       scanErrors: [{ service: 'rds', region: 'us-east-1', message: 'Forbidden' }],
-      settings: { ...DEFAULT_SETTINGS, showScanErrorBadges: false },
+      settings: { ...DEFAULT_SETTINGS, showScanErrorBadges: false }
     })
     render(<Sidebar />)
     expect(screen.queryByText('⚠')).not.toBeInTheDocument()
@@ -222,9 +228,9 @@ describe('Sidebar scan error badges', () => {
   it('shows ⚠ on multiple service rows when multiple services failed', () => {
     useCloudStore.setState({
       scanErrors: [
-        { service: 's3',    region: 'us-east-1', message: 'err1' },
-        { service: 'lambda', region: 'us-east-1', message: 'err2' },
-      ],
+        { service: 's3', region: 'us-east-1', message: 'err1' },
+        { service: 'lambda', region: 'us-east-1', message: 'err2' }
+      ]
     })
     render(<Sidebar />)
     const badges = screen.getAllByText('⚠')
@@ -233,8 +239,8 @@ describe('Sidebar scan error badges', () => {
 
   it('shows ⚠ on the Parameters section header even when no SSM params exist', () => {
     useCloudStore.setState({
-      nodes: [],  // no ssm-param nodes → ssmGroups will be empty
-      scanErrors: [{ service: 'ssm', region: 'us-east-1', message: 'AccessDenied' }],
+      nodes: [], // no ssm-param nodes → ssmGroups will be empty
+      scanErrors: [{ service: 'ssm', region: 'us-east-1', message: 'AccessDenied' }]
     })
     render(<Sidebar />)
     // Parameters header must render
@@ -246,7 +252,7 @@ describe('Sidebar scan error badges', () => {
 
   it('tooltip contains the full error detail', () => {
     useCloudStore.setState({
-      scanErrors: [{ service: 'dynamo', region: 'eu-west-1', message: 'ThrottlingException' }],
+      scanErrors: [{ service: 'dynamo', region: 'eu-west-1', message: 'ThrottlingException' }]
     })
     render(<Sidebar />)
     const badge = screen.getByTitle('[dynamo] eu-west-1 — ThrottlingException')
@@ -260,6 +266,7 @@ describe('Sidebar scan error badges', () => {
 ```bash
 cd riftview && npx vitest run src/renderer/components/__tests__/Sidebar.test.tsx 2>&1 | tail -30
 ```
+
 Expected: FAIL — `⚠` elements not found
 
 - [ ] **Step 3: Add `SCAN_KEY_TO_TYPE` constant to `Sidebar.tsx`**
@@ -268,28 +275,28 @@ After the `SERVICES` array (after line 36, before `getSsmPrefix`), add:
 
 ```ts
 const SCAN_KEY_TO_TYPE: Record<string, NodeType> = {
-  'ec2:instances':       'ec2',
-  'ec2:vpcs':            'vpc',
-  'ec2:subnets':         'subnet',
+  'ec2:instances': 'ec2',
+  'ec2:vpcs': 'vpc',
+  'ec2:subnets': 'subnet',
   'ec2:security-groups': 'security-group',
-  'igw':                 'igw',
-  'nat':                 'nat-gateway',
-  'rds':                 'rds',
-  's3':                  's3',
-  'lambda':              'lambda',
-  'alb':                 'alb',
-  'acm':                 'acm',
-  'cloudfront':          'cloudfront',
-  'apigw':               'apigw',
-  'sqs':                 'sqs',
-  'secrets':             'secret',
-  'ecr':                 'ecr-repo',
-  'sns':                 'sns',
-  'dynamo':              'dynamo',
-  'ssm':                 'ssm-param',
-  'r53':                 'r53-zone',
-  'sfn':                 'sfn',
-  'eventbridge':         'eventbridge-bus',
+  igw: 'igw',
+  nat: 'nat-gateway',
+  rds: 'rds',
+  s3: 's3',
+  lambda: 'lambda',
+  alb: 'alb',
+  acm: 'acm',
+  cloudfront: 'cloudfront',
+  apigw: 'apigw',
+  sqs: 'sqs',
+  secrets: 'secret',
+  ecr: 'ecr-repo',
+  sns: 'sns',
+  dynamo: 'dynamo',
+  ssm: 'ssm-param',
+  r53: 'r53-zone',
+  sfn: 'sfn',
+  eventbridge: 'eventbridge-bus'
 }
 ```
 
@@ -298,8 +305,8 @@ const SCAN_KEY_TO_TYPE: Record<string, NodeType> = {
 In the `Sidebar` function body, after the existing store selectors (around line 58), add:
 
 ```ts
-const scanErrors  = useCloudStore((s) => s.scanErrors)
-const settings    = useCloudStore((s) => s.settings)
+const scanErrors = useCloudStore((s) => s.scanErrors)
+const settings = useCloudStore((s) => s.settings)
 ```
 
 - [ ] **Step 5: Add `errorsByType` memo**
@@ -324,6 +331,7 @@ const errorsByType = useMemo<Map<NodeType, string>>(() => {
 - [ ] **Step 6: Add `⚠` badge to `SERVICES` rows**
 
 In the `SERVICES.map()` JSX, the `.map()` callback currently opens with:
+
 ```tsx
 return (
   <div
@@ -331,6 +339,7 @@ return (
 ```
 
 The full callback is:
+
 ```tsx
 {SERVICES.map((s) => {
   const count = counts[s.type] ?? 0
@@ -352,40 +361,50 @@ The full callback is:
 Add a local const for the error tooltip, then use it in the label span. Change the callback body so it reads:
 
 ```tsx
-{SERVICES.map((s) => {
-  const count        = counts[s.type] ?? 0
-  const isActive     = sidebarFilter === s.type
-  const errTooltip   = errorsByType.get(s.type)
-  const activeStyle: React.CSSProperties = {
-    ...serviceRowStyle,
-    border:     '1px solid var(--cb-accent)',
-    color:      'var(--cb-accent)',
-    background: 'var(--cb-bg-elevated)',
-    cursor:     'pointer',
-  }
-  return (
-    <div
-      key={s.type}
-      draggable={s.hasCreate}
-      onDragStart={s.hasCreate ? (e) => e.dataTransfer.setData('text/plain', s.resource ?? s.type) : undefined}
-      onClick={() => { if (sidebarFilter === s.type) setSidebarFilter(null); else setFilterTarget(s.type) }}
-      className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
-      style={{ ...(isActive ? activeStyle : serviceRowStyle), cursor: s.hasCreate ? 'grab' : 'default' }}
-    >
-      <span>
-        ⬡ {s.label}
-        {errTooltip && (
-          <span title={errTooltip} style={{ color: '#f59e0b', fontSize: 10, marginLeft: 4 }}>⚠</span>
-        )}
-      </span>
-      {count > 0 && (
-        <span style={badgeStyle}>
-          {count}
+{
+  SERVICES.map((s) => {
+    const count = counts[s.type] ?? 0
+    const isActive = sidebarFilter === s.type
+    const errTooltip = errorsByType.get(s.type)
+    const activeStyle: React.CSSProperties = {
+      ...serviceRowStyle,
+      border: '1px solid var(--cb-accent)',
+      color: 'var(--cb-accent)',
+      background: 'var(--cb-bg-elevated)',
+      cursor: 'pointer'
+    }
+    return (
+      <div
+        key={s.type}
+        draggable={s.hasCreate}
+        onDragStart={
+          s.hasCreate
+            ? (e) => e.dataTransfer.setData('text/plain', s.resource ?? s.type)
+            : undefined
+        }
+        onClick={() => {
+          if (sidebarFilter === s.type) setSidebarFilter(null)
+          else setFilterTarget(s.type)
+        }}
+        className="mx-1.5 mb-0.5 px-2.5 py-1 rounded text-[9px] font-mono"
+        style={{
+          ...(isActive ? activeStyle : serviceRowStyle),
+          cursor: s.hasCreate ? 'grab' : 'default'
+        }}
+      >
+        <span>
+          ⬡ {s.label}
+          {errTooltip && (
+            <span title={errTooltip} style={{ color: '#f59e0b', fontSize: 10, marginLeft: 4 }}>
+              ⚠
+            </span>
+          )}
         </span>
-      )}
-    </div>
-  )
-})}
+        {count > 0 && <span style={badgeStyle}>{count}</span>}
+      </div>
+    )
+  })
+}
 ```
 
 - [ ] **Step 7: Update SSM section gate and add badge to Parameters header**
@@ -427,6 +446,7 @@ Everything after `{ssmGroups.map(...` through the closing `</>` and `)}` is unch
 ```bash
 cd riftview && npx vitest run src/renderer/components/__tests__/Sidebar.test.tsx 2>&1 | tail -20
 ```
+
 Expected: all 5 tests pass
 
 - [ ] **Step 9: Run full test suite + typecheck**
@@ -434,6 +454,7 @@ Expected: all 5 tests pass
 ```bash
 cd riftview && npm run typecheck && npm test 2>&1 | tail -20
 ```
+
 Expected: all pass
 
 - [ ] **Step 10: Commit**
@@ -448,6 +469,7 @@ git commit -m "feat(scan-errors): add per-service error badges to Sidebar"
 ## Task 3: Settings toggle in SettingsModal
 
 **Files:**
+
 - Modify: `src/renderer/components/SettingsModal.tsx`
 
 ### Background
@@ -502,6 +524,7 @@ with:
 ```bash
 cd riftview && npm run typecheck && npm test 2>&1 | tail -20
 ```
+
 Expected: all pass
 
 - [ ] **Step 3: Commit**

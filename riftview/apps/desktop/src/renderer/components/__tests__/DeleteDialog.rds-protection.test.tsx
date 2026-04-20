@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import DeleteDialog from '../modals/DeleteDialog'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 function makeRdsNode(deletionProtection: boolean): CloudNode {
   return {

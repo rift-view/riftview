@@ -1,4 +1,4 @@
-import type { CloudNode } from './cloud'
+import type { CloudNode } from '@riftview/shared'
 
 export interface TfModuleInfo {
   name: string

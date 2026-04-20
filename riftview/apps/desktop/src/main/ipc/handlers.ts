@@ -20,7 +20,7 @@ import {
 } from '@aws-sdk/client-cloudfront'
 import type { CloudFrontParams } from '../../renderer/types/create'
 import type { CloudFrontEditParams } from '../../renderer/types/edit'
-import type { AwsProfile, CloudNode } from '../../renderer/types/cloud'
+import type { AwsProfile, CloudNode } from '@riftview/shared'
 import { generateTerraformFile } from '../terraform/index'
 import { execFile, spawn } from 'child_process'
 import type { ChildProcess } from 'child_process'
@@ -35,7 +35,7 @@ import { parseTfState, parseTfStateModules } from '../aws/tfstate/parser'
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 import { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from '../aws/iam/fetcher'
 import type { IamAnalysisResult } from '../../renderer/types/iam'
-import type { NodeType } from '../../renderer/types/cloud'
+import type { NodeType } from '@riftview/shared'
 
 type TerraformDeployResult =
   | { status: 'success'; output: string }
@@ -523,7 +523,7 @@ export function registerHandlers(win: BrowserWindow): void {
         id: nodeId,
         type: nodeType,
         metadata
-      } as import('../../renderer/types/cloud').CloudNode
+      } as import('@riftview/shared').CloudNode
 
       const timeoutPromise = new Promise<IamAnalysisResult>((resolve) =>
         setTimeout(

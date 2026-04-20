@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { NodeType, CloudNode, CustomEdge } from '../types/cloud'
+import type { NodeType, CloudNode, CustomEdge } from '@riftview/shared'
 import type { NodeTypeMetadata } from '../types/plugin'
 
 export interface NodeFilter {

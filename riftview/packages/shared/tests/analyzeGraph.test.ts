@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { analyzeGraph } from '../../../src/renderer/utils/analyzeGraph'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import { analyzeGraph } from '../src/analysis/analyzeGraph'
+import type { CloudNode } from '../src/types/cloud'
 
 function makeApigw(id = 'apigw-1', integrations: CloudNode['integrations'] = []): CloudNode {
   return {

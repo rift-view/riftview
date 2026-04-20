@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { DriftModeStrip } from '../../../src/renderer/components/canvas/DriftModeStrip'
 import { useCloudStore } from '../../../src/renderer/store/cloud'
 import { useUIStore } from '../../../src/renderer/store/ui'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 const baseNode = (id: string, driftStatus: CloudNode['driftStatus']): CloudNode =>
   ({ id, type: 'ec2', label: id, region: 'us-east-1', metadata: {}, driftStatus }) as CloudNode

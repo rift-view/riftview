@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 import type { EditParams, CloudFrontEditParams } from '../../types/edit'
 import { resolveEditCommands } from '../../plugin/pluginCommands'
 import { useCliStore } from '../../store/cli'

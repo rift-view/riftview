@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { parse } from 'ini'
-import type { AwsProfile } from '../../renderer/types/cloud'
+import type { AwsProfile } from '@riftview/shared'
 
 function credentialsPath(): string {
   return path.join(os.homedir(), '.aws', 'credentials')

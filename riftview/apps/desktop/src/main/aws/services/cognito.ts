@@ -4,7 +4,7 @@ import {
   DescribeUserPoolCommand,
   type LambdaConfigType
 } from '@aws-sdk/client-cognito-identity-provider'
-import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '@riftview/shared'
 
 function extractLambdaTriggers(
   lambdaConfig: LambdaConfigType | undefined

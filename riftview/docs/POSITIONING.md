@@ -34,24 +34,28 @@ remediation, SSM terminal pane, Terraform export — is compounding value.
 ## Differentiation
 
 ### vs. Cloudcraft (Architecture-as-diagram)
+
 Cloudcraft diagrams drift from reality. RiftView is live — it's a **view
 of the account**, not an artifact edited by humans. Cloudcraft answers
-"what did we build?"; RiftView answers "what is broken *right now*?"
+"what did we build?"; RiftView answers "what is broken _right now_?"
 
 ### vs. Firefly.ai (Agentic recovery automation)
+
 Firefly automates recovery. RiftView is the **pre-flight check**: you
 understand what's about to change before an agent runs. **Complementary,
-not competitive.** A pitch to Firefly users: *"RiftView is what you look
-at before you approve Firefly's plan."*
+not competitive.** A pitch to Firefly users: _"RiftView is what you look
+at before you approve Firefly's plan."_
 
 ### vs. Datadog Service Catalog / New Relic CMP
+
 Observability-first tools anchor on metrics. RiftView anchors on
 **structure** — the graph itself is the primary artifact, and metrics
 overlay onto it. A Datadog dashboard tells you "p99 is up"; RiftView
-tells you "p99 is up on *this* Lambda and here are the 6 services that
+tells you "p99 is up on _this_ Lambda and here are the 6 services that
 will degrade when it does."
 
 ### vs. AWS Console
+
 Console is a browser-per-service. RiftView is one window where the
 graph is the navigation. Click a Lambda → see its SQS upstream → click
 that → see which Lambdas consume it → Escape → back to where you were.

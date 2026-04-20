@@ -12,24 +12,25 @@
 
 ## File Map
 
-| File | Role |
-|------|------|
-| `src/renderer/types/cloud.ts` | Add `DriftStatus` type + `driftStatus?`, `tfMetadata?` to `CloudNode` |
-| `src/renderer/utils/compareDrift.ts` | New — pure `compareDrift()` + `applyDriftToState()` |
-| `src/renderer/store/cloud.ts` | Wire drift into `setImportedNodes`, `applyDelta`, `clearImportedNodes` (both store + factory) |
-| `src/renderer/store/ui.ts` | Add `driftFilterActive` + `toggleDriftFilter` |
-| `src/renderer/components/canvas/nodes/ResourceNode.tsx` | Drift stripe colour + corner badge |
-| `src/renderer/components/canvas/CloudCanvas.tsx` | Drift filter toolbar button |
-| `src/renderer/components/canvas/TopologyView.tsx` | Apply drift filter to leaf `flowNodes` |
-| `src/renderer/components/canvas/GraphView.tsx` | Same |
-| `src/renderer/components/Inspector.tsx` | Drift status section — three states |
-| `tests/renderer/utils/compareDrift.test.ts` | New — unit tests for pure functions |
+| File                                                    | Role                                                                                          |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `src/renderer/types/cloud.ts`                           | Add `DriftStatus` type + `driftStatus?`, `tfMetadata?` to `CloudNode`                         |
+| `src/renderer/utils/compareDrift.ts`                    | New — pure `compareDrift()` + `applyDriftToState()`                                           |
+| `src/renderer/store/cloud.ts`                           | Wire drift into `setImportedNodes`, `applyDelta`, `clearImportedNodes` (both store + factory) |
+| `src/renderer/store/ui.ts`                              | Add `driftFilterActive` + `toggleDriftFilter`                                                 |
+| `src/renderer/components/canvas/nodes/ResourceNode.tsx` | Drift stripe colour + corner badge                                                            |
+| `src/renderer/components/canvas/CloudCanvas.tsx`        | Drift filter toolbar button                                                                   |
+| `src/renderer/components/canvas/TopologyView.tsx`       | Apply drift filter to leaf `flowNodes`                                                        |
+| `src/renderer/components/canvas/GraphView.tsx`          | Same                                                                                          |
+| `src/renderer/components/Inspector.tsx`                 | Drift status section — three states                                                           |
+| `tests/renderer/utils/compareDrift.test.ts`             | New — unit tests for pure functions                                                           |
 
 ---
 
 ### Task 1: Types — DriftStatus + CloudNode fields
 
 **Files:**
+
 - Modify: `src/renderer/types/cloud.ts`
 
 - [ ] **Step 1: Add `DriftStatus` and extend `CloudNode`**
@@ -78,6 +79,7 @@ git commit -m "feat(drift): add DriftStatus type and driftStatus/tfMetadata fiel
 ### Task 2: Pure functions — compareDrift + applyDriftToState
 
 **Files:**
+
 - Create: `src/renderer/utils/compareDrift.ts`
 - Create: `tests/renderer/utils/compareDrift.test.ts`
 
@@ -91,11 +93,25 @@ import { compareDrift, applyDriftToState } from '../../../src/renderer/utils/com
 import type { CloudNode } from '../../../src/renderer/types/cloud'
 
 function node(id: string, type: CloudNode['type'] = 'ec2'): CloudNode {
-  return { id, type, label: id, status: 'running', region: 'us-east-1', metadata: { instance_type: 't3.micro' } }
+  return {
+    id,
+    type,
+    label: id,
+    status: 'running',
+    region: 'us-east-1',
+    metadata: { instance_type: 't3.micro' }
+  }
 }
 
 function imported(id: string, type: CloudNode['type'] = 'ec2'): CloudNode {
-  return { id, type, label: id, status: 'imported', region: 'us-east-1', metadata: { instance_type: 't3.micro' } }
+  return {
+    id,
+    type,
+    label: id,
+    status: 'imported',
+    region: 'us-east-1',
+    metadata: { instance_type: 't3.micro' }
+  }
 }
 
 describe('compareDrift', () => {
@@ -127,7 +143,7 @@ describe('compareDrift', () => {
 
   it('handles mixed matched/unmanaged/missing in one call', () => {
     const live = [node('i-match'), node('i-unmanaged')]
-    const imp  = [imported('i-match'), imported('i-missing')]
+    const imp = [imported('i-match'), imported('i-missing')]
     const result = compareDrift(live, imp)
     expect(result.matched).toEqual(['i-match'])
     expect(result.unmanaged).toEqual(['i-unmanaged'])
@@ -144,9 +160,9 @@ describe('compareDrift', () => {
 describe('applyDriftToState', () => {
   it('stamps driftStatus=matched and copies tfMetadata onto live node, removes from importedNodes', () => {
     const live = [node('i-123')]
-    const imp  = [{ ...imported('i-123'), metadata: { instance_type: 't3.large' } }]
+    const imp = [{ ...imported('i-123'), metadata: { instance_type: 't3.large' } }]
     const result = applyDriftToState(live, imp)
-    const liveNode = result.nodes.find(n => n.id === 'i-123')!
+    const liveNode = result.nodes.find((n) => n.id === 'i-123')!
     expect(liveNode.driftStatus).toBe('matched')
     expect(liveNode.tfMetadata).toEqual({ instance_type: 't3.large' })
     expect(result.importedNodes).toHaveLength(0)
@@ -172,9 +188,9 @@ describe('applyDriftToState', () => {
 
   it('excludes type:unknown imported nodes from matching', () => {
     const live = [node('i-123')]
-    const imp  = [imported('tf-unknown-nat-1', 'unknown')]
+    const imp = [imported('tf-unknown-nat-1', 'unknown')]
     const result = applyDriftToState(live, imp)
-    const liveNode = result.nodes.find(n => n.id === 'i-123')!
+    const liveNode = result.nodes.find((n) => n.id === 'i-123')!
     expect(liveNode.driftStatus).toBe('unmanaged')
     // unknown imported node kept in importedNodes but marked missing? No — excluded entirely
     expect(result.importedNodes[0].driftStatus).toBeUndefined()
@@ -198,34 +214,31 @@ Create `src/renderer/utils/compareDrift.ts`:
 import type { CloudNode } from '../types/cloud'
 
 export interface DriftResult {
-  matched:   string[]
+  matched: string[]
   unmanaged: string[]
-  missing:   string[]
+  missing: string[]
 }
 
-export function compareDrift(
-  liveNodes:     CloudNode[],
-  importedNodes: CloudNode[],
-): DriftResult {
+export function compareDrift(liveNodes: CloudNode[], importedNodes: CloudNode[]): DriftResult {
   const eligible = importedNodes.filter((n) => n.type !== 'unknown')
-  const liveIds  = new Set(liveNodes.map((n) => n.id))
-  const impIds   = new Set(eligible.map((n) => n.id))
+  const liveIds = new Set(liveNodes.map((n) => n.id))
+  const impIds = new Set(eligible.map((n) => n.id))
 
-  const matched   = liveNodes.filter((n) => impIds.has(n.id)).map((n) => n.id)
+  const matched = liveNodes.filter((n) => impIds.has(n.id)).map((n) => n.id)
   const unmanaged = liveNodes.filter((n) => !impIds.has(n.id)).map((n) => n.id)
-  const missing   = eligible.filter((n) => !liveIds.has(n.id)).map((n) => n.id)
+  const missing = eligible.filter((n) => !liveIds.has(n.id)).map((n) => n.id)
 
   return { matched, unmanaged, missing }
 }
 
 export function applyDriftToState(
-  liveNodes:     CloudNode[],
-  importedNodes: CloudNode[],
+  liveNodes: CloudNode[],
+  importedNodes: CloudNode[]
 ): { nodes: CloudNode[]; importedNodes: CloudNode[] } {
   const { matched, unmanaged, missing } = compareDrift(liveNodes, importedNodes)
-  const matchedSet   = new Set(matched)
+  const matchedSet = new Set(matched)
   const unmanagedSet = new Set(unmanaged)
-  const missingSet   = new Set(missing)
+  const missingSet = new Set(missing)
 
   const importedMap = new Map(importedNodes.map((n) => [n.id, n]))
 
@@ -240,11 +253,13 @@ export function applyDriftToState(
     return n
   })
 
-  const newImportedNodes = importedNodes.map((n) => {
-    if (n.type === 'unknown') return n  // exclude from drift, leave unchanged
-    if (missingSet.has(n.id)) return { ...n, driftStatus: 'missing' as const }
-    return n
-  }).filter((n) => !matchedSet.has(n.id))  // remove matched ones (absorbed into live)
+  const newImportedNodes = importedNodes
+    .map((n) => {
+      if (n.type === 'unknown') return n // exclude from drift, leave unchanged
+      if (missingSet.has(n.id)) return { ...n, driftStatus: 'missing' as const }
+      return n
+    })
+    .filter((n) => !matchedSet.has(n.id)) // remove matched ones (absorbed into live)
 
   return { nodes, importedNodes: newImportedNodes }
 }
@@ -278,6 +293,7 @@ git commit -m "feat(drift): add compareDrift and applyDriftToState pure function
 ### Task 3: Store wiring — applyDriftToState in cloud.ts
 
 **Files:**
+
 - Modify: `src/renderer/store/cloud.ts`
 
 This task modifies three actions in BOTH the main `useCloudStore` and the `createCloudStore()` test factory. They must stay in sync.
@@ -330,6 +346,7 @@ clearImportedNodes: () =>
 - [ ] **Step 4: Update `applyDelta`**
 
 In `applyDelta`, the current return is:
+
 ```typescript
 return { nodes: Array.from(nodeMap.values()), lastScannedAt: new Date() }
 ```
@@ -373,6 +390,7 @@ git commit -m "feat(drift): wire applyDriftToState into setImportedNodes, applyD
 ### Task 4: UI store — driftFilterActive
 
 **Files:**
+
 - Modify: `src/renderer/store/ui.ts`
 
 - [ ] **Step 1: Add to the `UIState` interface**
@@ -413,6 +431,7 @@ git commit -m "feat(drift): add driftFilterActive and toggleDriftFilter to useUI
 ### Task 5: ResourceNode — drift stripe + corner badge
 
 **Files:**
+
 - Modify: `src/renderer/components/canvas/nodes/ResourceNode.tsx`
 
 The `ResourceNode` receives props via `data` as a `ResourceNodeData` object. The canvas views pass this data when building `flowNodes`.
@@ -423,15 +442,15 @@ In `ResourceNode.tsx`, extend the `ResourceNodeData` interface (currently at lin
 
 ```typescript
 interface ResourceNodeData {
-  label:       string
-  nodeType:    NodeType
-  status:      NodeStatus
-  driftStatus?: import('../../../types/cloud').DriftStatus  // add this
-  vpcLabel?:   string
-  vpcColor?:   string
-  region?:     string
-  dimmed?:     boolean
-  locked?:     boolean
+  label: string
+  nodeType: NodeType
+  status: NodeStatus
+  driftStatus?: import('../../../types/cloud').DriftStatus // add this
+  vpcLabel?: string
+  vpcColor?: string
+  region?: string
+  dimmed?: boolean
+  locked?: boolean
   annotation?: string
 }
 ```
@@ -439,6 +458,7 @@ interface ResourceNodeData {
 - [ ] **Step 2: Update the stripe colour logic**
 
 The current code at line 87 is:
+
 ```typescript
 const stripeColor = statusStripeColor(d.status)
 ```
@@ -448,9 +468,12 @@ Replace with:
 ```typescript
 function driftStripeColor(driftStatus: import('../../../types/cloud').DriftStatus): string {
   switch (driftStatus) {
-    case 'unmanaged': return '#f59e0b'
-    case 'missing':   return '#ef4444'
-    case 'matched':   return '#22c55e'
+    case 'unmanaged':
+      return '#f59e0b'
+    case 'missing':
+      return '#ef4444'
+    case 'matched':
+      return '#22c55e'
   }
 }
 
@@ -463,43 +486,64 @@ Place `driftStripeColor` as a standalone function above `ResourceNode`, alongsid
 - [ ] **Step 3: Add the drift corner badge**
 
 The existing TF badge in `ResourceNode.tsx` looks like this:
+
 ```tsx
-{isImported && (
-  <div style={{
-    position: 'absolute', top: -6, right: -6,
-    background: '#7c3aed', color: '#fff',
-    fontSize: 8, fontWeight: 700, padding: '1px 4px', borderRadius: 3,
-  }}>TF</div>
-)}
+{
+  isImported && (
+    <div
+      style={{
+        position: 'absolute',
+        top: -6,
+        right: -6,
+        background: '#7c3aed',
+        color: '#fff',
+        fontSize: 8,
+        fontWeight: 700,
+        padding: '1px 4px',
+        borderRadius: 3
+      }}
+    >
+      TF
+    </div>
+  )
+}
 ```
 
 Add the drift badge **after** the TF badge (TF badge shows for matched/missing imported nodes too — drift badge takes visual priority by stacking):
 
 ```tsx
-{d.driftStatus && (
-  <div
-    title={
-      d.driftStatus === 'unmanaged' ? 'Unmanaged — not in Terraform state' :
-      d.driftStatus === 'missing'   ? 'Missing — declared in Terraform but not in live AWS' :
-                                      'Matched — found in both live AWS and Terraform state'
-    }
-    style={{
-      position:   'absolute',
-      top:        d.driftStatus === 'matched' ? -6 : -6,
-      right:      isImported ? 14 : -6,  // offset right of TF badge for imported nodes
-      background: d.driftStatus === 'unmanaged' ? '#f59e0b' :
-                  d.driftStatus === 'missing'   ? '#ef4444' : '#22c55e',
-      color:      d.driftStatus === 'unmanaged' ? '#000' : '#fff',
-      fontSize:   8,
-      fontWeight: 700,
-      padding:    '1px 4px',
-      borderRadius: 3,
-      zIndex:     2,
-    }}
-  >
-    {d.driftStatus === 'unmanaged' ? '!' : d.driftStatus === 'missing' ? '✕' : '✓'}
-  </div>
-)}
+{
+  d.driftStatus && (
+    <div
+      title={
+        d.driftStatus === 'unmanaged'
+          ? 'Unmanaged — not in Terraform state'
+          : d.driftStatus === 'missing'
+            ? 'Missing — declared in Terraform but not in live AWS'
+            : 'Matched — found in both live AWS and Terraform state'
+      }
+      style={{
+        position: 'absolute',
+        top: d.driftStatus === 'matched' ? -6 : -6,
+        right: isImported ? 14 : -6, // offset right of TF badge for imported nodes
+        background:
+          d.driftStatus === 'unmanaged'
+            ? '#f59e0b'
+            : d.driftStatus === 'missing'
+              ? '#ef4444'
+              : '#22c55e',
+        color: d.driftStatus === 'unmanaged' ? '#000' : '#fff',
+        fontSize: 8,
+        fontWeight: 700,
+        padding: '1px 4px',
+        borderRadius: 3,
+        zIndex: 2
+      }}
+    >
+      {d.driftStatus === 'unmanaged' ? '!' : d.driftStatus === 'missing' ? '✕' : '✓'}
+    </div>
+  )
+}
 ```
 
 - [ ] **Step 4: Typecheck**
@@ -530,6 +574,7 @@ git commit -m "feat(drift): add drift stripe colour and corner badge to Resource
 ### Task 6: Canvas views — drift filter in toolbar + flowNodes
 
 **Files:**
+
 - Modify: `src/renderer/components/canvas/CloudCanvas.tsx`
 - Modify: `src/renderer/components/canvas/TopologyView.tsx`
 - Modify: `src/renderer/components/canvas/GraphView.tsx`
@@ -541,27 +586,29 @@ git commit -m "feat(drift): add drift stripe colour and corner badge to Resource
 In `CloudCanvas.tsx`, read the new store values at the top of `CanvasInner`:
 
 ```typescript
-const driftFilterActive  = useUIStore((s) => s.driftFilterActive)
-const toggleDriftFilter  = useUIStore((s) => s.toggleDriftFilter)
+const driftFilterActive = useUIStore((s) => s.driftFilterActive)
+const toggleDriftFilter = useUIStore((s) => s.toggleDriftFilter)
 ```
 
 Add the button between the Grid toggle and the Export dropdown (after the Grid button block):
 
 ```tsx
-{importedNodes.length > 0 && (
-  <button
-    onClick={toggleDriftFilter}
-    title={driftFilterActive ? 'Show all nodes' : 'Show only unmanaged and missing nodes'}
-    style={{
-      ...btnBase,
-      background: driftFilterActive ? 'var(--cb-bg-elevated)' : 'transparent',
-      border: `1px solid ${driftFilterActive ? '#ef4444' : 'var(--cb-border)'}`,
-      color:  driftFilterActive ? '#ef4444' : '#666',
-    }}
-  >
-    ⊘ Drift only
-  </button>
-)}
+{
+  importedNodes.length > 0 && (
+    <button
+      onClick={toggleDriftFilter}
+      title={driftFilterActive ? 'Show all nodes' : 'Show only unmanaged and missing nodes'}
+      style={{
+        ...btnBase,
+        background: driftFilterActive ? 'var(--cb-bg-elevated)' : 'transparent',
+        border: `1px solid ${driftFilterActive ? '#ef4444' : 'var(--cb-border)'}`,
+        color: driftFilterActive ? '#ef4444' : '#666'
+      }}
+    >
+      ⊘ Drift only
+    </button>
+  )
+}
 ```
 
 #### TopologyView.tsx — driftStatus in data + filter
@@ -581,21 +628,25 @@ const driftFilterActive = useUIStore((s) => s.driftFilterActive)
 `buildFlowNodes` (starting at line 66 of `TopologyView.tsx`) builds `data` objects for resource nodes. Add `driftStatus: n.driftStatus` at **four** specific call sites (skip container nodes at lines 164, 178, 245 — those are VPC/subnet/apigw):
 
 **Line 109** (global zone resource nodes):
+
 ```typescript
 data: { label: n.label, nodeType: n.type, status: n.status, driftStatus: n.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(n.id) },
 ```
 
 **Line 195** (subnet children):
+
 ```typescript
 data: { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
 ```
 
 **Line 216** (direct-VPC children):
+
 ```typescript
 data: { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
 ```
 
 **Line 282** (root resource nodes):
+
 ```typescript
 data: { label: r.label, nodeType: r.type, status: r.status, driftStatus: r.driftStatus, region: r.region, dimmed: highlightedIds !== null && !highlightedIds.has(r.id) },
 ```
@@ -640,14 +691,17 @@ Also add `driftFilterActive` to the `useMemo` dependency array (currently line 5
 - [ ] **Step 6: Pass `driftStatus` in GraphView's main node mapping (line 303–322)**
 
 Read drift filter state:
+
 ```typescript
 const driftFilterActive = useUIStore((s) => s.driftFilterActive)
 ```
 
 In the `mapped` array inside the `flowNodes` useMemo (around line 303), add to the `data` object:
+
 ```typescript
 driftStatus: n.driftStatus,
 ```
+
 Place it after `status: n.status,` (line 306).
 
 - [ ] **Step 7: Pass `driftStatus` in GraphView's `importedFlowNodes` (line 335)**
@@ -659,10 +713,13 @@ data: { label: n.label, nodeType: n.type, status: n.status, region: n.region, dr
 - [ ] **Step 8: Apply drift filter and update memo deps (GraphView)**
 
 Replace the final `return` (line 339):
+
 ```typescript
 return [...mapped, ...importedFlowNodes]
 ```
+
 With:
+
 ```typescript
 const all = [...mapped, ...importedFlowNodes]
 if (!driftFilterActive) return all
@@ -675,8 +732,21 @@ return all.filter((fn) => {
 ```
 
 Add `driftFilterActive` to the `flowNodes` dep array (line 341):
+
 ```typescript
-[allNodes, selectedId, byId, vpcColorMap, highlightedIds, graphPositions, livePositions, lockedNodes, annotations, importedNodes, driftFilterActive]
+;[
+  allNodes,
+  selectedId,
+  byId,
+  vpcColorMap,
+  highlightedIds,
+  graphPositions,
+  livePositions,
+  lockedNodes,
+  annotations,
+  importedNodes,
+  driftFilterActive
+]
 ```
 
 - [ ] **Step 9: Typecheck**
@@ -709,6 +779,7 @@ git commit -m "feat(drift): add drift filter toolbar button and driftStatus thro
 ### Task 7: Inspector — drift status section
 
 **Files:**
+
 - Modify: `src/renderer/components/Inspector.tsx`
 
 - [ ] **Step 1: Add the drift status section**
@@ -716,41 +787,104 @@ git commit -m "feat(drift): add drift filter toolbar button and driftStatus thro
 In `Inspector.tsx`, the existing imported banner is at lines 149–153:
 
 ```tsx
-{isImported && (
-  <div style={{ padding: '6px 10px', borderRadius: 4, background: 'var(--cb-bg-secondary)', border: '1px solid var(--cb-border)', fontSize: 11, color: 'var(--cb-text-muted)', marginBottom: 8 }}>
-    Imported from Terraform — read-only
-  </div>
-)}
+{
+  isImported && (
+    <div
+      style={{
+        padding: '6px 10px',
+        borderRadius: 4,
+        background: 'var(--cb-bg-secondary)',
+        border: '1px solid var(--cb-border)',
+        fontSize: 11,
+        color: 'var(--cb-text-muted)',
+        marginBottom: 8
+      }}
+    >
+      Imported from Terraform — read-only
+    </div>
+  )
+}
 ```
 
 Replace this block with a drift-aware section. The new block handles all three drift states and falls back to the old banner for imported nodes that have no `driftStatus` yet (e.g. before drift has run):
 
 ```tsx
-{node.driftStatus === 'unmanaged' && (
-  <div style={{ padding: '8px 10px', borderRadius: 4, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.4)', fontSize: 11, marginBottom: 8 }}>
-    <div style={{ fontWeight: 700, color: '#f59e0b', marginBottom: 3 }}>! UNMANAGED</div>
-    <div style={{ color: '#d97706', lineHeight: 1.5 }}>Not tracked in Terraform. Consider adding to your tfstate.</div>
-  </div>
-)}
+{
+  node.driftStatus === 'unmanaged' && (
+    <div
+      style={{
+        padding: '8px 10px',
+        borderRadius: 4,
+        background: 'rgba(245,158,11,0.1)',
+        border: '1px solid rgba(245,158,11,0.4)',
+        fontSize: 11,
+        marginBottom: 8
+      }}
+    >
+      <div style={{ fontWeight: 700, color: '#f59e0b', marginBottom: 3 }}>! UNMANAGED</div>
+      <div style={{ color: '#d97706', lineHeight: 1.5 }}>
+        Not tracked in Terraform. Consider adding to your tfstate.
+      </div>
+    </div>
+  )
+}
 
-{node.driftStatus === 'missing' && (
-  <div style={{ padding: '8px 10px', borderRadius: 4, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)', fontSize: 11, marginBottom: 8 }}>
-    <div style={{ fontWeight: 700, color: '#ef4444', marginBottom: 3 }}>✕ MISSING — read-only</div>
-    <div style={{ color: '#dc2626', lineHeight: 1.5 }}>Declared in Terraform but not found in live AWS.</div>
-  </div>
-)}
+{
+  node.driftStatus === 'missing' && (
+    <div
+      style={{
+        padding: '8px 10px',
+        borderRadius: 4,
+        background: 'rgba(239,68,68,0.1)',
+        border: '1px solid rgba(239,68,68,0.4)',
+        fontSize: 11,
+        marginBottom: 8
+      }}
+    >
+      <div style={{ fontWeight: 700, color: '#ef4444', marginBottom: 3 }}>
+        ✕ MISSING — read-only
+      </div>
+      <div style={{ color: '#dc2626', lineHeight: 1.5 }}>
+        Declared in Terraform but not found in live AWS.
+      </div>
+    </div>
+  )
+}
 
-{node.driftStatus === 'matched' && (
-  <div style={{ padding: '8px 10px', borderRadius: 4, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.3)', fontSize: 11, marginBottom: 8 }}>
-    <DriftDiffTable metadata={node.metadata} tfMetadata={node.tfMetadata ?? {}} />
-  </div>
-)}
+{
+  node.driftStatus === 'matched' && (
+    <div
+      style={{
+        padding: '8px 10px',
+        borderRadius: 4,
+        background: 'rgba(34,197,94,0.08)',
+        border: '1px solid rgba(34,197,94,0.3)',
+        fontSize: 11,
+        marginBottom: 8
+      }}
+    >
+      <DriftDiffTable metadata={node.metadata} tfMetadata={node.tfMetadata ?? {}} />
+    </div>
+  )
+}
 
-{!node.driftStatus && isImported && (
-  <div style={{ padding: '6px 10px', borderRadius: 4, background: 'var(--cb-bg-secondary)', border: '1px solid var(--cb-border)', fontSize: 11, color: 'var(--cb-text-muted)', marginBottom: 8 }}>
-    Imported from Terraform — read-only
-  </div>
-)}
+{
+  !node.driftStatus && isImported && (
+    <div
+      style={{
+        padding: '6px 10px',
+        borderRadius: 4,
+        background: 'var(--cb-bg-secondary)',
+        border: '1px solid var(--cb-border)',
+        fontSize: 11,
+        color: 'var(--cb-text-muted)',
+        marginBottom: 8
+      }}
+    >
+      Imported from Terraform — read-only
+    </div>
+  )
+}
 ```
 
 - [ ] **Step 2: Add the `DriftDiffTable` component**
@@ -758,28 +892,83 @@ Replace this block with a drift-aware section. The new block handles all three d
 Add this small component at the top of `Inspector.tsx` (above the `Inspector` function, below the imports):
 
 ```tsx
-function DriftDiffTable({ metadata, tfMetadata }: { metadata: Record<string, unknown>; tfMetadata: Record<string, unknown> }): React.JSX.Element {
+function DriftDiffTable({
+  metadata,
+  tfMetadata
+}: {
+  metadata: Record<string, unknown>
+  tfMetadata: Record<string, unknown>
+}): React.JSX.Element {
   const allKeys = Array.from(new Set([...Object.keys(metadata), ...Object.keys(tfMetadata)]))
-  const diffs = allKeys.filter((k) => String(metadata[k] ?? '') !== String(tfMetadata[k] ?? '') && (metadata[k] !== undefined || tfMetadata[k] !== undefined))
+  const diffs = allKeys.filter(
+    (k) =>
+      String(metadata[k] ?? '') !== String(tfMetadata[k] ?? '') &&
+      (metadata[k] !== undefined || tfMetadata[k] !== undefined)
+  )
 
   return (
     <>
       <div style={{ fontWeight: 700, color: '#22c55e', marginBottom: diffs.length > 0 ? 6 : 0 }}>
-        ✓ MATCHED{diffs.length > 0 ? ` — ${diffs.length} difference${diffs.length === 1 ? '' : 's'}` : ''}
+        ✓ MATCHED
+        {diffs.length > 0 ? ` — ${diffs.length} difference${diffs.length === 1 ? '' : 's'}` : ''}
       </div>
       {diffs.length === 0 ? (
         <div style={{ color: '#4ade80', fontSize: 10 }}>No differences detected</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(0,0,0,0.3)', borderRadius: 3, overflow: 'hidden', fontSize: 9 }}>
-          <div style={{ padding: '3px 6px', color: '#6b7280', fontWeight: 700, fontSize: 8, background: 'rgba(0,0,0,0.2)' }}>LIVE</div>
-          <div style={{ padding: '3px 6px', color: '#7c3aed', fontWeight: 700, fontSize: 8, background: 'rgba(0,0,0,0.2)' }}>TERRAFORM</div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 1,
+            background: 'rgba(0,0,0,0.3)',
+            borderRadius: 3,
+            overflow: 'hidden',
+            fontSize: 9
+          }}
+        >
+          <div
+            style={{
+              padding: '3px 6px',
+              color: '#6b7280',
+              fontWeight: 700,
+              fontSize: 8,
+              background: 'rgba(0,0,0,0.2)'
+            }}
+          >
+            LIVE
+          </div>
+          <div
+            style={{
+              padding: '3px 6px',
+              color: '#7c3aed',
+              fontWeight: 700,
+              fontSize: 8,
+              background: 'rgba(0,0,0,0.2)'
+            }}
+          >
+            TERRAFORM
+          </div>
           {diffs.map((k) => (
             <>
-              <div key={`live-${k}`} style={{ padding: '3px 6px', background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div
+                key={`live-${k}`}
+                style={{
+                  padding: '3px 6px',
+                  background: 'rgba(0,0,0,0.15)',
+                  borderTop: '1px solid rgba(255,255,255,0.05)'
+                }}
+              >
                 <div style={{ color: '#6b7280', fontSize: 7, marginBottom: 1 }}>{k}</div>
                 <div style={{ color: '#fca5a5' }}>{String(metadata[k] ?? '—')}</div>
               </div>
-              <div key={`tf-${k}`} style={{ padding: '3px 6px', background: 'rgba(0,0,0,0.15)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div
+                key={`tf-${k}`}
+                style={{
+                  padding: '3px 6px',
+                  background: 'rgba(0,0,0,0.15)',
+                  borderTop: '1px solid rgba(255,255,255,0.05)'
+                }}
+              >
                 <div style={{ color: '#6b7280', fontSize: 7, marginBottom: 1 }}>{k}</div>
                 <div style={{ color: '#86efac' }}>{String(tfMetadata[k] ?? '—')}</div>
               </div>

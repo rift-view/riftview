@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 import type { DynamoEditParams } from '../../types/edit'
 
 interface Props {

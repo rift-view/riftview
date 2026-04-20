@@ -1,6 +1,6 @@
 import { EC2Client, DescribeInternetGatewaysCommand } from '@aws-sdk/client-ec2'
 import { scanFlatService } from './scanFlatService'
-import type { CloudNode } from '../../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 export function listInternetGateways(client: EC2Client, region: string): Promise<CloudNode[]> {
   return scanFlatService(client, region, {

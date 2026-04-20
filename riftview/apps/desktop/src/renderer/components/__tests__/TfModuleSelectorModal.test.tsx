@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import TfModuleSelectorModal from '../modals/TfModuleSelectorModal'
 import type { TfModuleInfo } from '../../types/tfstate'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 function makeNode(id: string): CloudNode {
   return { id, type: 'ec2', label: id, status: 'running', region: 'us-east-1', metadata: {} }

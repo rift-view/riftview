@@ -1,4 +1,4 @@
-import type { CloudNode, NodeType } from '../types/cloud'
+import type { CloudNode, NodeType } from '@riftview/shared'
 
 const GRID_W = 150
 const GRID_H = 66

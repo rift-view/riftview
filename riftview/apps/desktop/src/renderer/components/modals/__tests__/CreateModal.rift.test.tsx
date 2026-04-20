@@ -5,7 +5,7 @@ import { useUIStore } from '../../../store/ui'
 import { useCloudStore } from '../../../store/cloud'
 import { useCliStore } from '../../../store/cli'
 import DeleteDialog from '../DeleteDialog'
-import type { CloudNode } from '../../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 /** R6 visual contract — modal shell + form primitives. */
 

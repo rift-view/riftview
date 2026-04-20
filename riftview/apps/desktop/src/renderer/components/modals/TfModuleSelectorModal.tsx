@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 import type { TfModuleInfo } from '../../types/tfstate'
 
 interface Props {

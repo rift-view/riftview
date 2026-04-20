@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
-import type { CloudNode, NodeType } from '../types/cloud'
+import type { CloudNode, NodeType } from '@riftview/shared'
 
 const TYPE_BADGE_COLOR = {
   ec2: '#FF9900',

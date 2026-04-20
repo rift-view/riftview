@@ -1,5 +1,5 @@
 import { SSMClient, DescribeParametersCommand } from '@aws-sdk/client-ssm'
-import type { CloudNode } from '../../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 export async function listParameters(client: SSMClient, region: string): Promise<CloudNode[]> {
   const nodes: CloudNode[] = []

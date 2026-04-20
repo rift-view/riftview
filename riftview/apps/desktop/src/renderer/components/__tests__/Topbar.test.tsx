@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { Topbar } from '../Topbar'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
-import type { AwsProfile, CloudNode } from '../../types/cloud'
+import type { AwsProfile, CloudNode } from '@riftview/shared'
 
 // Stub modals so we don't have to mount their trees
 vi.mock('../TemplatesModal', () => ({ default: () => null }))

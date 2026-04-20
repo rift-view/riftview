@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { sortAdvisories } from '../../../src/renderer/utils/sortAdvisories'
-import type { Advisory } from '../../../src/renderer/types/cloud'
+import { sortAdvisories } from '../src/analysis/sortAdvisories'
+import type { Advisory } from '../src/types/cloud'
 
 function makeAdvisory(
   ruleId: Advisory['ruleId'],

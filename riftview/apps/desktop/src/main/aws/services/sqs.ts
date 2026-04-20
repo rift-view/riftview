@@ -1,6 +1,6 @@
 import { SQSClient, ListQueuesCommand, GetQueueAttributesCommand } from '@aws-sdk/client-sqs'
 import { LambdaClient, ListEventSourceMappingsCommand } from '@aws-sdk/client-lambda'
-import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '@riftview/shared'
 import { scanFlatService } from './scanFlatService'
 
 export async function listQueues(

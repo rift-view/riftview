@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import type { NodeType } from '../../../types/cloud'
+import type { NodeType } from '@riftview/shared'
 import { useUIStore } from '../../../store/ui'
 import { useShallow } from 'zustand/react/shallow'
 

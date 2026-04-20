@@ -33,7 +33,7 @@ import { listEksClusters } from '../aws/services/eks'
 import { listOpenSearchDomains } from '../aws/services/opensearch'
 import { listMskClusters } from '../aws/services/msk'
 import type { RiftViewPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from './types'
-import type { CloudNode } from '../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 function errCatch(service: string, region: string, errors: PluginScanResult['errors']) {
   return (e: unknown): CloudNode[] => {

@@ -5,41 +5,71 @@
    ============================================================ */
 
 @keyframes rift-pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.35; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 
 @keyframes rift-shimmer {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
 }
 
 @keyframes rift-error-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 var(--fault-glow); }
-  50%      { box-shadow: 0 0 0 3px var(--fault-glow); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--fault-glow);
+  }
+  50% {
+    box-shadow: 0 0 0 3px var(--fault-glow);
+  }
 }
 
 @keyframes rift-fade-in-up {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* A single 1px ember hairline sweeps top→bottom across the canvas
    on mount/profile change, then fades. */
 @keyframes rift-hairline-sweep {
-  0%   { transform: translateY(-100%); opacity: 0; }
-  15%  { opacity: 1; }
-  85%  { opacity: 1; }
-  100% { transform: translateY(100vh); opacity: 0; }
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur-instant: 0ms;
-    --dur-fast:    0ms;
-    --dur-med:     0ms;
-    --dur-slow:    0ms;
-    --dur-reveal:  0ms;
-    --dur-epic:    0ms;
+    --dur-fast: 0ms;
+    --dur-med: 0ms;
+    --dur-slow: 0ms;
+    --dur-reveal: 0ms;
+    --dur-epic: 0ms;
   }
 }

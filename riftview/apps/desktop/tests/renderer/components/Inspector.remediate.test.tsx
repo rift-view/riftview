@@ -3,7 +3,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 import { Inspector } from '../../../src/renderer/components/Inspector'
 import { useUIStore } from '../../../src/renderer/store/ui'
 import { useCloudStore } from '../../../src/renderer/store/cloud'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 // ---- Mocks (same pattern as Inspector.test.tsx) ----------------------------
 

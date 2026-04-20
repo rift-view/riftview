@@ -1,4 +1,4 @@
-import type { CloudNode } from '../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 import type { TerraformGenerator } from './types'
 import { terraformGenerators } from './generators'
 import { pluginRegistry } from '../plugin/index'

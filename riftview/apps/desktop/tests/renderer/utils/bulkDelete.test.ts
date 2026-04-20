@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildDeleteCommands } from '../../../src/renderer/utils/buildDeleteCommands'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 const makeNode = (id: string, type: CloudNode['type'], label = id): CloudNode => ({
   id,

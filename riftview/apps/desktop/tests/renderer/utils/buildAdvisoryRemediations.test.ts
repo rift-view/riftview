@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildAdvisoryRemediation } from '../../../src/renderer/utils/buildAdvisoryRemediations'
-import type { Advisory } from '../../../src/renderer/types/cloud'
+import type { Advisory } from '@riftview/shared'
 
 function makeAdvisory(ruleId: Advisory['ruleId']): Advisory {
   return { ruleId, severity: 'warning', title: '', detail: '', nodeId: 'node-1' }

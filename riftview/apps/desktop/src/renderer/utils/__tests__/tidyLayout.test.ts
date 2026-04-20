@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { computeTidyLayout } from '../tidyLayout'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 function makeNode(id: string, type: CloudNode['type'], opts: Partial<CloudNode> = {}): CloudNode {
   return {

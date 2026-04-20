@@ -1,5 +1,5 @@
 import { buildConsoleUrl } from '../../../utils/buildConsoleUrl'
-import type { CloudNode } from '../../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 interface ActionRailProps {
   node: CloudNode

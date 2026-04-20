@@ -1,4 +1,4 @@
-import type { NodeType } from '../types/cloud'
+import type { NodeType } from '@riftview/shared'
 
 export const SCAN_KEY_TO_TYPE: Record<string, NodeType> = {
   'ec2:instances': 'ec2',

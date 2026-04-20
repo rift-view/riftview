@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useCloudStore, createCloudStore } from '../../../src/renderer/store/cloud'
 import { useUIStore } from '../../../src/renderer/store/ui'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 const makeNode = (id: string): CloudNode => ({
   id,

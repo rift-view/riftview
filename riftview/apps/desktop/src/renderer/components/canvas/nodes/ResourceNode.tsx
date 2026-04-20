@@ -1,10 +1,10 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { useState, useEffect } from 'react'
-import type { NodeStatus, NodeType } from '../../../types/cloud'
+import type { NodeStatus, NodeType } from '@riftview/shared'
 import { useUIStore } from '../../../store/ui'
 import { useCloudStore } from '../../../store/cloud'
 import { ActionRail } from './ActionRail'
-import { analyzeNode } from '../../../utils/analyzeNode'
+import { analyzeNode } from '@riftview/shared'
 
 interface CloudMetric {
   name: string
@@ -59,7 +59,7 @@ interface ResourceNodeData {
   label: string
   nodeType: NodeType
   status: NodeStatus
-  driftStatus?: import('../../../types/cloud').DriftStatus
+  driftStatus?: import('@riftview/shared').DriftStatus
   vpcLabel?: string // graph view only — VPC membership indicator
   vpcColor?: string // graph view only — color assigned to that VPC
   region?: string // shown as muted secondary label when node is not inside a VPC

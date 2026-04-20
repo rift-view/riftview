@@ -1,6 +1,6 @@
 import { DynamoDBClient, ListTablesCommand, DescribeTableCommand } from '@aws-sdk/client-dynamodb'
 import { LambdaClient, ListEventSourceMappingsCommand } from '@aws-sdk/client-lambda'
-import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '@riftview/shared'
 
 export async function listTables(
   client: DynamoDBClient,

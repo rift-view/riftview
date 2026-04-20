@@ -12,18 +12,19 @@
 
 ## File Map
 
-| File | Change |
-|---|---|
-| `src/renderer/store/cloud.ts` | Add `patchNodeStatus(id, status)` action |
-| `src/renderer/src/App.tsx` | Fix `handleRemediate` — optimistic update + toast + rescan |
-| `tests/renderer/store/cloud.test.ts` | Add 2 tests for `patchNodeStatus` |
-| `.env.local.example` | Enable EXECUTION_ENGINE + STATUS_LANGUAGE flags |
+| File                                 | Change                                                     |
+| ------------------------------------ | ---------------------------------------------------------- |
+| `src/renderer/store/cloud.ts`        | Add `patchNodeStatus(id, status)` action                   |
+| `src/renderer/src/App.tsx`           | Fix `handleRemediate` — optimistic update + toast + rescan |
+| `tests/renderer/store/cloud.test.ts` | Add 2 tests for `patchNodeStatus`                          |
+| `.env.local.example`                 | Enable EXECUTION_ENGINE + STATUS_LANGUAGE flags            |
 
 ---
 
 ## Task 1: Add `patchNodeStatus` to cloud store
 
 **Files:**
+
 - Modify: `src/renderer/store/cloud.ts`
 - Test: `tests/renderer/store/cloud.test.ts`
 
@@ -107,6 +108,7 @@ git commit -m "feat(store): add patchNodeStatus action for optimistic status upd
 ## Task 2: Wire `handleRemediate` — optimistic update + toast + rescan
 
 **Files:**
+
 - Modify: `src/renderer/src/App.tsx:189-191`
 
 Background: `handleRemediate` currently just calls `window.riftview.runCli(commands)` and returns. It needs to: (1) set the node to 'pending' before running, (2) show a toast on success/error, (3) call `triggerScan()` on success so the canvas reflects the remediated state. Pattern: mirrors `CommandDrawer.handleRun()` which does `window.riftview.startScan()` after success, but we use `triggerScan()` (from `useScanner`) because it also saves previous counts for the delta badge.
@@ -116,25 +118,27 @@ Note: No separate test is written for this function — the Inspector.remediate.
 - [ ] **Step 1: Replace the `handleRemediate` implementation in `src/renderer/src/App.tsx`**
 
 Find (around line 189):
+
 ```typescript
-  async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{ code: number }> {
-    return window.riftview.runCli(commands)
-  }
+async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{ code: number }> {
+  return window.riftview.runCli(commands)
+}
 ```
 
 Replace with:
+
 ```typescript
-  async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{ code: number }> {
-    useCloudStore.getState().patchNodeStatus(node.id, 'pending')
-    const result = await window.riftview.runCli(commands)
-    if (result.code === 0) {
-      useUIStore.getState().showToast('Remediation complete')
-      triggerScan()
-    } else {
-      useUIStore.getState().showToast('Remediation failed', 'error')
-    }
-    return result
+async function handleRemediate(node: CloudNode, commands: string[][]): Promise<{ code: number }> {
+  useCloudStore.getState().patchNodeStatus(node.id, 'pending')
+  const result = await window.riftview.runCli(commands)
+  if (result.code === 0) {
+    useUIStore.getState().showToast('Remediation complete')
+    triggerScan()
+  } else {
+    useUIStore.getState().showToast('Remediation failed', 'error')
   }
+  return result
+}
 ```
 
 - [ ] **Step 2: Run typecheck to verify no type errors**
@@ -165,6 +169,7 @@ git commit -m "feat(remediate): optimistic pending status + toast + rescan after
 ## Task 3: Enable flags in .env.local.example
 
 **Files:**
+
 - Modify: `.env.local.example`
 
 Background: The meeting decided STATUS_LANGUAGE is production-ready (pure visual, zero data risk) and should be default-on. EXECUTION_ENGINE gates the REMEDIATE section — now that the execution loop is complete, it should be enabled too. Updating `.env.local.example` communicates these as "ready" for local dev. Users who copy this file get them enabled. (To make them truly default-on in a production build, a separate CI env config change is needed — that's out of scope here.)
@@ -172,35 +177,45 @@ Background: The meeting decided STATUS_LANGUAGE is production-ready (pure visual
 - [ ] **Step 1: Update `.env.local.example`**
 
 Find:
+
 ```
 VITE_FLAG_STATUS_LANGUAGE=false
 ```
+
 Replace with:
+
 ```
 VITE_FLAG_STATUS_LANGUAGE=true
 ```
 
 Find:
+
 ```
 VITE_FLAG_EXECUTION_ENGINE=false
 ```
+
 Replace with:
+
 ```
 VITE_FLAG_EXECUTION_ENGINE=true
 ```
 
 Add a comment above each changed flag:
+
 ```
 # ✅ Production-ready — enable by default
 VITE_FLAG_STATUS_LANGUAGE=true
 ```
+
 and:
+
 ```
 # ✅ Execution loop complete — enable by default
 VITE_FLAG_EXECUTION_ENGINE=true
 ```
 
 Final file should look like:
+
 ```
 # Copy this file to .env.local to enable in-progress features during development.
 # .env.local is gitignored and never committed.

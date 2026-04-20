@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useUIStore } from '../../../src/renderer/store/ui'
 import type { NodeFilter } from '../../../src/renderer/store/ui'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 function makeNode(type: CloudNode['type']): CloudNode {
   return { id: type, type, label: type, status: 'running', region: 'us-east-1', metadata: {} }

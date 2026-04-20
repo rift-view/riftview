@@ -12,7 +12,7 @@ demo booking. Subject lines tested for under-50-char length and curiosity.
 Hey {{first_name}},
 
 I built RiftView because every AWS incident I've worked started with
-the same question: *"which services does this take down with it?"*
+the same question: _"which services does this take down with it?"_
 
 The Console doesn't answer it. Diagrams drift. Tribal memory is slow.
 
@@ -52,6 +52,7 @@ It's **not** another architecture diagram tool. It's built for the
 before rolling back.
 
 Looking for 5 beta testers who:
+
 - Run 50+ resources on AWS
 - Have had a "which services does this touch?" moment in the last quarter
 - Are willing to spend 15 min giving feedback
@@ -110,6 +111,7 @@ After Day 10, drop the thread entirely. No 4th follow-up.
 ## What to track
 
 Per variant, track:
+
 - Open rate (not reliable but directional)
 - Reply rate (the real signal)
 - Demo booking rate

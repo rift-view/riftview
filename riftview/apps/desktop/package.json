@@ -51,6 +51,7 @@
     "@aws-sdk/client-sqs": "^3.1012.0",
     "@aws-sdk/client-ssm": "^3.1012.0",
     "@aws-sdk/client-sts": "^3.1029.0",
+    "@riftview/shared": "*",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@fontsource-variable/libre-franklin": "^5.2.8",

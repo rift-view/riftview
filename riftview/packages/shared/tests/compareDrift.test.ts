@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { compareDrift, applyDriftToState } from '../../../src/renderer/utils/compareDrift'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import { compareDrift, applyDriftToState } from '../src/drift/compareDrift'
+import type { CloudNode } from '../src/types/cloud'
 
 function node(id: string, type: CloudNode['type'] = 'ec2', label = id): CloudNode {
   return {

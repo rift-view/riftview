@@ -1,5 +1,5 @@
 import { EC2Client, DescribeNatGatewaysCommand } from '@aws-sdk/client-ec2'
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus } from '@riftview/shared'
 
 function mapNatState(state: string | undefined): NodeStatus {
   switch (state) {

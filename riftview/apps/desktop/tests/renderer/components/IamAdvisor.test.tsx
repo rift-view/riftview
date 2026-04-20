@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { IamAdvisor } from '../../../src/renderer/components/IamAdvisor'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 import type { IamAnalysisResult } from '../../../src/renderer/types/iam'
 
 // ---- Fixtures ---------------------------------------------------------------

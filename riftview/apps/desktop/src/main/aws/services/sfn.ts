@@ -3,7 +3,7 @@ import {
   ListStateMachinesCommand,
   DescribeStateMachineCommand
 } from '@aws-sdk/client-sfn'
-import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '@riftview/shared'
 
 function isKnownTarget(resource: string): boolean {
   if (resource.startsWith('arn:aws:lambda:')) return true

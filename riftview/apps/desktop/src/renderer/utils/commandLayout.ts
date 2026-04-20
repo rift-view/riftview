@@ -1,5 +1,5 @@
 import type { Node } from '@xyflow/react'
-import type { CloudNode, NodeType } from '../types/cloud'
+import type { CloudNode, NodeType } from '@riftview/shared'
 
 // ── Tier mapping ──────────────────────────────────────────────────────────────
 

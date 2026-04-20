@@ -35,14 +35,18 @@ vi.mock('../../../../src/renderer/utils/commandLayout', () => ({
 
 // ── Mock resolveIntegrationTargetId ───────────────────────────────────────────
 
-vi.mock('../../../../src/renderer/utils/resolveIntegrationTargetId', () => ({
-  resolveIntegrationTargetId: (_nodes: unknown, targetId: string) => targetId
-}))
+vi.mock('@riftview/shared', async (importOriginal) => {
+  const m = await importOriginal<typeof import('@riftview/shared')>()
+  return {
+    ...m,
+    resolveIntegrationTargetId: (_nodes: unknown, targetId: string) => targetId
+  }
+})
 
 // ── Import component after mocks are established ─────────────────────────────
 
 import { CommandView } from '../../../../src/renderer/components/canvas/CommandView'
-import type { CloudNode } from '../../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

@@ -6,7 +6,7 @@ import {
   describeSubnets,
   describeSecurityGroups
 } from '../../../../src/main/aws/services/ec2'
-import type { CloudNode } from '../../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 const mockSend = vi.fn()
 const mockClient = { send: mockSend } as unknown as EC2Client

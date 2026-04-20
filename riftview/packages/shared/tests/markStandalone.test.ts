@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { markStandaloneNodes } from '../../../src/main/aws/markStandalone'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import { markStandaloneNodes } from '../src/scan/markStandalone'
+import type { CloudNode } from '../src/types/cloud'
 
 function n(
   id: string,

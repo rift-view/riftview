@@ -5,7 +5,7 @@ import {
   GetIntegrationsCommand,
   GetAuthorizersCommand
 } from '@aws-sdk/client-apigatewayv2'
-import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '@riftview/shared'
 
 export async function listApis(client: ApiGatewayV2Client, region: string): Promise<CloudNode[]> {
   try {
@@ -22,13 +22,13 @@ export async function listApis(client: ApiGatewayV2Client, region: string): Prom
 
         // Detect Cognito authorizers
         let apigwIntegrations:
-          | { targetId: string; edgeType: import('../../../renderer/types/cloud').EdgeType }[]
+          | { targetId: string; edgeType: import('@riftview/shared').EdgeType }[]
           | undefined
         try {
           const authRes = await client.send(new GetAuthorizersCommand({ ApiId: api.ApiId }))
           const cognitoIntegrations: {
             targetId: string
-            edgeType: import('../../../renderer/types/cloud').EdgeType
+            edgeType: import('@riftview/shared').EdgeType
           }[] = []
           for (const auth of authRes.Items ?? []) {
             if (auth.AuthorizerType === 'JWT' && auth.JwtConfiguration?.Issuer) {

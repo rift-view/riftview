@@ -5,7 +5,7 @@ import {
   DescribeServicesCommand,
   DescribeTaskDefinitionCommand
 } from '@aws-sdk/client-ecs'
-import type { CloudNode, NodeStatus, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus, EdgeType } from '@riftview/shared'
 
 function ecsStatusToNodeStatus(status: string | undefined): NodeStatus {
   if (status === 'ACTIVE') return 'running'

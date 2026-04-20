@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import type { IamAnalysisResult, IamFinding, IamSeverity } from '../types/iam'
-import type { CloudNode } from '../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 interface IamAdvisorProps {
   node: CloudNode

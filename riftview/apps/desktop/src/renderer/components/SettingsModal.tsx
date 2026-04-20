@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useCloudStore } from '../store/cloud'
-import type { Settings, AwsProfile } from '../types/cloud'
+import type { Settings, AwsProfile } from '@riftview/shared'
 import { getRegionColor } from '../utils/regionColors'
 
 interface SettingsModalProps {

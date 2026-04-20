@@ -3,10 +3,10 @@ import fsp from 'fs/promises'
 import path from 'path'
 import { IPC } from '../ipc/channels'
 import { createClients } from './client'
-import type { CloudNode, ScanDelta } from '../../renderer/types/cloud'
+import type { CloudNode, ScanDelta } from '@riftview/shared'
+import { markStandaloneNodes, scanOnce } from '@riftview/shared'
 import { describeKeyPairs } from './services/ec2'
 import { pluginRegistry } from '../plugin/index'
-import { markStandaloneNodes } from './markStandalone'
 import { classifyScanError } from './classifyScanError'
 
 // --- Per-node change history ---
@@ -127,7 +127,7 @@ export class ResourceScanner {
    * @param serviceName  The service key being retried (used to drop/keep its error entry)
    */
   applyServiceRetry(
-    freshNodes: import('../../renderer/types/cloud').CloudNode[],
+    freshNodes: import('@riftview/shared').CloudNode[],
     serviceErrors: Array<{ service: string; region: string; message: string }>,
     existingScanErrors: Array<{ service: string; region: string; message: string }>,
     serviceName: string
@@ -178,16 +178,14 @@ export class ResourceScanner {
     this.window.webContents.send(IPC.SCAN_STATUS, 'scanning')
 
     try {
-      // Fan out across all selected regions in parallel.
       // Credentials were established by activateAll() before the scanner started.
-      const regionResults = await Promise.all(
-        this.regions.map((region) => pluginRegistry.scanAll(region))
-      )
-
-      const nextNodes = regionResults.flatMap((r) => r.nodes)
-      const scanErrors = regionResults.flatMap((r) => r.errors)
-
-      markStandaloneNodes(nextNodes)
+      // scanOnce handles region fan-out + markStandaloneNodes + timing.
+      const { nodes: nextNodes, errors: scanErrors } = await scanOnce({
+        profile: this.profile,
+        regions: this.regions,
+        endpoint: this.endpoint,
+        scanAll: (region) => pluginRegistry.scanAll(region)
+      })
 
       const delta = computeDelta(this.currentNodes, nextNodes)
 

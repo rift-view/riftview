@@ -1,4 +1,4 @@
-import type { CloudNode } from '../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 /**
  * A single Terraform resource block as a string of HCL.
@@ -15,7 +15,4 @@ export type TerraformGenerator = (node: CloudNode) => TerraformBlock
  * Exhaustive map — every NodeType must have an entry.
  * Compile-time enforcement: adding a new NodeType will cause a type error here.
  */
-export type TerraformGeneratorMap = Record<
-  import('../../renderer/types/cloud').NodeType,
-  TerraformGenerator
->
+export type TerraformGeneratorMap = Record<import('@riftview/shared').NodeType, TerraformGenerator>

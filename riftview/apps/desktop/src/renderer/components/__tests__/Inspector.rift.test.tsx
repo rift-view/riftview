@@ -4,7 +4,7 @@ import { Inspector } from '../Inspector'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
 import { useCliStore } from '../../store/cli'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 /**
  * VISUAL CONTRACT suite for the Rift-restyled Inspector.

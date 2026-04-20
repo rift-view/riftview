@@ -7,7 +7,7 @@ import {
 } from '@xyflow/react'
 import { useState } from 'react'
 import { useUIStore } from '../../../store/ui'
-import type { CustomEdgeColor } from '../../../types/cloud'
+import type { CustomEdgeColor } from '@riftview/shared'
 
 const COLORS: CustomEdgeColor[] = ['#f59e0b', '#14b8a6', '#6366f1', '#22c55e', '#ef4444', '#8b5cf6']
 

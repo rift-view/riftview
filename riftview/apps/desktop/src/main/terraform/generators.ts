@@ -1,5 +1,5 @@
 import type { TerraformGeneratorMap } from './types'
-import type { CloudNode } from '../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 function sanitizeName(label: string, fallback: string): string {
   const sanitized = label

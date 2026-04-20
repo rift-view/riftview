@@ -1,5 +1,5 @@
 import { ACMClient, ListCertificatesCommand, DescribeCertificateCommand } from '@aws-sdk/client-acm'
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus } from '@riftview/shared'
 
 function acmStatusToNodeStatus(status: string | undefined): NodeStatus {
   if (status === 'ISSUED') return 'running'

@@ -1,4 +1,4 @@
-import type { CloudNode } from '../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 import type { EditParams, SgRule, ApigwEditParams } from '../types/edit'
 
 function ruleKey(r: SgRule): string {

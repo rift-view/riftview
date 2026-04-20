@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ActionRail } from '../../../../../src/renderer/components/canvas/nodes/ActionRail'
-import type { CloudNode } from '../../../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 // Mock buildConsoleUrl
 vi.mock('../../../../../src/renderer/utils/buildConsoleUrl', () => ({

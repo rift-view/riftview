@@ -2,7 +2,7 @@
 // Routing layer for create/delete/edit commands.
 // Built-in NodeTypes delegate to existing builders.
 // Plugin types delegate to registered PluginCommandHandlers.
-import type { CloudNode } from '../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 import { buildCommands } from '../utils/buildCommand'
 import { buildDeleteCommands } from '../utils/buildDeleteCommands'
 import { buildEditCommands } from '../utils/buildEditCommands'

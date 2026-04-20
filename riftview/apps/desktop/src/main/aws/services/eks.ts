@@ -1,5 +1,5 @@
 import { EKSClient, ListClustersCommand, DescribeClusterCommand } from '@aws-sdk/client-eks'
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus } from '@riftview/shared'
 
 function eksStatusToNodeStatus(status: string | undefined): NodeStatus {
   if (status === 'ACTIVE') return 'running'

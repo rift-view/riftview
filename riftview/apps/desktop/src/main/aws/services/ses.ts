@@ -1,5 +1,5 @@
 import { SESClient, ListIdentitiesCommand } from '@aws-sdk/client-ses'
-import type { CloudNode } from '../../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 export async function listIdentities(client: SESClient, region: string): Promise<CloudNode[]> {
   try {

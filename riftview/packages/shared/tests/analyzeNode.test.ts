@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { analyzeNode } from '../../../src/renderer/utils/analyzeNode'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import { analyzeNode } from '../src/analysis/analyzeNode'
+import type { CloudNode } from '../src/types/cloud'
 
 function node(overrides: Partial<CloudNode>): CloudNode {
   return {

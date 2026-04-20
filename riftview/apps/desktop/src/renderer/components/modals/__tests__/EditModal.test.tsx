@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import EditModal from '../EditModal'
-import type { CloudNode } from '../../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 const vpcNode: CloudNode = {
   id: 'vpc-123',

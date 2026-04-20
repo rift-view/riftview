@@ -1,5 +1,5 @@
 // src/main/plugin/types.ts
-import type { CloudNode } from '../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 export interface ScanContext<TCredentials = unknown> {
   credentials: TCredentials

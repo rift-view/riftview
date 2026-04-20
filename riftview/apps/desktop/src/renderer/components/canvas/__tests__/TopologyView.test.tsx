@@ -4,7 +4,7 @@ import { TopologyView } from '../TopologyView'
 import { useCloudStore } from '../../../store/cloud'
 import { useUIStore } from '../../../store/ui'
 import type { NodeChange } from '@xyflow/react'
-import type { CloudNode } from '../../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 const mockFitView = vi.fn()
 let capturedOnNodesChange: ((changes: NodeChange[]) => void) | undefined

@@ -5,7 +5,7 @@ import type {
   PluginHclGenerator,
   PluginScanResult
 } from './types'
-import type { CloudNode } from '../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 export class PluginRegistry {
   private _plugins: RiftViewPlugin[] = []

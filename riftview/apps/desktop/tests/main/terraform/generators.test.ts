@@ -10,7 +10,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { generateTerraformBlock, generateTerraformFile } from '../../../src/main/terraform/index'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 // Helper: build a minimal CloudNode
 function makeNode(overrides: Partial<CloudNode> & { type: CloudNode['type'] }): CloudNode {

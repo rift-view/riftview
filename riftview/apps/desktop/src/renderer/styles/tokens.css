@@ -6,64 +6,64 @@
 
 :root {
   /* ---------- PALETTE: WARM INK ---------- */
-  --ink-1000: oklch(0.10 0.006 30);
-  --ink-950:  oklch(0.13 0.008 30);
-  --ink-900:  oklch(0.17 0.009 30);
-  --ink-850:  oklch(0.20 0.010 30);
-  --ink-800:  oklch(0.24 0.010 30);
-  --ink-700:  oklch(0.32 0.010 30);
-  --ink-600:  oklch(0.42 0.012 30);
-  --ink-500:  oklch(0.52 0.012 30);
+  --ink-1000: oklch(0.1 0.006 30);
+  --ink-950: oklch(0.13 0.008 30);
+  --ink-900: oklch(0.17 0.009 30);
+  --ink-850: oklch(0.2 0.01 30);
+  --ink-800: oklch(0.24 0.01 30);
+  --ink-700: oklch(0.32 0.01 30);
+  --ink-600: oklch(0.42 0.012 30);
+  --ink-500: oklch(0.52 0.012 30);
 
   /* ---------- PALETTE: BONE ---------- */
-  --bone-50:  oklch(0.98 0.010 80);
+  --bone-50: oklch(0.98 0.01 80);
   --bone-100: oklch(0.95 0.013 75);
   --bone-200: oklch(0.86 0.016 75);
   --bone-300: oklch(0.72 0.018 70);
   --bone-400: oklch(0.58 0.018 65);
 
   /* ---------- PALETTE: EMBER ---------- */
-  --ember-300: oklch(0.86 0.100 60);
-  --ember-400: oklch(0.80 0.140 55);
-  --ember-500: oklch(0.73 0.170 50);
-  --ember-600: oklch(0.63 0.170 45);
-  --ember-700: oklch(0.52 0.150 40);
-  --ember-glow: oklch(0.73 0.170 50 / 0.18);
+  --ember-300: oklch(0.86 0.1 60);
+  --ember-400: oklch(0.8 0.14 55);
+  --ember-500: oklch(0.73 0.17 50);
+  --ember-600: oklch(0.63 0.17 45);
+  --ember-700: oklch(0.52 0.15 40);
+  --ember-glow: oklch(0.73 0.17 50 / 0.18);
 
   /* ---------- PALETTE: OXIDE ---------- */
-  --oxide-400: oklch(0.66 0.080 40);
-  --oxide-500: oklch(0.55 0.090 35);
-  --oxide-600: oklch(0.45 0.080 35);
+  --oxide-400: oklch(0.66 0.08 40);
+  --oxide-500: oklch(0.55 0.09 35);
+  --oxide-600: oklch(0.45 0.08 35);
 
   /* ---------- PALETTE: FAULT ---------- */
-  --fault-500: oklch(0.60 0.200 28);
-  --fault-glow: oklch(0.60 0.200 28 / 0.22);
+  --fault-500: oklch(0.6 0.2 28);
+  --fault-glow: oklch(0.6 0.2 28 / 0.22);
 
   /* ---------- PALETTE: MOSS ---------- */
-  --moss-500: oklch(0.68 0.100 145);
+  --moss-500: oklch(0.68 0.1 145);
 
   /* ---------- SEMANTIC ALIASES ---------- */
-  --bg:            var(--ink-950);
-  --bg-elev-1:     var(--ink-900);
-  --bg-elev-2:     var(--ink-850);
-  --fg:            var(--bone-100);
-  --fg-strong:     var(--bone-50);
-  --fg-muted:      var(--bone-300);
-  --fg-dim:        var(--bone-400);
-  --border:        var(--ink-700);
+  --bg: var(--ink-950);
+  --bg-elev-1: var(--ink-900);
+  --bg-elev-2: var(--ink-850);
+  --fg: var(--bone-100);
+  --fg-strong: var(--bone-50);
+  --fg-muted: var(--bone-300);
+  --fg-dim: var(--bone-400);
+  --border: var(--ink-700);
   --border-strong: var(--ink-600);
-  --accent:        var(--ember-500);
-  --accent-soft:   var(--ember-glow);
-  --danger:        var(--fault-500);
-  --ok:            var(--moss-500);
+  --accent: var(--ember-500);
+  --accent-soft: var(--ember-glow);
+  --danger: var(--fault-500);
+  --ok: var(--moss-500);
 
   /* ---------- CANVAS ALIASES ---------- */
-  --canvas-bg:              var(--ink-1000);
-  --canvas-grid-dot:        oklch(0.22 0.008 30);
-  --container-vpc-stroke:   var(--ink-700);
-  --container-subnet-stroke: oklch(0.30 0.008 30);
-  --edge-structural:        var(--ink-600);
-  --edge-flow:              linear-gradient(to right, var(--ember-700), var(--ember-500));
+  --canvas-bg: var(--ink-1000);
+  --canvas-grid-dot: oklch(0.22 0.008 30);
+  --container-vpc-stroke: var(--ink-700);
+  --container-subnet-stroke: oklch(0.3 0.008 30);
+  --edge-structural: var(--ink-600);
+  --edge-flow: linear-gradient(to right, var(--ember-700), var(--ember-500));
 
   /* ---------- TYPOGRAPHY: STACKS ----------
      Fontsource variable packages use "<Family> Variable" font-family name;
@@ -71,46 +71,47 @@
        - @fontsource/archivo-narrow            → "Archivo Narrow"
        - @fontsource-variable/libre-franklin   → "Libre Franklin Variable"
        - @fontsource/fragment-mono             → "Fragment Mono"               */
-  --font-display: "Archivo Narrow", "Helvetica Neue Condensed", "Helvetica Neue", system-ui, sans-serif;
-  --font-body:    "Libre Franklin Variable", "Libre Franklin", "Helvetica Neue", system-ui, sans-serif;
-  --font-mono:    "Fragment Mono", "Menlo", "SF Mono", ui-monospace, monospace;
+  --font-display:
+    'Archivo Narrow', 'Helvetica Neue Condensed', 'Helvetica Neue', system-ui, sans-serif;
+  --font-body: 'Libre Franklin Variable', 'Libre Franklin', 'Helvetica Neue', system-ui, sans-serif;
+  --font-mono: 'Fragment Mono', 'Menlo', 'SF Mono', ui-monospace, monospace;
 
   /* ---------- TYPOGRAPHY: FLUID SCALE ---------- */
-  --text-micro:   0.6875rem;
-  --text-xs:      0.75rem;
-  --text-sm:      0.875rem;
-  --text-base:    1rem;
-  --text-lg:      1.125rem;
-  --text-xl:      clamp(1.25rem, 0.5vw + 1.1rem, 1.5rem);
-  --text-2xl:     clamp(1.5rem, 1vw + 1.25rem, 2rem);
-  --text-3xl:     clamp(2rem, 2vw + 1.5rem, 2.75rem);
-  --text-4xl:     clamp(2.75rem, 3vw + 2rem, 4rem);
+  --text-micro: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: clamp(1.25rem, 0.5vw + 1.1rem, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1vw + 1.25rem, 2rem);
+  --text-3xl: clamp(2rem, 2vw + 1.5rem, 2.75rem);
+  --text-4xl: clamp(2.75rem, 3vw + 2rem, 4rem);
   --text-display: clamp(3.25rem, 5vw + 1.5rem, 6.5rem);
-  --text-mega:    clamp(4rem, 8vw + 1rem, 9rem);
+  --text-mega: clamp(4rem, 8vw + 1rem, 9rem);
 
   /* ---------- LEADING ---------- */
-  --leading-tight:    1.02;
-  --leading-snug:     1.14;
+  --leading-tight: 1.02;
+  --leading-snug: 1.14;
   --leading-headline: 1.08;
-  --leading-body:     1.55;
-  --leading-loose:    1.75;
+  --leading-body: 1.55;
+  --leading-loose: 1.75;
 
   /* ---------- TRACKING ---------- */
-  --tracking-mega:  -0.02em;
+  --tracking-mega: -0.02em;
   --tracking-tight: -0.01em;
-  --tracking-snug:  -0.005em;
-  --tracking-body:   0;
-  --tracking-label:  0.18em;
-  --tracking-loud:   0.24em;
+  --tracking-snug: -0.005em;
+  --tracking-body: 0;
+  --tracking-label: 0.18em;
+  --tracking-loud: 0.24em;
 
   /* ---------- SPACING ---------- */
   --space-3xs: 0.25rem;
   --space-2xs: 0.5rem;
-  --space-xs:  0.75rem;
-  --space-sm:  1rem;
-  --space-md:  1.5rem;
-  --space-lg:  2rem;
-  --space-xl:  3rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
   --space-2xl: 4.5rem;
   --space-3xl: 6rem;
   --space-4xl: 9rem;
@@ -124,22 +125,22 @@
   --radius-pill: 999px;
 
   /* ---------- MOTION ---------- */
-  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in-out:   cubic-bezier(0.83, 0, 0.17, 1);
-  --ease-swift:    cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.83, 0, 0.17, 1);
+  --ease-swift: cubic-bezier(0.4, 0, 0.2, 1);
 
   --dur-instant: 60ms;
-  --dur-fast:    160ms;
-  --dur-med:     320ms;
-  --dur-slow:    620ms;
-  --dur-reveal:  1100ms;
-  --dur-epic:    1800ms;
+  --dur-fast: 160ms;
+  --dur-med: 320ms;
+  --dur-slow: 620ms;
+  --dur-reveal: 1100ms;
+  --dur-epic: 1800ms;
 
   /* ---------- LAYERS ---------- */
-  --z-behind:  -1;
-  --z-base:     0;
-  --z-raise:   10;
-  --z-sticky:  50;
+  --z-behind: -1;
+  --z-base: 0;
+  --z-raise: 10;
+  --z-sticky: 50;
   --z-overlay: 100;
 }

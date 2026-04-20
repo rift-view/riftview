@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { resolveIntegrationTargetId } from '../resolveIntegrationTargetId'
-import type { CloudNode } from '../../types/cloud'
+import { resolveIntegrationTargetId } from '../src/graph/resolveIntegrationTargetId'
+import type { CloudNode } from '../src/types/cloud'
 
 function makeNode(overrides: Partial<CloudNode>): CloudNode {
   return {

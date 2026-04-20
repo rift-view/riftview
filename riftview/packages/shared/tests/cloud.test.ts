@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { CloudNode, NodeStatus, ScanDelta } from '../../../src/renderer/types/cloud'
+import type { CloudNode, NodeStatus, ScanDelta } from '../src/types/cloud'
 
 describe('NodeStatus includes imported', () => {
   it('imported is a valid NodeStatus', () => {

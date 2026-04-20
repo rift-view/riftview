@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useUIStore } from '../../../src/renderer/store/ui'
-import type { CustomEdge } from '../../../src/renderer/types/cloud'
+import type { CustomEdge } from '@riftview/shared'
 
 const EDGE: CustomEdge = { id: 'e1', source: 'a', target: 'b', color: '#22c55e' }
 

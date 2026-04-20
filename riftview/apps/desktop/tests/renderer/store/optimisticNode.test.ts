@@ -13,7 +13,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useCloudStore } from '../../../src/renderer/store/cloud'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 const makeOptimisticNode = (id: string): CloudNode => ({
   id,

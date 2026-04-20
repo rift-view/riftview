@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { EDGE_TYPE_STYLES } from './edges/IntegrationEdge'
-import type { EdgeType } from '../../types/cloud'
+import type { EdgeType } from '@riftview/shared'
 import { useUIStore } from '../../store/ui'
 
 export default function IntegrationLegend(): React.JSX.Element | null {

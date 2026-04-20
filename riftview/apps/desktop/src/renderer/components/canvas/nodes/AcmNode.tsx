@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import type { NodeStatus } from '../../../types/cloud'
+import type { NodeStatus } from '@riftview/shared'
 
 interface AcmNodeData {
   label: string

@@ -3,7 +3,7 @@ import {
   ListDomainNamesCommand,
   DescribeDomainsCommand
 } from '@aws-sdk/client-opensearch'
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus } from '@riftview/shared'
 
 function osStatusToNodeStatus(state: string | undefined): NodeStatus {
   if (state === 'Active') return 'running'

@@ -1,4 +1,4 @@
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus } from '@riftview/shared'
 
 interface TfStateResource {
   type: string

@@ -1,5 +1,5 @@
 import { CloudFrontClient, ListDistributionsCommand } from '@aws-sdk/client-cloudfront'
-import type { CloudNode, EdgeType, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType, NodeStatus } from '@riftview/shared'
 
 function cfStatusToNodeStatus(status: string | undefined): NodeStatus {
   if (status === 'Deployed') return 'running'

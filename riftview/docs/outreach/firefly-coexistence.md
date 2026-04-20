@@ -8,26 +8,26 @@
 
 Firefly runs agentic recovery automation. When something breaks, their
 Codification, SRE, and DR agents propose and execute corrective actions.
-Their strength is *automating the response* — taking action at machine
+Their strength is _automating the response_ — taking action at machine
 speed when a human would take minutes or hours.
 
 ## What RiftView does
 
 RiftView is the **visual diagnostic layer**. Click a broken resource,
 see the full blast radius, understand what will change before anyone
-pulls a trigger. Our strength is *seeing structure* — making dependency
+pulls a trigger. Our strength is _seeing structure_ — making dependency
 relationships obvious at a glance.
 
 ## Why they're complementary, not competitive
 
-| Concern | Firefly answers | RiftView answers |
-|---|---|---|
-| What should be automated? | Everything safe | — |
-| How do we recover? | Auto-run remediation | — |
-| What is about to change? | — | Every upstream / downstream service |
-| What did this depend on? | — | Full dependency graph |
-| Is the plan safe? | Agent confidence score | Visual blast radius |
-| What's the audit trail? | Agent action log | Live structural snapshot |
+| Concern                   | Firefly answers        | RiftView answers                    |
+| ------------------------- | ---------------------- | ----------------------------------- |
+| What should be automated? | Everything safe        | —                                   |
+| How do we recover?        | Auto-run remediation   | —                                   |
+| What is about to change?  | —                      | Every upstream / downstream service |
+| What did this depend on?  | —                      | Full dependency graph               |
+| Is the plan safe?         | Agent confidence score | Visual blast radius                 |
+| What's the audit trail?   | Agent action log       | Live structural snapshot            |
 
 ## How they combine in a workflow
 
@@ -59,7 +59,7 @@ pilot RiftView for diagnostic value without displacing Firefly.
 
 ### "We already use Datadog / New Relic for this."
 
-APM tools anchor on metrics. They'll tell you *that* p99 spiked on a
+APM tools anchor on metrics. They'll tell you _that_ p99 spiked on a
 Lambda. They won't show you the 12 downstream services that read from
 the queue that Lambda writes to. RiftView anchors on structure first,
 metrics second.
@@ -75,4 +75,4 @@ metrics second.
 
 ---
 
-*Last reviewed 2026-04-17.*
+_Last reviewed 2026-04-17._

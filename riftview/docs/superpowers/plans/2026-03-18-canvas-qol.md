@@ -15,6 +15,7 @@
 ### Task 1: UIStore — add position and saved view state
 
 **Files:**
+
 - Modify: `src/renderer/store/ui.ts`
 - Create: `src/renderer/store/__tests__/ui.test.ts`
 
@@ -28,9 +29,9 @@ import { useUIStore } from '../ui'
 
 beforeEach(() => {
   useUIStore.setState({
-    nodePositions:  { topology: {}, graph: {} },
-    savedViews:     [null, null, null, null],
-    activeViewSlot: null,
+    nodePositions: { topology: {}, graph: {} },
+    savedViews: [null, null, null, null],
+    activeViewSlot: null
   })
 })
 
@@ -55,7 +56,7 @@ describe('setNodePosition', () => {
 describe('saveView', () => {
   it('snapshots current view positions into the slot with the given name', () => {
     useUIStore.setState({
-      nodePositions: { topology: { 'vpc-1': { x: 50, y: 60 } }, graph: {} },
+      nodePositions: { topology: { 'vpc-1': { x: 50, y: 60 } }, graph: {} }
     })
     useUIStore.getState().saveView(1, 'Prod Layout', 'topology')
     const slot = useUIStore.getState().savedViews[1]
@@ -81,7 +82,7 @@ describe('saveView', () => {
 describe('loadView', () => {
   it('copies slot positions into the correct view map', () => {
     useUIStore.setState({
-      nodePositions: { topology: { 'vpc-1': { x: 50, y: 60 } }, graph: {} },
+      nodePositions: { topology: { 'vpc-1': { x: 50, y: 60 } }, graph: {} }
     })
     useUIStore.getState().saveView(0, 'Layout A', 'topology')
     useUIStore.setState({ nodePositions: { topology: {}, graph: {} } })
@@ -120,41 +121,44 @@ import { create } from 'zustand'
 type ViewKey = 'topology' | 'graph'
 
 interface SavedView {
-  name:      string
+  name: string
   positions: Record<string, { x: number; y: number }>
 }
 
 interface UIState {
-  view:            ViewKey
-  selectedNodeId:  string | null
-  activeCreate:    { resource: string; view: ViewKey; dropPosition?: { x: number; y: number } } | null
-  toast:           { message: string; type: 'success' | 'error' } | null
-  nodePositions:   { topology: Record<string, { x: number; y: number }>; graph: Record<string, { x: number; y: number }> }
-  savedViews:      Array<SavedView | null>
-  activeViewSlot:  number | null
+  view: ViewKey
+  selectedNodeId: string | null
+  activeCreate: { resource: string; view: ViewKey; dropPosition?: { x: number; y: number } } | null
+  toast: { message: string; type: 'success' | 'error' } | null
+  nodePositions: {
+    topology: Record<string, { x: number; y: number }>
+    graph: Record<string, { x: number; y: number }>
+  }
+  savedViews: Array<SavedView | null>
+  activeViewSlot: number | null
 
-  setView:         (view: ViewKey) => void
-  selectNode:      (id: string | null) => void
+  setView: (view: ViewKey) => void
+  selectNode: (id: string | null) => void
   setActiveCreate: (val: UIState['activeCreate']) => void
-  showToast:       (message: string, type?: 'success' | 'error') => void
-  clearToast:      () => void
+  showToast: (message: string, type?: 'success' | 'error') => void
+  clearToast: () => void
   setNodePosition: (view: ViewKey, id: string, pos: { x: number; y: number }) => void
-  saveView:        (slot: number, name: string, view: ViewKey) => void
-  loadView:        (slot: number, view: ViewKey, fitViewFn: () => void) => void
+  saveView: (slot: number, name: string, view: ViewKey) => void
+  loadView: (slot: number, view: ViewKey, fitViewFn: () => void) => void
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
-  view:           'topology',
+  view: 'topology',
   selectedNodeId: null,
-  activeCreate:   null,
-  toast:          null,
-  nodePositions:  { topology: {}, graph: {} },
-  savedViews:     [null, null, null, null],
+  activeCreate: null,
+  toast: null,
+  nodePositions: { topology: {}, graph: {} },
+  savedViews: [null, null, null, null],
   activeViewSlot: null,
 
-  setView:         (view) => set({ view }),
-  selectNode:      (id)   => set({ selectedNodeId: id }),
-  setActiveCreate: (val)  => set({ activeCreate: val }),
+  setView: (view) => set({ view }),
+  selectNode: (id) => set({ selectedNodeId: id }),
+  setActiveCreate: (val) => set({ activeCreate: val }),
   showToast: (message, type = 'success') => {
     set({ toast: { message, type } })
     setTimeout(() => set({ toast: null }), 2500)
@@ -165,8 +169,8 @@ export const useUIStore = create<UIState>((set, get) => ({
     set((s) => ({
       nodePositions: {
         ...s.nodePositions,
-        [view]: { ...s.nodePositions[view], [id]: pos },
-      },
+        [view]: { ...s.nodePositions[view], [id]: pos }
+      }
     })),
 
   saveView: (slot, name, view) => {
@@ -182,11 +186,11 @@ export const useUIStore = create<UIState>((set, get) => ({
     const saved = get().savedViews[slot]
     if (!saved) return
     set((s) => ({
-      nodePositions:  { ...s.nodePositions, [view]: { ...saved.positions } },
-      activeViewSlot: slot,
+      nodePositions: { ...s.nodePositions, [view]: { ...saved.positions } },
+      activeViewSlot: slot
     }))
     fitViewFn()
-  },
+  }
 }))
 ```
 
@@ -212,6 +216,7 @@ git commit -m "feat: add nodePositions, savedViews, saveView/loadView to UIStore
 ### Task 2: GraphView — panning config, position overrides, one-time fitView
 
 **Files:**
+
 - Modify: `src/renderer/components/canvas/GraphView.tsx`
 - Create: `src/renderer/components/canvas/__tests__/GraphView.test.tsx`
 
@@ -235,14 +240,18 @@ vi.mock('@xyflow/react', async (importOriginal) => {
     ReactFlow: (_props: unknown) => <div data-testid="react-flow" />,
     useReactFlow: () => ({
       fitView: mockFitView,
-      screenToFlowPosition: vi.fn().mockReturnValue({ x: 0, y: 0 }),
-    }),
+      screenToFlowPosition: vi.fn().mockReturnValue({ x: 0, y: 0 })
+    })
   }
 })
 
 const vpc = (id: string) => ({
-  id, type: 'vpc' as const, label: id, status: 'running' as const,
-  region: 'us-east-1', metadata: {},
+  id,
+  type: 'vpc' as const,
+  label: id,
+  status: 'running' as const,
+  region: 'us-east-1',
+  metadata: {}
 })
 
 beforeEach(() => {
@@ -252,7 +261,7 @@ beforeEach(() => {
     nodePositions: { topology: {}, graph: {} },
     savedViews: [null, null, null, null],
     activeViewSlot: null,
-    selectedNodeId: null,
+    selectedNodeId: null
   })
 })
 
@@ -264,24 +273,36 @@ describe('GraphView — one-time fitView', () => {
 
   it('calls fitView when nodes first become non-empty', () => {
     render(<GraphView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [vpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [vpc('vpc-1')] })
+    })
     expect(mockFitView).toHaveBeenCalledOnce()
   })
 
   it('does NOT call fitView again on subsequent node updates', () => {
     render(<GraphView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [vpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [vpc('vpc-1')] })
+    })
     mockFitView.mockClear()
-    act(() => { useCloudStore.setState({ nodes: [vpc('vpc-1'), vpc('vpc-2')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [vpc('vpc-1'), vpc('vpc-2')] })
+    })
     expect(mockFitView).not.toHaveBeenCalled()
   })
 
   it('calls fitView again after node count drops to 0 then rises', () => {
     render(<GraphView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [vpc('vpc-1')] }) })
-    act(() => { useCloudStore.setState({ nodes: [] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [vpc('vpc-1')] })
+    })
+    act(() => {
+      useCloudStore.setState({ nodes: [] })
+    })
     mockFitView.mockClear()
-    act(() => { useCloudStore.setState({ nodes: [vpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [vpc('vpc-1')] })
+    })
     expect(mockFitView).toHaveBeenCalledOnce()
   })
 })
@@ -297,56 +318,74 @@ Expected: FAIL — fitView called unexpectedly (the `fitView` prop currently tri
 Edit `src/renderer/components/canvas/GraphView.tsx`:
 
 **3a.** Change line 1 React import to include `useRef` and `useEffect`:
+
 ```ts
 import { useMemo, useCallback, useRef, useEffect } from 'react'
 ```
 
 **3b.** Change line 2 `@xyflow/react` import to include `type NodeChange`:
+
 ```ts
-import { ReactFlow, Background, MiniMap, useReactFlow, type Node, type Edge, type NodeChange } from '@xyflow/react'
+import {
+  ReactFlow,
+  Background,
+  MiniMap,
+  useReactFlow,
+  type Node,
+  type Edge,
+  type NodeChange
+} from '@xyflow/react'
 ```
 
 **3c.** In the `GraphView` function body, after line 148 (`const { screenToFlowPosition } = useReactFlow()`), replace with:
-```ts
-  const { screenToFlowPosition, fitView } = useReactFlow()
-  const nodePositions   = useUIStore((s) => s.nodePositions)
-  const setNodePosition = useUIStore((s) => s.setNodePosition)
 
-  // One-time fitView when nodes first appear (or re-appear after dropping to 0)
-  const hasFitted = useRef(false)
-  useEffect(() => {
-    if (cloudNodes.length === 0) {
-      hasFitted.current = false
-      return
-    }
-    if (!hasFitted.current) {
-      hasFitted.current = true
-      fitView({ duration: 300 })
-    }
-  }, [cloudNodes.length, fitView])
+```ts
+const { screenToFlowPosition, fitView } = useReactFlow()
+const nodePositions = useUIStore((s) => s.nodePositions)
+const setNodePosition = useUIStore((s) => s.setNodePosition)
+
+// One-time fitView when nodes first appear (or re-appear after dropping to 0)
+const hasFitted = useRef(false)
+useEffect(() => {
+  if (cloudNodes.length === 0) {
+    hasFitted.current = false
+    return
+  }
+  if (!hasFitted.current) {
+    hasFitted.current = true
+    fitView({ duration: 300 })
+  }
+}, [cloudNodes.length, fitView])
 ```
 
 **3d.** After the existing `onDrop` callback, add:
+
 ```ts
-  // Persist drag-end positions (all nodes in GraphView are free-floating, no extent guard needed)
-  const onNodesChange = useCallback((changes: NodeChange[]) => {
+// Persist drag-end positions (all nodes in GraphView are free-floating, no extent guard needed)
+const onNodesChange = useCallback(
+  (changes: NodeChange[]) => {
     for (const change of changes) {
       if (change.type === 'position' && change.position && !change.dragging) {
         setNodePosition('graph', change.id, change.position)
       }
     }
-  }, [setNodePosition])
+  },
+  [setNodePosition]
+)
 ```
 
 **3e.** Add `const graphPositions = nodePositions.graph` before the `flowNodes` useMemo.
 
 **3f.** In the `flowNodes` useMemo, replace the `position` line with:
+
 ```ts
         position: graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: Math.floor(i / 5) * 110 + 60 },
 ```
+
 Add `graphPositions` to the dependency array.
 
 **3g.** In `<ReactFlow>`, remove the `fitView` prop and add these three props + `onNodesChange`:
+
 ```tsx
       onNodesChange={onNodesChange}
       panOnScroll
@@ -378,6 +417,7 @@ git commit -m "feat: GraphView — panning config, position persistence, one-tim
 ### Task 3: TopologyView — panning config, position overrides (top-level only), one-time fitView
 
 **Files:**
+
 - Modify: `src/renderer/components/canvas/TopologyView.tsx`
 - Create: `src/renderer/components/canvas/__tests__/TopologyView.test.tsx`
 
@@ -406,14 +446,18 @@ vi.mock('@xyflow/react', async (importOriginal) => {
     },
     useReactFlow: () => ({
       fitView: mockFitView,
-      screenToFlowPosition: vi.fn().mockReturnValue({ x: 0, y: 0 }),
-    }),
+      screenToFlowPosition: vi.fn().mockReturnValue({ x: 0, y: 0 })
+    })
   }
 })
 
 const baseVpc = (id: string) => ({
-  id, type: 'vpc' as const, label: id, status: 'running' as const,
-  region: 'us-east-1', metadata: {},
+  id,
+  type: 'vpc' as const,
+  label: id,
+  status: 'running' as const,
+  region: 'us-east-1',
+  metadata: {}
 })
 
 beforeEach(() => {
@@ -421,10 +465,10 @@ beforeEach(() => {
   capturedOnNodesChange = undefined
   useCloudStore.setState({ nodes: [], pendingNodes: [] })
   useUIStore.setState({
-    nodePositions:  { topology: {}, graph: {} },
-    savedViews:     [null, null, null, null],
+    nodePositions: { topology: {}, graph: {} },
+    savedViews: [null, null, null, null],
     activeViewSlot: null,
-    selectedNodeId: null,
+    selectedNodeId: null
   })
 })
 
@@ -436,24 +480,36 @@ describe('TopologyView — one-time fitView', () => {
 
   it('calls fitView when nodes first become non-empty', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
     expect(mockFitView).toHaveBeenCalledOnce()
   })
 
   it('does NOT call fitView again on subsequent node updates', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
     mockFitView.mockClear()
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1'), baseVpc('vpc-2')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1'), baseVpc('vpc-2')] })
+    })
     expect(mockFitView).not.toHaveBeenCalled()
   })
 
   it('calls fitView again after node count drops to 0 then rises', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
-    act(() => { useCloudStore.setState({ nodes: [] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
+    act(() => {
+      useCloudStore.setState({ nodes: [] })
+    })
     mockFitView.mockClear()
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
     expect(mockFitView).toHaveBeenCalledOnce()
   })
 })
@@ -464,7 +520,7 @@ describe('TopologyView — position overrides (extent guard)', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
     act(() => {
       capturedOnNodesChange?.([
-        { type: 'position', id: 'subnet-phantom', position: { x: 5, y: 5 }, dragging: false },
+        { type: 'position', id: 'subnet-phantom', position: { x: 5, y: 5 }, dragging: false }
       ])
     })
     expect(useUIStore.getState().nodePositions.topology['subnet-phantom']).toBeUndefined()
@@ -472,10 +528,12 @@ describe('TopologyView — position overrides (extent guard)', () => {
 
   it('persists position for a top-level VPC node after drag-end', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
     act(() => {
       capturedOnNodesChange?.([
-        { type: 'position', id: 'vpc-1', position: { x: 300, y: 400 }, dragging: false },
+        { type: 'position', id: 'vpc-1', position: { x: 300, y: 400 }, dragging: false }
       ])
     })
     expect(useUIStore.getState().nodePositions.topology['vpc-1']).toEqual({ x: 300, y: 400 })
@@ -483,10 +541,12 @@ describe('TopologyView — position overrides (extent guard)', () => {
 
   it('does NOT persist mid-drag positions (dragging: true)', () => {
     render(<TopologyView onNodeContextMenu={vi.fn()} />)
-    act(() => { useCloudStore.setState({ nodes: [baseVpc('vpc-1')] }) })
+    act(() => {
+      useCloudStore.setState({ nodes: [baseVpc('vpc-1')] })
+    })
     act(() => {
       capturedOnNodesChange?.([
-        { type: 'position', id: 'vpc-1', position: { x: 300, y: 400 }, dragging: true },
+        { type: 'position', id: 'vpc-1', position: { x: 300, y: 400 }, dragging: true }
       ])
     })
     expect(useUIStore.getState().nodePositions.topology['vpc-1']).toBeUndefined()
@@ -504,44 +564,58 @@ Expected: FAIL
 Edit `src/renderer/components/canvas/TopologyView.tsx`:
 
 **3a.** Change line 1 React import to include `useRef`, `useEffect`, and ensure `useCallback` is present:
+
 ```ts
 import { useMemo, useCallback, useRef, useEffect } from 'react'
 ```
 
 **3b.** Add `type NodeChange` to the `@xyflow/react` import (line 2):
+
 ```ts
-import { ReactFlow, Background, MiniMap, useReactFlow, type Node, type Edge, type NodeChange } from '@xyflow/react'
+import {
+  ReactFlow,
+  Background,
+  MiniMap,
+  useReactFlow,
+  type Node,
+  type Edge,
+  type NodeChange
+} from '@xyflow/react'
 ```
 
 **3c.** In the `TopologyView` function body, replace line 346 (`const { screenToFlowPosition } = useReactFlow()`) with:
+
 ```ts
-  const { screenToFlowPosition, fitView } = useReactFlow()
-  const nodePositions   = useUIStore((s) => s.nodePositions)
-  const setNodePosition = useUIStore((s) => s.setNodePosition)
+const { screenToFlowPosition, fitView } = useReactFlow()
+const nodePositions = useUIStore((s) => s.nodePositions)
+const setNodePosition = useUIStore((s) => s.setNodePosition)
 ```
 
 **3d.** After the `onDrop` callback (around line 359), add:
+
 ```ts
-  // One-time fitView when nodes first appear (or re-appear after dropping to 0)
-  const hasFitted = useRef(false)
-  useEffect(() => {
-    if (cloudNodes.length === 0) {
-      hasFitted.current = false
-      return
-    }
-    if (!hasFitted.current) {
-      hasFitted.current = true
-      fitView({ duration: 300 })
-    }
-  }, [cloudNodes.length, fitView])
+// One-time fitView when nodes first appear (or re-appear after dropping to 0)
+const hasFitted = useRef(false)
+useEffect(() => {
+  if (cloudNodes.length === 0) {
+    hasFitted.current = false
+    return
+  }
+  if (!hasFitted.current) {
+    hasFitted.current = true
+    fitView({ duration: 300 })
+  }
+}, [cloudNodes.length, fitView])
 ```
 
 **3e.** After the `hasFitted` effect, add the `onNodesChange` handler:
+
 ```ts
-  // Persist drag-end positions for top-level nodes only.
-  // Child nodes carry extent: 'parent' in flowNodes — look up by id to check before saving.
-  // (cloudNodes has no extent field; flowNodes does.)
-  const onNodesChange = useCallback((changes: NodeChange[]) => {
+// Persist drag-end positions for top-level nodes only.
+// Child nodes carry extent: 'parent' in flowNodes — look up by id to check before saving.
+// (cloudNodes has no extent field; flowNodes does.)
+const onNodesChange = useCallback(
+  (changes: NodeChange[]) => {
     for (const change of changes) {
       if (change.type === 'position' && change.position && !change.dragging) {
         const rfNode = flowNodes.find((n) => n.id === change.id)
@@ -549,24 +623,28 @@ import { ReactFlow, Background, MiniMap, useReactFlow, type Node, type Edge, typ
         setNodePosition('topology', change.id, change.position)
       }
     }
-  }, [setNodePosition, flowNodes])
+  },
+  [setNodePosition, flowNodes]
+)
 ```
 
 **3f.** Replace the `flowNodes` useMemo (lines 375–378) with a version that applies position overrides:
-```ts
-  const topologyPositions = nodePositions.topology
 
-  const flowNodes: Node[] = useMemo(() => {
-    const raw = buildFlowNodes(allNodes, selectedId, highlightedIds)
-    return raw.map((n) => {
-      if (n.extent === 'parent') return n  // never override child nodes
-      const saved = topologyPositions[n.id]
-      return saved ? { ...n, position: saved } : n
-    })
-  }, [allNodes, selectedId, highlightedIds, topologyPositions])
+```ts
+const topologyPositions = nodePositions.topology
+
+const flowNodes: Node[] = useMemo(() => {
+  const raw = buildFlowNodes(allNodes, selectedId, highlightedIds)
+  return raw.map((n) => {
+    if (n.extent === 'parent') return n // never override child nodes
+    const saved = topologyPositions[n.id]
+    return saved ? { ...n, position: saved } : n
+  })
+}, [allNodes, selectedId, highlightedIds, topologyPositions])
 ```
 
 **3g.** In `<ReactFlow>` (line 390+), remove `fitView` prop and add:
+
 ```tsx
       onNodesChange={onNodesChange}
       panOnScroll
@@ -596,6 +674,7 @@ git commit -m "feat: TopologyView — panning config, position persistence (top-
 ### Task 4: SaveViewModal component
 
 **Files:**
+
 - Create: `src/renderer/components/canvas/SaveViewModal.tsx`
 - Create: `src/renderer/components/canvas/__tests__/SaveViewModal.test.tsx`
 
@@ -676,10 +755,10 @@ Create `src/renderer/components/canvas/SaveViewModal.tsx`:
 import { useState } from 'react'
 
 interface Props {
-  slot:        number
+  slot: number
   initialName: string
-  onSave:      (name: string) => void
-  onCancel:    () => void
+  onSave: (name: string) => void
+  onCancel: () => void
 }
 
 export function SaveViewModal({ slot, initialName, onSave, onCancel }: Props) {
@@ -687,10 +766,10 @@ export function SaveViewModal({ slot, initialName, onSave, onCancel }: Props) {
 
   const btnBase: React.CSSProperties = {
     fontFamily: 'monospace',
-    fontSize:   '11px',
+    fontSize: '11px',
     borderRadius: '4px',
-    padding:    '4px 16px',
-    cursor:     'pointer',
+    padding: '4px 16px',
+    cursor: 'pointer'
   }
 
   return (
@@ -702,18 +781,18 @@ export function SaveViewModal({ slot, initialName, onSave, onCancel }: Props) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 100,
+        zIndex: 100
       }}
       onClick={onCancel}
     >
       <div
         style={{
-          background:   'var(--cb-bg-elevated)',
-          border:       '1px solid var(--cb-border-strong)',
+          background: 'var(--cb-bg-elevated)',
+          border: '1px solid var(--cb-border-strong)',
           borderRadius: '6px',
-          padding:      '20px 24px',
-          minWidth:     '280px',
-          fontFamily:   'monospace',
+          padding: '20px 24px',
+          minWidth: '280px',
+          fontFamily: 'monospace'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -728,33 +807,43 @@ export function SaveViewModal({ slot, initialName, onSave, onCancel }: Props) {
           autoFocus
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter')  onSave(name)
+            if (e.key === 'Enter') onSave(name)
             if (e.key === 'Escape') onCancel()
           }}
           style={{
-            width:        '100%',
-            boxSizing:    'border-box',
-            background:   'var(--cb-bg)',
-            border:       '1px solid var(--cb-border-strong)',
+            width: '100%',
+            boxSizing: 'border-box',
+            background: 'var(--cb-bg)',
+            border: '1px solid var(--cb-border-strong)',
             borderRadius: '3px',
-            color:        'var(--cb-text)',
-            fontFamily:   'monospace',
-            fontSize:     '12px',
-            padding:      '5px 8px',
+            color: 'var(--cb-text)',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            padding: '5px 8px',
             marginBottom: 14,
-            outline:      'none',
+            outline: 'none'
           }}
         />
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button
             onClick={onCancel}
-            style={{ ...btnBase, background: 'transparent', border: '1px solid var(--cb-border)', color: 'var(--cb-text-secondary)' }}
+            style={{
+              ...btnBase,
+              background: 'transparent',
+              border: '1px solid var(--cb-border)',
+              color: 'var(--cb-text-secondary)'
+            }}
           >
             Cancel
           </button>
           <button
             onClick={() => onSave(name)}
-            style={{ ...btnBase, background: 'var(--cb-bg-elevated)', border: '1px solid var(--cb-accent)', color: 'var(--cb-accent)' }}
+            style={{
+              ...btnBase,
+              background: 'var(--cb-bg-elevated)',
+              border: '1px solid var(--cb-accent)',
+              color: 'var(--cb-accent)'
+            }}
           >
             Save
           </button>
@@ -787,6 +876,7 @@ git commit -m "feat: add SaveViewModal component"
 ### Task 5: CloudCanvas toolbar — saved view slot buttons
 
 **Files:**
+
 - Modify: `src/renderer/components/canvas/CloudCanvas.tsx`
 
 - [ ] **Step 1: Read current CloudCanvas to confirm state before editing**
@@ -796,6 +886,7 @@ Read `src/renderer/components/canvas/CloudCanvas.tsx` in full.
 - [ ] **Step 2: Add `SaveViewModal` import**
 
 Add to the imports at the top of `CloudCanvas.tsx`:
+
 ```ts
 import { SaveViewModal } from './SaveViewModal'
 ```
@@ -803,38 +894,38 @@ import { SaveViewModal } from './SaveViewModal'
 - [ ] **Step 3: Add UIStore selectors and modal state to CanvasInner**
 
 In `CanvasInner`, after the existing store selectors (around line 33), add:
+
 ```ts
-  const savedViews     = useUIStore((s) => s.savedViews)
-  const activeViewSlot = useUIStore((s) => s.activeViewSlot)
-  const saveView       = useUIStore((s) => s.saveView)
-  const loadView       = useUIStore((s) => s.loadView)
-  const [modalSlot, setModalSlot] = useState<number | null>(null)
+const savedViews = useUIStore((s) => s.savedViews)
+const activeViewSlot = useUIStore((s) => s.activeViewSlot)
+const saveView = useUIStore((s) => s.saveView)
+const loadView = useUIStore((s) => s.loadView)
+const [modalSlot, setModalSlot] = useState<number | null>(null)
 ```
 
 - [ ] **Step 4: Add slot-click handler and modal-save handler**
 
 After the `handleContextMenu` function, add:
+
 ```ts
-  function handleSlotClick(slot: number): void {
-    const saved = savedViews[slot]
-    if (saved === null) {
-      setModalSlot(slot)                                          // empty → open modal to create
-    } else if (slot === activeViewSlot) {
-      setModalSlot(slot)                                          // active → open modal to rename
-    } else {
-      loadView(slot, view, () => fitView({ duration: 300 }))     // saved non-active → load
-    }
+function handleSlotClick(slot: number): void {
+  const saved = savedViews[slot]
+  if (saved === null) {
+    setModalSlot(slot) // empty → open modal to create
+  } else if (slot === activeViewSlot) {
+    setModalSlot(slot) // active → open modal to rename
+  } else {
+    loadView(slot, view, () => fitView({ duration: 300 })) // saved non-active → load
   }
+}
 
-  function handleModalSave(name: string): void {
-    if (modalSlot === null) return
-    saveView(modalSlot, name, view)
-    setModalSlot(null)
-  }
+function handleModalSave(name: string): void {
+  if (modalSlot === null) return
+  saveView(modalSlot, name, view)
+  setModalSlot(null)
+}
 
-  const activeViewName = activeViewSlot !== null
-    ? (savedViews[activeViewSlot]?.name ?? null)
-    : null
+const activeViewName = activeViewSlot !== null ? (savedViews[activeViewSlot]?.name ?? null) : null
 ```
 
 - [ ] **Step 5: Add slot buttons and name label to toolbar**
@@ -842,36 +933,51 @@ After the `handleContextMenu` function, add:
 After the view toggle buttons (the `(['topology', 'graph'] as const).map(...)` block, around line 101), add:
 
 ```tsx
-        <div className="w-px h-3.5 bg-gray-700" />
+;<div className="w-px h-3.5 bg-gray-700" />
 
-        {/* Saved view slots */}
-        {([0, 1, 2, 3] as const).map((slot) => {
-          const saved    = savedViews[slot]
-          const isActive = slot === activeViewSlot
-          return (
-            <button
-              key={slot}
-              onClick={() => handleSlotClick(slot)}
-              title={saved?.name ?? `Empty slot ${slot + 1}`}
-              style={{
-                ...btnBase,
-                background: isActive ? 'var(--cb-bg-elevated)' : 'transparent',
-                border: `1px solid ${saved ? (isActive ? 'var(--cb-accent)' : 'var(--cb-border-strong)') : 'var(--cb-border)'}`,
-                color:  saved ? (isActive ? 'var(--cb-accent)' : 'var(--cb-text-secondary)') : '#444',
-                minWidth: '20px',
-              }}
-            >
-              {slot + 1}
-            </button>
-          )
-        })}
+{
+  /* Saved view slots */
+}
+{
+  ;([0, 1, 2, 3] as const).map((slot) => {
+    const saved = savedViews[slot]
+    const isActive = slot === activeViewSlot
+    return (
+      <button
+        key={slot}
+        onClick={() => handleSlotClick(slot)}
+        title={saved?.name ?? `Empty slot ${slot + 1}`}
+        style={{
+          ...btnBase,
+          background: isActive ? 'var(--cb-bg-elevated)' : 'transparent',
+          border: `1px solid ${saved ? (isActive ? 'var(--cb-accent)' : 'var(--cb-border-strong)') : 'var(--cb-border)'}`,
+          color: saved ? (isActive ? 'var(--cb-accent)' : 'var(--cb-text-secondary)') : '#444',
+          minWidth: '20px'
+        }}
+      >
+        {slot + 1}
+      </button>
+    )
+  })
+}
 
-        {activeViewName && (
-          <span style={{ fontSize: 10, color: 'var(--cb-text-muted)', fontFamily: 'monospace',
-                         whiteSpace: 'nowrap', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {activeViewName}
-          </span>
-        )}
+{
+  activeViewName && (
+    <span
+      style={{
+        fontSize: 10,
+        color: 'var(--cb-text-muted)',
+        fontFamily: 'monospace',
+        whiteSpace: 'nowrap',
+        maxWidth: 80,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      }}
+    >
+      {activeViewName}
+    </span>
+  )
+}
 ```
 
 - [ ] **Step 6: Render SaveViewModal at the bottom of CanvasInner's JSX**
@@ -879,14 +985,16 @@ After the view toggle buttons (the `(['topology', 'graph'] as const).map(...)` b
 Just before the closing `</div>` of `CanvasInner` (after `<CanvasToast />`), add:
 
 ```tsx
-      {modalSlot !== null && (
-        <SaveViewModal
-          slot={modalSlot}
-          initialName={savedViews[modalSlot]?.name ?? ''}
-          onSave={handleModalSave}
-          onCancel={() => setModalSlot(null)}
-        />
-      )}
+{
+  modalSlot !== null && (
+    <SaveViewModal
+      slot={modalSlot}
+      initialName={savedViews[modalSlot]?.name ?? ''}
+      onSave={handleModalSave}
+      onCancel={() => setModalSlot(null)}
+    />
+  )
+}
 ```
 
 - [ ] **Step 7: Run full suite and typecheck**

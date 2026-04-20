@@ -1,5 +1,5 @@
 import { SecretsManagerClient, ListSecretsCommand } from '@aws-sdk/client-secrets-manager'
-import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '@riftview/shared'
 
 export async function listSecrets(
   client: SecretsManagerClient,

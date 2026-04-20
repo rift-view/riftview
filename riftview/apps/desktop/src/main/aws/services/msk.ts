@@ -1,6 +1,6 @@
 import { KafkaClient, ListClustersV2Command } from '@aws-sdk/client-kafka'
 import { LambdaClient, ListEventSourceMappingsCommand } from '@aws-sdk/client-lambda'
-import type { CloudNode, NodeStatus, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus, EdgeType } from '@riftview/shared'
 
 function mskStatusToNodeStatus(state: string | undefined): NodeStatus {
   if (state === 'ACTIVE') return 'running'

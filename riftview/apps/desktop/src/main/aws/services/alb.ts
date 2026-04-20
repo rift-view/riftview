@@ -5,7 +5,7 @@ import {
   DescribeTargetHealthCommand,
   DescribeListenersCommand
 } from '@aws-sdk/client-elastic-load-balancing-v2'
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus } from '@riftview/shared'
 
 function albStatusToNodeStatus(code: string | undefined): NodeStatus {
   if (code === 'active') return 'running'

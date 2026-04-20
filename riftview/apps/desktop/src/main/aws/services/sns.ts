@@ -1,5 +1,5 @@
 import { SNSClient, ListTopicsCommand, ListSubscriptionsByTopicCommand } from '@aws-sdk/client-sns'
-import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '@riftview/shared'
 import { scanFlatService } from './scanFlatService'
 
 export async function listTopics(client: SNSClient, region: string): Promise<CloudNode[]> {

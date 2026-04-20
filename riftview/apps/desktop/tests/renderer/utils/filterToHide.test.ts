@@ -3,7 +3,7 @@ import {
   applyNodeFilters,
   filterEdgesByVisibleNodes
 } from '../../../src/renderer/utils/filterToHide'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 import type { NodeFilter } from '../../../src/renderer/store/ui'
 import type { Edge } from '@xyflow/react'
 

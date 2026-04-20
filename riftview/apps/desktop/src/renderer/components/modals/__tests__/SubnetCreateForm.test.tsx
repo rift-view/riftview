@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { SubnetCreateForm } from '../SubnetCreateForm'
 import { useCloudStore } from '../../../store/cloud'
-import type { CloudNode } from '../../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 const VPC_NODE: CloudNode = {
   id: 'vpc-0abc1234',

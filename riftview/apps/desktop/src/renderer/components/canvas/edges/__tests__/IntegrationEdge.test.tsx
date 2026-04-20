@@ -2,7 +2,7 @@ import { render } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import IntegrationEdge, { EDGE_TYPE_STYLES } from '../IntegrationEdge'
 import { Position } from '@xyflow/react'
-import type { EdgeType } from '../../../../types/cloud'
+import type { EdgeType } from '@riftview/shared'
 
 vi.mock('@xyflow/react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@xyflow/react')>()

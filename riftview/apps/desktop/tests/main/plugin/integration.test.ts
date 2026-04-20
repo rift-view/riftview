@@ -78,7 +78,7 @@ describe('Plugin system — integration smoke test', () => {
       status: 'running',
       region: 'us-east-1',
       metadata: {}
-    } as unknown as import('../../../src/renderer/types/cloud').CloudNode)
+    } as unknown as import('@riftview/shared').CloudNode)
     expect(hcl).toBe('resource "mock_service" "r-001" {}')
   })
 

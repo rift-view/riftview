@@ -3,7 +3,7 @@ import {
   DescribeReplicationGroupsCommand,
   DescribeCacheClustersCommand
 } from '@aws-sdk/client-elasticache'
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus } from '@riftview/shared'
 
 function ecStatusToNodeStatus(status: string | undefined): NodeStatus {
   if (status === 'available') return 'running'

@@ -1,4 +1,4 @@
-import type { Advisory } from '../types/cloud'
+import type { Advisory } from '@riftview/shared'
 
 /**
  * Returns CLI argv arrays for a deterministic fix for the given advisory,

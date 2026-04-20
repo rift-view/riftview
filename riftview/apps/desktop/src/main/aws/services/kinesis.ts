@@ -1,10 +1,10 @@
 import { KinesisClient, ListStreamsCommand } from '@aws-sdk/client-kinesis'
 import { LambdaClient, ListEventSourceMappingsCommand } from '@aws-sdk/client-lambda'
-import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '@riftview/shared'
 
 function kinesisStatusToNodeStatus(
   status: string | undefined
-): import('../../../renderer/types/cloud').NodeStatus {
+): import('@riftview/shared').NodeStatus {
   if (status === 'ACTIVE') return 'running'
   if (status === 'CREATING') return 'pending'
   if (status === 'DELETING') return 'pending'

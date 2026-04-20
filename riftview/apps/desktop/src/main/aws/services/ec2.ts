@@ -8,7 +8,7 @@ import {
   type Instance,
   type IpPermission
 } from '@aws-sdk/client-ec2'
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus } from '@riftview/shared'
 
 function nameTag(tags: { Key?: string; Value?: string }[] | undefined): string | undefined {
   return tags?.find((t) => t.Key === 'Name')?.Value

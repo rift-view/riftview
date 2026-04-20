@@ -6,7 +6,7 @@ import {
   type EdgeProps,
   type Edge
 } from '@xyflow/react'
-import type { EdgeType, IntegrationEdgeData } from '../../../types/cloud'
+import type { EdgeType, IntegrationEdgeData } from '@riftview/shared'
 
 type IntegrationEdgeType = Edge<IntegrationEdgeData, 'integration'>
 

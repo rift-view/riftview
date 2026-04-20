@@ -21,14 +21,14 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
-import type { NodeType } from '../../types/cloud'
+import type { NodeType } from '@riftview/shared'
 import { ResourceNode } from './nodes/ResourceNode'
 import { VpcNode } from './nodes/VpcNode'
 import { SubnetNode } from './nodes/SubnetNode'
 import { GlobalZoneNode } from './nodes/GlobalZoneNode'
 import { RegionZoneNode } from './nodes/RegionZoneNode'
 import { buildRegionColorMap } from '../../utils/regionColors'
-import { resolveIntegrationTargetId } from '../../utils/resolveIntegrationTargetId'
+import { resolveIntegrationTargetId } from '@riftview/shared'
 import { AcmNode } from './nodes/AcmNode'
 import { CloudFrontNode } from './nodes/CloudFrontNode'
 import { ApigwNode } from './nodes/ApigwNode'
@@ -36,19 +36,19 @@ import { ApigwRouteNode } from './nodes/ApigwRouteNode'
 import { StickyNoteNode } from './nodes/StickyNoteNode'
 import { ResourceGroupNode } from './nodes/ResourceGroupNode'
 import { useStickyNoteCallbacks } from './nodes/useStickyNoteCallbacks'
-import type { CloudNode, EdgeType, IntegrationEdgeData, CustomEdge } from '../../types/cloud'
+import type { CloudNode, EdgeType, IntegrationEdgeData, CustomEdge } from '@riftview/shared'
 import { getPluginNodeComponents } from '../../plugin/rendererRegistry'
 import IntegrationEdge from './edges/IntegrationEdge'
 import UserEdge from './edges/UserEdge'
 import { edgeStyle } from './edges/edgeStyle'
 import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../utils/filterToHide'
 import IntegrationLegend from './IntegrationLegend'
+import { buildBlastRadius } from '@riftview/shared'
 import {
-  buildBlastRadius,
   hopRingStyle,
   directionSymbol,
   applyBlastRadiusToEdges
-} from '../../utils/blastRadius'
+} from '../../utils/blastRadiusEdges'
 
 const SNAP_GRID_SIZE = 20
 

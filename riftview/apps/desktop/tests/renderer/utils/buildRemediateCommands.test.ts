@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildRemediateCommands } from '../../../src/renderer/utils/buildRemediateCommands'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 function node(overrides: Partial<CloudNode>): CloudNode {
   return {

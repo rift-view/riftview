@@ -3,7 +3,7 @@ import {
   ListHostedZonesCommand,
   ListResourceRecordSetsCommand
 } from '@aws-sdk/client-route-53'
-import type { CloudNode, EdgeType } from '../../../renderer/types/cloud'
+import type { CloudNode, EdgeType } from '@riftview/shared'
 
 export async function listHostedZones(client: Route53Client): Promise<CloudNode[]> {
   try {

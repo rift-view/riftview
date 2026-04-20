@@ -1,5 +1,5 @@
 import { ECRClient, DescribeRepositoriesCommand } from '@aws-sdk/client-ecr'
-import type { CloudNode } from '../../../renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 export async function listRepositories(client: ECRClient, region: string): Promise<CloudNode[]> {
   try {

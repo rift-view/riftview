@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { BulkActionToolbar } from '../../../../src/renderer/components/canvas/BulkActionToolbar'
 import { useUIStore } from '../../../../src/renderer/store/ui'
 import { useCloudStore } from '../../../../src/renderer/store/cloud'
-import type { CloudNode } from '../../../../src/renderer/types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 // ---- Mocks ----------------------------------------------------------------
 

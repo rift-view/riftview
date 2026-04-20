@@ -1,4 +1,4 @@
-import type { CloudNode } from '../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 const REGION = 'us-east-1'
 

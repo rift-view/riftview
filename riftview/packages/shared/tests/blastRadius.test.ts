@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { buildBlastRadius, applyBlastRadiusToEdges } from '../../../src/renderer/utils/blastRadius'
-import type { CloudNode } from '../../../src/renderer/types/cloud'
+import { buildBlastRadius } from '../src/graph/blastRadius'
+import type { CloudNode } from '../src/types/cloud'
 
 function makeNode(
   id: string,
@@ -52,7 +52,6 @@ describe('buildBlastRadius', () => {
       makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]),
       makeNode('B', [{ targetId: 'A', edgeType: 'trigger' }])
     ]
-    // Should not throw or hang
     const result = buildBlastRadius(nodes, 'A')
     expect(result.members.has('A')).toBe(true)
     expect(result.members.has('B')).toBe(true)
@@ -67,24 +66,17 @@ describe('buildBlastRadius', () => {
   })
 
   it('direction "both" — A→B, C→B, B→C: click B → A is upstream, C is both', () => {
-    // A→B:  A sends to B
-    // C→B:  C sends to B
-    // B→C:  B sends to C
     const nodes = [
       makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]),
       makeNode('B', [{ targetId: 'C', edgeType: 'trigger' }]),
       makeNode('C', [{ targetId: 'B', edgeType: 'trigger' }])
     ]
     const result = buildBlastRadius(nodes, 'B')
-    // A only points TO B — upstream
     expect(result.members.get('A')?.direction).toBe('upstream')
-    // C points TO B (upstream) and B points TO C (downstream) → 'both'
     expect(result.members.get('C')?.direction).toBe('both')
   })
 
   it('resolves DNS-name targetIds (ALB case) to real node IDs in member set', () => {
-    // apigw integrates with ALB via ALB's dnsName string, not the node id.
-    // buildBlastRadius must resolve so members can be matched against edge IDs.
     const apigw: CloudNode = {
       id: 'apigw-1',
       type: 'apigw',
@@ -103,7 +95,6 @@ describe('buildBlastRadius', () => {
       metadata: { dnsName: 'my-alb.us-east-1.elb.amazonaws.com' }
     }
     const result = buildBlastRadius([apigw, alb], 'apigw-1')
-    // Member set must contain resolved node id, NOT the raw DNS name
     expect(result.members.has('alb-1')).toBe(true)
     expect(result.members.has('my-alb.us-east-1.elb.amazonaws.com')).toBe(false)
     expect(result.members.get('alb-1')?.direction).toBe('downstream')
@@ -119,8 +110,6 @@ describe('buildBlastRadius', () => {
       metadata: {},
       integrations: [{ targetId: 'some-queue.sqs.amazonaws.com', edgeType: 'trigger' }]
     }
-    // SQS node ID is different from the queue endpoint — simulate via dnsName-style
-    // resolver (not real, but proves the pathway). Use rds trick with endpoint.
     const rds: CloudNode = {
       id: 'rds-1',
       type: 'rds',
@@ -129,14 +118,12 @@ describe('buildBlastRadius', () => {
       region: 'us-east-1',
       metadata: { endpoint: 'some-queue.sqs.amazonaws.com' }
     }
-    // Click rds-1 — backward BFS should find lambda via resolved id
     const result = buildBlastRadius([lambda, rds], 'rds-1')
     expect(result.members.has('lambda-1')).toBe(true)
     expect(result.members.get('lambda-1')?.direction).toBe('upstream')
   })
 
   it('upstreamCount and downstreamCount are correct', () => {
-    // X→A (upstream), A→Y (downstream), A→Z (downstream)
     const nodes = [
       makeNode('X', [{ targetId: 'A', edgeType: 'trigger' }]),
       makeNode('A', [
@@ -147,76 +134,7 @@ describe('buildBlastRadius', () => {
       makeNode('Z')
     ]
     const result = buildBlastRadius(nodes, 'A')
-    expect(result.upstreamCount).toBe(1) // X
-    expect(result.downstreamCount).toBe(2) // Y + Z
-  })
-})
-
-describe('applyBlastRadiusToEdges', () => {
-  it('returns edges unchanged when blastRadius is null', () => {
-    const edges = [{ source: 'A', target: 'B', style: { stroke: 'red' } }]
-    expect(applyBlastRadiusToEdges(edges, null)).toEqual(edges)
-  })
-
-  it('highlights edges where both endpoints are members without overriding native color', () => {
-    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
-    const blast = buildBlastRadius(nodes, 'A')
-    // Caller-provided style simulates an edge type's native color (e.g. indigo for 'serves')
-    const edges: {
-      source: string
-      target: string
-      style?: Record<string, unknown>
-      animated?: boolean
-    }[] = [{ source: 'A', target: 'B', style: { stroke: '#6366f1' } }]
-    const result = applyBlastRadiusToEdges(edges, blast)
-    // Native color preserved (no amber override)
-    expect(result[0].style?.stroke).toBe('#6366f1')
-    // Still thickened and brightened
-    expect(result[0].style?.strokeWidth).toBe(2.5)
-    expect(result[0].style?.opacity).toBe(1)
-  })
-
-  it('dims edges where either endpoint is NOT a member', () => {
-    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
-    const blast = buildBlastRadius(nodes, 'A')
-    // C is not in the blast radius
-    const edges: {
-      source: string
-      target: string
-      style?: Record<string, unknown>
-      animated?: boolean
-    }[] = [{ source: 'C', target: 'D' }]
-    const result = applyBlastRadiusToEdges(edges, blast)
-    expect(result[0].style?.opacity).toBe(0)
-    expect(result[0].style?.pointerEvents).toBe('none')
-    expect(result[0].animated).toBe(false)
-  })
-
-  it('dims edges where only one endpoint is a member (boundary case)', () => {
-    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
-    const blast = buildBlastRadius(nodes, 'A')
-    // A is member, C is not
-    const edges: { source: string; target: string; style?: Record<string, unknown> }[] = [
-      { source: 'A', target: 'C' }
-    ]
-    const result = applyBlastRadiusToEdges(edges, blast)
-    expect(result[0].style?.opacity).toBe(0)
-  })
-
-  it('preserves other style properties on member edges', () => {
-    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
-    const blast = buildBlastRadius(nodes, 'A')
-    const edges = [{ source: 'A', target: 'B', style: { strokeDasharray: '4 2' } }]
-    const result = applyBlastRadiusToEdges(edges, blast)
-    expect(result[0].style?.strokeDasharray).toBe('4 2')
-  })
-
-  it('does not mutate the input edges', () => {
-    const nodes = [makeNode('A', [{ targetId: 'B', edgeType: 'trigger' }]), makeNode('B')]
-    const blast = buildBlastRadius(nodes, 'A')
-    const edges = [{ source: 'A', target: 'B' }]
-    const original = JSON.stringify(edges)
-    applyBlastRadiusToEdges(edges, blast)
-    expect(JSON.stringify(edges)).toBe(original)
+    expect(result.upstreamCount).toBe(1)
+    expect(result.downstreamCount).toBe(2)
   })
 })

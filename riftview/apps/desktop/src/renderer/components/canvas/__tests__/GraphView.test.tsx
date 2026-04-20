@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { GraphView } from '../GraphView'
 import { useCloudStore } from '../../../store/cloud'
 import { useUIStore } from '../../../store/ui'
-import type { CloudNode } from '../../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 const mockFitView = vi.fn()
 

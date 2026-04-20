@@ -5,7 +5,7 @@ import {
   GetFunctionConfigurationCommand,
   GetFunctionConcurrencyCommand
 } from '@aws-sdk/client-lambda'
-import type { CloudNode, NodeStatus } from '../../../renderer/types/cloud'
+import type { CloudNode, NodeStatus } from '@riftview/shared'
 
 function lambdaStatusToNodeStatus(state: string | undefined): NodeStatus {
   if (state === 'Active') return 'running'

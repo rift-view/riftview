@@ -29,6 +29,7 @@ All commands run from `riftview/` (the directory containing `package.json`).
 **Files modified:** 37 files total — see complete list below.
 
 **Completion criteria:**
+
 - `grep -r "window\.riftview" src tests --include="*.ts" --include="*.tsx"` → zero results
 - `grep -r "'riftview'" src tests --include="*.ts" --include="*.tsx"` → zero results
 - `npm run typecheck` → zero errors
@@ -53,10 +54,13 @@ Record both numbers. After the rename both must be 0.
 - [ ] **Step 2: Update `package.json` name**
 
 In `package.json`, change:
+
 ```json
 "name": "riftview"
 ```
+
 to:
+
 ```json
 "name": "riftview"
 ```
@@ -125,6 +129,7 @@ export interface RiftViewPlugin {
 - [ ] **Step 7: Update `src/main/plugin/registry.ts` — 5 occurrences**
 
 Replace all 5 occurrences of `RiftViewPlugin` with `RiftViewPlugin`:
+
 - Import statement
 - `private _plugins: RiftViewPlugin[]`
 - `private _ownerByType = new Map<string, RiftViewPlugin>`
@@ -138,6 +143,7 @@ Replace all 5 occurrences of `RiftViewPlugin` with `RiftViewPlugin`:
 - [ ] **Step 8: Update `src/main/plugin/awsPlugin.ts` — interface + plugin ID**
 
 Two changes:
+
 ```ts
 // Import line:
 // Before: import type { RiftViewPlugin, ... } from './types'
@@ -192,6 +198,7 @@ find src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/window\.rif
 ```
 
 Files that will be changed (verify all are touched):
+
 - `src/renderer/src/App.tsx`
 - `src/renderer/hooks/useIpc.ts`
 - `src/renderer/hooks/useScanner.ts`
@@ -231,6 +238,7 @@ find src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' "s/'riftview:/
 ```
 
 This replaces these 7 event name strings:
+
 - `'riftview:fitnode'` → `'riftview:fitnode'`
 - `'riftview:fitview'` → `'riftview:fitview'`
 - `'riftview:export-canvas'` → `'riftview:export-canvas'`
@@ -274,6 +282,7 @@ expect(contextBridge.exposeInMainWorld).toHaveBeenCalledWith(
 - [ ] **Step 15: Update test files — `tests/main/plugin/awsPlugin.test.ts`**
 
 Find the assertion `expect(awsPlugin.id).toBe('com.riftview.aws')` and change to:
+
 ```ts
 expect(awsPlugin.id).toBe('com.riftview.aws')
 ```
@@ -299,6 +308,7 @@ find tests src/renderer -name "*.ts" -o -name "*.tsx" | xargs sed -i '' 's/typeo
 ```
 
 Files touched:
+
 - `tests/renderer/components/DriftModeStrip.test.tsx`
 - `tests/renderer/components/Inspector.test.tsx`
 - `tests/renderer/components/IamAdvisor.test.tsx`
@@ -313,10 +323,12 @@ Files touched:
 - [ ] **Step 17: Update `CLAUDE.md` — product name references**
 
 In `CLAUDE.md` (at the project root, not inside `riftview/`), update product-name occurrences:
+
 - `"RiftView"` → `"RiftView"` (product name in prose)
 - `riftview` → `riftview` where it refers to the product name (not file paths or store names)
 
 Keep unchanged:
+
 - `useCloudStore`, `useUIStore`, `useCliStore` (store names)
 - File paths like `riftview/src/`
 - CSS prefix `--cb-`
@@ -376,6 +388,7 @@ git commit -m "feat: rename product to RiftView — window.riftview, RiftViewPlu
 ## Task 2: Feature Flag System
 
 **Files:**
+
 - Create: `src/renderer/utils/flags.ts`
 - Create: `tests/renderer/utils/flags.test.ts`
 - Create: `.env.local.example`
@@ -435,11 +448,11 @@ Expected: FAIL — `Cannot find module '../../../src/renderer/utils/flags'`
 // Scoped to tsconfig.web.json — import.meta.env is only available in renderer context.
 
 export type FlagName =
-  | 'COMMAND_BOARD'      // Phase 1: relationship-first layout engine
-  | 'STATUS_LANGUAGE'    // Phase 1: live health visual texture on nodes
-  | 'ACTION_RAIL'        // Phase 1: node hover inline action surface
-  | 'EXECUTION_ENGINE'   // Phase 2: bulk ops + action chains
-  | 'OP_INTELLIGENCE'    // Phase 3: command palette + CloudWatch log tail
+  | 'COMMAND_BOARD' // Phase 1: relationship-first layout engine
+  | 'STATUS_LANGUAGE' // Phase 1: live health visual texture on nodes
+  | 'ACTION_RAIL' // Phase 1: node hover inline action surface
+  | 'EXECUTION_ENGINE' // Phase 2: bulk ops + action chains
+  | 'OP_INTELLIGENCE' // Phase 3: command palette + CloudWatch log tail
 
 const ENV_PREFIX = 'VITE_FLAG_'
 
@@ -520,6 +533,7 @@ git commit -m "feat: compile-time feature flag system (FlagName union, call-time
 ## Task 3: Ladle Component Dev Environment
 
 **Files:**
+
 - Modify: `package.json`
 - Create: `vite.ladle.config.ts`
 - Create: `ladle.config.mjs`
@@ -558,9 +572,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@renderer': resolve(__dirname, 'src/renderer/src'),
-    },
-  },
+      '@renderer': resolve(__dirname, 'src/renderer/src')
+    }
+  }
 })
 ```
 
@@ -573,7 +587,7 @@ export default defineConfig({
 export default {
   stories: 'src/**/*.stories.{tsx,jsx}',
   viteConfig: './vite.ladle.config.ts',
-  port: 61000,
+  port: 61000
 }
 ```
 
@@ -582,6 +596,7 @@ export default {
 - [ ] **Step 4: Add `stories` script to `package.json`**
 
 In the `"scripts"` block of `package.json`, add:
+
 ```json
 "stories": "ladle serve"
 ```
@@ -609,7 +624,7 @@ function makeProps(nodeType: NodeType, status: NodeStatus, label: string) {
     isConnectable: true,
     positionAbsoluteX: 0,
     positionAbsoluteY: 0,
-    data: { label, nodeType, status, metadata: {} },
+    data: { label, nodeType, status, metadata: {} }
   } as Parameters<typeof ResourceNode>[0]
 }
 
@@ -620,18 +635,10 @@ export const LambdaRunning: Story = () => (
 export const Ec2Running: Story = () => (
   <ResourceNode {...makeProps('ec2', 'running', 'i-0abc123')} />
 )
-export const S3Running: Story = () => (
-  <ResourceNode {...makeProps('s3', 'running', 'my-bucket')} />
-)
-export const RdsRunning: Story = () => (
-  <ResourceNode {...makeProps('rds', 'running', 'my-db')} />
-)
-export const AlbRunning: Story = () => (
-  <ResourceNode {...makeProps('alb', 'running', 'my-alb')} />
-)
-export const SqsRunning: Story = () => (
-  <ResourceNode {...makeProps('sqs', 'running', 'my-queue')} />
-)
+export const S3Running: Story = () => <ResourceNode {...makeProps('s3', 'running', 'my-bucket')} />
+export const RdsRunning: Story = () => <ResourceNode {...makeProps('rds', 'running', 'my-db')} />
+export const AlbRunning: Story = () => <ResourceNode {...makeProps('alb', 'running', 'my-alb')} />
+export const SqsRunning: Story = () => <ResourceNode {...makeProps('sqs', 'running', 'my-queue')} />
 export const DynamoRunning: Story = () => (
   <ResourceNode {...makeProps('dynamo', 'running', 'my-table')} />
 )
@@ -649,9 +656,7 @@ export const CognitoRunning: Story = () => (
 export const LambdaError: Story = () => (
   <ResourceNode {...makeProps('lambda', 'error', 'broken-function')} />
 )
-export const Ec2Error: Story = () => (
-  <ResourceNode {...makeProps('ec2', 'error', 'i-broken')} />
-)
+export const Ec2Error: Story = () => <ResourceNode {...makeProps('ec2', 'error', 'i-broken')} />
 
 // --- Pending state ---
 export const RdsPending: Story = () => (
@@ -703,7 +708,7 @@ function makeVpcProps(label: string, cidr?: string, collapsed?: boolean) {
     isConnectable: false,
     positionAbsoluteX: 0,
     positionAbsoluteY: 0,
-    data: { label, cidr, collapsed, childCount: 3 },
+    data: { label, cidr, collapsed, childCount: 3 }
   } as Parameters<typeof VpcNode>[0]
 }
 
@@ -745,7 +750,7 @@ function makeSubnetProps(label: string, isPublic: boolean, az?: string) {
     isConnectable: false,
     positionAbsoluteX: 0,
     positionAbsoluteY: 0,
-    data: { label, isPublic, az },
+    data: { label, isPublic, az }
   } as Parameters<typeof SubnetNode>[0]
 }
 
@@ -797,6 +802,7 @@ npm run stories
 ```
 
 Expected: Ladle starts, prints `Listening at http://localhost:61000`. Open the URL and verify:
+
 - Stories tree shows ResourceNode, VpcNode, SubnetNode
 - `LambdaRunning` story renders a node with `λ` badge and green stripe
 - `LambdaError` renders with red stripe
@@ -831,6 +837,7 @@ git commit -m "feat: Ladle component dev environment with ResourceNode/VpcNode/S
 ## Task 4: Process Infrastructure
 
 **Files:**
+
 - Create: `scripts/README.md`
 - Create: `RESUME.md`
 - Scribe: Initialize Obsidian changelog
@@ -876,25 +883,32 @@ Written when a session approaches context limits (~90% usage).
 Delete this file once the session is successfully resumed.
 
 ## Status
+
 (populated at pause time: PAUSED / IN_PROGRESS)
 
 ## Current Task
+
 (populated at pause time)
 
 ## Last Completed Step
+
 (populated at pause time — copy the checkbox text from the plan)
 
 ## Next Step
+
 (populated at pause time — exact next action)
 
 ## Files Modified But Not Committed
+
 (populated at pause time)
 
 ## Git State
+
 Branch: (populated at pause time)
 Last commit: (populated at pause time — git log --oneline -1)
 
 ## Resume Instructions
+
 1. Read this file
 2. Run: npm run typecheck && npm test (verify baseline)
 3. Continue from "Next Step" above
@@ -913,18 +927,22 @@ Scribe creates `RiftView/Changelog/CHANGELOG.md` in Obsidian with initial struct
 ## Phase 0: Marathon Infrastructure
 
 ### 2026-04-05 — Task 1: RiftView Rename
+
 Status: complete
 Changes: window.riftview, RiftViewPlugin, riftview: events, UI strings, build config
 
 ### 2026-04-05 — Task 2: Feature Flag System
+
 Status: complete
 Changes: src/renderer/utils/flags.ts, FlagName union, .env.local.example
 
 ### 2026-04-05 — Task 3: Ladle Component Dev Environment
+
 Status: complete
 Changes: @ladle/react, vite.ladle.config.ts, ResourceNode/VpcNode/SubnetNode stories
 
 ### 2026-04-05 — Task 4: Process Infrastructure
+
 Status: complete
 Changes: scripts/README.md, RESUME.md template
 ```

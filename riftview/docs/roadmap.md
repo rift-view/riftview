@@ -18,12 +18,12 @@
 
 Fix before any new features. All XS–M effort, all isolated.
 
-| ID | Item | Detail | Effort |
-|----|------|--------|--------|
-| B1 | **Region zone containment** | `RegionZoneNode` boxes are visual overlays only (`zIndex: -2`). Nodes have no `parentId` to their region zone — don't move with the box, don't resize it. VPC/subnet/globalZone all use `parentId` + `extent: 'parent'`; region zones need the same treatment. | M |
-| B2 | **`driftFilterActive` not reset** | `clearImportedNodes` doesn't reset `driftFilterActive` in `useUIStore`. One-liner fix — filter stays `true` after clearing import, corrupting the next import session. | XS |
-| B3 | **Test housekeeping** | (a) `compareDrift.test.ts` tests 8+9 are duplicate assertions. (b) `useIpc.test.ts` mock may be missing multi-region methods (`selectRegion`, `startScan` with regions arg). Audit and fix. | XS |
-| B4 | **`SCAN_KEY_TO_TYPE` contract test** | 22-key map in `Sidebar.tsx` has no structural link to `provider.ts`. One test imports both and asserts no asymmetry. Prevents silent badge drift when services are added. | XS |
+| ID  | Item                                 | Detail                                                                                                                                                                                                                                                         | Effort |
+| --- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| B1  | **Region zone containment**          | `RegionZoneNode` boxes are visual overlays only (`zIndex: -2`). Nodes have no `parentId` to their region zone — don't move with the box, don't resize it. VPC/subnet/globalZone all use `parentId` + `extent: 'parent'`; region zones need the same treatment. | M      |
+| B2  | **`driftFilterActive` not reset**    | `clearImportedNodes` doesn't reset `driftFilterActive` in `useUIStore`. One-liner fix — filter stays `true` after clearing import, corrupting the next import session.                                                                                         | XS     |
+| B3  | **Test housekeeping**                | (a) `compareDrift.test.ts` tests 8+9 are duplicate assertions. (b) `useIpc.test.ts` mock may be missing multi-region methods (`selectRegion`, `startScan` with regions arg). Audit and fix.                                                                    | XS     |
+| B4  | **`SCAN_KEY_TO_TYPE` contract test** | 22-key map in `Sidebar.tsx` has no structural link to `provider.ts`. One test imports both and asserts no asymmetry. Prevents silent badge drift when services are added.                                                                                      | XS     |
 
 ---
 
@@ -31,10 +31,10 @@ Fix before any new features. All XS–M effort, all isolated.
 
 Makes existing shipped surfaces feel finished. Each item is independently shippable.
 
-| ID | Item | Detail | Effort |
-|----|------|--------|--------|
-| C1 | **Edit forms for M5.5 services** | SQS, SNS, DynamoDB, Secrets Manager, ECR, SFN, EventBridge, and ACM all have Create+Delete but no Edit. Ships as one sprint, one form per commit. Key fields: SQS (visibility timeout, retention), DynamoDB (billing mode, capacity), Secrets (description, rotation), ECR (scan-on-push, mutability), SFN (definition, role), EventBridge (description), SNS (display name, delivery policy), ACM (no editable fields — remove edit affordance). | L |
-| C2 | **Empty canvas onboarding** | First-time user opens app with blank canvas and no guidance. Renderer-only: show a welcome state when no profile is configured or no scan has run yet — "Connect your AWS profile to start scanning" with a Settings CTA. No backend changes. | S |
+| ID  | Item                             | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                            | Effort |
+| --- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| C1  | **Edit forms for M5.5 services** | SQS, SNS, DynamoDB, Secrets Manager, ECR, SFN, EventBridge, and ACM all have Create+Delete but no Edit. Ships as one sprint, one form per commit. Key fields: SQS (visibility timeout, retention), DynamoDB (billing mode, capacity), Secrets (description, rotation), ECR (scan-on-push, mutability), SFN (definition, role), EventBridge (description), SNS (display name, delivery policy), ACM (no editable fields — remove edit affordance). | L      |
+| C2  | **Empty canvas onboarding**      | First-time user opens app with blank canvas and no guidance. Renderer-only: show a welcome state when no profile is configured or no scan has run yet — "Connect your AWS profile to start scanning" with a Settings CTA. No backend changes.                                                                                                                                                                                                     | S      |
 
 ---
 
@@ -42,35 +42,35 @@ Makes existing shipped surfaces feel finished. Each item is independently shippa
 
 Expands what users can actually do with the canvas.
 
-| ID | Item | Detail | Effort |
-|----|------|--------|--------|
-| D1 | **Canvas annotations** | `loadAnnotations`/`saveAnnotations` IPC already exists (unused). Free-floating sticky notes and per-node notes on the canvas. Zero backend work. | S |
-| D2 | **IAM analysis panel** | `analyzeIam(nodeId, nodeType, metadata)` IPC exists but is not surfaced. Add an Inspector panel section showing effective permissions for the selected resource. Frontend-only integration. | M |
-| D3 | **R53 + SSM CRUD** | Route 53 zones and SSM parameters are scan-only. R53: create/delete hosted zones + A/CNAME records. SSM: create/update/delete parameters. One service at a time — R53 first (higher user demand). | M per service |
-| D4 | **Full VPC build-from-scratch** | Subnet and IGW are scan-only. User can create a VPC from the canvas but can't add subnets or attach an IGW without leaving the UI. Completing this closes the full VPC provisioning loop. | M |
-| D5 | **Multi-select + bulk ops** | Every action is currently single-node. Multi-select → bulk delete, bulk HCL export. Required for managing infrastructure at scale. | L |
+| ID  | Item                            | Detail                                                                                                                                                                                            | Effort        |
+| --- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| D1  | **Canvas annotations**          | `loadAnnotations`/`saveAnnotations` IPC already exists (unused). Free-floating sticky notes and per-node notes on the canvas. Zero backend work.                                                  | S             |
+| D2  | **IAM analysis panel**          | `analyzeIam(nodeId, nodeType, metadata)` IPC exists but is not surfaced. Add an Inspector panel section showing effective permissions for the selected resource. Frontend-only integration.       | M             |
+| D3  | **R53 + SSM CRUD**              | Route 53 zones and SSM parameters are scan-only. R53: create/delete hosted zones + A/CNAME records. SSM: create/update/delete parameters. One service at a time — R53 first (higher user demand). | M per service |
+| D4  | **Full VPC build-from-scratch** | Subnet and IGW are scan-only. User can create a VPC from the canvas but can't add subnets or attach an IGW without leaving the UI. Completing this closes the full VPC provisioning loop.         | M             |
+| D5  | **Multi-select + bulk ops**     | Every action is currently single-node. Multi-select → bulk delete, bulk HCL export. Required for managing infrastructure at scale.                                                                | L             |
 
 ---
 
 ## Tier 4 — Platform / Architecture
 
-| ID | Item | Detail | Effort |
-|----|------|--------|--------|
-| P1 | **Filter composition model** | Sidebar filter, scan error badges, and region zones are three independent visibility systems. A fourth (e.g., "show only drifted nodes") will break without a unified filter model. Design before shipping the next filter type. | M (design-first) |
-| P2 | **Background scan + drift notifications** | Scan is currently user-triggered or timer-based with no notification on change. Tray notification or in-app alert when a scan detects drift. Makes RiftView feel like active monitoring. | M |
-| P3 | **M6 multi-cloud plugin architecture** | Azure, GCP, Vercel. `CloudProvider` interface already designed for this. Core question: how do plugins register NodeTypes, scan handlers, and CRUD commands without forking the codebase? Design-first sprint. | L–XL |
+| ID  | Item                                      | Detail                                                                                                                                                                                                                           | Effort           |
+| --- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| P1  | **Filter composition model**              | Sidebar filter, scan error badges, and region zones are three independent visibility systems. A fourth (e.g., "show only drifted nodes") will break without a unified filter model. Design before shipping the next filter type. | M (design-first) |
+| P2  | **Background scan + drift notifications** | Scan is currently user-triggered or timer-based with no notification on change. Tray notification or in-app alert when a scan detects drift. Makes RiftView feel like active monitoring.                                         | M                |
+| P3  | **M6 multi-cloud plugin architecture**    | Azure, GCP, Vercel. `CloudProvider` interface already designed for this. Core question: how do plugins register NodeTypes, scan handlers, and CRUD commands without forking the codebase? Design-first sprint.                   | L–XL             |
 
 ---
 
 ## Wave Sequencing
 
-| Wave | Items | Gate | Status |
-|------|-------|------|--------|
-| **Wave 1** | B1, B2, B3, B4, C2 | — | ✅ Complete (368 tests) |
-| **Wave 2** | C1 (7 edit forms) | Wave 1 complete | ✅ Complete (399 tests) |
-| **Wave 3** | D1, D2, D3 | Wave 2 complete | ✅ Complete (442 tests) |
+| Wave       | Items               | Gate            | Status                  |
+| ---------- | ------------------- | --------------- | ----------------------- |
+| **Wave 1** | B1, B2, B3, B4, C2  | —               | ✅ Complete (368 tests) |
+| **Wave 2** | C1 (7 edit forms)   | Wave 1 complete | ✅ Complete (399 tests) |
+| **Wave 3** | D1, D2, D3          | Wave 2 complete | ✅ Complete (442 tests) |
 | **Wave 4** | D4, D5, P1 (design) | Wave 3 complete | ✅ Complete (478 tests) |
-| **Wave 5** | P2, P3 | Wave 4 complete | ✅ Complete (528 tests) |
+| **Wave 5** | P2, P3              | Wave 4 complete | ✅ Complete (528 tests) |
 
 ---
 

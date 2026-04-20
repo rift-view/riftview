@@ -1,5 +1,5 @@
 import React from 'react'
-import type { CloudNode } from '../../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 
 interface NodeContextMenuProps {
   node: CloudNode

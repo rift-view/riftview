@@ -1,4 +1,4 @@
-import { CloudNode } from '../../../renderer/types/cloud'
+import { CloudNode } from '@riftview/shared'
 
 export interface FlatServiceConfig<TClient, TItem> {
   /** Call the SDK paginator/list command and return raw items */

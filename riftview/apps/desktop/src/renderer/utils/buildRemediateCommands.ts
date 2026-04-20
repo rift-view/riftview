@@ -1,4 +1,4 @@
-import type { CloudNode } from '../types/cloud'
+import type { CloudNode } from '@riftview/shared'
 import { buildDeleteCommands } from './buildDeleteCommands'
 
 export function buildRemediateCommands(node: CloudNode): string[][] {

@@ -1,4 +1,5 @@
 # RiftView M3 — Design Spec
+
 **Date:** 2026-03-12
 **Status:** Approved
 
@@ -17,6 +18,7 @@ Every write operation — create, edit, delete, stop, start — routes through t
 Right-clicking a canvas **node** shows a node actions menu — distinct from right-clicking empty canvas (which still opens the create menu). React Flow's `onNodeContextMenu` prop handles the distinction.
 
 Node context menu items:
+
 - **Edit [resource type]** — opens pre-filled Edit modal
 - **Delete [resource type]** — opens delete confirmation dialog
 - **Stop / Start** — EC2 and RDS only; routes directly to Command Drawer
@@ -38,6 +40,7 @@ The Inspector gains three areas for nodes that support them:
 Right-click node → "Delete [type]" → type-to-confirm dialog → CLI Engine → rescan on success.
 
 **Type-to-confirm dialog:** user must type the resource ID/name before the Delete button enables. Pre-condition warnings appear above the input field:
+
 - VPC with active subnets or instances: "VPC has attached resources. Detach them first."
 - Non-empty S3 bucket: warning + "Force delete (removes all objects)" toggle — adds `--force` to `aws s3 rb`
 - RDS without final snapshot: "Skip final snapshot?" toggle
@@ -46,15 +49,15 @@ Right-click node → "Delete [type]" → type-to-confirm dialog → CLI Engine �
 
 ### Delete commands
 
-| Resource | Command |
-|---|---|
-| VPC | `aws ec2 delete-vpc --vpc-id <id>` |
-| EC2 | `aws ec2 terminate-instances --instance-ids <id>` |
-| SG | `aws ec2 delete-security-group --group-id <id>` |
-| RDS | `aws rds delete-db-instance --db-instance-identifier <id> [--skip-final-snapshot]` |
-| S3 | `aws s3 rb s3://<bucket> [--force]` |
-| Lambda | `aws lambda delete-function --function-name <name>` |
-| ALB | `aws elbv2 delete-load-balancer --load-balancer-arn <arn>` |
+| Resource | Command                                                                            |
+| -------- | ---------------------------------------------------------------------------------- |
+| VPC      | `aws ec2 delete-vpc --vpc-id <id>`                                                 |
+| EC2      | `aws ec2 terminate-instances --instance-ids <id>`                                  |
+| SG       | `aws ec2 delete-security-group --group-id <id>`                                    |
+| RDS      | `aws rds delete-db-instance --db-instance-identifier <id> [--skip-final-snapshot]` |
+| S3       | `aws s3 rb s3://<bucket> [--force]`                                                |
+| Lambda   | `aws lambda delete-function --function-name <name>`                                |
+| ALB      | `aws elbv2 delete-load-balancer --load-balancer-arn <arn>`                         |
 
 ---
 
@@ -65,45 +68,52 @@ Edit modal reuses the M2 Create modal component with a new `mode: 'edit'` prop. 
 ### Editable fields and commands per resource
 
 **VPC**
+
 - Name tag
 - `aws ec2 create-tags --resources <id> --tags Key=Name,Value=<name>`
 
 **EC2**
+
 - Name tag, instance type (requires stop if running), security groups
 - Instance type change on a running instance: stop → modify → start (3-command chain via CLI Engine). All three commands are queued as a sequence and displayed together in the Command Drawer before the user clicks Run. CLI Engine executes them in order after confirmation. If the instance is already stopped, the stop command is omitted and only modify → start are queued.
 - `aws ec2 create-tags` + `aws ec2 modify-instance-attribute`
 
 **SG**
+
 - Inbound rules (add/remove rows) — name and description are immutable in AWS
 - `aws ec2 authorize-security-group-ingress` / `aws ec2 revoke-security-group-ingress` per changed rule
 
 **SG rule diffing:** `CloudNode.metadata.rules` stores the current rule set as `Array<{ protocol: string; fromPort: number; toPort: number; cidr: string }>`. M3 updates the SG service scanner to populate this field in exactly this shape from `IpPermissions` in the `DescribeSecurityGroups` response. A rule's identity is the tuple `(protocol, fromPort, toPort, cidr)`. On save, compute the diff: rules present in the new set but absent from the old → authorize; rules present in the old set but absent from the new → revoke. AWS has no in-place rule edit — a modified rule is a revoke + authorize pair. All revoke commands are emitted before authorize commands.
 
 **RDS**
+
 - Instance class, multi-AZ toggle, deletion protection toggle
 - `aws rds modify-db-instance --db-instance-identifier <id> --apply-immediately`
 
 **S3**
+
 - Versioning toggle, public access block toggles
 - `aws s3api put-bucket-versioning` + `aws s3api put-public-access-block`
 
 **Lambda**
+
 - Memory (MB), timeout (s), environment variables (key-value pairs, addable/removable rows)
 - `aws lambda update-function-configuration --function-name <name>`
 
 **ALB**
+
 - Name tag
 - `aws elbv2 add-tags --resource-arns <arn> --tags Key=Name,Value=<name>`
 
 ### Quick action buttons (Inspector, EC2 and RDS only)
 
-| Button | Command |
-|---|---|
-| EC2 Stop | `aws ec2 stop-instances --instance-ids <id>` |
-| EC2 Start | `aws ec2 start-instances --instance-ids <id>` |
-| EC2 Reboot | `aws ec2 reboot-instances --instance-ids <id>` |
-| RDS Stop | `aws rds stop-db-instance --db-instance-identifier <id>` |
-| RDS Start | `aws rds start-db-instance --db-instance-identifier <id>` |
+| Button     | Command                                                    |
+| ---------- | ---------------------------------------------------------- |
+| EC2 Stop   | `aws ec2 stop-instances --instance-ids <id>`               |
+| EC2 Start  | `aws ec2 start-instances --instance-ids <id>`              |
+| EC2 Reboot | `aws ec2 reboot-instances --instance-ids <id>`             |
+| RDS Stop   | `aws rds stop-db-instance --db-instance-identifier <id>`   |
+| RDS Start  | `aws rds start-db-instance --db-instance-identifier <id>`  |
 | RDS Reboot | `aws rds reboot-db-instance --db-instance-identifier <id>` |
 
 Quick actions skip the Edit modal — they go straight to the Command Drawer (preview + Run / Cancel). Successful execution triggers a rescan.
@@ -116,33 +126,33 @@ Edit modal saves also trigger a rescan on success.
 
 ### RDS
 
-| Field | Notes |
-|---|---|
-| DB instance identifier | Name |
-| Engine | Dropdown: MySQL, PostgreSQL, MariaDB |
-| Instance class | Dropdown: db.t3.micro, db.t3.small, db.m5.large |
-| Master username | Text |
-| Master password | Password input |
-| VPC | Dropdown from store |
-| Publicly accessible | Toggle, default off |
-| Multi-AZ | Toggle, default off |
-| Allocated storage (GB) | Number, default 20 |
+| Field                  | Notes                                           |
+| ---------------------- | ----------------------------------------------- |
+| DB instance identifier | Name                                            |
+| Engine                 | Dropdown: MySQL, PostgreSQL, MariaDB            |
+| Instance class         | Dropdown: db.t3.micro, db.t3.small, db.m5.large |
+| Master username        | Text                                            |
+| Master password        | Password input                                  |
+| VPC                    | Dropdown from store                             |
+| Publicly accessible    | Toggle, default off                             |
+| Multi-AZ               | Toggle, default off                             |
+| Allocated storage (GB) | Number, default 20                              |
 
 Generates: `aws rds create-db-instance ...`
 
 ### Lambda
 
-| Field | Notes |
-|---|---|
-| Function name | Text |
-| Runtime | Dropdown: nodejs20.x, python3.12, java21, go1.x |
-| Handler | Text, e.g. `index.handler` |
-| Role ARN | Free text (dropdown in M4 once IAM roles are scanned) |
-| Memory (MB) | Number, default 128 |
-| Timeout (s) | Number, default 3 |
-| VPC | Optional dropdown from store; when selected, shows two additional fields |
-| Subnets | Multi-select filtered by VPC (visible only when VPC is selected) |
-| Security groups | Multi-select from store (visible only when VPC is selected) |
+| Field           | Notes                                                                    |
+| --------------- | ------------------------------------------------------------------------ |
+| Function name   | Text                                                                     |
+| Runtime         | Dropdown: nodejs20.x, python3.12, java21, go1.x                          |
+| Handler         | Text, e.g. `index.handler`                                               |
+| Role ARN        | Free text (dropdown in M4 once IAM roles are scanned)                    |
+| Memory (MB)     | Number, default 128                                                      |
+| Timeout (s)     | Number, default 3                                                        |
+| VPC             | Optional dropdown from store; when selected, shows two additional fields |
+| Subnets         | Multi-select filtered by VPC (visible only when VPC is selected)         |
+| Security groups | Multi-select from store (visible only when VPC is selected)              |
 
 When VPC is set, the command includes `--vpc-config SubnetIds=<subnets>,SecurityGroupIds=<sgs>`.
 
@@ -150,13 +160,13 @@ Generates: `aws lambda create-function ...`
 
 ### ALB
 
-| Field | Notes |
-|---|---|
-| Name | Text |
-| Scheme | Dropdown: internet-facing / internal |
-| VPC | Dropdown from store |
-| Subnets | Multi-select filtered by VPC |
-| Security groups | Multi-select from store |
+| Field           | Notes                                |
+| --------------- | ------------------------------------ |
+| Name            | Text                                 |
+| Scheme          | Dropdown: internet-facing / internal |
+| VPC             | Dropdown from store                  |
+| Subnets         | Multi-select filtered by VPC         |
+| Security groups | Multi-select from store              |
 
 Generates: `aws elbv2 create-load-balancer ...`
 
@@ -174,10 +184,10 @@ The existing `commandPreview: string` store field is widened to `commandPreview:
 
 ### M3 settings
 
-| Setting | Options | Default |
-|---|---|---|
+| Setting                   | Options                          | Default         |
+| ------------------------- | -------------------------------- | --------------- |
 | Delete confirmation style | Type to confirm / Command Drawer | Type to confirm |
-| Scan interval | 15s / 30s / 60s / Manual only | `30` (number) |
+| Scan interval             | 15s / 30s / 60s / Manual only    | `30` (number)   |
 
 **Foundation for M4:** Settings panel includes a placeholder "Theme" category in M3 (greyed out) so the panel structure is in place before M4 theme logic arrives.
 
