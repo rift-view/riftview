@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useIpc } from '../hooks/useIpc'
 import { useScanner } from '../hooks/useScanner'
-import { TitleBar } from '../components/TitleBar'
-import { RegionBar } from '../components/RegionBar'
+import { Topbar } from '../components/Topbar'
 import { Sidebar } from '../components/Sidebar'
 import { CloudCanvas } from '../components/canvas/CloudCanvas'
 import { Inspector } from '../components/Inspector'
@@ -233,8 +232,7 @@ export default function App(): React.JSX.Element | null {
       className="flex flex-col h-screen w-screen overflow-hidden"
       style={{ background: 'var(--cb-bg-app)' }}
     >
-      <TitleBar onScan={triggerScan} fixCount={fixCount} />
-      <RegionBar />
+      <Topbar onScan={triggerScan} fixCount={fixCount} />
       {errorMessage && <ErrorBanner message={errorMessage} onDismiss={() => setError(null)} />}
       <div className="flex flex-1 overflow-hidden">
         <div
