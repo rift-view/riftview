@@ -31,7 +31,7 @@ import { fetchMetrics } from '../aws/services/cloudwatch'
 import type { CloudMetric } from '../aws/services/cloudwatch'
 import { buildLocalStackProvider } from '../terraform/provider'
 const execFileAsync = promisify(execFile)
-import { parseTfState, parseTfStateModules } from '../aws/tfstate/parser'
+import { parseTfState, parseTfStateModules } from '@riftview/shared'
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 import { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from '../aws/iam/fetcher'
 import type { IamAnalysisResult } from '../../renderer/types/iam'

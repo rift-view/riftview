@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseTfState } from '../../../../src/main/aws/tfstate/parser'
+import { parseTfState } from './parser'
 
 const minimal = (type: string, attrs: Record<string, unknown>): string =>
   JSON.stringify({

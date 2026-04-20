@@ -8,7 +8,8 @@ import { awsScanRunner } from './scan-runtime'
 async function run(): Promise<number> {
   const program = buildProgram({
     scan: { runner: awsScanRunner },
-    risks: { runner: awsScanRunner }
+    risks: { runner: awsScanRunner },
+    drift: { runner: awsScanRunner }
   })
   program.exitOverride()
   try {
