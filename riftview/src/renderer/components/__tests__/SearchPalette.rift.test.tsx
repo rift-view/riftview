@@ -37,33 +37,25 @@ describe('SearchPalette rift shape', () => {
   })
 
   it('renders .search-palette shell with backdrop when open', () => {
-    const { container } = render(
-      <SearchPalette open={true} onClose={vi.fn()} onSelect={vi.fn()} />
-    )
+    const { container } = render(<SearchPalette open={true} onClose={vi.fn()} onSelect={vi.fn()} />)
     expect(container.querySelector('.search-palette-backdrop')).toBeTruthy()
     const shell = container.querySelector('.search-palette')
     expect(shell).toBeTruthy()
   })
 
   it('shell width is 640px (widened from 420)', () => {
-    const { container } = render(
-      <SearchPalette open={true} onClose={vi.fn()} onSelect={vi.fn()} />
-    )
+    const { container } = render(<SearchPalette open={true} onClose={vi.fn()} onSelect={vi.fn()} />)
     const shell = container.querySelector('.search-palette') as HTMLElement
     expect(shell.style.width).toBe('640px')
   })
 
   it('renders .search-palette-input wrapper around the search input', () => {
-    const { container } = render(
-      <SearchPalette open={true} onClose={vi.fn()} onSelect={vi.fn()} />
-    )
+    const { container } = render(<SearchPalette open={true} onClose={vi.fn()} onSelect={vi.fn()} />)
     expect(container.querySelector('.search-palette-input')).toBeTruthy()
   })
 
   it('renders .search-result rows with mono type badge for each match', async () => {
-    const { container } = render(
-      <SearchPalette open={true} onClose={vi.fn()} onSelect={vi.fn()} />
-    )
+    const { container } = render(<SearchPalette open={true} onClose={vi.fn()} onSelect={vi.fn()} />)
     // Component runs setQuery('') inside a requestAnimationFrame on open.
     // Wait for that to fire before typing, otherwise our typed value is wiped.
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
@@ -76,9 +68,7 @@ describe('SearchPalette rift shape', () => {
   })
 
   it('renders foot hint with mono "↑↓ navigate" + "↵ select"', () => {
-    const { container } = render(
-      <SearchPalette open={true} onClose={vi.fn()} onSelect={vi.fn()} />
-    )
+    const { container } = render(<SearchPalette open={true} onClose={vi.fn()} onSelect={vi.fn()} />)
     expect(container.querySelector('.search-palette-foot')).toBeTruthy()
   })
 })

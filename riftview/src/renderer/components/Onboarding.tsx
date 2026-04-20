@@ -42,9 +42,7 @@ export function Onboarding(): React.JSX.Element {
       }}
     >
       <span className="eyebrow">WELCOME TO RIFTVIEW</span>
-      <h1 className="empty-state-title">
-        The incident diagnostic layer AWS doesn&apos;t have.
-      </h1>
+      <h1 className="empty-state-title">The incident diagnostic layer AWS doesn&apos;t have.</h1>
       <p
         style={{
           fontFamily: 'var(--font-body)',

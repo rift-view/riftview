@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
 import type { CloudNode, NodeType } from '../types/cloud'
@@ -113,23 +113,23 @@ export function SearchPalette({ open, onClose, onSelect }: Props): React.JSX.Ele
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
-  const results: SearchResult[] =
-    query.trim() === ''
-      ? []
-      : nodes
-          .reduce<SearchResult[]>((acc, n) => {
-            const q = query.toLowerCase()
-            if (n.label.toLowerCase().includes(q) || n.type.toLowerCase().includes(q)) {
-              acc.push({ node: n, matchedField: null })
-            } else {
-              const metaMatch = getMetaMatch(n, q)
-              if (metaMatch !== null) {
-                acc.push({ node: n, matchedField: metaMatch })
-              }
-            }
-            return acc
-          }, [])
-          .slice(0, 8)
+  const results: SearchResult[] = useMemo(() => {
+    if (query.trim() === '') return []
+    const q = query.toLowerCase()
+    return nodes
+      .reduce<SearchResult[]>((acc, n) => {
+        if (n.label.toLowerCase().includes(q) || n.type.toLowerCase().includes(q)) {
+          acc.push({ node: n, matchedField: null })
+        } else {
+          const metaMatch = getMetaMatch(n, q)
+          if (metaMatch !== null) {
+            acc.push({ node: n, matchedField: metaMatch })
+          }
+        }
+        return acc
+      }, [])
+      .slice(0, 8)
+  }, [query, nodes])
 
   useEffect(() => {
     if (open) {
