@@ -17,7 +17,7 @@ describe('SubnetCreateForm', () => {
   it('renders VPC selector, CIDR, and AZ inputs', () => {
     useCloudStore.setState({ nodes: [VPC_NODE], importedNodes: [] })
     render(<SubnetCreateForm onChange={vi.fn()} />)
-    expect(screen.getByText(/vpc \*/i)).toBeInTheDocument()
+    expect(screen.getByText(/^vpc$/i)).toBeInTheDocument()
     expect(screen.getByPlaceholderText('10.0.1.0/24')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('us-east-1a')).toBeInTheDocument()
   })

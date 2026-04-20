@@ -1,28 +1,9 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { SfnParams } from '../../types/create'
 
 interface Props {
   onChange: (p: SfnParams) => void
   showErrors?: boolean
-}
-
-const inp = (err: boolean): React.CSSProperties => ({
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: `1px solid ${err ? '#ff5f57' : 'var(--border)'}`,
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-})
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
 }
 
 const BLANK_DEFINITION = JSON.stringify(
@@ -42,57 +23,69 @@ export function SfnForm({ onChange, showErrors }: Props): React.JSX.Element {
   const [definition, setDefinition] = useState(BLANK_DEFINITION)
 
   const err = showErrors ?? false
+  const nameInvalid = err && !name.trim()
+  const roleInvalid = err && !roleArn.trim()
+  const defInvalid = err && !definition.trim()
 
   const emit = (n: string, t: 'STANDARD' | 'EXPRESS', r: string, d: string): void => {
     onChange({ resource: 'sfn', name: n, type: t, roleArn: r, definition: d })
   }
 
   return (
-    <div>
-      <div style={lbl}>State Machine Name *</div>
-      <input
-        style={inp(err && !name.trim())}
-        value={name}
-        placeholder="my-state-machine"
-        onChange={(e) => {
-          setName(e.target.value)
-          emit(e.target.value, type, roleArn, definition)
-        }}
-      />
+    <div className="form-group">
+      <div className={'form-field' + (nameInvalid ? ' -invalid' : '')}>
+        <span className="label">State Machine Name</span>
+        <input
+          className="form-input"
+          value={name}
+          placeholder="my-state-machine"
+          onChange={(e) => {
+            setName(e.target.value)
+            emit(e.target.value, type, roleArn, definition)
+          }}
+        />
+      </div>
 
-      <div style={lbl}>Type</div>
-      <select
-        style={inp(false)}
-        value={type}
-        onChange={(e) => {
-          setType(e.target.value as 'STANDARD' | 'EXPRESS')
-          emit(name, e.target.value as 'STANDARD' | 'EXPRESS', roleArn, definition)
-        }}
-      >
-        <option value="STANDARD">STANDARD</option>
-        <option value="EXPRESS">EXPRESS</option>
-      </select>
+      <div className="form-field">
+        <span className="label">Type</span>
+        <select
+          className="form-select"
+          value={type}
+          onChange={(e) => {
+            setType(e.target.value as 'STANDARD' | 'EXPRESS')
+            emit(name, e.target.value as 'STANDARD' | 'EXPRESS', roleArn, definition)
+          }}
+        >
+          <option value="STANDARD">STANDARD</option>
+          <option value="EXPRESS">EXPRESS</option>
+        </select>
+      </div>
 
-      <div style={lbl}>Role ARN *</div>
-      <input
-        style={inp(err && !roleArn.trim())}
-        value={roleArn}
-        placeholder="arn:aws:iam::123456789012:role/StepFunctionsRole"
-        onChange={(e) => {
-          setRoleArn(e.target.value)
-          emit(name, type, e.target.value, definition)
-        }}
-      />
+      <div className={'form-field' + (roleInvalid ? ' -invalid' : '')}>
+        <span className="label">Role ARN</span>
+        <input
+          className="form-input"
+          value={roleArn}
+          placeholder="arn:aws:iam::123456789012:role/StepFunctionsRole"
+          onChange={(e) => {
+            setRoleArn(e.target.value)
+            emit(name, type, e.target.value, definition)
+          }}
+        />
+      </div>
 
-      <div style={lbl}>Definition (ASL JSON) *</div>
-      <textarea
-        style={{ ...inp(err && !definition.trim()), height: 80, resize: 'vertical' }}
-        value={definition}
-        onChange={(e) => {
-          setDefinition(e.target.value)
-          emit(name, type, roleArn, e.target.value)
-        }}
-      />
+      <div className={'form-field' + (defInvalid ? ' -invalid' : '')}>
+        <span className="label">Definition (ASL JSON)</span>
+        <textarea
+          className="form-textarea"
+          style={{ minHeight: 80 }}
+          value={definition}
+          onChange={(e) => {
+            setDefinition(e.target.value)
+            emit(name, type, roleArn, e.target.value)
+          }}
+        />
+      </div>
     </div>
   )
 }

@@ -6,26 +6,6 @@ interface Props {
   showErrors?: boolean
 }
 
-const inp: React.CSSProperties = {
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: '1px solid var(--border)',
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-}
-
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
-}
-
 export function IgwCreateForm({ onChange }: Props): React.JSX.Element {
   const [name, setName] = useState('')
 
@@ -34,17 +14,19 @@ export function IgwCreateForm({ onChange }: Props): React.JSX.Element {
   }
 
   return (
-    <div>
-      <div style={lbl}>Name Tag</div>
-      <input
-        style={inp}
-        value={name}
-        placeholder="my-igw"
-        onChange={(e) => {
-          setName(e.target.value)
-          emit(e.target.value)
-        }}
-      />
+    <div className="form-group">
+      <div className="form-field">
+        <span className="label">Name Tag</span>
+        <input
+          className="form-input"
+          value={name}
+          placeholder="my-igw"
+          onChange={(e) => {
+            setName(e.target.value)
+            emit(e.target.value)
+          }}
+        />
+      </div>
     </div>
   )
 }

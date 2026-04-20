@@ -1,30 +1,10 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { AlbParams } from '../../types/create'
 import { useCloudStore } from '../../store/cloud'
 
 interface Props {
   onChange: (p: AlbParams) => void
   showErrors?: boolean
-}
-
-const inp = (err: boolean): React.CSSProperties => ({
-  width: '100%',
-  background: 'var(--ink-900)',
-  border: `1px solid ${err ? '#ff5f57' : 'var(--border)'}`,
-  borderRadius: 3,
-  padding: '3px 6px',
-  color: 'var(--fg)',
-  fontFamily: 'monospace',
-  fontSize: 10,
-  boxSizing: 'border-box' as const
-})
-const sel = inp
-const lbl: React.CSSProperties = {
-  fontSize: 9,
-  color: 'var(--fg-muted)',
-  textTransform: 'uppercase',
-  marginBottom: 2,
-  marginTop: 8
 }
 
 export function AlbForm({ onChange, showErrors }: Props): React.JSX.Element {
@@ -51,28 +31,36 @@ export function AlbForm({ onChange, showErrors }: Props): React.JSX.Element {
   const filteredSubnets = form.vpcId ? subnets.filter((s) => s.parentId === form.vpcId) : subnets
   const filteredSgs = form.vpcId ? sgs.filter((s) => s.parentId === form.vpcId) : sgs
 
+  const nameInvalid = err && !form.name
+  const subnetsInvalid = err && form.subnetIds.length < 2
+  const sgsInvalid = err && form.securityGroupIds.length < 1
+
   return (
-    <div>
-      <div style={lbl}>Name *</div>
-      <input
-        style={inp(err && !form.name)}
-        value={form.name}
-        onChange={(e) => update('name', e.target.value)}
-      />
-      <div style={lbl}>Scheme</div>
-      <select
-        style={sel(false)}
-        value={form.scheme}
-        onChange={(e) => update('scheme', e.target.value as AlbParams['scheme'])}
-      >
-        <option value="internet-facing">Internet-facing</option>
-        <option value="internal">Internal</option>
-      </select>
+    <div className="form-group">
+      <div className={'form-field' + (nameInvalid ? ' -invalid' : '')}>
+        <span className="label">Name</span>
+        <input
+          className="form-input"
+          value={form.name}
+          onChange={(e) => update('name', e.target.value)}
+        />
+      </div>
+      <div className="form-field">
+        <span className="label">Scheme</span>
+        <select
+          className="form-select"
+          value={form.scheme}
+          onChange={(e) => update('scheme', e.target.value as AlbParams['scheme'])}
+        >
+          <option value="internet-facing">Internet-facing</option>
+          <option value="internal">Internal</option>
+        </select>
+      </div>
       {vpcs.length > 0 && (
-        <>
-          <div style={lbl}>VPC</div>
+        <div className="form-field">
+          <span className="label">VPC</span>
           <select
-            style={sel(false)}
+            className="form-select"
             value={form.vpcId}
             onChange={(e) => update('vpcId', e.target.value)}
           >
@@ -83,61 +71,54 @@ export function AlbForm({ onChange, showErrors }: Props): React.JSX.Element {
               </option>
             ))}
           </select>
-        </>
+        </div>
       )}
-      <div style={lbl}>Subnets (select ≥2) *</div>
-      {filteredSubnets.map((s) => (
-        <label
-          key={s.id}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: 4,
-            fontSize: 10,
-            color: 'var(--bone-200)',
-            cursor: 'pointer'
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={form.subnetIds.includes(s.id)}
-            onChange={(e) => {
-              const ids = form.subnetIds
-              update('subnetIds', e.target.checked ? [...ids, s.id] : ids.filter((x) => x !== s.id))
-            }}
-          />
-          {s.label} ({s.id})
-        </label>
-      ))}
-      <div style={lbl}>Security groups *</div>
-      {filteredSgs.map((sg) => (
-        <label
-          key={sg.id}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            marginTop: 4,
-            fontSize: 10,
-            color: 'var(--bone-200)',
-            cursor: 'pointer'
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={form.securityGroupIds.includes(sg.id)}
-            onChange={(e) => {
-              const ids = form.securityGroupIds
-              update(
-                'securityGroupIds',
-                e.target.checked ? [...ids, sg.id] : ids.filter((x) => x !== sg.id)
-              )
-            }}
-          />
-          {sg.label} ({sg.id})
-        </label>
-      ))}
+      <div className={'form-field' + (subnetsInvalid ? ' -invalid' : '')}>
+        <span className="label">Subnets (select ≥2)</span>
+        {filteredSubnets.length === 0 ? (
+          <div className="form-helper">No subnets available</div>
+        ) : (
+          filteredSubnets.map((s) => (
+            <label key={s.id} className="form-checkbox">
+              <input
+                type="checkbox"
+                checked={form.subnetIds.includes(s.id)}
+                onChange={(e) => {
+                  const ids = form.subnetIds
+                  update(
+                    'subnetIds',
+                    e.target.checked ? [...ids, s.id] : ids.filter((x) => x !== s.id)
+                  )
+                }}
+              />
+              {s.label} ({s.id})
+            </label>
+          ))
+        )}
+      </div>
+      <div className={'form-field' + (sgsInvalid ? ' -invalid' : '')}>
+        <span className="label">Security Groups</span>
+        {filteredSgs.length === 0 ? (
+          <div className="form-helper">No security groups available</div>
+        ) : (
+          filteredSgs.map((sg) => (
+            <label key={sg.id} className="form-checkbox">
+              <input
+                type="checkbox"
+                checked={form.securityGroupIds.includes(sg.id)}
+                onChange={(e) => {
+                  const ids = form.securityGroupIds
+                  update(
+                    'securityGroupIds',
+                    e.target.checked ? [...ids, sg.id] : ids.filter((x) => x !== sg.id)
+                  )
+                }}
+              />
+              {sg.label} ({sg.id})
+            </label>
+          ))
+        )}
+      </div>
     </div>
   )
 }
