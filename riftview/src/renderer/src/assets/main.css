@@ -211,15 +211,6 @@ code {
   }
 }
 
-/* ActionRail hover visibility */
-.resource-node .action-rail {
-  opacity: 0;
-  transition: opacity 150ms;
-}
-.resource-node:hover .action-rail {
-  opacity: 1;
-}
-
 /* Connection handles — hidden by default, visible on node hover so users
    discover that they can drag between nodes to draw custom edges. */
 .cb-handle {

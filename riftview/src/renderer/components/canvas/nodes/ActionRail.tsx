@@ -6,18 +6,6 @@ interface ActionRailProps {
   onToast: (msg: string, type: 'success' | 'error') => void
 }
 
-const btnStyle: React.CSSProperties = {
-  background: 'var(--cb-bg-elevated)',
-  border: '1px solid var(--cb-border)',
-  borderRadius: 3,
-  color: 'var(--cb-text-secondary)',
-  cursor: 'pointer',
-  fontFamily: 'monospace',
-  fontSize: 9,
-  padding: '2px 5px',
-  lineHeight: 1
-}
-
 export function ActionRail({ node, onToast }: ActionRailProps): React.JSX.Element {
   const consoleUrl = buildConsoleUrl(node)
 
@@ -34,22 +22,12 @@ export function ActionRail({ node, onToast }: ActionRailProps): React.JSX.Elemen
   }
 
   return (
-    <div
-      className="action-rail"
-      style={{
-        position: 'absolute',
-        top: -28,
-        right: 0,
-        display: 'flex',
-        gap: 4,
-        pointerEvents: 'auto'
-      }}
-    >
-      <button style={btnStyle} title="Copy ARN" onClick={handleCopyArn}>
-        ⌘
+    <div className="action-rail" role="toolbar" aria-label="node actions">
+      <button className="btn-glyph" title="Copy ARN" onClick={handleCopyArn}>
+        ⎘
       </button>
       {consoleUrl && (
-        <button style={btnStyle} title="Open in AWS Console" onClick={handleOpenConsole}>
+        <button className="btn-glyph" title="Open in AWS Console" onClick={handleOpenConsole}>
           ↗
         </button>
       )}
