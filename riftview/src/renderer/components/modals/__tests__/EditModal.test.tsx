@@ -48,7 +48,8 @@ describe('EditModal', () => {
 
   it('renders edit title for VPC', () => {
     render(<EditModal node={vpcNode} onClose={vi.fn()} />)
-    expect(screen.getByText(/edit vpc/i)).toBeInTheDocument()
+    expect(screen.getByText('EDIT')).toBeInTheDocument()
+    expect(screen.getByText(/vpc/i)).toBeInTheDocument()
   })
 
   it('calls onClose when Cancel is clicked', () => {
@@ -77,7 +78,8 @@ describe('EditModal', () => {
 
     it('renders the SQS edit modal with queue URL', () => {
       render(<EditModal node={sqsNode} onClose={vi.fn()} />)
-      expect(screen.getByText(/edit sqs queue/i)).toBeInTheDocument()
+      expect(screen.getByText('EDIT')).toBeInTheDocument()
+      expect(screen.getByText(/sqs queue/i)).toBeInTheDocument()
       expect(
         screen.getByDisplayValue('https://sqs.us-east-1.amazonaws.com/123/my-queue')
       ).toBeInTheDocument()
@@ -109,7 +111,8 @@ describe('EditModal', () => {
 
     it('renders the SNS edit modal with topic ARN', () => {
       render(<EditModal node={snsNode} onClose={vi.fn()} />)
-      expect(screen.getByText(/edit sns topic/i)).toBeInTheDocument()
+      expect(screen.getByText('EDIT')).toBeInTheDocument()
+      expect(screen.getByText(/sns topic/i)).toBeInTheDocument()
       expect(screen.getByDisplayValue('arn:aws:sns:us-east-1:123:my-topic')).toBeInTheDocument()
     })
 
@@ -142,7 +145,8 @@ describe('EditModal', () => {
 
     it('renders the ECR edit modal with repository name', () => {
       render(<EditModal node={ecrNode} onClose={vi.fn()} />)
-      expect(screen.getByText(/edit ecr repository/i)).toBeInTheDocument()
+      expect(screen.getByText('EDIT')).toBeInTheDocument()
+      expect(screen.getByText(/ecr repository/i)).toBeInTheDocument()
       expect(screen.getByDisplayValue('my-repo')).toBeInTheDocument()
     })
 
@@ -171,7 +175,8 @@ describe('EditModal', () => {
 
     it('renders the Secret edit modal with secret ID', () => {
       render(<EditModal node={secretNode} onClose={vi.fn()} />)
-      expect(screen.getByText(/edit secret/i)).toBeInTheDocument()
+      expect(screen.getByText('EDIT')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /secret/i })).toBeInTheDocument()
       expect(
         screen.getByDisplayValue('arn:aws:secretsmanager:us-east-1:123:secret/my-secret')
       ).toBeInTheDocument()
@@ -202,7 +207,8 @@ describe('EditModal', () => {
 
     it('renders the DynamoDB edit modal with table name', () => {
       render(<EditModal node={dynamoNode} onClose={vi.fn()} />)
-      expect(screen.getByText(/edit dynamodb table/i)).toBeInTheDocument()
+      expect(screen.getByText('EDIT')).toBeInTheDocument()
+      expect(screen.getByText(/dynamodb table/i)).toBeInTheDocument()
       expect(screen.getByDisplayValue('my-table')).toBeInTheDocument()
     })
 
@@ -240,7 +246,8 @@ describe('EditModal', () => {
   describe('EventBridge edit form', () => {
     it('renders the EventBridge edit modal with bus name and pre-filled description', () => {
       render(<EditModal node={eventBridgeNode} onClose={vi.fn()} />)
-      expect(screen.getByText(/edit eventbridge bus/i)).toBeInTheDocument()
+      expect(screen.getByText('EDIT')).toBeInTheDocument()
+      expect(screen.getByText(/eventbridge bus/i)).toBeInTheDocument()
       expect(screen.getByDisplayValue('my-bus')).toBeInTheDocument()
       expect(screen.getByDisplayValue('My existing description')).toBeInTheDocument()
     })
@@ -275,7 +282,8 @@ describe('EditModal', () => {
 
     it('renders the SSM edit modal title', () => {
       render(<EditModal node={ssmStringNode} onClose={vi.fn()} />)
-      expect(screen.getByText(/edit ssm parameter/i)).toBeInTheDocument()
+      expect(screen.getByText('EDIT')).toBeInTheDocument()
+      expect(screen.getByText(/ssm parameter/i)).toBeInTheDocument()
     })
 
     it('shows the parameter name as read-only', () => {

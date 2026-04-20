@@ -120,48 +120,29 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
 
   handleRunRef.current = handleRun
 
-  const overlay: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 200
-  }
-  const modal: React.CSSProperties = {
-    background: 'var(--ink-900)',
-    border: `1px solid var(--accent)`,
-    borderRadius: 8,
-    padding: 20,
-    width: 360,
-    maxHeight: '80vh',
-    overflowY: 'auto',
-    fontFamily: 'monospace'
-  }
-
   return (
     <div
-      style={overlay}
+      className="modal-backdrop"
       onClick={(e) => e.target === e.currentTarget && !isRunning && onClose()}
       onKeyDown={(e) => {
         if (e.key === 'Escape' && !isRunning) onClose()
       }}
       tabIndex={-1}
+      style={{ zIndex: 200 }}
     >
-      <div style={modal}>
-        <div
-          style={{
-            color: 'var(--accent)',
-            fontWeight: 'bold',
-            fontSize: 13,
-            marginBottom: 12,
-            borderBottom: '1px solid var(--border-strong)',
-            paddingBottom: 8
-          }}
-        >
-          Edit {RESOURCE_LABELS[node.type] ?? node.type}
+      <div className="modal modal--sm">
+        <div className="modal-head">
+          <div className="modal-head-text">
+            <span className="eyebrow">EDIT</span>
+            <h2 className="modal-title">
+              {RESOURCE_LABELS[node.type] ?? node.type}
+            </h2>
+          </div>
+          <button className="modal-close" onClick={onClose} disabled={isRunning} title="Close">
+            ×
+          </button>
         </div>
+        <div className="modal-body">
 
         {node.type === 'vpc' && (
           <VpcEditForm node={node} onChange={handleChange} showErrors={showErrors} />
@@ -187,38 +168,12 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
         {node.type === 'ssm-param' && <SsmEditForm node={node} onChange={handleChange} />}
         {node.type === 'sfn' && <SfnEditForm node={node} onChange={handleChange} />}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
-          <button
-            disabled={isRunning}
-            onClick={onClose}
-            style={{
-              background: 'var(--ink-850)',
-              border: '1px solid var(--border)',
-              borderRadius: 3,
-              padding: '4px 16px',
-              color: 'var(--bone-200)',
-              fontFamily: 'monospace',
-              fontSize: 11,
-              cursor: 'pointer'
-            }}
-          >
+        </div>
+        <div className="modal-foot">
+          <button disabled={isRunning} onClick={onClose} className="btn btn-sm btn-ghost">
             Cancel
           </button>
-          <button
-            disabled={isRunning}
-            onClick={handleRun}
-            style={{
-              background: '#22c55e',
-              border: 'none',
-              borderRadius: 3,
-              padding: '4px 16px',
-              color: '#000',
-              fontFamily: 'monospace',
-              fontSize: 11,
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
+          <button disabled={isRunning} onClick={handleRun} className="btn btn-sm btn-primary">
             {isRunning ? 'Saving\u2026' : 'Save'}
           </button>
         </div>

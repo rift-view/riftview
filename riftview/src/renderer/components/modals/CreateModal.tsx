@@ -317,48 +317,27 @@ export function CreateModal(): React.JSX.Element | null {
   // Update the ref each render so the event listener always calls the latest version
   handleRunRef.current = handleRun // eslint-disable-line react-hooks/refs
 
-  const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.6)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 500
-  }
-  const modalStyle: React.CSSProperties = {
-    background: 'var(--ink-900)',
-    border: '1px solid var(--accent)',
-    borderRadius: '6px',
-    padding: '16px',
-    width: '420px',
-    maxHeight: '80vh',
-    overflowY: 'auto',
-    fontFamily: 'monospace',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.6)'
-  }
-
   return (
     <div
-      style={overlayStyle}
+      className="modal-backdrop"
       onKeyDown={(e) => {
         if (e.key === 'Escape') handleCancel()
       }}
       tabIndex={-1}
     >
-      <div style={modalStyle}>
-        <div
-          style={{
-            color: 'var(--accent)',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            marginBottom: '14px',
-            borderBottom: '1px solid var(--border-strong)',
-            paddingBottom: '8px'
-          }}
-        >
-          {TITLES[activeCreate.resource] ?? 'New Resource'}
+      <div className="modal modal--md">
+        <div className="modal-head">
+          <div className="modal-head-text">
+            <span className="eyebrow">NEW RESOURCE</span>
+            <h2 className="modal-title">
+              {TITLES[activeCreate.resource] ?? 'New Resource'}
+            </h2>
+          </div>
+          <button className="modal-close" onClick={handleCancel} title="Close">
+            ×
+          </button>
         </div>
+        <div className="modal-body">
 
         {activeCreate.resource === 'vpc' && (
           <VpcForm onChange={handleChange} showErrors={showErrors} />
@@ -427,45 +406,12 @@ export function CreateModal(): React.JSX.Element | null {
           <IgwCreateForm onChange={handleChange} showErrors={showErrors} />
         )}
 
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '8px',
-            marginTop: '16px',
-            paddingTop: '10px',
-            borderTop: '1px solid var(--border-strong)'
-          }}
-        >
-          <button
-            onClick={handleCancel}
-            style={{
-              background: 'var(--ink-850)',
-              border: '1px solid var(--border)',
-              borderRadius: '3px',
-              color: 'var(--bone-200)',
-              cursor: 'pointer',
-              fontSize: '10px',
-              padding: '4px 10px',
-              fontFamily: 'monospace'
-            }}
-          >
+        </div>
+        <div className="modal-foot">
+          <button onClick={handleCancel} className="btn btn-sm btn-ghost">
             Cancel
           </button>
-          <button
-            onClick={handleRun}
-            style={{
-              background: 'var(--accent)',
-              border: '1px solid var(--accent)',
-              borderRadius: '3px',
-              color: '#000',
-              cursor: 'pointer',
-              fontSize: '10px',
-              padding: '4px 12px',
-              fontFamily: 'monospace',
-              fontWeight: 'bold'
-            }}
-          >
+          <button onClick={handleRun} className="btn btn-sm btn-primary">
             Create
           </button>
         </div>
