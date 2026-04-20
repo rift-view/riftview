@@ -15,6 +15,7 @@ import { EmptyCanvasState } from './EmptyCanvasState'
 import { BulkActionToolbar } from './BulkActionToolbar'
 import type { CloudNode } from '../../types/cloud'
 import { exportCanvasToPng } from '../../utils/exportCanvas'
+import { analyzeNode } from '../../utils/analyzeNode'
 
 interface Props {
   onNodeContextMenu: (node: CloudNode, x: number, y: number) => void
@@ -45,6 +46,15 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
   // Ghost hint overlay — shown once after the first successful scan with nodes
   const nodes = useCloudStore((s) => s.nodes)
   const lastScannedAt = useCloudStore((s) => s.lastScannedAt)
+  const selectedRegions = useCloudStore((s) => s.selectedRegions)
+
+  // Advisory count across all nodes (register-br). analyzeNode is pure — fine to call per render.
+  const advisoryCount = nodes.reduce((n, node) => n + analyzeNode(node).length, 0)
+
+  // Register-tl: compact region list (max 3 visible, rest summarised as "+N")
+  const regionLabel =
+    selectedRegions.slice(0, 3).join(' · ') +
+    (selectedRegions.length > 3 ? ' · +' + (selectedRegions.length - 3) : '')
   const [hintVisible, setHintVisible] = useState(false)
   const [hintOpacity, setHintOpacity] = useState(1)
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -163,6 +173,9 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
       <DriftModeStrip />
 
       <div className="relative flex-1" onContextMenu={handleContextMenu}>
+        {/* Rift canvas background — dotted grid + warm vignette (sits under React Flow) */}
+        <div className="rift-canvas-bg" aria-hidden="true" />
+
         {/* Viewport toolbar */}
         <div
           className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 px-2 py-1 rounded-md"
@@ -383,18 +396,22 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
           </div>
         )}
 
-        {/* CRT turn-on animation overlay — remounts on profile change to replay the animation */}
-        <div
-          key={profileKey}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: '#000',
-            pointerEvents: 'none',
-            zIndex: 200,
-            animation: 'crt-on 0.7s ease-out forwards'
-          }}
-        />
+        {/* Hairline sweep — 1px ember line sweeps across on mount / profile change */}
+        <div key={profileKey} className="rift-sweep" aria-hidden="true" />
+
+        {/* Corner register marks — editorial frame, pointer-events: none via class */}
+        <div className="register register-tl" aria-hidden="true">
+          RV · {regionLabel}
+        </div>
+        <div className="register register-tr" aria-hidden="true">
+          — {lastScannedAt ? lastScannedAt.toISOString().replace('T', ' ').slice(0, 16) : 'NO SCAN'}
+        </div>
+        <div className="register register-bl" aria-hidden="true">
+          {nodes.length} RESOURCES
+        </div>
+        <div className="register register-br" aria-hidden="true">
+          {advisoryCount} ADVISORIES
+        </div>
 
         {contextMenu && (
           <CanvasContextMenu
