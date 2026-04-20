@@ -90,22 +90,9 @@ export interface AwsProfile {
   endpoint?: string
 }
 
-export type Theme =
-  | 'dark'
-  | 'light'
-  | 'solarized'
-  | 'rose-pine'
-  | 'catppuccin'
-  | 'solarized-light'
-  | 'github-light'
-  | 'nord-light'
-  | 'gruvbox-dark'
-  | 'gruvbox-light'
-
 export interface Settings {
   deleteConfirmStyle: 'type-to-confirm' | 'command-drawer'
   scanInterval: 15 | 30 | 60 | 'manual'
-  theme: Theme
   showRegionIndicators: boolean
   regionColors: Record<string, string>
   showScanErrorBadges: boolean
