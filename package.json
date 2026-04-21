@@ -1,7 +1,7 @@
 {
   "name": "riftview-monorepo",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "RiftView monorepo — desktop, CLI, and shared analysis library",
   "workspaces": [
     "apps/*",
