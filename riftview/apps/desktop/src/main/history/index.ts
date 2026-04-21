@@ -2,6 +2,14 @@ export { canonicalize, contentHash } from './canonical'
 export { closeDb, openDb, prepareStatements, SchemaVersionError, withTransaction } from './db'
 export type { Db, Statements } from './db'
 export {
+  deleteSnapshot,
+  listVersions,
+  readSnapshot,
+  type ListVersionsFilter,
+  type Snapshot,
+  type VersionMeta
+} from './read'
+export {
   closeSnapshotStore,
   defaultSnapshotDbPath,
   initSnapshotStore,
