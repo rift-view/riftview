@@ -112,3 +112,69 @@ describe('useUIStore — annotations', () => {
     expect(() => useUIStore.getState().clearAnnotation('nonexistent')).not.toThrow()
   })
 })
+
+describe('useUIStore — canvasMode + activeSnapshot (RIFT-38)', () => {
+  beforeEach(() => {
+    useUIStore.setState({ canvasMode: 'live', activeSnapshotId: null, activeSnapshot: null })
+  })
+
+  it('defaults to live mode with no snapshot', () => {
+    const s = useUIStore.getState()
+    expect(s.canvasMode).toBe('live')
+    expect(s.activeSnapshotId).toBeNull()
+    expect(s.activeSnapshot).toBeNull()
+  })
+
+  it('setCanvasMode("timeline", id) records both mode and id', () => {
+    useUIStore.getState().setCanvasMode('timeline', 'ver-123')
+    const s = useUIStore.getState()
+    expect(s.canvasMode).toBe('timeline')
+    expect(s.activeSnapshotId).toBe('ver-123')
+  })
+
+  it('setCanvasMode("live") clears activeSnapshotId AND activeSnapshot', () => {
+    useUIStore.setState({
+      canvasMode: 'timeline',
+      activeSnapshotId: 'ver-123',
+      activeSnapshot: {
+        meta: {
+          id: 'ver-123',
+          timestamp: '2026-04-21T00:00:00Z',
+          profile: 'p',
+          region: 'us-east-1',
+          endpoint: null,
+          contentHash: 'abc'
+        },
+        nodes: []
+      }
+    })
+    useUIStore.getState().setCanvasMode('live')
+    const s = useUIStore.getState()
+    expect(s.canvasMode).toBe('live')
+    expect(s.activeSnapshotId).toBeNull()
+    expect(s.activeSnapshot).toBeNull()
+  })
+
+  it('setActiveSnapshot stores the record', () => {
+    const snap = {
+      meta: {
+        id: 'ver-9',
+        timestamp: '2026-04-21T00:00:00Z',
+        profile: 'p',
+        region: 'us-east-1',
+        endpoint: null,
+        contentHash: 'deadbeef'
+      },
+      nodes: []
+    }
+    useUIStore.getState().setActiveSnapshot(snap)
+    expect(useUIStore.getState().activeSnapshot).toBe(snap)
+  })
+
+  it('setActiveSnapshot(null) clears the record without changing mode', () => {
+    useUIStore.setState({ canvasMode: 'timeline', activeSnapshotId: 'x' })
+    useUIStore.getState().setActiveSnapshot(null)
+    expect(useUIStore.getState().activeSnapshot).toBeNull()
+    expect(useUIStore.getState().canvasMode).toBe('timeline')
+  })
+})

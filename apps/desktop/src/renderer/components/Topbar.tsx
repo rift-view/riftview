@@ -5,6 +5,7 @@ import type { AwsProfile, CloudNode } from '@riftview/shared'
 import type { TfModuleInfo } from '../types/tfstate'
 import TemplatesModal from './TemplatesModal'
 import TfModuleSelectorModal from './modals/TfModuleSelectorModal'
+import { CanvasModeBadge } from './CanvasModeBadge'
 import { getMonthlyEstimate, formatPrice } from '../utils/pricing'
 import { buildRegionColorMap } from '../utils/regionColors'
 import logoUrl from '../assets/riftview-logo.jpg'
@@ -383,6 +384,10 @@ export function Topbar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
           <span className="dot" style={unknownDotStyle} />
           <span style={{ color: connectionLabelColor }}>{connectionLabel}</span>
         </span>
+
+        <div style={hairlineStyle} />
+
+        <CanvasModeBadge />
 
         <div style={hairlineStyle} />
 
