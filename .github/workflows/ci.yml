@@ -16,10 +16,8 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: riftview/package-lock.json
       - name: Install dependencies
         run: npm ci
-        working-directory: riftview
       - name: Guard — @riftview/shared has no electron imports
         # Belt-and-suspenders: the CLI bundle marks electron external, but
         # any electron import in shared source would still bloat esbuild's
@@ -29,25 +27,19 @@ jobs:
             echo "::error::@riftview/shared must not import electron"
             exit 1
           fi
-        working-directory: riftview
       - name: Lint
         run: npm run lint
-        working-directory: riftview
       - name: Typecheck
         run: npm run typecheck
-        working-directory: riftview
       - name: Test
         run: npm test
-        working-directory: riftview
       - name: Build CLI
         run: npm run build:cli
-        working-directory: riftview
       - name: CLI bundle smoke — `riftview version --output json`
         run: |
           out=$(node apps/cli/out/index.js version --output json)
           echo "$out"
           echo "$out" | node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));if(d.schemaVersion!==1){console.error("bad schemaVersion:",d.schemaVersion);process.exit(1)}'
-        working-directory: riftview
 
   release:
     needs: ci
@@ -70,13 +62,11 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: riftview/package-lock.json
       - name: Install dependencies
         run: npm ci
-        working-directory: riftview
       - name: Build and publish
         run: npx electron-vite build && npx electron-builder --${{ matrix.platform }} --publish always
-        working-directory: riftview
+        working-directory: apps/desktop
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.CSC_LINK }}

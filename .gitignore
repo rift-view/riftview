@@ -19,8 +19,7 @@ Thumbs.db
 # the public repo. Only user-facing docs ship from here.
 docs/*
 !docs/cli.md
-riftview/docs/*
-!riftview/docs/IPC.md
+!docs/IPC.md
 
 # Superpowers / brainstorm runtime state
 .superpowers/
@@ -42,7 +41,6 @@ node_modules/
 
 # graphify output
 graphify-out/
-riftview/graphify-out/
 
 # Session-pause template (populated on context-limit pauses)
 RESUME.md
