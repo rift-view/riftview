@@ -44,7 +44,10 @@ export const IPC = {
   TERMINAL_RESIZE: 'terminal:resize', // invoke(sessionId, cols, rows) → void
   TERMINAL_CLOSE: 'terminal:close', // invoke(sessionId) → void
   TERMINAL_OUTPUT: 'terminal:output', // push: main → renderer
-  SCAN_ERROR_DETAIL: 'scan:error-detail' // push: main → renderer — { message, kind } for actionable scan failure toasts
+  SCAN_ERROR_DETAIL: 'scan:error-detail', // push: main → renderer — { message, kind } for actionable scan failure toasts
+  SNAPSHOT_LIST: 'snapshot:list', // invoke(filter?: { profile?, region?, limit? }) → VersionMeta[]
+  SNAPSHOT_READ: 'snapshot:read', // invoke(versionId: string) → Snapshot | null
+  SNAPSHOT_DELETE: 'snapshot:delete' // invoke(versionId: string) → { ok: boolean }
 } as const
 
 export type IpcChannel = (typeof IPC)[keyof typeof IPC]

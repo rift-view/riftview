@@ -99,5 +99,12 @@ interface Window {
     resizeTerminal(sessionId: string, cols: number, rows: number): Promise<void>
     closeTerminal(sessionId: string): Promise<void>
     onTerminalOutput(cb: (data: { sessionId: string; data: string }) => void): () => void
+    listSnapshots(filter?: {
+      profile?: string
+      region?: string
+      limit?: number
+    }): Promise<import('../main/history/read').VersionMeta[]>
+    readSnapshot(versionId: string): Promise<import('../main/history/read').Snapshot | null>
+    deleteSnapshot(versionId: string): Promise<{ ok: boolean }>
   }
 }
