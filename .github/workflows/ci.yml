@@ -45,8 +45,24 @@ jobs:
           echo "$out"
           echo "$out" | node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));if(d.schemaVersion!==1){console.error("bad schemaVersion:",d.schemaVersion);process.exit(1)}'
 
+  e2e:
+    # Stub for M1. Real content (IPC contract, CLI↔LocalStack, Electron smoke)
+    # lands in M2–M4. Duplicating `npm test` proves the job slot is wired
+    # correctly and the PR check surface shows two parallel jobs.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Test
+        run: npm test
+
   release:
-    needs: fast
+    needs: [fast, e2e]
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
