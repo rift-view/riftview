@@ -1,0 +1,18 @@
+# Pre-commit hooks for RiftView.
+#
+# Format + lint on staged files only, parallel, sub-second. No typecheck,
+# no tests — those are CI's job. Keep this fast: if the hook ever exceeds
+# ~1s, someone will reach for --no-verify and the guarantee is gone.
+#
+# One-time install: `npx lefthook install` (see README "Development").
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: '*.{ts,tsx,json,md,yml,yaml}'
+      run: npx prettier --write {staged_files}
+      stage_fixed: true
+    lint:
+      glob: '*.{ts,tsx}'
+      run: npx eslint --fix {staged_files}
+      stage_fixed: true
