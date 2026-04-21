@@ -14,7 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:integration": "vitest run --project cli-integration",
+    "test:integration": "vitest run --config apps/cli/vitest.integration.config.ts",
     "localstack:up": "docker compose -f .localstack/compose.yml up -d && ./scripts/wait-localstack.sh && cd apps/cli/tests/integration/fixtures && terraform init -input=false && terraform apply -auto-approve",
     "localstack:down": "docker compose -f .localstack/compose.yml down -v",
     "build": "npm run build --workspaces --if-present",
