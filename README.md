@@ -43,7 +43,7 @@ riftview scan --profile prod
 riftview drift --state terraform.tfstate --fail-on-drift
 ```
 
-See [`docs/cli.md`](./docs/cli.md) for the full reference: command flags, JSON output schema, exit codes, and a GitHub Actions example.
+See [`apps/cli/README.md`](./apps/cli/README.md) for the full reference: command flags, JSON output schema, exit codes, and a GitHub Actions example.
 
 ## Repository layout
 

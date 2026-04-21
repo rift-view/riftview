@@ -15,11 +15,12 @@ Thumbs.db
 # Claude Code local state
 .claude/
 
-# Planning docs, outreach, positioning, and demo scaffolding live outside
-# the public repo. Only user-facing docs ship from here.
-docs/*
-!docs/cli.md
-!docs/IPC.md
+# Planning docs, outreach, positioning, brand assets, IDE settings, and
+# demo scaffolding live outside the public repo.
+docs/
+brand/
+scripts/
+.vscode/
 
 # Superpowers / brainstorm runtime state
 .superpowers/
