@@ -37,3 +37,18 @@ public repo that points to it.
   `npm run build:cli`, `npm run dev`) run from the repo root.
 - CI: `.github/workflows/ci.yml`. Must pass: lint, typecheck, test,
   CLI build + smoke.
+
+## Adding a new AWS service (scan)
+
+When extending the scanner to cover a new AWS service:
+
+1. Add/extend the scan helper and wire it into `awsPlugin.scan()` under
+   `apps/desktop/src/main/plugin/`.
+2. Add the new `NodeType` literal to `packages/shared/src/types/cloud.ts`.
+3. Extend any `Record<NodeType, ...>` map in the renderer so the
+   exhaustive-check typecheck still passes.
+4. Add a minimal resource to
+   `apps/cli/tests/integration/fixtures/seed.tf` so the LocalStack
+   integration suite exercises the new scan path. If LocalStack
+   Community-Archive does not support the service, note the gap in the
+   file's header comment instead of silently skipping.

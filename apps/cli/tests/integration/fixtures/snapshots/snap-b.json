@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "command": "scan",
+  "profile": "integration",
+  "regions": ["us-east-1"],
+  "timestamp": "2026-04-21T11:00:00.000Z",
+  "durationMs": 45,
+  "nodes": [
+    {
+      "id": "i-stable",
+      "type": "ec2",
+      "label": "rv-seed-web",
+      "status": "running",
+      "region": "us-east-1",
+      "metadata": { "instanceType": "t3.micro" }
+    },
+    {
+      "id": "i-added",
+      "type": "ec2",
+      "label": "new-node",
+      "status": "running",
+      "region": "us-east-1",
+      "metadata": { "instanceType": "t3.small" }
+    },
+    {
+      "id": "fn-changed",
+      "type": "lambda",
+      "label": "rv-seed-api",
+      "status": "running",
+      "region": "us-east-1",
+      "metadata": { "timeout": 30, "memorySize": 512 }
+    }
+  ],
+  "edges": [],
+  "scanErrors": [],
+  "topRisks": []
+}
