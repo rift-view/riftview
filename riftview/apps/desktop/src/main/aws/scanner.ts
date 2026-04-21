@@ -2,6 +2,7 @@ import { BrowserWindow, app } from 'electron'
 import fsp from 'fs/promises'
 import path from 'path'
 import { IPC } from '../ipc/channels'
+import { writeSnapshotSafe } from '../history/store'
 import { createClients } from './client'
 import type { CloudNode, ScanDelta } from '@riftview/shared'
 import { classifyScanError, markStandaloneNodes, scanOnce } from '@riftview/shared'
@@ -226,6 +227,17 @@ export class ResourceScanner {
       }
       // Cache newly added nodes
       for (const n of delta.added ?? []) nodeCache.set(n.id, n)
+
+      // Snapshot write — best-effort, must never fail the scan (RIF-5).
+      writeSnapshotSafe({
+        profile: this.profile,
+        endpoint: this.endpoint ?? null,
+        regions: this.regions,
+        pluginId: 'com.riftview.aws',
+        pluginVersion: app.getVersion(),
+        scanErrors: scanErrors.map((e) => `${e.service}/${e.region}: ${e.message}`),
+        nodes: nextNodes
+      })
 
       this.window.webContents.send(IPC.SCAN_STATUS, 'idle')
 

@@ -1,6 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { autoUpdater } from 'electron-updater'
+import { closeSnapshotStore } from './history/store'
 import { registerHandlers } from './ipc/handlers'
 import { IPC } from './ipc/channels'
 
@@ -42,4 +43,8 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+app.on('before-quit', () => {
+  closeSnapshotStore()
 })
