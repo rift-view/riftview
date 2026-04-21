@@ -30,6 +30,7 @@ const PERMISSIONS = [
 export function Onboarding(): React.JSX.Element {
   return (
     <div
+      data-testid="onboarding"
       className="onb"
       style={{
         display: 'flex',
