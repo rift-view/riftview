@@ -341,6 +341,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
 export const awsPlugin: RiftViewPlugin = {
   id: 'com.riftview.aws',
   displayName: 'Amazon Web Services',
+  versionFormat: 'scan-snapshot',
 
   nodeTypes: [
     'ec2',
