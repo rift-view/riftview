@@ -15,7 +15,7 @@ export function useDemoFixture(): void {
     if (!isDemoMode()) return
     const { nodes } = useCloudStore.getState()
     if (nodes.length > 0) return
-    useCloudStore.setState({ nodes: DEMO_FIXTURE_NODES })
+    useCloudStore.setState({ nodes: DEMO_FIXTURE_NODES, lastScannedAt: new Date() })
     didHydrate.current = true
   }, [])
 }

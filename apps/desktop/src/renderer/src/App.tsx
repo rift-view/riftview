@@ -28,6 +28,7 @@ import { KeyboardHelpButton } from '../components/KeyboardHelpButton'
 import { TerminalPane } from '../components/TerminalPane'
 import { useKeyboardNav } from '../hooks/useKeyboardNav'
 import { useDemoFixture } from '../hooks/useDemoFixture'
+import { isDemoMode } from '../utils/demoMode'
 
 function ResizeHandle({ onResize }: { onResize: (delta: number) => void }): React.JSX.Element {
   const startX = useRef<number | null>(null)
@@ -228,7 +229,7 @@ export default function App(): React.JSX.Element | null {
   }
 
   if (profiles === null) return <div style={{ background: 'var(--ink-1000)', height: '100vh' }} />
-  if (profiles.length === 0) return <Onboarding />
+  if (profiles.length === 0 && !isDemoMode()) return <Onboarding />
 
   return (
     <div

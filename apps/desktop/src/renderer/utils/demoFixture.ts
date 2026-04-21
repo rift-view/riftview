@@ -19,7 +19,7 @@ export const DEMO_FIXTURE_NODES: CloudNode[] = [
     label: 'demo-api',
     status: 'running',
     region: 'us-east-1',
-    metadata: { timeout: 30, memorySize: 256 }
+    metadata: { timeout: 30, memorySize: 256, functionName: 'demo-api' }
   },
   {
     id: 'demo-assets',
@@ -27,6 +27,6 @@ export const DEMO_FIXTURE_NODES: CloudNode[] = [
     label: 'demo-assets',
     status: 'running',
     region: 'us-east-1',
-    metadata: {}
+    metadata: { bucketName: 'demo-assets' }
   }
 ]
