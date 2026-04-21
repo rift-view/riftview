@@ -1,5 +1,5 @@
 // Stable CLI output schema v1. CI consumers rely on these shapes — any
-// additive change must bump SCHEMA_VERSION. See ~/riftview-docs/superpowers/plans/2026-04-20-riftview-cli.md §Output schema.
+// additive change must bump SCHEMA_VERSION.
 import type { Advisory, CloudNode, EdgeType, ScanError } from '@riftview/shared'
 
 export const SCHEMA_VERSION = 1 as const
