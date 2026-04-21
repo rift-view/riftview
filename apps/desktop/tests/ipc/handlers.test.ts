@@ -12,25 +12,25 @@ vi.mock('@riftview/shared', async (importOriginal) => {
     getDefaultRegion: vi.fn().mockReturnValue('us-east-1')
   }
 })
-vi.mock('../../../src/main/aws/client', () => ({
+vi.mock('../../src/main/aws/client', () => ({
   createClients: vi.fn().mockReturnValue({})
 }))
-vi.mock('../../../src/main/aws/scanner', () => ({
+vi.mock('../../src/main/aws/scanner', () => ({
   ResourceScanner: vi.fn(function () {
     return { start: vi.fn(), stop: vi.fn(), triggerManualScan: vi.fn(), updateRegions: vi.fn() }
   })
 }))
-vi.mock('../../../src/main/cli/engine', () => ({
+vi.mock('../../src/main/cli/engine', () => ({
   CliEngine: vi.fn(function () {
     return { execute: vi.fn(), cancel: vi.fn() }
   })
 }))
-vi.mock('../../../src/renderer/utils/buildCommand', () => ({
+vi.mock('../../src/renderer/utils/buildCommand', () => ({
   buildCommands: vi.fn().mockReturnValue([])
 }))
 
 import { ipcMain } from 'electron'
-import { registerHandlers } from '../../../src/main/ipc/handlers'
+import { registerHandlers } from '../../src/main/ipc/handlers'
 
 describe('registerHandlers', () => {
   beforeEach(() => vi.clearAllMocks())
@@ -72,7 +72,7 @@ describe('registerHandlers', () => {
     expect(handler).toBeDefined()
     await handler!({} as Electron.IpcMainInvokeEvent, { selectedRegions: ['us-west-2'] })
 
-    const { ResourceScanner } = await import('../../../src/main/aws/scanner')
+    const { ResourceScanner } = await import('../../src/main/aws/scanner')
     const mockInstance = vi.mocked(ResourceScanner).mock.results[0]?.value
     expect(mockInstance?.updateRegions).toHaveBeenCalledWith(['us-west-2'])
   })

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { IPC } from '../../../src/main/ipc/channels'
+import { IPC } from '../../src/main/ipc/channels'
 
 describe('IPC channel constants', () => {
   it('has required channel names', () => {
