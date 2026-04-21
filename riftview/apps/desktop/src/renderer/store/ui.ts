@@ -12,6 +12,13 @@ const TOAST_DURATION_MS = 2500
 
 type ViewKey = 'topology' | 'graph' | 'command'
 
+/**
+ * Canvas mode (RIF-19). 'live' is the default steady state; 'timeline' is the
+ * read-only snapshot rail; 'restore' is the staged plan-diff with explicit
+ * ember framing. Mode transitions are deliberate — see setCanvasMode.
+ */
+export type CanvasMode = 'live' | 'timeline' | 'restore'
+
 export interface StickyNote {
   id: string
   content: string
@@ -75,7 +82,20 @@ interface UIState {
   terminalNodeId: string | null
   savedViewport: { x: number; y: number; zoom: number } | null
 
+  /** RIF-19: canvas mode — 'live' | 'timeline' | 'restore'. */
+  canvasMode: CanvasMode
+  /** RIF-19: snapshot the timeline/restore modes are pinned to, or null in 'live'. */
+  activeSnapshotId: string | null
+
   setView: (view: ViewKey) => void
+  /**
+   * RIF-19: enter / exit a canvas mode. Transitions are intentionally
+   * constrained — a plan-diff apply in progress (tracked by RIF-20) must
+   * complete or cancel before mode 'restore' → 'live' is accepted. Until
+   * that state lives here, this setter accepts any transition; gating moves
+   * in with the apply IPC.
+   */
+  setCanvasMode: (mode: CanvasMode, snapshotId?: string | null) => void
   selectNode: (id: string | null) => void
   setSelectedNodeIds: (ids: Set<string>) => void
   clearSelectedNodeIds: () => void
@@ -142,6 +162,8 @@ let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 export const useUIStore = create<UIState>((set, get) => ({
   view: 'topology',
+  canvasMode: 'live',
+  activeSnapshotId: null,
   selectedNodeId: null,
   selectedNodeIds: new Set<string>(),
   selectedEdgeId: null,
@@ -182,6 +204,13 @@ export const useUIStore = create<UIState>((set, get) => ({
   savedViewport: null,
 
   setView: (view) => set({ view }),
+  setCanvasMode: (mode, snapshotId = null) => {
+    if (mode === 'live') {
+      set({ canvasMode: 'live', activeSnapshotId: null })
+    } else {
+      set({ canvasMode: mode, activeSnapshotId: snapshotId })
+    }
+  },
   selectNode: (id) => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
   setSelectedNodeIds: (ids) => set({ selectedNodeIds: ids }),
   clearSelectedNodeIds: () => set({ selectedNodeIds: new Set<string>() }),

@@ -5,6 +5,7 @@ export type FlagName =
   | 'COMMAND_BOARD' // Phase 1: always-on (kept for flags.test.ts)
   | 'ACTION_RAIL' // Phase 1: always-on (kept for ResourceNode.advisories.test.tsx)
   | 'EXECUTION_ENGINE' // Phase 2: always-on (kept for Inspector.remediate.test.tsx)
+  | 'RESTORE_MODE' // RIF-19: gate Timeline / Restore mode entry points
 
 const ENV_PREFIX = 'VITE_FLAG_'
 
