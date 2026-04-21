@@ -1,5 +1,4 @@
-import { createHash } from 'node:crypto'
-import type { CloudNode } from '@riftview/shared'
+import type { CloudNode } from '../types/cloud'
 import type { EdgeRecord, ScanMeta, ScanPayload } from './types'
 
 export function canonicalize(payload: ScanPayload): string {
@@ -8,10 +7,6 @@ export function canonicalize(payload: ScanPayload): string {
     edges: [...payload.edges].sort(byEdgeKey),
     meta: stableScanMeta(payload.meta)
   })
-}
-
-export function contentHash(payload: ScanPayload): string {
-  return createHash('sha256').update(canonicalize(payload)).digest('hex')
 }
 
 function byNodeId(a: CloudNode, b: CloudNode): number {

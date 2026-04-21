@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs'
+import type { ScanPayload } from '@riftview/shared/snapshot'
 import { UsageError } from './errors'
 import { toJson } from './output/json'
 import { SCHEMA_VERSION, type ScanOutput } from './output/schema'
@@ -48,4 +49,28 @@ export function readSnapshot(path: string): ScanOutput {
     )
   }
   return snap as ScanOutput
+}
+
+/**
+ * Adapt a CLI ScanOutput into the shared ScanPayload shape. Used by commands
+ * that want to compute a content hash (e.g. diff short-circuit) without
+ * rewriting the on-wire CLI format.
+ *
+ * The CLI's flat ScanOutput has a different edges shape (source/target) and
+ * carries extra fields (timestamp, durationMs, topRisks) the hash shouldn't
+ * depend on. This adapter projects only the graph-meaningful subset.
+ */
+export function toScanPayload(output: ScanOutput): ScanPayload {
+  return {
+    nodes: output.nodes,
+    edges: output.edges.map((e) => ({ from: e.source, to: e.target, edgeType: e.edgeType })),
+    meta: {
+      scanErrors: output.scanErrors.map((err) => `${err.service}:${err.region}:${err.message}`),
+      nodeCount: output.nodes.length,
+      edgeCount: output.edges.length,
+      pluginId: 'aws',
+      pluginVersion: '1',
+      schemaVersion: SCHEMA_VERSION
+    }
+  }
 }

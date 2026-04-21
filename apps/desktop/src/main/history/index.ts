@@ -1,4 +1,4 @@
-export { canonicalize, contentHash } from './canonical'
+export { canonicalize, contentHash } from '@riftview/shared/snapshot'
 export { closeDb, openDb, prepareStatements, SchemaVersionError, withTransaction } from './db'
 export type { Db, Statements } from './db'
 export {

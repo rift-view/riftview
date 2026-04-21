@@ -4,12 +4,13 @@
 // gating by piping JSON through jq / shell.
 import type { Command } from 'commander'
 import type { CloudNode } from '@riftview/shared'
+import { contentHash } from '@riftview/shared/snapshot'
 import { UsageError } from '../errors'
 import { toJson } from '../output/json'
 import { formatDiff } from '../output/pretty-diff'
 import type { DiffChange, DiffOutput, ScanOutput } from '../output/schema'
 import { SCHEMA_VERSION } from '../output/schema'
-import { readSnapshot } from '../snapshot'
+import { readSnapshot, toScanPayload } from '../snapshot'
 
 export interface DiffDeps {
   /** Override snapshot reader — tests stub this. */
@@ -40,7 +41,9 @@ export function registerDiff(program: Command, deps: DiffDeps = {}): void {
         command: 'diff',
         a,
         b,
-        ...computeDiff(snapA, snapB)
+        ...(contentHash(toScanPayload(snapA)) === contentHash(toScanPayload(snapB))
+          ? { added: [], removed: [], changed: [] }
+          : computeDiff(snapA, snapB))
       }
 
       const cfg = (

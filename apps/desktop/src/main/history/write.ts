@@ -1,9 +1,14 @@
 import { randomBytes } from 'node:crypto'
 import type { CloudNode } from '@riftview/shared'
-import { contentHash } from './canonical'
+import {
+  contentHash,
+  type EdgeRecord,
+  type ScanMeta,
+  type ScanPayload
+} from '@riftview/shared/snapshot'
 import { withTransaction, type Db, type Statements } from './db'
 import { toSnapshotRecord } from './transform'
-import { HISTORY_SCHEMA_VERSION, type EdgeRecord, type ScanMeta, type ScanPayload } from './types'
+import { HISTORY_SCHEMA_VERSION } from './types'
 
 export interface WriteSnapshotInput {
   profile: string

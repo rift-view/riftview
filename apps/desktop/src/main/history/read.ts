@@ -1,6 +1,6 @@
 import type { CloudNode, DriftStatus, EdgeType, NodeStatus, NodeType } from '@riftview/shared'
+import type { EdgeRecord, ScanMeta } from '@riftview/shared/snapshot'
 import type { Db, Statements } from './db'
-import type { EdgeRecord, ScanMeta } from './types'
 
 export interface VersionMeta {
   id: string

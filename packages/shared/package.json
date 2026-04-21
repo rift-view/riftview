@@ -5,6 +5,10 @@
   "description": "Platform-agnostic analysis, graph, drift, and scan primitives shared between @riftview/desktop and @riftview/cli",
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./snapshot": "./src/snapshot/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
