@@ -57,6 +57,10 @@ Root `package.json` hoists devDeps; `npm install` at the root sets up all three.
 
 ## Development
 
+### Apple Silicon prereq
+
+RiftView's snapshot store uses `better-sqlite3`, a native module. On Apple Silicon Macs, Node must be `arm64` or the Electron runtime will fail to load the native binary. If you installed Node via Intel Homebrew (`/usr/local/bin/node`), either switch to `/opt/homebrew` Node, use nvm, or run `npx @electron/rebuild` after `npm install` to rebuild native modules against Electron's arch.
+
 ```bash
 # Install dependencies
 npm install
