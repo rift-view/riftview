@@ -103,31 +103,82 @@ jobs:
         run: docker compose -f .localstack/compose.yml logs localstack | tail -200
 
   release:
-    needs: [fast, e2e]
     if: startsWith(github.ref, 'refs/tags/v')
+    needs: [fast, e2e]
     permissions:
       contents: write
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: macos-latest
             platform: mac
-          - os: windows-latest
-            platform: win
           - os: ubuntu-latest
             platform: linux
     runs-on: ${{ matrix.os }}
+    services:
+      localstack:
+        image: localstack/localstack:community-archive
+        ports: ['4566:4566']
+        env:
+          SERVICES: ec2,lambda,s3,sqs,sns,dynamodb,rds,iam,elbv2,events,stepfunctions,secretsmanager,sts,cloudwatch,logs
+          DEBUG: '0'
+        options: >-
+          --health-cmd "curl -sf http://localhost:4566/_localstack/health || exit 1"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://localhost:4566
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.x
       - name: Install dependencies
         run: npm ci
-      - name: Build and publish
-        run: npx electron-vite build && npx electron-builder --${{ matrix.platform }} --publish always
+      - name: Install Playwright browsers (with Linux deps)
+        run: npx playwright install --with-deps chromium
+      - name: Wait for LocalStack
+        run: |
+          for i in {1..30}; do
+            curl -sf http://localhost:4566/_localstack/health && break || sleep 2
+          done
+      - name: Seed LocalStack
+        working-directory: apps/cli/tests/integration/fixtures
+        run: terraform init -input=false && terraform apply -auto-approve -input=false
+      - name: Build desktop bundles (electron-vite)
         working-directory: apps/desktop
+        run: npx electron-vite build
+      - name: Build unsigned binary (for @release E2E)
+        working-directory: apps/desktop
+        run: npx electron-builder --dir
+      - name: Run @release E2E against the built binary
+        run: |
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            xvfb-run -a npm run test:e2e:release
+          else
+            npm run test:e2e:release
+          fi
+        env:
+          CI: 'true'
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-release-${{ matrix.platform }}
+          path: apps/desktop/tests/e2e/playwright-report
+          retention-days: 30
+      - name: Build signed and publish
+        working-directory: apps/desktop
+        run: npx electron-vite build && npx electron-builder --${{ matrix.platform }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
