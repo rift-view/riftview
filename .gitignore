@@ -15,10 +15,12 @@ Thumbs.db
 # Claude Code local state
 .claude/
 
-# Planning docs live in the private riftview-docs repo; only public
-# user-facing docs (CLI reference) ship from here.
+# Planning docs, outreach, positioning, and demo scaffolding live outside
+# the public repo. Only user-facing docs ship from here.
 docs/*
 !docs/cli.md
+riftview/docs/*
+!riftview/docs/IPC.md
 
 # Superpowers / brainstorm runtime state
 .superpowers/
