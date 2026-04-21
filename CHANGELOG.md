@@ -16,4 +16,4 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Snapshot format: `riftview scan --snapshot <path>` writes a reloadable `ScanOutput` consumed by `risks --snapshot` and `diff`.
   - Self-contained Node bundle with no Electron runtime deps.
   - Ships from `apps/cli/` workspace; analysis primitives reused from `packages/shared/`.
-  - Docs: [`docs/cli.md`](./docs/cli.md).
+  - Docs: [`apps/cli/README.md`](./apps/cli/README.md).
