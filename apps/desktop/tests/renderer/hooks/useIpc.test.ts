@@ -8,6 +8,7 @@ const unsubStatus = vi.fn()
 
 beforeEach(() => {
   window.riftview = {
+    isDemoMode: false,
     listProfiles: vi.fn().mockResolvedValue([]),
     selectProfile: vi.fn().mockResolvedValue(undefined),
     selectRegion: vi.fn().mockResolvedValue(undefined),

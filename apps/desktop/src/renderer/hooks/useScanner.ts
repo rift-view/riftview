@@ -1,9 +1,12 @@
 import { useEffect, useRef } from 'react'
 import { useCloudStore } from '../store/cloud'
 import { useUIStore } from '../store/ui'
+import { isDemoMode } from '../utils/demoMode'
 
 // On mount: loads profiles, selects first profile + its default region
-// (which starts the scanner in main).
+// (which starts the scanner in main). In demo mode, short-circuits —
+// the fixture seed (useDemoFixture) populates the store; real AWS is
+// never touched.
 export function useScanner(): { triggerScan: () => void } {
   const setProfile = useCloudStore((s) => s.setProfile)
   const setRegion = useCloudStore((s) => s.setRegion)
@@ -13,6 +16,7 @@ export function useScanner(): { triggerScan: () => void } {
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
+    if (isDemoMode()) return
 
     window.riftview.listProfiles().then((profiles) => {
       if (profiles.length === 0) return

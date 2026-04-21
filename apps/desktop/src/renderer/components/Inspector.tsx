@@ -144,7 +144,11 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
 
   if (nodes.length === 0 || !lastScannedAt) {
     return (
-      <div className="label" style={{ textAlign: 'center', marginTop: 32, padding: 16 }}>
+      <div
+        data-testid="inspector-empty"
+        className="label"
+        style={{ textAlign: 'center', marginTop: 32, padding: 16 }}
+      >
         {scanStatus === 'scanning' ? 'Scanning…' : 'Click a resource to inspect'}
       </div>
     )
@@ -747,6 +751,7 @@ export function Inspector({
 
   return (
     <div
+      data-testid="inspector"
       className="overflow-y-auto h-full"
       style={{
         background: 'var(--ink-900)',
