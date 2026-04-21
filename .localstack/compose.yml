@@ -1,0 +1,31 @@
+# Local LocalStack harness for the CLI integration test suite.
+#
+# Pinned to `localstack/localstack:community-archive` per project policy:
+# per the LocalStack team, `community-archive` tracks ahead of tagged
+# community releases (e.g. `4.14`). Do NOT change to `:latest` or
+# `:community` silently — bumps require a conscious change (fixture
+# compatibility, service coverage, env vars may all shift). See CLAUDE.md.
+#
+# CI uses this same compose file via `docker compose -f .localstack/compose.yml
+# up -d` in the `e2e` job — one source of truth for local and CI.
+services:
+  localstack:
+    image: localstack/localstack:community-archive
+    container_name: riftview-localstack
+    ports:
+      - '4566:4566'
+    environment:
+      SERVICES: ec2,lambda,s3,sqs,sns,dynamodb,rds,iam,elbv2,events,stepfunctions,secretsmanager,sts,cloudwatch,logs
+      # Lambda executor needs the host Docker socket to spawn function
+      # runtime containers. Without this + the volume mount below, lambda
+      # create fails with "Docker not available".
+      LAMBDA_EXECUTOR: docker
+      DEBUG: '0'
+      PERSISTENCE: '0'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ['CMD', 'curl', '-sf', 'http://localhost:4566/_localstack/health']
+      interval: 5s
+      timeout: 3s
+      retries: 20

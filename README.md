@@ -2,7 +2,7 @@
 
 **The incident diagnostic layer AWS doesn't have.**
 
-The AWS console is organized by service silo. When something breaks, you open 4 tabs to answer one question: *what else is connected to this?* RiftView answers it in 10 seconds.
+The AWS console is organized by service silo. When something breaks, you open 4 tabs to answer one question: _what else is connected to this?_ RiftView answers it in 10 seconds.
 
 ## What it does
 
@@ -65,6 +65,9 @@ RiftView's snapshot store uses `better-sqlite3`, a native module. On Apple Silic
 # Install dependencies
 npm install
 
+# One-time: install the pre-commit hook (prettier + eslint on staged files)
+npx lefthook install
+
 # Start dev server
 npm run dev
 
@@ -77,6 +80,9 @@ npm run typecheck
 # Lint
 npm run lint
 ```
+
+For the LocalStack-backed CLI integration tests, see
+[`apps/cli/tests/integration/README.md`](./apps/cli/tests/integration/README.md).
 
 ## Build
 

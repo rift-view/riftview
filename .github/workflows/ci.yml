@@ -46,19 +46,46 @@ jobs:
           echo "$out" | node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));if(d.schemaVersion!==1){console.error("bad schemaVersion:",d.schemaVersion);process.exit(1)}'
 
   e2e:
-    # Real content starts in M2 with the IPC contract walker.
-    # M3 will add LocalStack + CLI integration tests; M4 adds Electron E2E.
+    # M2: IPC contract walker. M3: CLI ↔ LocalStack integration.
+    # M4 will add Electron E2E; M5 flips release to build-test-publish.
+    #
+    # LocalStack runs via `docker compose -f .localstack/compose.yml up -d`
+    # (the same compose file used for local dev — one source of truth).
+    # Docker socket mount in that compose file is what lets the Lambda
+    # provider spawn function runtime containers.
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://localhost:4566
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.x
       - name: Install dependencies
         run: npm ci
+      - name: Start LocalStack
+        run: docker compose -f .localstack/compose.yml up -d
+      - name: Wait for LocalStack
+        run: ./scripts/wait-localstack.sh
+      - name: Seed LocalStack
+        working-directory: apps/cli/tests/integration/fixtures
+        run: terraform init -input=false && terraform apply -auto-approve -input=false
+      - name: Build CLI
+        run: npm run build:cli
       - name: IPC contract
         run: npx vitest run apps/desktop/tests/ipc
+      - name: CLI ↔ LocalStack integration
+        run: npm run test:integration
+      - name: LocalStack logs on failure
+        if: failure()
+        run: docker compose -f .localstack/compose.yml logs localstack | tail -200
 
   release:
     needs: [fast, e2e]
