@@ -12,8 +12,12 @@ export {
 export {
   closeSnapshotStore,
   defaultSnapshotDbPath,
+  deleteSnapshotSafe,
   initSnapshotStore,
   isSnapshotStoreOpen,
+  listVersionsSafe,
+  readSnapshotSafe,
+  validateListFilter,
   writeSnapshotSafe
 } from './store'
 export { REDACTED, toSnapshotRecord, type SnapshotRecord } from './transform'

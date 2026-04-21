@@ -19,4 +19,10 @@ describe('IPC channel constants', () => {
   it('defines PLUGIN_METADATA channel', () => {
     expect(IPC.PLUGIN_METADATA).toBe('plugin:metadata')
   })
+
+  it('defines snapshot read-only channels (RIF-5 Phase 6)', () => {
+    expect(IPC.SNAPSHOT_LIST).toBe('snapshot:list')
+    expect(IPC.SNAPSHOT_READ).toBe('snapshot:read')
+    expect(IPC.SNAPSHOT_DELETE).toBe('snapshot:delete')
+  })
 })

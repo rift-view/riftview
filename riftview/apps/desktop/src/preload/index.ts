@@ -185,5 +185,11 @@ contextBridge.exposeInMainWorld('riftview', {
     ipcRenderer.on(IPC.TERMINAL_OUTPUT, handler as Parameters<typeof ipcRenderer.on>[1])
     return () =>
       ipcRenderer.off(IPC.TERMINAL_OUTPUT, handler as Parameters<typeof ipcRenderer.off>[1])
-  }
+  },
+
+  // Snapshot history — read-only from renderer.
+  listSnapshots: (filter?: { profile?: string; region?: string; limit?: number }) =>
+    ipcRenderer.invoke(IPC.SNAPSHOT_LIST, filter),
+  readSnapshot: (versionId: string) => ipcRenderer.invoke(IPC.SNAPSHOT_READ, versionId),
+  deleteSnapshot: (versionId: string) => ipcRenderer.invoke(IPC.SNAPSHOT_DELETE, versionId)
 })

@@ -60,7 +60,10 @@ beforeEach(() => {
     sendTerminalInput: vi.fn().mockResolvedValue(undefined),
     resizeTerminal: vi.fn().mockResolvedValue(undefined),
     closeTerminal: vi.fn().mockResolvedValue(undefined),
-    onTerminalOutput: vi.fn().mockReturnValue(vi.fn())
+    onTerminalOutput: vi.fn().mockReturnValue(vi.fn()),
+    listSnapshots: vi.fn().mockResolvedValue([]),
+    readSnapshot: vi.fn().mockResolvedValue(null),
+    deleteSnapshot: vi.fn().mockResolvedValue({ ok: true })
   }
   useCloudStore.setState({
     nodes: [],
