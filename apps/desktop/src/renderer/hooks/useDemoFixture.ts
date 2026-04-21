@@ -1,4 +1,5 @@
-// One-shot boot hook: when VITE_DEMO_MODE=1 and the store has no nodes,
+// One-shot boot hook: when RIFTVIEW_DEMO_MODE=1 (surfaced via
+// window.riftview.isDemoMode by the preload) and the store has no nodes,
 // seed it from DEMO_FIXTURE_NODES. Intentional null-op in normal mode
 // and on subsequent renders — the ref guard + node-count check keep
 // live scans from being clobbered.

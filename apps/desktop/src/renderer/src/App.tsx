@@ -68,7 +68,7 @@ function ResizeHandle({ onResize }: { onResize: (delta: number) => void }): Reac
 }
 
 export default function App(): React.JSX.Element | null {
-  useDemoFixture() // no-op unless VITE_DEMO_MODE=1 and store is empty
+  useDemoFixture() // no-op unless RIFTVIEW_DEMO_MODE=1 and store is empty
   useIpc()
   useKeyboardNav()
   const { triggerScan } = useScanner()

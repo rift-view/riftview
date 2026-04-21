@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures'
 
-// Boot Electron with VITE_DEMO_MODE=1 so useDemoFixture seeds the store
+// Boot Electron with RIFTVIEW_DEMO_MODE=1 so useDemoFixture seeds the store
 // with 3 CloudNodes (i-demo-web, demo-api, demo-assets). App.tsx's
 // Onboarding early-return is bypassed in demo mode, so the main canvas
 // renders even when no AWS profile is present.

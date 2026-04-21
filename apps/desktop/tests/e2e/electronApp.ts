@@ -22,7 +22,7 @@ export async function launchApp(opts: LaunchOptions = {}): Promise<ElectronAppli
 
   const env: NodeJS.ProcessEnv = {
     ...process.env,
-    ...(opts.demoMode ? { VITE_DEMO_MODE: '1' } : {}),
+    ...(opts.demoMode ? { RIFTVIEW_DEMO_MODE: '1' } : {}),
     ...opts.env
   }
 

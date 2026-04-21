@@ -3,7 +3,7 @@ import { launchApp, type LaunchOptions } from './electronApp'
 
 // Playwright fixture — boots Electron, exposes firstWindow() as `page`,
 // tears down after each test. Use `appLaunchOptions: { demoMode: true }`
-// in test.use() to launch with VITE_DEMO_MODE=1 and the fixture store seeded.
+// in test.use() to launch with RIFTVIEW_DEMO_MODE=1 and the fixture store seeded.
 // (Name is `appLaunchOptions` to avoid collision with Playwright's builtin
 // worker-scoped `launchOptions` fixture.)
 export interface AppFixtures {

@@ -5,6 +5,7 @@ import { useCloudStore } from '../../../src/renderer/store/cloud'
 
 beforeEach(() => {
   window.riftview = {
+    isDemoMode: false,
     listProfiles: vi.fn().mockResolvedValue([{ name: 'default' }]),
     selectProfile: vi.fn().mockResolvedValue(undefined),
     selectRegion: vi.fn().mockResolvedValue(undefined),
