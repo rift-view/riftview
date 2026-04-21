@@ -15,6 +15,8 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:integration": "vitest run --config apps/cli/vitest.integration.config.ts",
+    "test:e2e": "cd apps/desktop && npx playwright test --grep-invert @release",
+    "test:e2e:release": "cd apps/desktop && RIFTVIEW_BUILT_APP=1 npx playwright test --grep @release",
     "localstack:up": "docker compose -f .localstack/compose.yml up -d && ./scripts/wait-localstack.sh && cd apps/cli/tests/integration/fixtures && terraform init -input=false && terraform apply -auto-approve",
     "localstack:down": "docker compose -f .localstack/compose.yml down -v",
     "build": "npm run build --workspaces --if-present",
@@ -30,6 +32,7 @@
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.1.0",
+    "@playwright/test": "^1.59.1",
     "@types/node": "^22.19.1",
     "@vitest/ui": "^4.0.18",
     "esbuild": "^0.28.0",

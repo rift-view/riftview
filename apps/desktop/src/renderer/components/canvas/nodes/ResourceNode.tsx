@@ -213,6 +213,7 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
 
   return (
     <div
+      data-testid={`resource-node-${id}`}
       data-selected={selected}
       data-status={d.status}
       data-node-type={d.nodeType}

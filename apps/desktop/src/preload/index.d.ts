@@ -1,5 +1,7 @@
 interface Window {
   riftview: {
+    /** Runtime demo-mode flag — captured at preload load from process.env.RIFTVIEW_DEMO_MODE. */
+    isDemoMode: boolean
     listProfiles(): Promise<import('@riftview/shared').AwsProfile[]>
     selectProfile(profile: import('@riftview/shared').AwsProfile): Promise<void>
     selectRegion(region: string, endpoint?: string): Promise<void>

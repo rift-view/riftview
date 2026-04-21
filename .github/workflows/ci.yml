@@ -83,6 +83,21 @@ jobs:
         run: npx vitest run apps/desktop/tests/ipc
       - name: CLI ↔ LocalStack integration
         run: npm run test:integration
+      - name: Install Playwright browsers (with Linux deps for xvfb)
+        run: npx playwright install --with-deps chromium
+      - name: Build desktop for E2E
+        run: npm run build --workspace=@riftview/desktop
+      - name: Electron E2E smoke (demo mode, xvfb)
+        run: xvfb-run -a npm run test:e2e
+        env:
+          CI: 'true'
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-pr
+          path: apps/desktop/tests/e2e/playwright-report
+          retention-days: 7
       - name: LocalStack logs on failure
         if: failure()
         run: docker compose -f .localstack/compose.yml logs localstack | tail -200

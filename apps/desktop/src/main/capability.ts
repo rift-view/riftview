@@ -7,9 +7,10 @@
  * ipcMain.handle() call must not run, so the renderer sees "No handler
  * registered" rather than a denial message.
  *
- * The env var is deliberately main-only (RIFTVIEW_DEMO_MODE, not VITE_*). The
- * renderer's VITE_DEMO_MODE stays for UI hiding; the main's flag is what the
- * restore IPC channel checks.
+ * The env var is RIFTVIEW_DEMO_MODE (not VITE_*). The preload mirrors this
+ * same env onto window.riftview.isDemoMode for renderer UI hiding, so a single
+ * env var drives both layers. Main's flag is what destructive IPC channels
+ * check — the renderer bridge value is advisory/UI-only.
  */
 
 const DEMO_MODE_ENV = 'RIFTVIEW_DEMO_MODE'

@@ -28,5 +28,13 @@ export default defineConfig(
       ...eslintPluginReactRefresh.configs.vite.rules
     }
   },
+  {
+    // Playwright fixtures call their injector `use`, which trips the
+    // react-hooks/rules-of-hooks linter even though no React is in play.
+    files: ['apps/desktop/tests/e2e/**/*.ts'],
+    rules: {
+      'react-hooks/rules-of-hooks': 'off'
+    }
+  },
   eslintConfigPrettier
 )

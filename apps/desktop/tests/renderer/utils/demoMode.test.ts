@@ -1,14 +1,19 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { redact, redactKeepSuffix, isDemoMode } from '../../../src/renderer/utils/demoMode'
 
+/**
+ * Demo mode is now a runtime flag exposed by the preload bridge as
+ * `window.riftview.isDemoMode` (captured from process.env.RIFTVIEW_DEMO_MODE
+ * at preload load). These tests stub that bridge directly.
+ */
 describe('demoMode', () => {
   afterEach(() => {
-    vi.unstubAllEnvs()
+    vi.unstubAllGlobals()
   })
 
-  describe('when VITE_DEMO_MODE is off', () => {
+  describe('when window.riftview.isDemoMode is false', () => {
     beforeEach(() => {
-      vi.stubEnv('VITE_DEMO_MODE', '')
+      vi.stubGlobal('riftview', { isDemoMode: false })
     })
 
     it('isDemoMode returns false', () => {
@@ -27,9 +32,24 @@ describe('demoMode', () => {
     })
   })
 
-  describe('when VITE_DEMO_MODE=1', () => {
+  describe('when window.riftview is absent (unit test without bridge)', () => {
     beforeEach(() => {
-      vi.stubEnv('VITE_DEMO_MODE', '1')
+      vi.stubGlobal('riftview', undefined)
+    })
+
+    it('isDemoMode returns false', () => {
+      expect(isDemoMode()).toBe(false)
+    })
+
+    it('redact is a no-op', () => {
+      const input = 'arn:aws:iam::123456789012:user/julius'
+      expect(redact(input)).toBe(input)
+    })
+  })
+
+  describe('when window.riftview.isDemoMode is true', () => {
+    beforeEach(() => {
+      vi.stubGlobal('riftview', { isDemoMode: true })
     })
 
     it('isDemoMode returns true', () => {
@@ -73,16 +93,6 @@ describe('demoMode', () => {
 
     it('redactKeepSuffix masks fully when input shorter than suffix', () => {
       expect(redactKeepSuffix('abc')).toBe('***')
-    })
-  })
-
-  describe('when VITE_DEMO_MODE=true', () => {
-    beforeEach(() => {
-      vi.stubEnv('VITE_DEMO_MODE', 'true')
-    })
-
-    it('isDemoMode returns true', () => {
-      expect(isDemoMode()).toBe(true)
     })
   })
 })

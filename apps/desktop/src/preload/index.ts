@@ -6,6 +6,11 @@ import type { NodeTypeMetadata } from '../main/plugin/types'
 import { IPC } from '../main/ipc/channels'
 
 contextBridge.exposeInMainWorld('riftview', {
+  // Runtime demo-mode flag — read once at preload load from the main-process
+  // env. Previously gated via Vite's build-time VITE_DEMO_MODE, which couldn't
+  // be toggled after build. Exposed as a frozen boolean; no IPC round-trip.
+  isDemoMode: process.env.RIFTVIEW_DEMO_MODE === '1',
+
   listProfiles: () => ipcRenderer.invoke(IPC.PROFILES_LIST),
   selectProfile: (profile: AwsProfile) => ipcRenderer.invoke(IPC.PROFILE_SELECT, profile),
   selectRegion: (region: string, endpoint?: string) =>

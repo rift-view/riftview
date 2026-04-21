@@ -1,11 +1,13 @@
 // RENDERER-ONLY: Do not import from src/main/ or src/preload/.
-// Scoped to tsconfig.web.json — import.meta.env is only available in renderer context.
+// Scoped to tsconfig.web.json.
 
 /**
  * Demo mode — masks account IDs, ARNs, and other sensitive identifiers in
  * the UI so screen recordings and screenshots don't leak real account data.
  *
- * Enable via env: `VITE_DEMO_MODE=1` (or `true`) at build/run time.
+ * Enable via env: `RIFTVIEW_DEMO_MODE=1` at main-process launch time. The
+ * preload captures this into `window.riftview.isDemoMode` at load, so the
+ * same bundle can boot with or without demo mode (e.g. Playwright E2E).
  *
  * Usage:
  *   redact('arn:aws:iam::123456789012:user/julius')
@@ -14,8 +16,13 @@
  */
 
 export function isDemoMode(): boolean {
-  const raw = (import.meta.env as Record<string, string | undefined>).VITE_DEMO_MODE
-  return raw === '1' || raw === 'true'
+  // Read from the preload bridge (runtime-settable via RIFTVIEW_DEMO_MODE
+  // env at main-process launch). Previously read Vite's build-time
+  // VITE_DEMO_MODE, which couldn't be toggled after build.
+  //
+  // window.riftview is always present in the Electron renderer. The
+  // null-safe chain guards unit tests that don't mock the bridge.
+  return window.riftview?.isDemoMode ?? false
 }
 
 const ACCOUNT_ID_RE = /\b\d{12}\b/g

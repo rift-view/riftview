@@ -170,7 +170,7 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
   const activeViewName = activeViewSlot !== null ? (savedViews[activeViewSlot]?.name ?? null) : null
 
   return (
-    <div className="flex flex-col flex-1 h-full">
+    <div data-testid="cloud-canvas" className="flex flex-col flex-1 h-full">
       <DriftModeStrip />
 
       <div className="relative flex-1" onContextMenu={handleContextMenu}>

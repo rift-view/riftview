@@ -7,6 +7,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
-    css: true
+    css: true,
+    // Playwright Electron E2E specs live under tests/e2e/ and are run by
+    // `npm run test:e2e` (npx playwright test). Vitest must not collect them.
+    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**']
   }
 })
