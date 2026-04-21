@@ -43,3 +43,6 @@ node_modules/
 # graphify output
 graphify-out/
 riftview/graphify-out/
+
+# Session-pause template (populated on context-limit pauses)
+RESUME.md
