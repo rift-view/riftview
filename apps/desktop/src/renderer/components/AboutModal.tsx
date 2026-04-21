@@ -39,7 +39,7 @@ export function AboutModal({ onClose }: AboutModalProps): React.JSX.Element {
             </div>
             <div className="insp-row">
               <span className="k">REPO</span>
-              <span className="v">github.com/juliushamm/riftview</span>
+              <span className="v">github.com/rift-view/riftview</span>
             </div>
           </div>
           <hr className="hairline" style={{ margin: '12px 0' }} />
