@@ -47,7 +47,7 @@ See [`docs/cli.md`](./docs/cli.md) for the full reference: command flags, JSON o
 
 ## Repository layout
 
-This is an npm workspaces monorepo. Three workspaces under `riftview/`:
+This is an npm workspaces monorepo. Three workspaces:
 
 - `apps/desktop` — the Electron app (private, not published)
 - `apps/cli` — `@riftview/cli` (published to npm)
@@ -93,4 +93,4 @@ RiftView is not affiliated with, endorsed by, or sponsored by Amazon Web
 Services, Inc. AWS, Amazon EC2, and all related marks are trademarks of
 Amazon.com, Inc. or its affiliates.
 
-See [NOTICE.md](./riftview/NOTICE.md) for third-party license acknowledgments.
+See [NOTICE.md](./NOTICE.md) for third-party license acknowledgments.

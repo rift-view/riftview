@@ -1,9 +1,0 @@
-node_modules
-dist
-out
-.DS_Store
-.eslintcache
-*.log*
-.superpowers/
-.worktrees/
-.env.local
