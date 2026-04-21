@@ -33,6 +33,11 @@ dist/
 out/
 node_modules/
 
+# Playwright Electron E2E artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+
 # Terraform state
 .terraform/
 .terraform.lock.hcl

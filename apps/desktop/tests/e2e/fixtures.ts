@@ -2,18 +2,20 @@ import { test as base, type ElectronApplication, type Page } from '@playwright/t
 import { launchApp, type LaunchOptions } from './electronApp'
 
 // Playwright fixture — boots Electron, exposes firstWindow() as `page`,
-// tears down after each test. Use `demoMode: true` in test.use() to
-// launch with VITE_DEMO_MODE=1 and the fixture store seeded.
+// tears down after each test. Use `appLaunchOptions: { demoMode: true }`
+// in test.use() to launch with VITE_DEMO_MODE=1 and the fixture store seeded.
+// (Name is `appLaunchOptions` to avoid collision with Playwright's builtin
+// worker-scoped `launchOptions` fixture.)
 export interface AppFixtures {
   app: ElectronApplication
   page: Page
-  launchOptions: LaunchOptions
+  appLaunchOptions: LaunchOptions
 }
 
 export const test = base.extend<AppFixtures>({
-  launchOptions: [{}, { option: true }],
-  app: async ({ launchOptions }, use) => {
-    const app = await launchApp(launchOptions)
+  appLaunchOptions: [{}, { option: true }],
+  app: async ({ appLaunchOptions }, use) => {
+    const app = await launchApp(appLaunchOptions)
     try {
       await use(app)
     } finally {
