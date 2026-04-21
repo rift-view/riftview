@@ -2,6 +2,23 @@ import { create } from 'zustand'
 import type { NodeType, CloudNode, CustomEdge } from '@riftview/shared'
 import type { NodeTypeMetadata } from '../types/plugin'
 
+/**
+ * Structural twin of Snapshot from apps/desktop/src/main/history/read.ts.
+ * Duplicated (rather than imported) so the renderer doesn't pull any main-
+ * process types across the IPC boundary.
+ */
+export interface SnapshotRecord {
+  meta: {
+    id: string
+    timestamp: string
+    profile: string
+    region: string
+    endpoint: string | null
+    contentHash: string
+  }
+  nodes: CloudNode[]
+}
+
 export interface NodeFilter {
   id: string
   label: string
@@ -86,6 +103,8 @@ interface UIState {
   canvasMode: CanvasMode
   /** RIF-19: snapshot the timeline/restore modes are pinned to, or null in 'live'. */
   activeSnapshotId: string | null
+  /** RIFT-38: loaded snapshot record driving canvas render in timeline/restore mode. */
+  activeSnapshot: SnapshotRecord | null
 
   setView: (view: ViewKey) => void
   /**
@@ -96,6 +115,8 @@ interface UIState {
    * in with the apply IPC.
    */
   setCanvasMode: (mode: CanvasMode, snapshotId?: string | null) => void
+  /** RIFT-38: cache the loaded snapshot record (or clear with null). */
+  setActiveSnapshot: (snap: SnapshotRecord | null) => void
   selectNode: (id: string | null) => void
   setSelectedNodeIds: (ids: Set<string>) => void
   clearSelectedNodeIds: () => void
@@ -164,6 +185,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   view: 'topology',
   canvasMode: 'live',
   activeSnapshotId: null,
+  activeSnapshot: null,
   selectedNodeId: null,
   selectedNodeIds: new Set<string>(),
   selectedEdgeId: null,
@@ -206,11 +228,12 @@ export const useUIStore = create<UIState>((set, get) => ({
   setView: (view) => set({ view }),
   setCanvasMode: (mode, snapshotId = null) => {
     if (mode === 'live') {
-      set({ canvasMode: 'live', activeSnapshotId: null })
+      set({ canvasMode: 'live', activeSnapshotId: null, activeSnapshot: null })
     } else {
       set({ canvasMode: mode, activeSnapshotId: snapshotId })
     }
   },
+  setActiveSnapshot: (snap) => set({ activeSnapshot: snap }),
   selectNode: (id) => set({ selectedNodeId: id, selectedEdgeId: null, selectedEdgeInfo: null }),
   setSelectedNodeIds: (ids) => set({ selectedNodeIds: ids }),
   clearSelectedNodeIds: () => set({ selectedNodeIds: new Set<string>() }),

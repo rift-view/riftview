@@ -22,6 +22,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
+import { useDisplayedNodes } from '../../hooks/useDisplayedNodes'
 import type { NodeType, EdgeType, IntegrationEdgeData, CustomEdge } from '@riftview/shared'
 import { ResourceNode } from './nodes/ResourceNode'
 import { AcmNode } from './nodes/AcmNode'
@@ -209,7 +210,7 @@ interface GraphViewProps {
 }
 
 export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Element {
-  const cloudNodes = useCloudStore((s) => s.nodes)
+  const cloudNodes = useDisplayedNodes()
   const pendingNodes = useCloudStore((s) => s.pendingNodes)
   const importedNodes = useCloudStore((s) => s.importedNodes)
   const selectNode = useUIStore((s) => s.selectNode)

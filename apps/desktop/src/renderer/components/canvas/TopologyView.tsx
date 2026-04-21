@@ -21,6 +21,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
+import { useDisplayedNodes } from '../../hooks/useDisplayedNodes'
 import type { NodeType } from '@riftview/shared'
 import { ResourceNode } from './nodes/ResourceNode'
 import { VpcNode } from './nodes/VpcNode'
@@ -662,7 +663,7 @@ interface TopologyViewProps {
 }
 
 export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JSX.Element {
-  const cloudNodes = useCloudStore((s) => s.nodes)
+  const cloudNodes = useDisplayedNodes()
   const pendingNodes = useCloudStore((s) => s.pendingNodes)
   const importedNodes = useCloudStore((s) => s.importedNodes)
   const selectedRegions = useCloudStore((s) => s.selectedRegions)

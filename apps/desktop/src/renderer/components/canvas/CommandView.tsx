@@ -16,8 +16,8 @@ import {
   type XYPosition
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useCloudStore } from '../../store/cloud'
 import { useUIStore } from '../../store/ui'
+import { useDisplayedNodes } from '../../hooks/useDisplayedNodes'
 import { ResourceNode } from './nodes/ResourceNode'
 import type { CloudNode, NodeType } from '@riftview/shared'
 import { resolveIntegrationTargetId } from '@riftview/shared'
@@ -130,7 +130,7 @@ interface Props {
 }
 
 export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
-  const nodes = useCloudStore((s) => s.nodes)
+  const nodes = useDisplayedNodes()
   const showIntegrations = useUIStore((s) => s.showIntegrations)
   const commandPositions = useUIStore((s) => s.commandPositions)
   const setCommandPosition = useUIStore((s) => s.setCommandPosition)

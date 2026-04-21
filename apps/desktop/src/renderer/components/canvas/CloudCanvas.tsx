@@ -13,6 +13,7 @@ import { ScanErrorStrip } from './ScanErrorStrip'
 import { DriftModeStrip } from './DriftModeStrip'
 import { EmptyCanvasState } from './EmptyCanvasState'
 import { BulkActionToolbar } from './BulkActionToolbar'
+import { TimelineStrip } from './TimelineStrip'
 import type { CloudNode } from '@riftview/shared'
 import { exportCanvasToPng } from '../../utils/exportCanvas'
 import { analyzeNode } from '@riftview/shared'
@@ -418,6 +419,8 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
         )}
 
         <CanvasToast />
+
+        <TimelineStrip />
 
         {modalSlot !== null && (
           <SaveViewModal
