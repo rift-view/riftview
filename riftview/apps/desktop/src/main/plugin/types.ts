@@ -1,5 +1,18 @@
 // src/main/plugin/types.ts
 import type { CloudNode } from '@riftview/shared'
+import type { RiftViewPluginSnapshotExport } from './restoreTypes'
+
+export type {
+  ApplyEvent,
+  CostDelta,
+  CostDeltaEntry,
+  RestorePlan,
+  RestoreStep,
+  RiftViewPluginSnapshotExport,
+  StoredVersion,
+  TypedConfirmation,
+  VersionFormatId
+} from './restoreTypes'
 
 export interface ScanContext<TCredentials = unknown> {
   credentials: TCredentials
@@ -34,7 +47,7 @@ export interface PluginCommandHandlers {
 
 export type PluginHclGenerator = (node: CloudNode) => string
 
-export interface RiftViewPlugin {
+export interface RiftViewPluginBase {
   readonly id: string
   readonly displayName: string
   readonly nodeTypes: readonly string[]
@@ -55,3 +68,11 @@ export interface RiftViewPlugin {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   registerIpcHandlers?(win: any): void
 }
+
+/**
+ * Plugin contract. Every plugin implements the base surface plus the
+ * snapshot-export surface. Plugins that opt out of snapshot export declare
+ * `versionFormat: 'unsupported'` and leave the three methods undefined; the
+ * registry surfaces "restore not supported" in the UI for those plugins.
+ */
+export type RiftViewPlugin = RiftViewPluginBase & RiftViewPluginSnapshotExport

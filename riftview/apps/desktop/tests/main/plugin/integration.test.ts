@@ -10,6 +10,7 @@ describe('Plugin system — integration smoke test', () => {
   const mockPlugin: RiftViewPlugin = {
     id: 'com.test.mock',
     displayName: 'Mock Plugin',
+    versionFormat: 'unsupported',
     nodeTypes: ['mock-service'],
     nodeTypeMetadata: {
       'mock-service': {

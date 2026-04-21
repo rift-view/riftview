@@ -8,6 +8,7 @@ function makePlugin(id: string, nodeTypes: string[] = ['test-node']): RiftViewPl
   return {
     id,
     displayName: `Plugin ${id}`,
+    versionFormat: 'unsupported',
     nodeTypes,
     nodeTypeMetadata: Object.fromEntries(
       nodeTypes.map((t) => [

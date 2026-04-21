@@ -35,6 +35,7 @@ describe('RiftViewPlugin interface — structural shape', () => {
     const plugin: RiftViewPlugin = {
       id: 'com.test.plugin',
       displayName: 'Test Plugin',
+      versionFormat: 'unsupported',
       nodeTypes: ['test-node'],
       nodeTypeMetadata: {
         'test-node': {

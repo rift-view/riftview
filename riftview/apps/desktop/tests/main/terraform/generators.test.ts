@@ -452,6 +452,7 @@ describe('generateTerraformBlock — pluginRegistry fallback', () => {
     const testPlugin = {
       id: 'com.test.azure-vm-hcl',
       displayName: 'Test Azure VM',
+      versionFormat: 'unsupported' as const,
       nodeTypes: ['azure-vm-hcl-test'],
       nodeTypeMetadata: {
         'azure-vm-hcl-test': {
