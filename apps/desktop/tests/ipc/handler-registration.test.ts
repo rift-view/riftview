@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { IPC } from '../src/main/ipc/channels'
+import { IPC } from '../../src/main/ipc/channels'
 
 // Push-only channels that main sends to renderer — no handle registration expected
 const PUSH_ONLY_CHANNELS = new Set<string>([
@@ -40,14 +40,14 @@ vi.mock('electron', () => ({
     return { show: vi.fn() }
   })
 }))
-vi.mock('../src/main/aws/credentials', () => ({
+vi.mock('../../src/main/aws/credentials', () => ({
   listProfiles: vi.fn().mockReturnValue([]),
   getDefaultRegion: vi.fn().mockReturnValue('us-east-1')
 }))
-vi.mock('../src/main/aws/client', () => ({
+vi.mock('../../src/main/aws/client', () => ({
   createClients: vi.fn().mockReturnValue({})
 }))
-vi.mock('../src/main/aws/scanner', () => ({
+vi.mock('../../src/main/aws/scanner', () => ({
   ResourceScanner: vi.fn(function () {
     return {
       start: vi.fn(),
@@ -59,15 +59,15 @@ vi.mock('../src/main/aws/scanner', () => ({
   }),
   historyFilePath: vi.fn().mockReturnValue('/tmp/history/node.json')
 }))
-vi.mock('../src/main/cli/engine', () => ({
+vi.mock('../../src/main/cli/engine', () => ({
   CliEngine: vi.fn(function () {
     return { execute: vi.fn(), cancel: vi.fn() }
   })
 }))
-vi.mock('../src/main/terraform/index', () => ({
+vi.mock('../../src/main/terraform/index', () => ({
   generateTerraformFile: vi.fn().mockReturnValue({ hcl: '', skippedTypes: [] })
 }))
-vi.mock('../src/main/terraform/provider', () => ({
+vi.mock('../../src/main/terraform/provider', () => ({
   buildLocalStackProvider: vi.fn().mockReturnValue('')
 }))
 vi.mock('@riftview/shared', async (importOriginal) => {
@@ -78,7 +78,7 @@ vi.mock('@riftview/shared', async (importOriginal) => {
     parseTfStateModules: vi.fn().mockReturnValue([])
   }
 })
-vi.mock('../src/main/aws/iam/fetcher', () => ({
+vi.mock('../../src/main/aws/iam/fetcher', () => ({
   fetchEc2IamData: vi.fn().mockResolvedValue([]),
   fetchLambdaIamData: vi.fn().mockResolvedValue([]),
   fetchS3IamData: vi.fn().mockResolvedValue([])
@@ -88,12 +88,12 @@ vi.mock('@aws-sdk/client-cloudwatch', () => ({
     return {}
   })
 }))
-vi.mock('../src/main/aws/services/cloudwatch', () => ({
+vi.mock('../../src/main/aws/services/cloudwatch', () => ({
   fetchMetrics: vi.fn().mockResolvedValue([])
 }))
 
 import { ipcMain } from 'electron'
-import { registerHandlers } from '../src/main/ipc/handlers'
+import { registerHandlers } from '../../src/main/ipc/handlers'
 
 describe('IPC contract — channels vs handlers', () => {
   beforeEach(() => vi.clearAllMocks())
