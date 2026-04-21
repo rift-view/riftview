@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { CloudNode } from '@riftview/shared'
-import { canonicalize, contentHash } from '../../../src/main/history/canonical'
-import type { EdgeRecord, ScanPayload } from '../../../src/main/history/types'
+import {
+  canonicalize,
+  contentHash,
+  type EdgeRecord,
+  type ScanPayload
+} from '@riftview/shared/snapshot'
 
 function node(id: string, extra: Partial<CloudNode> = {}): CloudNode {
   return {
