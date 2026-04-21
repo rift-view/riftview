@@ -1,27 +1,8 @@
-import type { CloudNode } from '@riftview/shared'
+import type { ScanMeta } from '@riftview/shared/snapshot'
+
+export { type EdgeRecord, type ScanMeta, type ScanPayload } from '@riftview/shared/snapshot'
 
 export const HISTORY_SCHEMA_VERSION = 1
-
-export interface ScanMeta {
-  scanErrors: string[]
-  nodeCount: number
-  edgeCount: number
-  pluginId: string
-  pluginVersion: string
-  schemaVersion: number
-}
-
-export interface EdgeRecord {
-  from: string
-  to: string
-  edgeType: string
-}
-
-export interface ScanPayload {
-  nodes: CloudNode[]
-  edges: EdgeRecord[]
-  meta: ScanMeta
-}
 
 export interface VersionRow {
   id: string
