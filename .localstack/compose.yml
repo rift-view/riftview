@@ -1,0 +1,27 @@
+# Local LocalStack harness for the CLI integration test suite.
+#
+# Pinned to `localstack/localstack:community-archive` per project policy:
+# the LocalStack Community image has been unmaintained since March 2026;
+# `community-archive` is the deliberately-frozen last-known-good build.
+# Do NOT change to `:latest` or `:community` silently — see CLAUDE.md
+# (both public root and private docs) and the spec at
+# superpowers/specs/2026-04-21-testing-pipelines-design.md.
+#
+# The SERVICES list here MUST stay identical to the `SERVICES:` env in
+# the `e2e` job's `services.localstack` block in .github/workflows/ci.yml.
+# If you add a service, add it to both.
+services:
+  localstack:
+    image: localstack/localstack:community-archive
+    container_name: riftview-localstack
+    ports:
+      - '4566:4566'
+    environment:
+      SERVICES: ec2,lambda,s3,sqs,sns,dynamodb,rds,iam,elbv2,events,stepfunctions,secretsmanager,sts,cloudwatch,logs
+      DEBUG: '0'
+      PERSISTENCE: '0'
+    healthcheck:
+      test: ['CMD', 'curl', '-sf', 'http://localhost:4566/_localstack/health']
+      interval: 5s
+      timeout: 3s
+      retries: 20
