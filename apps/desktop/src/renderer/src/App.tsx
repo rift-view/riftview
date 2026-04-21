@@ -27,6 +27,7 @@ import { KeyboardHelp } from '../components/KeyboardHelp'
 import { KeyboardHelpButton } from '../components/KeyboardHelpButton'
 import { TerminalPane } from '../components/TerminalPane'
 import { useKeyboardNav } from '../hooks/useKeyboardNav'
+import { useDemoFixture } from '../hooks/useDemoFixture'
 
 function ResizeHandle({ onResize }: { onResize: (delta: number) => void }): React.JSX.Element {
   const startX = useRef<number | null>(null)
@@ -66,6 +67,7 @@ function ResizeHandle({ onResize }: { onResize: (delta: number) => void }): Reac
 }
 
 export default function App(): React.JSX.Element | null {
+  useDemoFixture() // no-op unless VITE_DEMO_MODE=1 and store is empty
   useIpc()
   useKeyboardNav()
   const { triggerScan } = useScanner()
