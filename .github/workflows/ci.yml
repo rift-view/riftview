@@ -116,18 +116,10 @@ jobs:
           - os: ubuntu-latest
             platform: linux
     runs-on: ${{ matrix.os }}
-    services:
-      localstack:
-        image: localstack/localstack:community-archive
-        ports: ['4566:4566']
-        env:
-          SERVICES: ec2,lambda,s3,sqs,sns,dynamodb,rds,iam,elbv2,events,stepfunctions,secretsmanager,sts,cloudwatch,logs
-          DEBUG: '0'
-        options: >-
-          --health-cmd "curl -sf http://localhost:4566/_localstack/health || exit 1"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 30
+    # LocalStack + @release E2E run on Linux only. GHA macos-latest runners
+    # don't have Docker, and we can't mount /var/run/docker.sock into a
+    # services-block container. Mac matrix entry still builds + publishes
+    # but skips the E2E gate — Linux entry carries the gate for both tiers.
     env:
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
@@ -139,43 +131,55 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.9.x
       - name: Install dependencies
         run: npm ci
+      # --- Linux-only LocalStack gate ---
+      - uses: hashicorp/setup-terraform@v3
+        if: runner.os == 'Linux'
+        with:
+          terraform_version: 1.9.x
       - name: Install Playwright browsers (with Linux deps)
+        if: runner.os == 'Linux'
         run: npx playwright install --with-deps chromium
+      - name: Start LocalStack
+        if: runner.os == 'Linux'
+        run: docker compose -f .localstack/compose.yml up -d
       - name: Wait for LocalStack
-        run: |
-          for i in {1..30}; do
-            curl -sf http://localhost:4566/_localstack/health && break || sleep 2
-          done
+        if: runner.os == 'Linux'
+        run: ./scripts/wait-localstack.sh
       - name: Seed LocalStack
+        if: runner.os == 'Linux'
         working-directory: apps/cli/tests/integration/fixtures
         run: terraform init -input=false && terraform apply -auto-approve -input=false
       - name: Build desktop bundles (electron-vite)
+        if: runner.os == 'Linux'
         working-directory: apps/desktop
         run: npx electron-vite build
       - name: Build unsigned binary (for @release E2E)
+        if: runner.os == 'Linux'
         working-directory: apps/desktop
         run: npx electron-builder --dir
       - name: Run @release E2E against the built binary
-        run: |
-          if [[ "$RUNNER_OS" == "Linux" ]]; then
-            xvfb-run -a npm run test:e2e:release
-          else
-            npm run test:e2e:release
-          fi
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:e2e:release
         env:
           CI: 'true'
       - name: Upload Playwright report on failure
-        if: failure()
+        if: failure() && runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-release-${{ matrix.platform }}
           path: apps/desktop/tests/e2e/playwright-report
           retention-days: 30
+      - name: LocalStack logs on failure
+        if: failure() && runner.os == 'Linux'
+        run: docker compose -f .localstack/compose.yml logs localstack | tail -200
+      # --- Build signed and publish (both platforms, gated by the Linux
+      # matrix entry — since fail-fast: false is off, a Linux gate failure
+      # kills the Linux publish but mac proceeds. This is a known gap:
+      # mac publishes without an E2E gate. Revisit when Docker-on-mac is
+      # reliable in CI, or add a mac-native smoke spec that doesn't need
+      # LocalStack.) ---
       - name: Build signed and publish
         working-directory: apps/desktop
         run: npx electron-vite build && npx electron-builder --${{ matrix.platform }} --publish always
