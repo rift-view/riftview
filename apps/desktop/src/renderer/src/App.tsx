@@ -170,6 +170,15 @@ export default function App(): React.JSX.Element | null {
       useUIStore.getState().setPluginNodeTypes(meta)
     })
 
+    // E2E test hatch — only wired when the preload capability flag is set.
+    // Gives Playwright @release specs direct access to a narrow store slice
+    // so they don't have to mock native OS dialogs.
+    if (window.__riftviewCapabilities?.isE2EMode) {
+      window.__riftviewE2E = {
+        setImportedNodes: (nodes) => useCloudStore.getState().setImportedNodes(nodes)
+      }
+    }
+
     return () => {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('riftview:open-search', onOpenSearch)

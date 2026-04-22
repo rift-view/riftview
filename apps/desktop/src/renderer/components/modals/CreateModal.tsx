@@ -320,6 +320,7 @@ export function CreateModal(): React.JSX.Element | null {
   return (
     <div
       className="modal-backdrop"
+      data-testid="create-modal"
       onKeyDown={(e) => {
         if (e.key === 'Escape') handleCancel()
       }}
@@ -407,7 +408,11 @@ export function CreateModal(): React.JSX.Element | null {
           <button onClick={handleCancel} className="btn btn-sm btn-ghost">
             Cancel
           </button>
-          <button onClick={handleRun} className="btn btn-sm btn-primary">
+          <button
+            onClick={handleRun}
+            data-testid="create-modal-submit"
+            className="btn btn-sm btn-primary"
+          >
             Create
           </button>
         </div>

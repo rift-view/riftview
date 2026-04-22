@@ -29,6 +29,7 @@ export function SqsForm({ onChange, showErrors }: Props): React.JSX.Element {
         <span className="label">Queue Name</span>
         <input
           className="form-input"
+          data-testid="sqs-form-name"
           value={name}
           placeholder="my-queue"
           onChange={(e) => {

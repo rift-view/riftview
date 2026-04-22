@@ -429,6 +429,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
 
           <div
             key={lastScannedAt?.getTime()}
+            data-testid="top-risks-panel"
             style={{ animation: 'cb-top-risks-fade 300ms ease-out both' }}
           >
             {allAdvisories.length === 0 ? (
@@ -461,6 +462,7 @@ function FirstScanSummary({ nodes }: { nodes: CloudNode[] }): React.JSX.Element 
                     return (
                       <div
                         key={`${advisory.nodeId}-${advisory.ruleId}-${idx}`}
+                        data-testid={`top-risks-item-${idx}`}
                         onClick={() => selectNode(advisory.nodeId)}
                         style={{
                           padding: '7px 8px',
@@ -988,7 +990,7 @@ export function Inspector({
 
                   {hasCommands ? (
                     <>
-                      <div style={{ marginBottom: 6 }}>
+                      <div data-testid="inspector-remediate-command" style={{ marginBottom: 6 }}>
                         {commands.map((argv, i) => {
                           const full = 'aws ' + argv.join(' ')
                           const display = full.length > 200 ? full.slice(0, 200) + '…' : full
@@ -1611,10 +1613,18 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
 
   const editDelete = !isImported && (
     <div className="insp-actions">
-      <button onClick={() => onEdit(node)} className="btn btn-sm btn-ghost">
+      <button
+        onClick={() => onEdit(node)}
+        data-testid="inspector-edit"
+        className="btn btn-sm btn-ghost"
+      >
         ✎ Edit
       </button>
-      <button onClick={() => onDelete(node)} className="btn btn-sm btn-ghost">
+      <button
+        onClick={() => onDelete(node)}
+        data-testid="inspector-delete"
+        className="btn btn-sm btn-ghost"
+      >
         ✕ Delete
       </button>
     </div>

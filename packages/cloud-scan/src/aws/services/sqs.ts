@@ -66,6 +66,7 @@ export async function listQueues(
         ...node,
         id: queueArn,
         metadata: {
+          url: node.id,
           ...(msgs != null ? { messages: Number(msgs) } : {}),
           ...(inFlight != null ? { inFlight: Number(inFlight) } : {}),
           hasDlq
