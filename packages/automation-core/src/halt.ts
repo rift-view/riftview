@@ -3,11 +3,9 @@ import { join } from 'node:path'
 
 export const HALT_FILE_NAME = '.riftview-automation-halt'
 
-export type HaltReason = {
-  kind: 'file' | 'label'
-  path?: string
-  label?: 'automation:halt' | 'automation:halt-all'
-}
+export type HaltReason =
+  | { kind: 'file'; path: string }
+  | { kind: 'label'; label: 'automation:halt' | 'automation:halt-all' }
 
 export type HaltInput = {
   issueId: string
@@ -15,7 +13,7 @@ export type HaltInput = {
   linearLabels: readonly string[]
 }
 
-export type HaltResult = { halted: boolean; reason?: HaltReason }
+export type HaltResult = { halted: false } | { halted: true; reason: HaltReason }
 
 export function isHalted({ workspaceDir, linearLabels }: HaltInput): HaltResult {
   const filePath = join(workspaceDir, HALT_FILE_NAME)
