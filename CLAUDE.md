@@ -1,4 +1,5 @@
 ---
+
 # CLAUDE.md
 
 ## Project: RiftView
@@ -19,11 +20,14 @@ first**. It is on the same filesystem; no checkout or auth is needed.
 
 Cross-references you should know about:
 
-- `~/riftview-docs/superpowers/plans/` — implementation plans per phase
-- `~/riftview-docs/superpowers/specs/` — design specs per phase
+- **Linear** — specs and implementation plans live as Linear Documents
+  attached to their project. Tracking issues link to them. Do not look
+  for specs or plans on disk.
 - `~/riftview-docs/team/` — role playbooks / agent personas
 - `~/riftview-docs/outreach/` — positioning, pricing, cold-email drafts
 - `~/riftview-docs/roadmap.md` — milestone sequencing
+- `~/riftview-docs/superpowers/{specs,plans}/` — historical archive
+  (pre-2026-04-22). Read-only reference; do not add files.
 
 Do **not** commit references or paths to `~/riftview-docs/` in source
 files that ship to end users. This CLAUDE.md is the only place in the
