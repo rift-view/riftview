@@ -19,7 +19,6 @@ describe('checkPath — Tier 1 blocklist (spec §6.3)', () => {
     ['build/anything', false],
     ['dist/anything', false],
     ['node_modules/pkg/file', false],
-    ['/Users/julius/AI/riftview/../riftview/.github/workflows/ci.yml', false],
     // Allowed
     ['packages/automation-core/src/lock.ts', true],
     ['apps/desktop/src/renderer/App.tsx', true],
@@ -35,6 +34,16 @@ describe('checkPath — Tier 1 blocklist (spec §6.3)', () => {
       if (!allowed) expect(r.reason).toBeTruthy()
     })
   }
+
+  it('blocks absolute paths after resolving .. segments', () => {
+    const projectDir = '/tmp/rv-test-proj'
+    const r = checkPath({
+      filePath: `${projectDir}/../rv-test-proj/.github/workflows/ci.yml`,
+      projectDir
+    })
+    expect(r.ok).toBe(false)
+    expect(r.reason).toBeTruthy()
+  })
 })
 
 describe('checkBash — Tier 1 command blocklist', () => {
