@@ -53,6 +53,8 @@ async function main(): Promise<void> {
     if (preflight) return
 
     throw new Error('full pipeline not yet implemented (M9)')
+    // Preflight releases immediately; full-pipeline mode keeps the lock
+    // and delegates release to the --cleanup subcommand in M9.
   } finally {
     if (preflight) releaseLock({ issueId, dir: DEFAULT_LOCK_DIR })
   }

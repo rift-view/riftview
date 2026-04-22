@@ -20,7 +20,6 @@ export function linearApiClient(apiKey = process.env.LINEAR_API_KEY): LinearClie
     },
     async removeLabel(issueId, label) {
       const labelId = await findLabelIdByName(apiKey, issueId, label)
-      if (!labelId) return
       await gql(apiKey, REMOVE_LABEL_MUTATION, { id: issueId, labelIds: [labelId] })
     },
     async postComment(issueId, body) {
