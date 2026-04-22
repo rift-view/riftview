@@ -5,11 +5,19 @@ import type { CloudFrontEditParams } from '../renderer/types/edit'
 import type { NodeTypeMetadata } from '../main/plugin/types'
 import { IPC } from '../main/ipc/channels'
 
+// Amendment (d) — unified RIFTVIEW_DEMO_MODE capability flag.
+// Read synchronously at preload init; no IPC round-trip.
+// VITE_DEMO_MODE is retired from the gate path (may persist as a build-time UI
+// hint only; main's flag is the security gate).
+const _isDemoMode = process.env.RIFTVIEW_DEMO_MODE === '1'
+
+// Expose capabilities synchronously so renderer reads them at first render
+// without waiting for IPC readiness.
+contextBridge.exposeInMainWorld('__riftviewCapabilities', { isDemoMode: _isDemoMode })
+
 contextBridge.exposeInMainWorld('riftview', {
-  // Runtime demo-mode flag — read once at preload load from the main-process
-  // env. Previously gated via Vite's build-time VITE_DEMO_MODE, which couldn't
-  // be toggled after build. Exposed as a frozen boolean; no IPC round-trip.
-  isDemoMode: process.env.RIFTVIEW_DEMO_MODE === '1',
+  // Runtime demo-mode flag — kept here for backwards compat with renderer UI reads.
+  isDemoMode: _isDemoMode,
 
   listProfiles: () => ipcRenderer.invoke(IPC.PROFILES_LIST),
   selectProfile: (profile: AwsProfile) => ipcRenderer.invoke(IPC.PROFILE_SELECT, profile),
@@ -196,5 +204,54 @@ contextBridge.exposeInMainWorld('riftview', {
   listSnapshots: (filter?: { profile?: string; region?: string; limit?: number }) =>
     ipcRenderer.invoke(IPC.SNAPSHOT_LIST, filter),
   readSnapshot: (versionId: string) => ipcRenderer.invoke(IPC.SNAPSHOT_READ, versionId),
-  deleteSnapshot: (versionId: string) => ipcRenderer.invoke(IPC.SNAPSHOT_DELETE, versionId)
+  deleteSnapshot: (versionId: string) => ipcRenderer.invoke(IPC.SNAPSHOT_DELETE, versionId),
+
+  // Restore surface — structurally absent in demo mode (amendment d, RIF-20 2026-04-21).
+  // Renderer probes window.riftview.restore === undefined as the capability check.
+  // No "greyed-out" restore button — the whole surface is absent from preload.
+  ...(_isDemoMode
+    ? {}
+    : {
+        restore: {
+          listVersions: (snapshotId: string) =>
+            ipcRenderer.invoke(IPC.RESTORE_VERSIONS, snapshotId),
+          planRestore: (snapshotId: string, versionId: string) =>
+            ipcRenderer.invoke(IPC.RESTORE_PLAN, snapshotId, versionId),
+          estimateCostDelta: (planToken: string) =>
+            ipcRenderer.invoke(IPC.RESTORE_COST_ESTIMATE, planToken),
+          confirmStep: (
+            planToken: string,
+            stepId: string,
+            destructiveIds: string[],
+            hmac: string,
+            typedString: string
+          ) =>
+            ipcRenderer.invoke(
+              IPC.RESTORE_CONFIRM_STEP,
+              planToken,
+              stepId,
+              destructiveIds,
+              hmac,
+              typedString
+            ),
+          apply: (planToken: string, confirmationTokens: string[]) =>
+            ipcRenderer.invoke(IPC.RESTORE_APPLY, planToken, confirmationTokens),
+          cancel: (applyId: string) => ipcRenderer.invoke(IPC.RESTORE_CANCEL, applyId),
+          onEvent: (
+            cb: (event: {
+              applyId: string
+              stepId: string
+              status: string
+              message: string
+            }) => void
+          ): (() => void) => {
+            const handler = (
+              _: Electron.IpcRendererEvent,
+              ev: { applyId: string; stepId: string; status: string; message: string }
+            ): void => cb(ev)
+            ipcRenderer.on(IPC.RESTORE_EVENT, handler)
+            return () => ipcRenderer.removeListener(IPC.RESTORE_EVENT, handler)
+          }
+        }
+      })
 })

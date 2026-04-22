@@ -32,7 +32,17 @@ import { listCacheClusters } from '../aws/services/elasticache'
 import { listEksClusters } from '../aws/services/eks'
 import { listOpenSearchDomains } from '../aws/services/opensearch'
 import { listMskClusters } from '../aws/services/msk'
-import type { RiftViewPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from './types'
+import type {
+  RiftViewPlugin,
+  NodeTypeMetadata,
+  PluginScanResult,
+  ScanContext,
+  StoredVersion,
+  RestorePlan,
+  TypedConfirmation,
+  ApplyEvent,
+  CostDelta
+} from './types'
 import type { CloudNode } from '@riftview/shared'
 
 function errCatch(service: string, region: string, errors: PluginScanResult['errors']) {
@@ -401,6 +411,54 @@ export const awsPlugin: RiftViewPlugin = {
       errors.push({ service: serviceName, region, message: (e as Error)?.message ?? String(e) })
       return { nodes: [], errors }
     }
+  },
+
+  // --- Snapshot-export surface (RIF-18 interface stubs) ---
+  // Full implementations are tracked in the RIF-18 apply-side sub-tasks.
+  // Stubs throw so the interface compiles and IPC handlers can be wired end-to-end.
+
+  async listVersions(snapshotId: string): Promise<StoredVersion[]> {
+    void snapshotId
+    throw new Error('not implemented for AWS yet')
+  },
+
+  async planRestore(from: StoredVersion, to: StoredVersion | 'live'): Promise<RestorePlan> {
+    void from
+    void to
+    throw new Error('not implemented for AWS yet')
+  },
+
+  // eslint-disable-next-line require-yield
+  async *applyRestore(
+    plan: RestorePlan,
+    confirmations: readonly TypedConfirmation[],
+    opts?: { signal?: AbortSignal }
+  ): AsyncIterable<ApplyEvent> {
+    void plan
+    void confirmations
+    void opts
+    throw new Error('not implemented for AWS yet')
+  },
+
+  async confirmStep(
+    planToken: string,
+    stepId: string,
+    typedString: string
+  ): Promise<{ confirmationToken: string }> {
+    void planToken
+    void stepId
+    void typedString
+    throw new Error('not implemented for AWS yet')
+  },
+
+  async cancel(applyId: string): Promise<{ ok: boolean }> {
+    void applyId
+    throw new Error('not implemented for AWS yet')
+  },
+
+  async estimateCostDelta(plan: RestorePlan): Promise<CostDelta> {
+    void plan
+    throw new Error('not implemented for AWS yet')
   },
 
   async scan(context: ScanContext): Promise<PluginScanResult> {

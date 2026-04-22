@@ -2,7 +2,7 @@ import fs from 'fs'
 import fsp from 'fs/promises'
 import path from 'path'
 import os from 'os'
-import { ipcMain, BrowserWindow, app, dialog, Notification } from 'electron'
+import { ipcMain, BrowserWindow, app, dialog, Notification, safeStorage } from 'electron'
 import { IPC } from './channels'
 import { listProfiles, getDefaultRegion } from '@riftview/shared'
 import { createClients } from '../aws/client'
@@ -43,6 +43,9 @@ import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
 import { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from '../aws/iam/fetcher'
 import type { IamAnalysisResult } from '../../renderer/types/iam'
 import type { NodeType } from '@riftview/shared'
+import { isDemoMode } from '../capability'
+import { signPlanProjection, verifyPlanProjection } from '../restore/hmac'
+import { mintPlanToken, lookupPlanToken, consumePlanToken } from '../restore/planStore'
 
 type TerraformDeployResult =
   | { status: 'success'; output: string }
@@ -764,6 +767,117 @@ export function registerHandlers(win: BrowserWindow): void {
 
   // Initialise engine for the default session
   cliEngine = new CliEngine(win)
+
+  // --- RESTORE (SecOps review required per handler) ---
+  // All restore handlers are structurally absent in demo mode.
+  // RESTORE_PLAN / RESTORE_CONFIRM_STEP / RESTORE_APPLY are additionally absent
+  // when safeStorage.isEncryptionAvailable() is false (amendment c, RIF-20 2026-04-21).
+  if (!isDemoMode()) {
+    const encAvailable = safeStorage.isEncryptionAvailable()
+
+    // Read-only channels — available even when keychain is unavailable.
+    ipcMain.handle(IPC.RESTORE_VERSIONS, async (_, snapshotId: unknown) => {
+      if (typeof snapshotId !== 'string' || snapshotId.length === 0) return []
+      try {
+        return listVersionsSafe({ profile: undefined, region: undefined })
+      } catch {
+        return []
+      }
+    })
+
+    ipcMain.handle(IPC.RESTORE_COST_ESTIMATE, async (_, planToken: unknown) => {
+      if (typeof planToken !== 'string') return null
+      const entry = lookupPlanToken(planToken)
+      if (!entry) return null
+      // Full cost computation is RIF-21's scope. Return null until wired.
+      return null
+    })
+
+    ipcMain.handle(IPC.RESTORE_CANCEL, async (_, applyId: unknown) => {
+      if (typeof applyId !== 'string') return { ok: false }
+      // Full cancellation logic is RIF-19/RIF-20's scope. Stub for interface delivery.
+      return { ok: true }
+    })
+
+    if (encAvailable) {
+      // Write/mutating channels — structurally absent when keychain unavailable.
+
+      ipcMain.handle(IPC.RESTORE_PLAN, async (_, snapshotId: unknown, versionId: unknown) => {
+        if (typeof snapshotId !== 'string' || typeof versionId !== 'string') {
+          return { error: 'invalid arguments' }
+        }
+        // planRestore implementation is RIF-18 apply-side work. For now, mint a
+        // stub token so the IPC surface and HMAC path are exercisable.
+        const stubPlan = {
+          planId: 'stub',
+          pluginId: 'com.riftview.aws',
+          versionFormat: 'scan-snapshot' as const,
+          from: { versionId, capturedAt: '', pluginId: '', region: '', versionFormat: '' },
+          to: 'live' as const,
+          steps: [],
+          createdAt: new Date().toISOString(),
+          planToken: ''
+        }
+        const planToken = mintPlanToken(snapshotId, versionId, stubPlan)
+        const destructiveIds: string[] = []
+        const hmac = signPlanProjection(planToken, destructiveIds)
+        return { planToken, signedPlanProjection: { destructiveIds, hmac }, steps: [] }
+      })
+
+      ipcMain.handle(
+        IPC.RESTORE_CONFIRM_STEP,
+        async (
+          _,
+          planToken: unknown,
+          stepId: unknown,
+          destructiveIds: unknown,
+          hmac: unknown,
+          typedString: unknown
+        ) => {
+          if (
+            typeof planToken !== 'string' ||
+            typeof stepId !== 'string' ||
+            !Array.isArray(destructiveIds) ||
+            typeof hmac !== 'string' ||
+            typeof typedString !== 'string'
+          ) {
+            return { error: 'invalid arguments' }
+          }
+          const ids = destructiveIds as string[]
+          if (!verifyPlanProjection(planToken, ids, hmac)) {
+            return { error: 'hmac verification failed' }
+          }
+          const entry = lookupPlanToken(planToken)
+          if (!entry) return { error: 'plan not found or expired' }
+          // Confirmation token = HMAC of (planToken + stepId + typedString)
+          const confirmationToken = signPlanProjection(planToken + stepId, [typedString])
+          return { confirmationToken }
+        }
+      )
+
+      ipcMain.handle(
+        IPC.RESTORE_APPLY,
+        async (_, planToken: unknown, confirmationTokens: unknown) => {
+          if (typeof planToken !== 'string' || !Array.isArray(confirmationTokens)) {
+            return { error: 'invalid arguments' }
+          }
+          const entry = consumePlanToken(planToken)
+          if (!entry) return { error: 'plan not found or expired' }
+          // Full apply is RIF-19/RIF-20 apply-side scope. The apply loop emits
+          // IPC.RESTORE_EVENT to the renderer for each step as it completes.
+          const applyId = `apply-${Date.now()}`
+          // emit a synthetic started event so the channel reference is wired
+          mainWindow?.webContents.send(IPC.RESTORE_EVENT, {
+            applyId,
+            stepId: '',
+            status: 'queued',
+            message: 'apply queued — full implementation in RIF-20'
+          })
+          return { applyId }
+        }
+      )
+    }
+  }
 }
 
 async function restartScanner(

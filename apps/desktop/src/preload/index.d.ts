@@ -1,4 +1,39 @@
+interface RiftviewRestoreApi {
+  listVersions(snapshotId: string): Promise<import('../main/history/read').VersionMeta[]>
+  planRestore(
+    snapshotId: string,
+    versionId: string
+  ): Promise<{
+    planToken: string
+    signedPlanProjection: { destructiveIds: string[]; hmac: string }
+    steps: unknown[]
+    error?: string
+  }>
+  estimateCostDelta(planToken: string): Promise<unknown>
+  confirmStep(
+    planToken: string,
+    stepId: string,
+    destructiveIds: string[],
+    hmac: string,
+    typedString: string
+  ): Promise<{ confirmationToken: string } | { error: string }>
+  apply(
+    planToken: string,
+    confirmationTokens: string[]
+  ): Promise<{ applyId: string } | { error: string }>
+  cancel(applyId: string): Promise<{ ok: boolean }>
+  onEvent(
+    cb: (event: { applyId: string; stepId: string; status: string; message: string }) => void
+  ): () => void
+}
+
 interface Window {
+  /** Synchronous capability flags — populated at preload init, no IPC round-trip needed. */
+  __riftviewCapabilities: {
+    /** True when RIFTVIEW_DEMO_MODE=1. Renderer uses this for UI gating only; main is the security gate. */
+    isDemoMode: boolean
+  }
+
   riftview: {
     /** Runtime demo-mode flag — captured at preload load from process.env.RIFTVIEW_DEMO_MODE. */
     isDemoMode: boolean
@@ -108,5 +143,10 @@ interface Window {
     }): Promise<import('../main/history/read').VersionMeta[]>
     readSnapshot(versionId: string): Promise<import('../main/history/read').Snapshot | null>
     deleteSnapshot(versionId: string): Promise<{ ok: boolean }>
+    /**
+     * Restore surface — undefined when demo mode is active (amendment d, RIF-20 2026-04-21).
+     * Renderer probes `window.riftview.restore === undefined` as the capability check.
+     */
+    restore?: RiftviewRestoreApi
   }
 }

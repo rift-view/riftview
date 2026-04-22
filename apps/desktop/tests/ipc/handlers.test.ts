@@ -2,7 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('electron', () => ({
   ipcMain: { handle: vi.fn(), on: vi.fn() },
-  BrowserWindow: vi.fn()
+  BrowserWindow: vi.fn(),
+  app: { getPath: vi.fn().mockReturnValue('/tmp'), getVersion: vi.fn().mockReturnValue('0.0.0') },
+  dialog: { showSaveDialog: vi.fn(), showOpenDialog: vi.fn() },
+  Notification: vi.fn(function () {
+    return { show: vi.fn() }
+  }),
+  safeStorage: { isEncryptionAvailable: vi.fn().mockReturnValue(true) }
 }))
 vi.mock('@riftview/shared', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>

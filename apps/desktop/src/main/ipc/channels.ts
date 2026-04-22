@@ -47,7 +47,19 @@ export const IPC = {
   SCAN_ERROR_DETAIL: 'scan:error-detail', // push: main → renderer — { message, kind } for actionable scan failure toasts
   SNAPSHOT_LIST: 'snapshot:list', // invoke(filter?: { profile?, region?, limit? }) → VersionMeta[]
   SNAPSHOT_READ: 'snapshot:read', // invoke(versionId: string) → Snapshot | null
-  SNAPSHOT_DELETE: 'snapshot:delete' // invoke(versionId: string) → { ok: boolean }
+  SNAPSHOT_DELETE: 'snapshot:delete', // invoke(versionId: string) → { ok: boolean }
+
+  // --- RESTORE (SecOps review required per handler) ---
+  // Channels below carry the restore flow. Conditionally registered:
+  // - ALL absent in demo mode (RIFTVIEW_DEMO_MODE=1)
+  // - RESTORE_PLAN / RESTORE_CONFIRM_STEP / RESTORE_APPLY also absent when safeStorage unavailable
+  RESTORE_VERSIONS: 'restore:versions', // invoke(snapshotId) → StoredVersion[]
+  RESTORE_PLAN: 'restore:plan', // invoke(snapshotId, versionId) → SignedPlanResponse
+  RESTORE_COST_ESTIMATE: 'restore:cost-estimate', // invoke(planToken) → CostDelta
+  RESTORE_CONFIRM_STEP: 'restore:confirm-step', // invoke(planToken, stepId, typedString) → { confirmationToken }
+  RESTORE_APPLY: 'restore:apply', // invoke(planToken, confirmationTokens[]) → { applyId }
+  RESTORE_CANCEL: 'restore:cancel', // invoke(applyId) → { ok }
+  RESTORE_EVENT: 'restore:event' // push main → renderer: { applyId, stepId, status, message }
 } as const
 
 export type IpcChannel = (typeof IPC)[keyof typeof IPC]

@@ -150,16 +150,24 @@ export type ApplyEvent =
  * Snapshot-export surface. Mixed into RiftViewPlugin.
  *
  * A plugin declares participation via `versionFormat`:
- *   - a concrete id → the three methods become the plugin's responsibility.
+ *   - a concrete id → the six methods become the plugin's responsibility.
  *   - `'unsupported'` → opt-out. The registry surfaces "restore not supported"
- *     in the UI and the three methods remain undefined.
+ *     in the UI and the methods remain undefined.
  *
  * Method signatures are optional at the type level so opting-out plugins
  * compile cleanly. The registry enforces the contract at runtime when
  * versionFormat !== 'unsupported'.
+ *
+ * Additions from RIF-18 (interface-first; AWS plugin stubs with throw):
+ *   listVersions — enumerate archived versions for a snapshot
+ *   confirmStep  — validate a typed confirmation string for a destructive step
+ *   cancel       — cancel an in-flight apply by applyId
  */
 export interface RiftViewPluginSnapshotExport {
   readonly versionFormat: VersionFormatId
+
+  /** List stored versions for the given snapshot. Read-only; no side effects. */
+  listVersions?(snapshotId: string): Promise<StoredVersion[]>
 
   planRestore?(fromVersion: StoredVersion, toVersion: StoredVersion | 'live'): Promise<RestorePlan>
 
@@ -169,5 +177,20 @@ export interface RiftViewPluginSnapshotExport {
     opts?: { signal?: AbortSignal }
   ): AsyncIterable<ApplyEvent>
 
+  /**
+   * Validate that `typedString` matches the expected confirmation phrase for
+   * the given destructive step. Returns an opaque confirmation token scoped to
+   * (planToken, stepId) that RESTORE_APPLY requires.
+   */
+  confirmStep?(
+    planToken: string,
+    stepId: string,
+    typedString: string
+  ): Promise<{ confirmationToken: string }>
+
+  /** Cancel an in-flight apply. Idempotent. Does NOT roll back completed steps. */
+  cancel?(applyId: string): Promise<{ ok: boolean }>
+
+  /** RIF-21 cost-delta hook. Pass-through; cost model fills CostDelta after planning. */
   estimateCostDelta?(plan: RestorePlan): Promise<CostDelta>
 }
