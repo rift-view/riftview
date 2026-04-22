@@ -445,7 +445,7 @@ describe('generateTerraformBlock — newly-implemented types', () => {
 
 describe('generateTerraformBlock — pluginRegistry fallback', () => {
   it('falls back to pluginRegistry.getHclGenerator for non-built-in node types', async () => {
-    const { PluginRegistry } = await import('../../../src/main/plugin/registry')
+    const { PluginRegistry } = await import('@riftview/cloud-scan')
 
     // Register a temporary plugin with an HCL generator for 'azure-vm'
     const mockGen = (node: CloudNode): string => `resource "azure_virtual_machine" "${node.id}" {}`
@@ -485,7 +485,7 @@ describe('generateTerraformBlock — pluginRegistry fallback', () => {
   })
 
   it('getHclGenerator returns undefined for unregistered plugin types', async () => {
-    const { PluginRegistry } = await import('../../../src/main/plugin/registry')
+    const { PluginRegistry } = await import('@riftview/cloud-scan')
     const freshRegistry = new PluginRegistry()
     expect(freshRegistry.getHclGenerator('not-registered-type')).toBeUndefined()
   })

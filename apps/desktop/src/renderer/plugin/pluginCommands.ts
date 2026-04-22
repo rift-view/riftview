@@ -8,7 +8,7 @@ import { buildDeleteCommands } from '../utils/buildDeleteCommands'
 import { buildEditCommands } from '../utils/buildEditCommands'
 import type { CreateParams } from '../types/create'
 import type { EditParams } from '../types/edit'
-import type { PluginCommandHandlers } from '../../main/plugin/types'
+import type { PluginCommandHandlers } from '@riftview/cloud-scan'
 
 // Registry for plugin command handlers (populated at startup for bundled plugins)
 const pluginHandlers = new Map<string, PluginCommandHandlers>()

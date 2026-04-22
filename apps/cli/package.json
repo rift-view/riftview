@@ -20,9 +20,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@riftview/cloud-scan": "*",
+    "@riftview/shared": "*",
     "commander": "^12.1.0"
-  },
-  "devDependencies": {
-    "@riftview/shared": "*"
   }
 }

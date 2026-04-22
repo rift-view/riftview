@@ -5,8 +5,7 @@ import os from 'os'
 import { ipcMain, BrowserWindow, app, dialog, Notification, safeStorage } from 'electron'
 import { IPC } from './channels'
 import { listProfiles, getDefaultRegion } from '@riftview/shared'
-import { createClients } from '../aws/client'
-import type { AwsClients } from '../aws/client'
+import { createClients, type AwsClients } from '@riftview/cloud-scan'
 import { ResourceScanner, historyFilePath } from '../aws/scanner'
 import {
   deleteSnapshotSafe,
@@ -16,7 +15,7 @@ import {
   type VersionMeta
 } from '../history/index'
 import { CliEngine } from '../cli/engine'
-import { pluginRegistry } from '../plugin/index'
+import { pluginRegistry } from '@riftview/cloud-scan'
 import {
   CreateDistributionCommand,
   GetDistributionConfigCommand,
@@ -33,14 +32,15 @@ import { execFile, spawn } from 'child_process'
 import type { ChildProcess } from 'child_process'
 import { promisify } from 'util'
 import { randomUUID } from 'crypto'
-import { CloudWatchClient } from '@aws-sdk/client-cloudwatch'
-import { fetchMetrics } from '../aws/services/cloudwatch'
-import type { CloudMetric } from '../aws/services/cloudwatch'
+import {
+  fetchMetricsForProfile,
+  type CloudMetric,
+  validateAwsCredentials
+} from '@riftview/cloud-scan'
 import { buildLocalStackProvider } from '../terraform/provider'
 const execFileAsync = promisify(execFile)
 import { parseTfState, parseTfStateModules } from '@riftview/shared'
-import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts'
-import { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from '../aws/iam/fetcher'
+import { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from '@riftview/cloud-scan'
 import type { IamAnalysisResult } from '../../renderer/types/iam'
 import type { NodeType } from '@riftview/shared'
 import { isDemoMode } from '../capability'
@@ -604,23 +604,7 @@ export function registerHandlers(win: BrowserWindow): void {
       _event,
       profile: AwsProfile
     ): Promise<{ ok: true; account: string; arn: string } | { ok: false; error: string }> => {
-      try {
-        const endpointConfig = profile.endpoint ? { endpoint: profile.endpoint } : {}
-        const credentialsConfig = profile.endpoint
-          ? { credentials: { accessKeyId: 'test', secretAccessKey: 'test' } }
-          : {}
-        // Mirror createClients: set AWS_PROFILE so the default credential chain picks up the right profile
-        process.env.AWS_PROFILE = profile.name
-        const stsClient = new STSClient({
-          region: profile.region ?? 'us-east-1',
-          ...endpointConfig,
-          ...credentialsConfig
-        })
-        const res = await stsClient.send(new GetCallerIdentityCommand({}))
-        return { ok: true, account: res.Account ?? '', arn: res.Arn ?? '' }
-      } catch (err) {
-        return { ok: false, error: (err as Error).message }
-      }
+      return validateAwsCredentials(profile)
     }
   )
 
@@ -637,16 +621,13 @@ export function registerHandlers(win: BrowserWindow): void {
         profile: AwsProfile
       }
     ): Promise<CloudMetric[]> => {
-      try {
-        const credentialsConfig = params.profile.endpoint
-          ? { credentials: { accessKeyId: 'test', secretAccessKey: 'test' } }
-          : {}
-        if (!params.profile.endpoint) process.env.AWS_PROFILE = params.profile.name
-        const cw = new CloudWatchClient({ region: params.region, ...credentialsConfig })
-        return await fetchMetrics(cw, { nodeType: params.nodeType, resourceId: params.resourceId })
-      } catch {
-        return []
-      }
+      if (!params.profile.endpoint) process.env.AWS_PROFILE = params.profile.name
+      return fetchMetricsForProfile({
+        nodeType: params.nodeType,
+        resourceId: params.resourceId,
+        region: params.region,
+        endpoint: params.profile.endpoint
+      })
     }
   )
 

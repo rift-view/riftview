@@ -1,0 +1,46 @@
+{
+  "name": "@riftview/cloud-scan",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AWS scan plugin registry and SDK client factory. Owns all @aws-sdk/client-* runtime coupling for @riftview/desktop and @riftview/cli.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aws-sdk/client-acm": "^3.1011.0",
+    "@aws-sdk/client-apigatewayv2": "^3.1011.0",
+    "@aws-sdk/client-cloudfront": "^3.1011.0",
+    "@aws-sdk/client-cloudwatch": "^3.1030.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.1023.0",
+    "@aws-sdk/client-dynamodb": "^3.1012.0",
+    "@aws-sdk/client-ec2": "^3.1007.0",
+    "@aws-sdk/client-ecr": "^3.1012.0",
+    "@aws-sdk/client-ecs": "^3.1024.0",
+    "@aws-sdk/client-eks": "^3.1024.0",
+    "@aws-sdk/client-elastic-load-balancing-v2": "^3.1007.0",
+    "@aws-sdk/client-elasticache": "^3.1024.0",
+    "@aws-sdk/client-eventbridge": "^3.1012.0",
+    "@aws-sdk/client-iam": "^3.1014.0",
+    "@aws-sdk/client-kafka": "^3.1024.0",
+    "@aws-sdk/client-kinesis": "^3.1023.0",
+    "@aws-sdk/client-lambda": "^3.1007.0",
+    "@aws-sdk/client-opensearch": "^3.1024.0",
+    "@aws-sdk/client-rds": "^3.1007.0",
+    "@aws-sdk/client-route-53": "^3.1012.0",
+    "@aws-sdk/client-s3": "^3.1007.0",
+    "@aws-sdk/client-secrets-manager": "^3.1012.0",
+    "@aws-sdk/client-ses": "^3.1023.0",
+    "@aws-sdk/client-sfn": "^3.1012.0",
+    "@aws-sdk/client-sns": "^3.1012.0",
+    "@aws-sdk/client-sqs": "^3.1012.0",
+    "@aws-sdk/client-ssm": "^3.1012.0",
+    "@aws-sdk/client-sts": "^3.1029.0",
+    "@riftview/shared": "*"
+  }
+}

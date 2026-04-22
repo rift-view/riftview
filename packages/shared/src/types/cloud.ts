@@ -109,6 +109,25 @@ export interface CustomEdge {
   label?: string
 }
 
+// ── IAM analysis types ────────────────────────────────────────────────────────
+
+export type IamSeverity = 'critical' | 'warning' | 'info'
+
+export interface IamFinding {
+  severity: IamSeverity
+  title: string
+  detail: string
+  policyName?: string
+  statement?: string
+}
+
+export interface IamAnalysisResult {
+  nodeId: string
+  findings: IamFinding[]
+  error?: string
+  fetchedAt: number
+}
+
 // ── Advisory system (Phase 3: OP_INTELLIGENCE) ────────────────────────────────
 
 export type AdvisoryRuleId =

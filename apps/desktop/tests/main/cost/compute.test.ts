@@ -5,7 +5,7 @@ import {
   coveredNodeTypes,
   pricingSourceDate
 } from '../../../src/main/cost/compute'
-import type { RestorePlan, RestoreStep, StoredVersion } from '../../../src/main/plugin/restoreTypes'
+import type { RestorePlan, RestoreStep, StoredVersion } from '@riftview/cloud-scan'
 
 const sampleVersion: StoredVersion = {
   versionId: '01ARZ3NDEKTSV4RRFFQ69G5FAV',

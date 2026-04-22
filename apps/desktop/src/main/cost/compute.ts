@@ -11,7 +11,7 @@
  * Spec: docs/superpowers/specs/2026-04-20-snapshot-export-cost-model.md
  */
 
-import type { CostDelta, CostDeltaEntry, RestorePlan, RestoreStep } from '../plugin/restoreTypes'
+import type { CostDelta, CostDeltaEntry, RestorePlan, RestoreStep } from '@riftview/cloud-scan'
 import defaults from './defaults.json'
 
 type ConfidenceTier = 'exact' | 'estimate' | 'unknown'
