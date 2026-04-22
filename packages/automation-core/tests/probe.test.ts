@@ -159,4 +159,37 @@ describe('probe — state machine (spec §6.1)', () => {
     await probe({ issueId: 'rift-18', ghUser: 'juliushamm', gh: mockGh(), git })
     expect(seen).toEqual(['*rift-18-*'])
   })
+
+  it('passes issueId-scoped query to listPullRequests', async () => {
+    const seen: string[] = []
+    const gh = mockGh({
+      async listPullRequests(q) {
+        seen.push(q)
+        return []
+      }
+    })
+    await probe({ issueId: 'RIFT-7', ghUser: 'juliushamm', gh, git: mockGit() })
+    expect(seen).toEqual(['RIFT-7 in:title,body'])
+  })
+
+  it('throws on malformed issueId', async () => {
+    await expect(
+      probe({ issueId: 'FOO-5', ghUser: 'juliushamm', gh: mockGh(), git: mockGit() })
+    ).rejects.toThrow(/does not match RIFT/)
+  })
+
+  it('abort-not-ours when both mine and theirs exist (theirs wins)', async () => {
+    const gh = mockGh({
+      async listPullRequests() {
+        return [
+          pr({ number: 50, author: 'juliushamm' }),
+          pr({ number: 51, author: 'someone-else' })
+        ]
+      }
+    })
+    const r = await probe({ issueId: 'RIFT-1', ghUser: 'juliushamm', gh, git: mockGit() })
+    if (r.state !== 'abort-not-ours') throw new Error(`expected abort-not-ours, got ${r.state}`)
+    expect(r.prNumber).toBe(51)
+    expect(r.author).toBe('someone-else')
+  })
 })

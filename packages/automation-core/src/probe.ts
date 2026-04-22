@@ -49,8 +49,7 @@ export async function probe({
   if (nonDraftOpen.length > 0) {
     const mine = nonDraftOpen.find((p) => p.author === ghUser)
     const theirs = nonDraftOpen.find((p) => p.author !== ghUser)
-    if (theirs && !mine)
-      return { state: 'abort-not-ours', prNumber: theirs.number, author: theirs.author }
+    if (theirs) return { state: 'abort-not-ours', prNumber: theirs.number, author: theirs.author }
 
     if (mine) {
       const status = await gh.getPullRequestStatus(mine.number)
@@ -76,5 +75,6 @@ export async function probe({
 
 function extractNum(issueId: string): string {
   const m = issueId.match(/RIFT-(\d+)/i)
-  return m ? m[1] : ''
+  if (!m) throw new Error(`probe: issueId "${issueId}" does not match RIFT-\\d+`)
+  return m[1]
 }
