@@ -54,6 +54,18 @@ describe('halt', () => {
     expect(r.reason.label).toBe('automation:halt-all')
   })
 
+  it('halt-all wins over halt in reason when both labels present', () => {
+    const r = isHalted({
+      issueId: 'RIFT-1',
+      workspaceDir,
+      linearLabels: ['automation:halt', 'automation:halt-all']
+    })
+    expect(r.halted).toBe(true)
+    if (!r.halted) throw new Error('expected halted')
+    if (r.reason.kind !== 'label') throw new Error('expected label reason')
+    expect(r.reason.label).toBe('automation:halt-all')
+  })
+
   it('file halt takes precedence over label halt in reason precedence', () => {
     writeFileSync(join(workspaceDir, HALT_FILE_NAME), '')
     const r = isHalted({

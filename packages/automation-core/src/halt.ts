@@ -8,6 +8,12 @@ export type HaltReason =
   | { kind: 'label'; label: 'automation:halt' | 'automation:halt-all' }
 
 export type HaltInput = {
+  /**
+   * The issue being evaluated. Not used directly: callers are responsible for
+   * passing `linearLabels` scoped to this issue plus any aggregated global
+   * `automation:halt-all` labels. Retained so future per-issue scoping logic
+   * can land without a signature change.
+   */
   issueId: string
   workspaceDir: string
   linearLabels: readonly string[]
