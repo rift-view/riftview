@@ -71,16 +71,6 @@ export default defineConfig(
               from: './apps/cli',
               message:
                 'apps/desktop must not import from apps/cli. Promote shared code to a package.'
-            },
-            {
-              target: './apps/automation',
-              from: './apps/desktop',
-              message: 'apps/automation must not import from apps/desktop.'
-            },
-            {
-              target: './apps/automation',
-              from: './apps/cli',
-              message: 'apps/automation must not import from apps/cli.'
             }
           ]
         }

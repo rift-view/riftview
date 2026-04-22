@@ -12,6 +12,17 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  lockfile-guard:
+    # Fails fast if package-lock.json has optionalDependencies without
+    # resolved entries — catches npm/cli#4828 strips that otherwise only
+    # surface as cryptic "Cannot find module '...<platform>.node'" errors
+    # on platforms that weren't the install author's.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check lockfile has no stripped platform deps
+        run: python3 scripts/check-lockfile-optional-deps.py
+
   fast:
     runs-on: ubuntu-latest
     steps:
