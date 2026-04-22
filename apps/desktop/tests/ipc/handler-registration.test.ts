@@ -27,9 +27,16 @@ const PUSH_ONLY_CHANNELS = new Set<string>([
 // Fire-and-forget channel registered with ipcMain.on, not ipcMain.handle
 const ON_CHANNELS = new Set<string>([IPC.CLI_CANCEL])
 
+// Channels gated on an env flag — intentionally absent unless the flag is on.
+// The contract check doesn't set the flag (we want the default-off surface),
+// so these are skipped. Coverage for the on-path belongs in a dedicated test.
+const CONDITIONAL_CHANNELS = new Set<string>([
+  IPC.E2E_IMPORT_TFSTATE // registered only when RIFTVIEW_E2E=1
+])
+
 // Channels that require an invoke handler
 const INVOKE_CHANNELS = Object.values(IPC).filter(
-  (ch) => !PUSH_ONLY_CHANNELS.has(ch) && !ON_CHANNELS.has(ch)
+  (ch) => !PUSH_ONLY_CHANNELS.has(ch) && !ON_CHANNELS.has(ch) && !CONDITIONAL_CHANNELS.has(ch)
 )
 
 vi.mock('electron', () => ({

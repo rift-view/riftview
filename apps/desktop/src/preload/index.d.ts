@@ -32,6 +32,17 @@ interface Window {
   __riftviewCapabilities: {
     /** True when RIFTVIEW_DEMO_MODE=1. Renderer uses this for UI gating only; main is the security gate. */
     isDemoMode: boolean
+    /** True when RIFTVIEW_E2E=1. Enables gated test affordances in preload + renderer. Never set in prod. */
+    isE2EMode: boolean
+  }
+
+  /**
+   * E2E-only renderer hatch. Only defined when `window.__riftviewCapabilities.isE2EMode`.
+   * Exposes a tiny slice of the zustand store so Playwright @release specs can
+   * drive state without having to click through every UI path.
+   */
+  __riftviewE2E?: {
+    setImportedNodes(nodes: import('@riftview/shared').CloudNode[]): void
   }
 
   riftview: {
@@ -148,5 +159,10 @@ interface Window {
      * Renderer probes `window.riftview.restore === undefined` as the capability check.
      */
     restore?: RiftviewRestoreApi
+    /**
+     * E2E-only tfstate importer. Reads + parses the file at `tfstatePath` and returns
+     * the parsed nodes. Unavailable unless RIFTVIEW_E2E=1. See preload/index.ts.
+     */
+    e2eImportTfState?(tfstatePath: string): Promise<import('@riftview/shared').CloudNode[]>
   }
 }

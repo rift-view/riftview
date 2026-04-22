@@ -457,6 +457,19 @@ export function registerHandlers(win: BrowserWindow): void {
 
   ipcMain.handle(IPC.TFSTATE_CLEAR, () => ({ ok: true }))
 
+  // E2E-only: parse a tfstate at the provided path without a file dialog.
+  // Gated on RIFTVIEW_E2E=1; unregistered in production so the channel is
+  // unreachable from a non-test renderer build.
+  if (process.env.RIFTVIEW_E2E === '1') {
+    ipcMain.handle(IPC.E2E_IMPORT_TFSTATE, async (_event, tfstatePath: unknown) => {
+      if (typeof tfstatePath !== 'string' || tfstatePath.length === 0) {
+        throw new Error('E2E_IMPORT_TFSTATE: path must be a non-empty string')
+      }
+      const raw = await fsp.readFile(tfstatePath, 'utf-8')
+      return parseTfState(raw)
+    })
+  }
+
   // List modules in a tfstate file — opens native file dialog, groups resources by module segment
   ipcMain.handle(IPC.TFSTATE_LIST_MODULES, async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog({

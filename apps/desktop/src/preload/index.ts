@@ -11,9 +11,16 @@ import { IPC } from '../main/ipc/channels'
 // hint only; main's flag is the security gate).
 const _isDemoMode = process.env.RIFTVIEW_DEMO_MODE === '1'
 
+// E2E test mode — gated preload capabilities for Playwright @release specs.
+// Must never be set in a production build; only Playwright fixtures opt in.
+const _isE2EMode = process.env.RIFTVIEW_E2E === '1'
+
 // Expose capabilities synchronously so renderer reads them at first render
 // without waiting for IPC readiness.
-contextBridge.exposeInMainWorld('__riftviewCapabilities', { isDemoMode: _isDemoMode })
+contextBridge.exposeInMainWorld('__riftviewCapabilities', {
+  isDemoMode: _isDemoMode,
+  isE2EMode: _isE2EMode
+})
 
 contextBridge.exposeInMainWorld('riftview', {
   // Runtime demo-mode flag — kept here for backwards compat with renderer UI reads.
@@ -205,6 +212,15 @@ contextBridge.exposeInMainWorld('riftview', {
     ipcRenderer.invoke(IPC.SNAPSHOT_LIST, filter),
   readSnapshot: (versionId: string) => ipcRenderer.invoke(IPC.SNAPSHOT_READ, versionId),
   deleteSnapshot: (versionId: string) => ipcRenderer.invoke(IPC.SNAPSHOT_DELETE, versionId),
+
+  // E2E-only helpers — absent from preload surface unless RIFTVIEW_E2E=1.
+  // Keeps production builds free of test affordances.
+  ...(_isE2EMode
+    ? {
+        e2eImportTfState: (tfstatePath: string) =>
+          ipcRenderer.invoke(IPC.E2E_IMPORT_TFSTATE, tfstatePath)
+      }
+    : {}),
 
   // Restore surface — structurally absent in demo mode (amendment d, RIF-20 2026-04-21).
   // Renderer probes window.riftview.restore === undefined as the capability check.

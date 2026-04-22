@@ -19,7 +19,8 @@ const CREATABLE = [
   { resource: 'alb', label: 'New ALB' },
   { resource: 'acm', label: 'New ACM Certificate' },
   { resource: 'cloudfront', label: 'New CloudFront Distribution' },
-  { resource: 'apigw', label: 'New API Gateway' }
+  { resource: 'apigw', label: 'New API Gateway' },
+  { resource: 'sqs', label: 'New SQS Queue' }
 ] as const
 
 export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
@@ -90,7 +91,7 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
           onClose()
         }}
       />
-      <div style={menuStyle}>
+      <div style={menuStyle} data-testid="canvas-context-menu">
         {!pendingResource ? (
           <>
             {/* Canvas section */}
@@ -122,6 +123,7 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
             {CREATABLE.map((item) => (
               <div
                 key={item.resource}
+                data-testid={`canvas-context-menu-item-${item.resource}`}
                 style={itemStyle}
                 onClick={() => setPendingResource(item.resource)}
                 onMouseEnter={hoverOn}
@@ -137,6 +139,7 @@ export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
             {(['topology', 'graph'] as const).map((v) => (
               <div
                 key={v}
+                data-testid={`canvas-context-menu-view-${v}`}
                 style={itemStyle}
                 onClick={() => selectView(v)}
                 onMouseEnter={hoverOn}
