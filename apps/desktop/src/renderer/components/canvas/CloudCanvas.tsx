@@ -11,6 +11,7 @@ import { CanvasToast } from '../CanvasToast'
 import { SaveViewModal } from './SaveViewModal'
 import { ScanErrorStrip } from './ScanErrorStrip'
 import { DriftModeStrip } from './DriftModeStrip'
+import { DriftNotificationBanner } from './DriftNotificationBanner'
 import { EmptyCanvasState } from './EmptyCanvasState'
 import { BulkActionToolbar } from './BulkActionToolbar'
 import { TimelineStrip } from './TimelineStrip'
@@ -174,6 +175,9 @@ function CanvasInner({ onNodeContextMenu }: Props): React.JSX.Element {
       <DriftModeStrip />
 
       <div className="relative flex-1" onContextMenu={handleContextMenu}>
+        {/* Drift notification banner — shows when imported tfstate has drift. */}
+        <DriftNotificationBanner />
+
         {/* Rift canvas background — dotted grid + warm vignette (sits under React Flow) */}
         <div className="rift-canvas-bg" aria-hidden="true" />
 

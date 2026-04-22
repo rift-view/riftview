@@ -43,6 +43,14 @@ export function CommandDrawer(): React.JSX.Element {
     }
   }, [activeCreate])
 
+  // When a fresh pendingCommand lands (e.g. a Delete after an Edit just
+  // completed), clear the stale exitCode so `showRun` re-exposes the Run
+  // button. Without this the drawer stays in "[OK]" mode until the user
+  // collapses it.
+  useEffect(() => {
+    if (pendingCommand) setExitCode(null)
+  }, [pendingCommand])
+
   // Subscribe to IPC streaming events
   useEffect(() => {
     const offOutput = window.riftview.onCliOutput((entry) => {
@@ -349,6 +357,7 @@ export function CommandDrawer(): React.JSX.Element {
         {showRun && (
           <button
             onClick={handleRun}
+            data-testid="command-drawer-run"
             className="btn btn-sm btn-primary"
             style={{ fontSize: 9, padding: '1px 10px' }}
           >
