@@ -235,6 +235,28 @@ describe('pollCi', () => {
     })
     expect(r.kind).toBe('halt')
   })
+
+  it('returns timeout when CI stays running and clock advances', async () => {
+    const gh = mockGh({
+      async getPullRequestStatus() {
+        return { state: 'running', mergeable: false }
+      }
+    })
+    let t = 0
+    const r = await pollCi(42, {
+      gh,
+      workspaceDir,
+      issueId: 'RIFT-1',
+      linearLabelsOf: async () => [],
+      now: () => {
+        const cur = t
+        t += 2 * 3600 * 1000 // each tick > 1h
+        return cur
+      },
+      sleep: async () => {}
+    })
+    expect(r.kind).toBe('timeout')
+  })
 })
 
 describe('mergeGate', () => {
@@ -297,6 +319,29 @@ describe('mergeGate', () => {
       sleep: async () => {}
     })
     expect(r.kind).toBe('halt')
+  })
+
+  it('returns timeout when clock advances past MERGE_REVIEW_TIMEOUT_MS', async () => {
+    const linear = mockLinear() // no labels, no merge
+    let t = 0
+    const r = await mergeGate(42, 'RIFT-1', {
+      linear,
+      workspaceDir,
+      isAlreadyMerged: async () => false,
+      performMerge: async () => {
+        throw new Error('unreachable')
+      },
+      markLinearDone: async () => {
+        throw new Error('unreachable')
+      },
+      now: () => {
+        const cur = t
+        t += 25 * 3600 * 1000 // each tick > 24h
+        return cur
+      },
+      sleep: async () => {}
+    })
+    expect(r.kind).toBe('timeout')
   })
 })
 

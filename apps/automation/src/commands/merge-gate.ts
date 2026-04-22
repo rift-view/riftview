@@ -10,6 +10,11 @@ export type MergeGateDeps = {
   workspaceDir: string
   isAlreadyMerged: () => Promise<boolean>
   performMerge: () => Promise<void>
+  /**
+   * v1: the dispatcher injects a thin "post a completion comment" function.
+   * TODO(M10+): replace with a real Linear status-transition call once the
+   * skill wires MCP save_issue to flip the issue to Done.
+   */
   markLinearDone: () => Promise<void>
   now?: () => number
   sleep?: (ms: number) => Promise<void>

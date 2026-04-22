@@ -77,7 +77,11 @@ async function main(): Promise<void> {
       console.log('red')
       process.exit(4)
     }
-    console.log(`HALT ${r.reason}`)
+    if (r.kind === 'halt') {
+      console.log(`HALT ${r.reason}`)
+      process.exit(3)
+    }
+    console.log('TIMEOUT')
     process.exit(3)
   }
 

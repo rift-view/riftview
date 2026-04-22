@@ -19,9 +19,13 @@ export async function cleanup(issueId: string, deps: CleanupDeps): Promise<void>
   } catch {
     // releasing a non-existent label is fine; don't block cleanup on Linear errors
   }
-  auditLog(deps.log, {
-    ts: new Date().toISOString(),
-    phase: 'done',
-    status: 'success'
-  })
+  try {
+    auditLog(deps.log, {
+      ts: new Date().toISOString(),
+      phase: 'done',
+      status: 'success'
+    })
+  } catch {
+    // a failed audit write must not prevent lock release from completing cleanly
+  }
 }
