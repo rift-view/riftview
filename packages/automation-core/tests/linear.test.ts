@@ -76,14 +76,29 @@ describe('linear', () => {
     expect(stale).toBe(false)
   })
 
-  it('isLockStale true when most-recent heartbeat is older than TTL', async () => {
+  it('isLockStale true when most-recent heartbeat is older than TTL (explicit now)', async () => {
     const c = mockClient()
+    const then = new Date('2026-04-21T00:00:00.000Z')
+    const now = new Date('2026-04-21T05:30:00.000Z') // 5.5h later
     c._comments.push({
       id: 'x',
       body: '🟡 automation:in-flight — heartbeat',
-      createdAt: new Date(Date.now() - 5 * 3_600_000).toISOString()
+      createdAt: then.toISOString()
     })
-    const stale = await isLockStale(c, 'RIFT-1', 4 * 3_600_000)
+    const stale = await isLockStale(c, 'RIFT-1', 4 * 3_600_000, now)
     expect(stale).toBe(true)
+  })
+
+  it('isLockStale false when latest heartbeat is within TTL of explicit now', async () => {
+    const c = mockClient()
+    const then = new Date('2026-04-21T00:00:00.000Z')
+    const now = new Date('2026-04-21T03:30:00.000Z') // 3.5h later
+    c._comments.push({
+      id: 'x',
+      body: '🟡 automation:in-flight — heartbeat',
+      createdAt: then.toISOString()
+    })
+    const stale = await isLockStale(c, 'RIFT-1', 4 * 3_600_000, now)
+    expect(stale).toBe(false)
   })
 })
