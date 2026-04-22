@@ -1,4 +1,4 @@
-import { relative, isAbsolute } from 'node:path'
+import { relative, isAbsolute, resolve } from 'node:path'
 
 const BLOCKED_PATH_GLOBS: readonly RegExp[] = [
   /^\.github\/workflows\//,
@@ -32,7 +32,7 @@ export function checkPath({
 
 function normalize(filePath: string, projectDir: string): string {
   if (isAbsolute(filePath)) {
-    const rel = relative(projectDir, filePath)
+    const rel = relative(projectDir, resolve(filePath))
     return rel.startsWith('..') ? filePath : rel
   }
   return filePath.replace(/^\.\//, '')
@@ -49,7 +49,7 @@ const BLOCKED_BASH_RULES: Array<{ rx: RegExp; why: string }> = [
   },
   { rx: /--no-verify\b/, why: '--no-verify forbidden (hooks are mandatory)' },
   {
-    rx: /\brm\s+-rf\s+(?!dist|build|node_modules|out|\.cache|\.tmp|\.terraform|graphify-out)/,
+    rx: /\brm\s+-rf\s+\.\/(?!dist|build|node_modules|out|\.cache|\.tmp|\.terraform|graphify-out)|\brm\s+-rf\s+(?!\.\/|dist|build|node_modules|out|\.cache|\.tmp|\.terraform|graphify-out)/,
     why: 'rm -rf restricted to generated/temp paths'
   },
   { rx: /\|\s*(sh|bash)\b/, why: 'piping remote content to a shell forbidden' },
