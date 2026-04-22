@@ -1,37 +1,38 @@
 // src/main/plugin/awsPlugin.ts
-import { createClients, type AwsClients } from '../aws/client'
 import {
+  createClients,
+  type AwsClients,
   describeInstances,
   describeVpcs,
   describeSubnets,
-  describeSecurityGroups
-} from '../aws/services/ec2'
-import { describeDBInstances } from '../aws/services/rds'
-import { listBuckets } from '../aws/services/s3'
-import { listFunctions } from '../aws/services/lambda'
-import { describeLoadBalancers } from '../aws/services/alb'
-import { listCertificates } from '../aws/services/acm'
-import { listDistributions } from '../aws/services/cloudfront'
-import { listApis } from '../aws/services/apigw'
-import { listInternetGateways } from '../aws/services/igw'
-import { listNatGateways } from '../aws/services/nat'
-import { listQueues } from '../aws/services/sqs'
-import { listSecrets } from '../aws/services/secrets'
-import { listRepositories } from '../aws/services/ecr'
-import { listTopics } from '../aws/services/sns'
-import { listTables } from '../aws/services/dynamo'
-import { listParameters } from '../aws/services/ssm'
-import { listHostedZones } from '../aws/services/r53'
-import { listStateMachines } from '../aws/services/sfn'
-import { listEventBuses } from '../aws/services/eventbridge'
-import { listIdentities } from '../aws/services/ses'
-import { listUserPools } from '../aws/services/cognito'
-import { listStreams } from '../aws/services/kinesis'
-import { listEcsServices } from '../aws/services/ecs'
-import { listCacheClusters } from '../aws/services/elasticache'
-import { listEksClusters } from '../aws/services/eks'
-import { listOpenSearchDomains } from '../aws/services/opensearch'
-import { listMskClusters } from '../aws/services/msk'
+  describeSecurityGroups,
+  describeDBInstances,
+  listBuckets,
+  listFunctions,
+  describeLoadBalancers,
+  listCertificates,
+  listDistributions,
+  listApis,
+  listInternetGateways,
+  listNatGateways,
+  listQueues,
+  listSecrets,
+  listRepositories,
+  listTopics,
+  listTables,
+  listParameters,
+  listHostedZones,
+  listStateMachines,
+  listEventBuses,
+  listIdentities,
+  listUserPools,
+  listStreams,
+  listEcsServices,
+  listCacheClusters,
+  listEksClusters,
+  listOpenSearchDomains,
+  listMskClusters
+} from '@riftview/cloud-scan'
 import type {
   RiftViewPlugin,
   NodeTypeMetadata,

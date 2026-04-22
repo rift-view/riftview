@@ -3,10 +3,9 @@ import fsp from 'fs/promises'
 import path from 'path'
 import { IPC } from '../ipc/channels'
 import { writeSnapshotSafe } from '../history/store'
-import { createClients } from './client'
+import { createClients, describeKeyPairs } from '@riftview/cloud-scan'
 import type { CloudNode, ScanDelta } from '@riftview/shared'
 import { classifyScanError, markStandaloneNodes, scanOnce } from '@riftview/shared'
-import { describeKeyPairs } from './services/ec2'
 import { pluginRegistry } from '../plugin/index'
 
 // --- Per-node change history ---
