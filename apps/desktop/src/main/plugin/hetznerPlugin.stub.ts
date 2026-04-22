@@ -64,6 +64,11 @@ export const hetznerPluginStub: RiftViewPlugin = {
 
   versionFormat: 'hetzner-cloud-api-v1',
 
+  async listVersions(snapshotId: string): Promise<StoredVersion[]> {
+    void snapshotId
+    throw new Error('stub: not implemented')
+  },
+
   async planRestore(from: StoredVersion, to: StoredVersion | 'live'): Promise<RestorePlan> {
     void from
     void to
@@ -77,6 +82,22 @@ export const hetznerPluginStub: RiftViewPlugin = {
     void plan
     void confirmations
     return emptyEvents()
+  },
+
+  async confirmStep(
+    planToken: string,
+    stepId: string,
+    typedString: string
+  ): Promise<{ confirmationToken: string }> {
+    void planToken
+    void stepId
+    void typedString
+    throw new Error('stub: not implemented')
+  },
+
+  async cancel(applyId: string): Promise<{ ok: boolean }> {
+    void applyId
+    throw new Error('stub: not implemented')
   },
 
   async estimateCostDelta(plan: RestorePlan): Promise<CostDelta> {
