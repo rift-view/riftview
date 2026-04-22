@@ -82,20 +82,30 @@ export interface FetchMetricsForProfileParams extends FetchMetricsParams {
 }
 
 /** Convenience wrapper: constructs the CloudWatchClient internally so callers
- *  don't need to import @aws-sdk/client-cloudwatch directly. */
+ *  don't need to import @aws-sdk/client-cloudwatch directly.
+ *
+ *  Note: this passes `endpoint` through to the CloudWatchClient. The pre-extraction
+ *  IPC handler (apps/desktop/src/main/ipc/handlers.ts @ 3ca8886) omitted it, which
+ *  silently routed LocalStack metric fetches to real AWS. This wrapper fixes that
+ *  latent bug — intentional behavioral change. Preserves the original
+ *  "never-throw, return []" IPC contract via the outer try/catch. */
 export async function fetchMetricsForProfile(
   params: FetchMetricsForProfileParams
 ): Promise<CloudMetric[]> {
-  const credentialsConfig = params.endpoint
-    ? { credentials: { accessKeyId: 'test', secretAccessKey: 'test' } }
-    : {}
-  const endpointConfig = params.endpoint ? { endpoint: params.endpoint } : {}
-  const cw = new CloudWatchClient({
-    region: params.region,
-    ...credentialsConfig,
-    ...endpointConfig
-  })
-  return fetchMetrics(cw, { nodeType: params.nodeType, resourceId: params.resourceId })
+  try {
+    const credentialsConfig = params.endpoint
+      ? { credentials: { accessKeyId: 'test', secretAccessKey: 'test' } }
+      : {}
+    const endpointConfig = params.endpoint ? { endpoint: params.endpoint } : {}
+    const cw = new CloudWatchClient({
+      region: params.region,
+      ...credentialsConfig,
+      ...endpointConfig
+    })
+    return await fetchMetrics(cw, { nodeType: params.nodeType, resourceId: params.resourceId })
+  } catch {
+    return []
+  }
 }
 
 export async function fetchMetrics(
