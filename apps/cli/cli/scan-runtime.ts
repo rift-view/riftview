@@ -1,24 +1,12 @@
-// Real AWS-backed scan runner. Reuses the desktop plugin registry + awsPlugin
-// via deep relative imports. Those modules are intentionally electron-free
-// (see apps/desktop/src/main/plugin/awsPlugin.ts), so esbuild bundles them
-// inline without pulling electron into the published CLI tarball. A future
-// ticket can lift pluginRegistry + awsPlugin into @riftview/shared if the
-// CLI grows additional cloud providers — tracked as a follow-up.
+// Real AWS-backed scan runner. Uses @riftview/cloud-scan for the plugin
+// registry and awsPlugin. registerBuiltinPlugins() is idempotent, so calling
+// it per-invocation is safe.
 import { scanOnce } from '@riftview/shared'
-import { pluginRegistry } from '../../desktop/src/main/plugin/registry'
-import { awsPlugin } from '../../desktop/src/main/plugin/awsPlugin'
+import { pluginRegistry, registerBuiltinPlugins } from '@riftview/cloud-scan'
 import type { ScanRunner } from './commands/scan'
 
-let registered = false
-
-function ensureRegistered(): void {
-  if (registered) return
-  pluginRegistry.register(awsPlugin)
-  registered = true
-}
-
 export const awsScanRunner: ScanRunner = async (input) => {
-  ensureRegistered()
+  registerBuiltinPlugins()
   return scanOnce({
     profile: input.profile,
     regions: input.regions,
