@@ -3,3 +3,4 @@ export { acquireLock, releaseLock, reclaimIfStale, DEFAULT_LOCK_DIR } from './lo
 export * from './config'
 export * from './halt'
 export * from './hooks/predicates'
+export * from './linear'
