@@ -20,7 +20,8 @@ const PUSH_ONLY_CHANNELS = new Set<string>([
   IPC.UPDATE_AVAILABLE,
   IPC.PLUGIN_METADATA,
   IPC.TERMINAL_OUTPUT,
-  IPC.SCAN_ERROR_DETAIL
+  IPC.SCAN_ERROR_DETAIL,
+  IPC.RESTORE_EVENT // push: main → renderer (restore step progress)
 ])
 
 // Fire-and-forget channel registered with ipcMain.on, not ipcMain.handle
@@ -38,7 +39,9 @@ vi.mock('electron', () => ({
   dialog: { showSaveDialog: vi.fn(), showOpenDialog: vi.fn() },
   Notification: vi.fn(function () {
     return { show: vi.fn() }
-  })
+  }),
+  // Keychain available by default so all restore handlers are registered
+  safeStorage: { isEncryptionAvailable: vi.fn().mockReturnValue(true) }
 }))
 vi.mock('../../src/main/aws/credentials', () => ({
   listProfiles: vi.fn().mockReturnValue([]),
