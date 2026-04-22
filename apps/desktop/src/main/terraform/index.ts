@@ -1,7 +1,7 @@
 import type { CloudNode } from '@riftview/shared'
 import type { TerraformGenerator } from './types'
 import { terraformGenerators } from './generators'
-import { pluginRegistry } from '../plugin/index'
+import { pluginRegistry } from '@riftview/cloud-scan'
 
 /**
  * Generate Terraform HCL for a single node.

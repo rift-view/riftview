@@ -11,7 +11,7 @@
  */
 
 import { randomBytes, createHash } from 'node:crypto'
-import type { RestorePlan } from '../plugin/restoreTypes'
+import type { RestorePlan } from '@riftview/cloud-scan'
 
 const PLAN_TTL_MS = 5 * 60 * 1000
 

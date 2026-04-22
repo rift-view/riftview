@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type {
-  RiftViewPlugin,
-  NodeTypeMetadata,
-  PluginScanResult,
-  ScanContext
-} from '../../../src/main/plugin/types'
+import type { RiftViewPlugin, NodeTypeMetadata, PluginScanResult, ScanContext } from '../types'
 
 describe('RiftViewPlugin interface — structural shape', () => {
   it('NodeTypeMetadata has all required fields', () => {

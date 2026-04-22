@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { awsPlugin } from '../../../src/main/plugin/awsPlugin'
-import { hetznerPluginStub } from '../../../src/main/plugin/hetznerPlugin.stub'
-import { vercelPluginStub } from '../../../src/main/plugin/vercelPlugin.stub'
+import { awsPlugin } from '../awsPlugin'
+import { hetznerPluginStub } from '../hetznerPlugin.stub'
+import { vercelPluginStub } from '../vercelPlugin.stub'
 import type {
   ApplyEvent,
   RestorePlan,
@@ -9,7 +9,7 @@ import type {
   StoredVersion,
   TypedConfirmation,
   VersionFormatId
-} from '../../../src/main/plugin/types'
+} from '../types'
 
 describe('plugin/restoreTypes — RIF-18 interface', () => {
   describe('plugin conformance', () => {

@@ -6,7 +6,7 @@ import { writeSnapshotSafe } from '../history/store'
 import { createClients, describeKeyPairs } from '@riftview/cloud-scan'
 import type { CloudNode, ScanDelta } from '@riftview/shared'
 import { classifyScanError, markStandaloneNodes, scanOnce } from '@riftview/shared'
-import { pluginRegistry } from '../plugin/index'
+import { pluginRegistry } from '@riftview/cloud-scan'
 
 // --- Per-node change history ---
 interface FieldChange {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { PluginRegistry } from '../../../src/main/plugin/registry'
-import type { RiftViewPlugin } from '../../../src/main/plugin/types'
+import { PluginRegistry } from '../registry'
+import type { RiftViewPlugin } from '../types'
 
 vi.mock('electron', () => ({ BrowserWindow: vi.fn() }))
 

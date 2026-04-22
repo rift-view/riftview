@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { ScanDelta, AwsProfile, NodeType } from '@riftview/shared'
 import type { CloudFrontParams } from '../renderer/types/create'
 import type { CloudFrontEditParams } from '../renderer/types/edit'
-import type { NodeTypeMetadata } from '../main/plugin/types'
+import type { NodeTypeMetadata } from '@riftview/cloud-scan'
 import { IPC } from '../main/ipc/channels'
 
 // Amendment (d) — unified RIFTVIEW_DEMO_MODE capability flag.

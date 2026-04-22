@@ -15,7 +15,7 @@ import {
   type VersionMeta
 } from '../history/index'
 import { CliEngine } from '../cli/engine'
-import { pluginRegistry } from '../plugin/index'
+import { pluginRegistry } from '@riftview/cloud-scan'
 import {
   CreateDistributionCommand,
   GetDistributionConfigCommand,
