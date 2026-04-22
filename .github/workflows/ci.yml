@@ -44,6 +44,29 @@ jobs:
           out=$(node apps/cli/out/index.js version --output json)
           echo "$out"
           echo "$out" | node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));if(d.schemaVersion!==1){console.error("bad schemaVersion:",d.schemaVersion);process.exit(1)}'
+      - name: CLI phantom-dep guard (pack + install in isolation)
+        # Catches the class of failure that commit 7f50643 had to recover
+        # from: hoisting-masked runtime deps in apps/cli. Packing all three
+        # workspaces (shared, cloud-scan, cli) and installing the tarballs
+        # in a fresh directory resolves only what apps/cli declares. If the
+        # CLI secretly relies on a package declared only by apps/desktop (or
+        # any other non-transitive workspace), this isolated install fails.
+        run: |
+          set -euo pipefail
+          TMPDIR=$(mktemp -d)
+          for ws in packages/shared packages/cloud-scan apps/cli; do
+            ( cd "$ws" && npm pack --pack-destination "$TMPDIR" )
+          done
+          cd "$TMPDIR"
+          mkdir guard-install && cd guard-install
+          npm init -y > /dev/null
+          npm install --prefix . \
+            "$TMPDIR"/riftview-shared-*.tgz \
+            "$TMPDIR"/riftview-cloud-scan-*.tgz \
+            "$TMPDIR"/riftview-cli-*.tgz
+          node node_modules/@riftview/cli/out/index.js version --output json | \
+            node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));if(d.schemaVersion!==1){console.error("guard: bad schemaVersion",d.schemaVersion);process.exit(1)}'
+          echo "::notice::CLI resolves with only its declared deps — no phantoms"
 
   e2e:
     # M2: IPC contract walker. M3: CLI ↔ LocalStack integration.
