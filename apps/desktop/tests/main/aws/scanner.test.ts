@@ -59,17 +59,13 @@ describe('computeDelta', () => {
   })
 })
 
-vi.mock('../../../src/main/aws/client', () => ({
-  createClients: vi.fn().mockReturnValue({})
-}))
-vi.mock('../../../src/main/plugin/index', () => ({
+vi.mock('@riftview/cloud-scan', () => ({
+  createClients: vi.fn().mockReturnValue({}),
+  describeKeyPairs: vi.fn().mockResolvedValue([]),
   pluginRegistry: {
     activateAll: vi.fn().mockResolvedValue(undefined),
     scanAll: vi.fn().mockResolvedValue({ nodes: [], errors: [] })
   }
-}))
-vi.mock('../../../src/main/aws/services/ec2', () => ({
-  describeKeyPairs: vi.fn().mockResolvedValue([])
 }))
 
 import { ResourceScanner } from '../../../src/main/aws/scanner'
