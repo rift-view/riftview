@@ -17,6 +17,7 @@
     "test:integration": "vitest run --config apps/cli/vitest.integration.config.ts",
     "test:e2e": "cd apps/desktop && npx playwright test --grep-invert @release",
     "test:e2e:release": "cd apps/desktop && RIFTVIEW_BUILT_APP=1 npx playwright test --grep @release",
+    "test:e2e:release:mac": "cd apps/desktop && RIFTVIEW_BUILT_APP=1 npx playwright test --grep @release-mac",
     "localstack:up": "docker compose -f .localstack/compose.yml up -d && ./scripts/wait-localstack.sh && cd apps/cli/tests/integration/fixtures && terraform init -input=false && terraform apply -auto-approve",
     "localstack:down": "docker compose -f .localstack/compose.yml down -v",
     "build": "npm run build --workspaces --if-present",
