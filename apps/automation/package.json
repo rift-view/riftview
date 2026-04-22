@@ -8,6 +8,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@riftview/automation-core": "*"
+    "@riftview/automation-core": "*",
+    "vitest": "^4.0.18"
   }
 }
