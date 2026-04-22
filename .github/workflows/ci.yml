@@ -180,6 +180,11 @@ jobs:
       - name: LocalStack logs on failure
         if: failure() && runner.os == 'Linux'
         run: docker compose -f .localstack/compose.yml logs localstack | tail -200
+      # libfuse2 is required for electron-builder's AppImage target on
+      # ubuntu-latest (removed from default image; app-builder-bin needs it).
+      - name: Install libfuse2 for AppImage (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libfuse2
       - name: Build signed and publish
         working-directory: apps/desktop
         run: npx electron-vite build && npx electron-builder --${{ matrix.platform }} --publish always
