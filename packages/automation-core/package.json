@@ -1,0 +1,18 @@
+{
+  "name": "@riftview/automation-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Safety-critical primitives for the Linear → PR automation (lockfile, probes, hooks, audit).",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./hooks/check-path": "./dist/hooks/check-path.js",
+    "./hooks/check-bash": "./dist/hooks/check-bash.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  }
+}

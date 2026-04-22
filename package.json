@@ -25,7 +25,10 @@
     "cli": "tsx apps/cli/cli/bin.ts",
     "dev": "npm run dev --workspace=@riftview/desktop",
     "start": "npm run start --workspace=@riftview/desktop",
-    "stories": "npm run stories --workspace=@riftview/desktop"
+    "stories": "npm run stories --workspace=@riftview/desktop",
+    "automate": "tsx apps/automation/bin/work-issue.ts",
+    "automate:bootstrap": "tsx apps/automation/bin/bootstrap.ts",
+    "automate:build-hooks": "npm run build --workspace=@riftview/automation-core"
   },
   "overrides": {
     "vite": "^7.2.6"
