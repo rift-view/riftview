@@ -59,7 +59,12 @@ export const IPC = {
   RESTORE_CONFIRM_STEP: 'restore:confirm-step', // invoke(planToken, stepId, typedString) → { confirmationToken }
   RESTORE_APPLY: 'restore:apply', // invoke(planToken, confirmationTokens[]) → { applyId }
   RESTORE_CANCEL: 'restore:cancel', // invoke(applyId) → { ok }
-  RESTORE_EVENT: 'restore:event' // push main → renderer: { applyId, stepId, status, message }
+  RESTORE_EVENT: 'restore:event', // push main → renderer: { applyId, stepId, status, message }
+
+  // --- E2E-only channels (registered only when RIFTVIEW_E2E=1) ---
+  // Bypasses the native file dialog so Playwright @release specs can drive
+  // tfstate import deterministically. No production code path depends on it.
+  E2E_IMPORT_TFSTATE: 'e2e:import-tfstate' // invoke(path: string) → CloudNode[]
 } as const
 
 export type IpcChannel = (typeof IPC)[keyof typeof IPC]

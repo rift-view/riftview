@@ -33,7 +33,10 @@ export async function launchApp(opts: LaunchOptions = {}): Promise<ElectronAppli
     return electron.launch({
       executablePath,
       env,
-      timeout: 20_000
+      // 45s — built-binary cold-starts on macOS can take 15-25s in the worst
+      // case (notarization checks, Gatekeeper, first-run signing). 20s was
+      // flaky on the 3rd sequential launch.
+      timeout: 45_000
     })
   }
 

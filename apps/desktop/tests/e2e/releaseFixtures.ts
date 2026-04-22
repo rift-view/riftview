@@ -50,6 +50,7 @@ export const test = base.extend<ReleaseFixtures>({
       env: {
         HOME: tempHome,
         RIFTVIEW_BUILT_APP: '1',
+        RIFTVIEW_E2E: '1',
         AWS_ENDPOINT_URL: 'http://localhost:4566',
         AWS_PROFILE: 'integration',
         AWS_REGION: 'us-east-1'

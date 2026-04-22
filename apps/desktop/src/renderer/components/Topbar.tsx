@@ -478,7 +478,11 @@ export function Topbar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
       <div style={clusterStyle}>
         {/* Import dropdown */}
         <div ref={importRef} style={{ position: 'relative' }}>
-          <button className="btn btn-sm btn-ghost" onClick={() => setImportOpen((o) => !o)}>
+          <button
+            className="btn btn-sm btn-ghost"
+            data-testid="topbar-import"
+            onClick={() => setImportOpen((o) => !o)}
+          >
             <span aria-hidden>↑</span>
             <span>Import</span>
             <span aria-hidden>▾</span>
@@ -487,6 +491,7 @@ export function Topbar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
             <div className="rift-dropdown-menu" style={dropdownMenuPosition('left')}>
               <button
                 className="rift-dropdown-item"
+                data-testid="topbar-import-tfstate"
                 onClick={() => {
                   void handleImportTfState()
                 }}

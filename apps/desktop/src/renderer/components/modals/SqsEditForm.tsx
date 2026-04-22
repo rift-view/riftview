@@ -29,6 +29,7 @@ export default function SqsEditForm({ node, onChange }: Props): React.JSX.Elemen
         <span className="label">Visibility Timeout (seconds)</span>
         <input
           className="form-input"
+          data-testid="sqs-edit-form-visibility-timeout"
           type="number"
           min={0}
           max={43200}

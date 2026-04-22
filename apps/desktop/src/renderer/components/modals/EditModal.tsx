@@ -123,6 +123,7 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
   return (
     <div
       className="modal-backdrop"
+      data-testid="edit-modal"
       onClick={(e) => e.target === e.currentTarget && !isRunning && onClose()}
       onKeyDown={(e) => {
         if (e.key === 'Escape' && !isRunning) onClose()
@@ -169,7 +170,12 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
           <button disabled={isRunning} onClick={onClose} className="btn btn-sm btn-ghost">
             Cancel
           </button>
-          <button disabled={isRunning} onClick={handleRun} className="btn btn-sm btn-primary">
+          <button
+            disabled={isRunning}
+            onClick={handleRun}
+            data-testid="edit-modal-submit"
+            className="btn btn-sm btn-primary"
+          >
             {isRunning ? 'Saving\u2026' : 'Save'}
           </button>
         </div>

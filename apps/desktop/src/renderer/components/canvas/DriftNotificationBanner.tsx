@@ -22,6 +22,7 @@ export function DriftNotificationBanner(): React.JSX.Element | null {
 
   return (
     <div
+      data-testid="drift-banner"
       style={{
         position: 'absolute',
         top: `${topOffset}px`,

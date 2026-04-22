@@ -33,6 +33,7 @@ export default function DeleteDialog({
   return (
     <div
       className="modal-backdrop"
+      data-testid="delete-dialog"
       onClick={(e) => e.target === e.currentTarget && onClose()}
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
@@ -60,6 +61,7 @@ export default function DeleteDialog({
             </label>
             <input
               autoFocus
+              data-testid="delete-dialog-confirm-input"
               placeholder={node.id}
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -108,6 +110,7 @@ export default function DeleteDialog({
           </button>
           <button
             disabled={!confirmed}
+            data-testid="delete-dialog-confirm"
             onClick={() => {
               const opts: DeleteOptions = {}
               if (skipSnapshot) opts.skipFinalSnapshot = true
