@@ -26,12 +26,14 @@ const PROFILES: Record<ProfileName, Omit<GateConfig, 'name'>> = {
   'balanced+paranoid-step-3': { dispatchReviewGate: true, mergeGate: true }
 }
 
-export function resolveProfile(
-  name: ProfileName | undefined = 'balanced+paranoid-step-3'
-): GateConfig {
-  const preset = PROFILES[name]
-  if (!preset) {
-    throw new Error(`Unknown profile "${name}". Valid: ${PROFILE_NAMES.join(', ')}`)
+export function resolveProfile(name?: string): GateConfig {
+  const resolved = name ?? 'balanced+paranoid-step-3'
+  if (!isProfileName(resolved)) {
+    throw new Error(`Unknown profile "${resolved}". Valid: ${PROFILE_NAMES.join(', ')}`)
   }
-  return { name, ...preset }
+  return { name: resolved, ...PROFILES[resolved] }
+}
+
+function isProfileName(value: string): value is ProfileName {
+  return (PROFILE_NAMES as readonly string[]).includes(value)
 }

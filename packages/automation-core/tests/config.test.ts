@@ -44,7 +44,7 @@ describe('config', () => {
   })
 
   it('throws on unknown profile', () => {
-    expect(() => resolveProfile('invalid' as never)).toThrow(/unknown profile/i)
+    expect(() => resolveProfile('invalid')).toThrow(/unknown profile/i)
   })
 
   it('PROFILE_NAMES lists all valid options', () => {
