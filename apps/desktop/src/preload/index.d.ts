@@ -45,7 +45,9 @@ interface RiftviewRestoreApi {
   ): Promise<{ confirmationToken: string } | { error: string }>
   apply(
     planToken: string,
-    confirmationTokens: string[]
+    confirmationTokens: string[],
+    destructiveIds: string[],
+    hmac: string
   ): Promise<{ applyId: string } | { error: string }>
   cancel(applyId: string): Promise<{ ok: boolean }>
   onEvent(

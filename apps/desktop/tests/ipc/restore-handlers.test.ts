@@ -175,3 +175,47 @@ describe('restore handler registration — normal mode', () => {
     expect(missing, `Restore channels missing: ${missing.join(', ')}`).toHaveLength(0)
   })
 })
+
+describe('RESTORE_APPLY — amendment (a) HMAC re-verification', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    vi.doMock('electron', () => makeElectronMock(true))
+    delete process.env.RIFTVIEW_DEMO_MODE
+  })
+
+  it('rejects with hmac error when destructiveIds/hmac are missing', async () => {
+    const { ipcMain } = await import('electron')
+    const { registerHandlers } = await import('../../src/main/ipc/handlers')
+    registerHandlers(mockWin())
+    const applyCall = vi.mocked(ipcMain.handle).mock.calls.find((c) => c[0] === IPC.RESTORE_APPLY)
+    expect(applyCall).toBeDefined()
+    const handler = applyCall![1] as (
+      _: unknown,
+      planToken: unknown,
+      confirmationTokens: unknown,
+      destructiveIds: unknown,
+      hmac: unknown
+    ) => Promise<unknown>
+
+    const result = await handler(null, 'tok', [], undefined, undefined)
+    expect(result).toMatchObject({ error: 'invalid arguments' })
+  })
+
+  it('rejects with hmac error when provided hmac is wrong', async () => {
+    const { ipcMain } = await import('electron')
+    const { registerHandlers } = await import('../../src/main/ipc/handlers')
+    registerHandlers(mockWin())
+    const applyCall = vi.mocked(ipcMain.handle).mock.calls.find((c) => c[0] === IPC.RESTORE_APPLY)
+    expect(applyCall).toBeDefined()
+    const handler = applyCall![1] as (
+      _: unknown,
+      planToken: unknown,
+      confirmationTokens: unknown,
+      destructiveIds: unknown,
+      hmac: unknown
+    ) => Promise<unknown>
+
+    const result = await handler(null, 'tok', [], ['res-1'], 'deadbeef'.repeat(8))
+    expect(result).toMatchObject({ error: 'hmac verification failed' })
+  })
+})

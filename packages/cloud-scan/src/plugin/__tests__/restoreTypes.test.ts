@@ -25,9 +25,12 @@ describe('plugin/restoreTypes — RIF-18 interface', () => {
       expect(vercelPluginStub.versionFormat).toBe('unsupported')
     })
 
-    it('opted-in plugins (stub) expose all three snapshot-export methods', () => {
+    it('opted-in plugins (stub) expose all six snapshot-export methods (RIF-18 + RIF-20 amendments)', () => {
+      expect(typeof hetznerPluginStub.listVersions).toBe('function')
       expect(typeof hetznerPluginStub.planRestore).toBe('function')
       expect(typeof hetznerPluginStub.applyRestore).toBe('function')
+      expect(typeof hetznerPluginStub.confirmStep).toBe('function')
+      expect(typeof hetznerPluginStub.cancel).toBe('function')
       expect(typeof hetznerPluginStub.estimateCostDelta).toBe('function')
     })
 
