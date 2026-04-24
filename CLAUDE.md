@@ -42,6 +42,54 @@ public repo that points to it.
 - CI: `.github/workflows/ci.yml`. Must pass: lint, typecheck, test,
   CLI build + smoke.
 
+## Native modules (better-sqlite3)
+
+The desktop app uses `better-sqlite3` for the snapshot history DB. Native
+modules are sensitive to Node.js ABI (`NODE_MODULE_VERSION`), which differs
+between the system Node used by `npm ci` and the Node bundled inside Electron.
+A single `.node` binary can only satisfy one ABI — so the project keeps two
+regimes separated by pipeline phase:
+
+1. **Install phase (`npm ci`)** — `better-sqlite3`'s postinstall downloads
+   the **Node-ABI** prebuild that matches the installing Node's
+   `NODE_MODULE_VERSION`. The `fast` CI job runs `vitest` unit tests against
+   SQLite directly, so this binary must be Node-loadable.
+2. **Packaging phase (before `electron-builder --dir`)** — run
+   `npm run rebuild` (= `electron-builder install-app-deps`, which uses
+   `@electron/rebuild`) to swap in the **Electron-ABI** prebuild matching the
+   Electron major declared in `apps/desktop/package.json`. `electron-builder`
+   then packages the Electron-compatible `.node` into the `.app`.
+
+The `apps/desktop` build scripts (`build:unpack`, `build:mac`, `build:linux`,
+`build:win`) chain `npm run rebuild` between `electron-vite build` and
+`electron-builder`, and the CI release job runs the same step before
+`electron-builder --dir`. `apps/desktop/electron-builder.yml` keeps
+`npmRebuild: false` because electron-builder's built-in `npm rebuild` would
+target the installing Node's ABI, not Electron's — the explicit `install-app-deps`
+step is what produces the right binary.
+
+Side-effect for local dev: after running `build:unpack`, the in-tree
+`node_modules/better-sqlite3/build/Release/better_sqlite3.node` is now
+Electron-ABI. Re-running `npm test` in that state fails with a
+`NODE_MODULE_VERSION` mismatch. Restore with
+`npm rebuild better-sqlite3` (no env overrides) before running unit tests
+again, or just `npm ci`.
+
+When bumping the `electron` devDependency, verify `better-sqlite3` ships a
+matching `electron-v<ABI>` prebuild for every packaged platform
+(`darwin×{arm64,x64}`, `linux×{arm64,x64}`, `win32×{arm64,x64}`) on its
+GitHub Releases — the prebuild catalog covers a limited window of Electron
+versions. If a target ABI is missing, bump `better-sqlite3` at the same
+time or `electron-builder install-app-deps` will fall back to compiling from
+source (which can break on newer V8 API surfaces).
+
+Symptom when broken: the built binary boots and scans normally, but
+`[history] failed to init snapshot store` appears in main-process logs and
+`writeSnapshotSafe` / `listVersionsSafe` silently no-op (the store is
+best-effort by design). The snapshot history is empty and the
+Topbar Export → Snapshot action reports "No snapshots yet — run a scan
+first" even after a successful scan.
+
 ## Adding a new AWS service (scan)
 
 When extending the scanner to cover a new AWS service:
