@@ -213,6 +213,19 @@ contextBridge.exposeInMainWorld('riftview', {
   readSnapshot: (versionId: string) => ipcRenderer.invoke(IPC.SNAPSHOT_READ, versionId),
   deleteSnapshot: (versionId: string) => ipcRenderer.invoke(IPC.SNAPSHOT_DELETE, versionId),
 
+  // RIFT-40: CLI ↔ desktop snapshot file bridge. Structurally absent in demo
+  // mode (the `snapshotFile` key is omitted so a renderer capability probe
+  // `window.riftview.snapshotFile === undefined` returns true under demo).
+  ...(_isDemoMode
+    ? {}
+    : {
+        snapshotFile: {
+          exportSnapshot: (versionId: string) =>
+            ipcRenderer.invoke(IPC.SNAPSHOT_EXPORT, { versionId }),
+          importSnapshot: () => ipcRenderer.invoke(IPC.SNAPSHOT_IMPORT)
+        }
+      }),
+
   // E2E-only helpers — absent from preload surface unless RIFTVIEW_E2E=1.
   // Keeps production builds free of test affordances.
   ...(_isE2EMode

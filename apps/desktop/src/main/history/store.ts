@@ -37,12 +37,13 @@ export function isSnapshotStoreOpen(): boolean {
 
 export function writeSnapshotSafe(
   input: WriteSnapshotInput,
-  retention = 50
+  retention = 50,
+  clock?: () => Date
 ): WriteSnapshotResult | null {
   if (!ensureOpen()) return null
   if (!db || !stmts) return null
   try {
-    return writeSnapshot(db, stmts, input, retention)
+    return writeSnapshot(db, stmts, input, retention, clock ?? (() => new Date()))
   } catch (err) {
     console.error('[history] writeSnapshot failed', err)
     return null

@@ -142,6 +142,70 @@ export function Topbar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
       .showToast(`Imported ${selectedNodes.length} resources from Terraform state`, 'success')
   }
 
+  // RIFT-40: CLI ↔ desktop snapshot JSON interop. The preload exposes
+  // `window.riftview.snapshotFile` only when not in demo mode, so the whole
+  // menu entry disappears under demo.
+  async function handleImportSnapshotFile(): Promise<void> {
+    setImportOpen(false)
+    const api = window.riftview.snapshotFile
+    if (!api) {
+      useUIStore.getState().showToast('Snapshot import is disabled in demo mode', 'error')
+      return
+    }
+    try {
+      const result = await api.importSnapshot()
+      if (!result.ok) {
+        if (result.code === 'cancelled') return
+        useUIStore.getState().showToast(`Snapshot import failed: ${result.error}`, 'error')
+        return
+      }
+      if (result.accountMismatch) {
+        useUIStore
+          .getState()
+          .showToast(
+            `Imported snapshot belongs to profile ${result.accountMismatch.fileProfile}; active profile is ${result.accountMismatch.activeProfile}`,
+            'error'
+          )
+      } else {
+        useUIStore.getState().showToast('Snapshot imported', 'success')
+      }
+    } catch (err) {
+      useUIStore.getState().showToast(`Snapshot import failed: ${(err as Error).message}`, 'error')
+    }
+  }
+
+  async function handleExportSnapshotFile(): Promise<void> {
+    setExportOpen(false)
+    const api = window.riftview.snapshotFile
+    if (!api) {
+      useUIStore.getState().showToast('Snapshot export is disabled in demo mode', 'error')
+      return
+    }
+    try {
+      // Pick the most recent snapshot for the active profile + region. This
+      // mirrors the Timeline strip's "latest dot"; operators can reach any
+      // specific version via the strip once RIFT-41 adds a per-dot menu.
+      const rows = await window.riftview.listSnapshots({
+        profile: profile.name,
+        region: selectedRegions[0],
+        limit: 1
+      })
+      if (rows.length === 0) {
+        useUIStore.getState().showToast('No snapshots yet — run a scan first', 'error')
+        return
+      }
+      const result = await api.exportSnapshot(rows[0].id)
+      if (!result.ok) {
+        if (result.code === 'cancelled') return
+        useUIStore.getState().showToast(`Snapshot export failed: ${result.error}`, 'error')
+        return
+      }
+      useUIStore.getState().showToast('Snapshot exported', 'success')
+    } catch (err) {
+      useUIStore.getState().showToast(`Snapshot export failed: ${(err as Error).message}`, 'error')
+    }
+  }
+
   async function handleImportTfState(): Promise<void> {
     setImportOpen(false)
     try {
@@ -502,6 +566,23 @@ export function Topbar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
               </button>
               <button
                 className="rift-dropdown-item"
+                data-testid="topbar-import-snapshot"
+                disabled={!window.riftview.snapshotFile}
+                title={
+                  window.riftview.snapshotFile
+                    ? 'Import a RiftView snapshot JSON file'
+                    : 'Disabled in demo mode'
+                }
+                onClick={() => {
+                  void handleImportSnapshotFile()
+                }}
+              >
+                <span aria-hidden>⎘</span>
+                <span style={{ flex: 1 }}>Snapshot</span>
+                <span style={{ fontSize: 9, color: 'var(--fg-dim)' }}>.json</span>
+              </button>
+              <button
+                className="rift-dropdown-item"
                 onClick={() => {
                   setImportOpen(false)
                   window.dispatchEvent(new CustomEvent('riftview:show-templates'))
@@ -563,6 +644,23 @@ export function Topbar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
               >
                 <span aria-hidden>⬡</span>
                 <span>Terraform HCL</span>
+              </button>
+              <button
+                className="rift-dropdown-item"
+                data-testid="topbar-export-snapshot"
+                disabled={!window.riftview.snapshotFile}
+                title={
+                  window.riftview.snapshotFile
+                    ? 'Export latest snapshot as JSON (CLI-compatible)'
+                    : 'Disabled in demo mode'
+                }
+                onClick={() => {
+                  void handleExportSnapshotFile()
+                }}
+              >
+                <span aria-hidden>⎘</span>
+                <span style={{ flex: 1 }}>Snapshot</span>
+                <span style={{ fontSize: 9, color: 'var(--fg-dim)' }}>.json</span>
               </button>
               <button
                 className="rift-dropdown-item"
