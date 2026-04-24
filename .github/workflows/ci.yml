@@ -191,6 +191,15 @@ jobs:
       - name: Build desktop bundles (electron-vite)
         working-directory: apps/desktop
         run: npx electron-vite build
+      - name: Rebuild native modules against Electron ABI
+        # Installs Electron-targeted prebuilds for native deps (better-sqlite3).
+        # `npm ci` above fetched the Node-ABI prebuilds so the fast job's
+        # vitest unit tests can load them. Packaging for Electron requires the
+        # ABI matching Electron's bundled Node (v140 on Electron 39); without
+        # this step the packaged .node is silently unloadable at runtime and
+        # the snapshot history store no-ops (see CLAUDE.md § Native modules).
+        working-directory: apps/desktop
+        run: npm run rebuild
       - name: Build unsigned binary (for @release E2E)
         working-directory: apps/desktop
         run: npx electron-builder --dir
