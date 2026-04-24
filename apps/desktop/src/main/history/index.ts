@@ -28,6 +28,17 @@ export {
   type WriteSnapshotResult
 } from './write'
 export {
+  SNAPSHOT_FILE_SCHEMA_VERSION,
+  SnapshotFileError,
+  fileToCloudNodes,
+  parseSnapshotFile,
+  serializeSnapshotFile,
+  snapshotFileIdentity,
+  snapshotToFile,
+  type OnDiskEdge,
+  type SnapshotFileV1
+} from './snapshotFile'
+export {
   HISTORY_SCHEMA_VERSION,
   type EdgeRecord,
   type EdgeRow,

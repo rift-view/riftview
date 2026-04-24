@@ -1,3 +1,29 @@
+interface RiftviewSnapshotFileApi {
+  /**
+   * Export a stored snapshot version to a user-chosen .json file.
+   * Main process prompts with showSaveDialog; returns `{ ok: false, code: 'cancelled' }`
+   * if the user aborts.
+   */
+  exportSnapshot(
+    versionId: string
+  ): Promise<{ ok: true; path: string } | { ok: false; error: string; code?: string }>
+  /**
+   * Import a CLI-produced snapshot JSON file into the SQLite store. Preserves
+   * the file's own `timestamp` (operator is importing history). Returns an
+   * optional `accountMismatch` payload when the file's profile differs from
+   * the currently-active one — the renderer uses this to show a banner but
+   * the import itself still proceeds.
+   */
+  importSnapshot(): Promise<
+    | {
+        ok: true
+        versionId: string
+        accountMismatch?: { fileProfile: string; activeProfile: string }
+      }
+    | { ok: false; error: string; code?: string }
+  >
+}
+
 interface RiftviewRestoreApi {
   listVersions(snapshotId: string): Promise<import('../main/history/read').VersionMeta[]>
   planRestore(
@@ -154,6 +180,12 @@ interface Window {
     }): Promise<import('../main/history/read').VersionMeta[]>
     readSnapshot(versionId: string): Promise<import('../main/history/read').Snapshot | null>
     deleteSnapshot(versionId: string): Promise<{ ok: boolean }>
+    /**
+     * CLI-interop snapshot file bridge. Undefined in demo mode (amendment d
+     * pattern — renderer probes `window.riftview.snapshotFile === undefined`
+     * to know whether to show the Export/Import Snapshot menu items).
+     */
+    snapshotFile?: RiftviewSnapshotFileApi
     /**
      * Restore surface — undefined when demo mode is active (amendment d, RIF-20 2026-04-21).
      * Renderer probes `window.riftview.restore === undefined` as the capability check.

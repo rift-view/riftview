@@ -11,9 +11,17 @@ import {
   deleteSnapshotSafe,
   listVersionsSafe,
   readSnapshotSafe,
+  writeSnapshotSafe,
   type Snapshot,
   type VersionMeta
 } from '../history/index'
+import {
+  SnapshotFileError,
+  parseSnapshotFile,
+  serializeSnapshotFile,
+  snapshotFileIdentity,
+  snapshotToFile
+} from '../history/snapshotFile'
 import { CliEngine } from '../cli/engine'
 import { pluginRegistry } from '@riftview/cloud-scan'
 import {
@@ -691,6 +699,131 @@ export function registerHandlers(win: BrowserWindow): void {
       return { ok: false }
     }
   })
+
+  // RIFT-40: Export + Import file-bridge channels.
+  // Structurally absent in demo mode per SecOps — redaction pass-through is a
+  // future decision and the safe default is to hide the surface entirely.
+  // We never log snapshot contents here — only { ok, path, versionId, code }.
+  if (!isDemoMode()) {
+    ipcMain.handle(
+      IPC.SNAPSHOT_EXPORT,
+      async (
+        _,
+        args: unknown
+      ): Promise<{ ok: true; path: string } | { ok: false; error: string; code?: string }> => {
+        try {
+          if (
+            !args ||
+            typeof args !== 'object' ||
+            typeof (args as { versionId?: unknown }).versionId !== 'string'
+          ) {
+            return { ok: false, error: 'versionId is required', code: 'invalid_args' }
+          }
+          const versionId = (args as { versionId: string }).versionId
+          const snap = readSnapshotSafe(versionId)
+          if (!snap) {
+            return { ok: false, error: 'snapshot not found', code: 'not_found' }
+          }
+
+          const defaultName = `riftview-${snap.meta.profile}-${snap.meta.region}-${snap.meta.timestamp.replace(/[:.]/g, '-')}.json`
+          const dlgResult = mainWindow
+            ? await dialog.showSaveDialog(mainWindow, {
+                defaultPath: defaultName,
+                filters: [{ name: 'RiftView Snapshot', extensions: ['json'] }]
+              })
+            : await dialog.showSaveDialog({
+                defaultPath: defaultName,
+                filters: [{ name: 'RiftView Snapshot', extensions: ['json'] }]
+              })
+
+          if (dlgResult.canceled || !dlgResult.filePath) {
+            return { ok: false, error: 'cancelled', code: 'cancelled' }
+          }
+
+          const file = snapshotToFile(snap)
+          const text = serializeSnapshotFile(file)
+          await fsp.writeFile(dlgResult.filePath, text, 'utf-8')
+          console.log('[ipc] snapshot:export ok', { path: dlgResult.filePath, versionId })
+          return { ok: true, path: dlgResult.filePath }
+        } catch (err) {
+          const code =
+            err instanceof SnapshotFileError ? err.code : (err as NodeJS.ErrnoException).code
+          console.error('[ipc] snapshot:export failed', { code })
+          return { ok: false, error: (err as Error).message ?? 'export failed', code }
+        }
+      }
+    )
+
+    ipcMain.handle(
+      IPC.SNAPSHOT_IMPORT,
+      async (): Promise<
+        | {
+            ok: true
+            versionId: string
+            accountMismatch?: { fileProfile: string; activeProfile: string }
+          }
+        | { ok: false; error: string; code?: string }
+      > => {
+        try {
+          const dlgResult = mainWindow
+            ? await dialog.showOpenDialog(mainWindow, {
+                filters: [{ name: 'RiftView Snapshot', extensions: ['json'] }],
+                properties: ['openFile']
+              })
+            : await dialog.showOpenDialog({
+                filters: [{ name: 'RiftView Snapshot', extensions: ['json'] }],
+                properties: ['openFile']
+              })
+          if (dlgResult.canceled || !dlgResult.filePaths[0]) {
+            return { ok: false, error: 'cancelled', code: 'cancelled' }
+          }
+          const raw = await fsp.readFile(dlgResult.filePaths[0], 'utf-8')
+          const file = parseSnapshotFile(raw)
+          const identity = snapshotFileIdentity(file)
+
+          // Preserve the file's scannedAt as the canonical timestamp — the
+          // operator is importing *history*, not registering a new scan.
+          const fileDate = new Date(file.timestamp)
+          const writeResult = writeSnapshotSafe(
+            {
+              profile: identity.profile,
+              endpoint: identity.endpoint,
+              regions: file.regions.length > 0 ? file.regions : [identity.region || 'unknown'],
+              pluginId: 'com.riftview.aws',
+              pluginVersion: app.getVersion(),
+              scanErrors: (file.scanErrors ?? []).map(
+                (e) => `${e.service ?? 'unknown'}/${e.region ?? 'unknown'}: ${e.message}`
+              ),
+              nodes: file.nodes
+            },
+            50,
+            () => fileDate
+          )
+
+          if (!writeResult || writeResult.versionIds.length === 0) {
+            return { ok: false, error: 'failed to persist imported snapshot', code: 'db_write' }
+          }
+
+          const versionId = writeResult.versionIds[0]
+          const active = activeProfile
+          const mismatch =
+            identity.profile && active && identity.profile !== active
+              ? { fileProfile: identity.profile, activeProfile: active }
+              : undefined
+
+          console.log('[ipc] snapshot:import ok', { versionId, accountMismatch: Boolean(mismatch) })
+          return mismatch
+            ? { ok: true, versionId, accountMismatch: mismatch }
+            : { ok: true, versionId }
+        } catch (err) {
+          const code =
+            err instanceof SnapshotFileError ? err.code : (err as NodeJS.ErrnoException).code
+          console.error('[ipc] snapshot:import failed', { code })
+          return { ok: false, error: (err as Error).message ?? 'import failed', code }
+        }
+      }
+    )
+  }
 
   // SSM terminal — start session
   ipcMain.handle(
