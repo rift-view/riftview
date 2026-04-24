@@ -263,8 +263,19 @@ contextBridge.exposeInMainWorld('riftview', {
               hmac,
               typedString
             ),
-          apply: (planToken: string, confirmationTokens: string[]) =>
-            ipcRenderer.invoke(IPC.RESTORE_APPLY, planToken, confirmationTokens),
+          apply: (
+            planToken: string,
+            confirmationTokens: string[],
+            destructiveIds: string[],
+            hmac: string
+          ) =>
+            ipcRenderer.invoke(
+              IPC.RESTORE_APPLY,
+              planToken,
+              confirmationTokens,
+              destructiveIds,
+              hmac
+            ),
           cancel: (applyId: string) => ipcRenderer.invoke(IPC.RESTORE_CANCEL, applyId),
           onEvent: (
             cb: (event: {

@@ -984,9 +984,24 @@ export function registerHandlers(win: BrowserWindow): void {
 
       ipcMain.handle(
         IPC.RESTORE_APPLY,
-        async (_, planToken: unknown, confirmationTokens: unknown) => {
+        async (
+          _,
+          planToken: unknown,
+          confirmationTokens: unknown,
+          destructiveIds: unknown,
+          hmac: unknown
+        ) => {
           if (typeof planToken !== 'string' || !Array.isArray(confirmationTokens)) {
             return { error: 'invalid arguments' }
+          }
+          if (!Array.isArray(destructiveIds) || typeof hmac !== 'string') {
+            return { error: 'invalid arguments' }
+          }
+          // Amendment (a) RIF-20 2026-04-21: re-verify the signed projection so
+          // the renderer cannot tamper with the destructive-ID list between
+          // planRestore and apply. Same verification used in RESTORE_CONFIRM_STEP.
+          if (!verifyPlanProjection(planToken, destructiveIds as string[], hmac)) {
+            return { error: 'hmac verification failed' }
           }
           const entry = consumePlanToken(planToken)
           if (!entry) return { error: 'plan not found or expired' }
