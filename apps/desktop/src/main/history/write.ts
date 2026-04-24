@@ -9,6 +9,7 @@ import {
 import { withTransaction, type Db, type Statements } from './db'
 import { toSnapshotRecord } from './transform'
 import { HISTORY_SCHEMA_VERSION } from './types'
+import { validateMetaJson } from '../restore/metaAllowlist'
 
 export interface WriteSnapshotInput {
   profile: string
@@ -105,6 +106,17 @@ export function writeSnapshot(
       }
       const hash = contentHash(payload)
       const id = ulid(now)
+
+      // Amendment (b) RIF-20 2026-04-21: runtime allowlist check on the
+      // plaintext metadata fields before writing to the store.
+      // Throws MetaAllowlistViolation if any sensitive value is detected.
+      validateMetaJson({
+        id,
+        createdAt: timestamp,
+        profile: input.profile,
+        region,
+        schemaVersion: HISTORY_SCHEMA_VERSION
+      })
 
       stmts.insertVersion.run(
         id,
