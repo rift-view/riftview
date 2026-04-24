@@ -610,6 +610,7 @@ export function Topbar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
         <div ref={exportRef} style={{ position: 'relative' }}>
           <button
             className="btn btn-sm btn-ghost"
+            data-testid="topbar-export"
             onClick={() => {
               if (!isExporting) setExportOpen((o) => !o)
             }}
