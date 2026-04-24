@@ -48,6 +48,9 @@ export const IPC = {
   SNAPSHOT_LIST: 'snapshot:list', // invoke(filter?: { profile?, region?, limit? }) → VersionMeta[]
   SNAPSHOT_READ: 'snapshot:read', // invoke(versionId: string) → Snapshot | null
   SNAPSHOT_DELETE: 'snapshot:delete', // invoke(versionId: string) → { ok: boolean }
+  // RIFT-40: CLI ↔ desktop file-level interop. Both absent in demo mode.
+  SNAPSHOT_EXPORT: 'snapshot:export', // invoke({versionId}) → { ok, path? , error? }
+  SNAPSHOT_IMPORT: 'snapshot:import', // invoke() → { ok, versionId?, accountMismatch?, error? }
 
   // --- RESTORE (SecOps review required per handler) ---
   // Channels below carry the restore flow. Conditionally registered:
