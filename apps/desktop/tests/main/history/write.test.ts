@@ -8,6 +8,7 @@ import {
   type Statements
 } from '../../../src/main/history/db'
 import { deriveEdges, writeSnapshot } from '../../../src/main/history/write'
+import { MetaAllowlistViolation } from '../../../src/main/restore/metaAllowlist'
 
 function node(
   id: string,
@@ -289,6 +290,108 @@ describe('history/write', () => {
         }
 
         expect(stmts.countVersions.get()).toEqual({ n: 2 })
+      } finally {
+        closeDb(db)
+      }
+    })
+  })
+
+  describe('writeSnapshot — meta.json allowlist (amendment b, RIF-20 2026-04-21)', () => {
+    it('rejects a write when profile contains an ARN pattern', () => {
+      const { db, stmts } = setupDb()
+      try {
+        expect(() =>
+          writeSnapshot(
+            db,
+            stmts,
+            {
+              profile: 'arn:aws:iam::123456789012:role/Admin',
+              endpoint: null,
+              regions: ['us-east-1'],
+              pluginId: 'com.riftview.aws',
+              pluginVersion: '0.1.0',
+              scanErrors: [],
+              nodes: []
+            },
+            50,
+            frozenClock
+          )
+        ).toThrow(MetaAllowlistViolation)
+      } finally {
+        closeDb(db)
+      }
+    })
+
+    it('rejects a write when profile contains a 12-digit account ID', () => {
+      const { db, stmts } = setupDb()
+      try {
+        expect(() =>
+          writeSnapshot(
+            db,
+            stmts,
+            {
+              profile: '123456789012',
+              endpoint: null,
+              regions: ['us-east-1'],
+              pluginId: 'com.riftview.aws',
+              pluginVersion: '0.1.0',
+              scanErrors: [],
+              nodes: []
+            },
+            50,
+            frozenClock
+          )
+        ).toThrow(MetaAllowlistViolation)
+      } finally {
+        closeDb(db)
+      }
+    })
+
+    it('rejects a write when region contains a VPC ID pattern', () => {
+      const { db, stmts } = setupDb()
+      try {
+        expect(() =>
+          writeSnapshot(
+            db,
+            stmts,
+            {
+              profile: 'default',
+              endpoint: null,
+              regions: ['vpc-0a1b2c3d4e5f67890'],
+              pluginId: 'com.riftview.aws',
+              pluginVersion: '0.1.0',
+              scanErrors: [],
+              nodes: []
+            },
+            50,
+            frozenClock
+          )
+        ).toThrow(MetaAllowlistViolation)
+      } finally {
+        closeDb(db)
+      }
+    })
+
+    it('allows a clean profile + region through without error', () => {
+      const { db, stmts } = setupDb()
+      try {
+        expect(() =>
+          writeSnapshot(
+            db,
+            stmts,
+            {
+              profile: 'my-staging-profile',
+              endpoint: null,
+              regions: ['eu-central-1'],
+              pluginId: 'com.riftview.aws',
+              pluginVersion: '0.1.0',
+              scanErrors: [],
+              nodes: []
+            },
+            50,
+            frozenClock
+          )
+        ).not.toThrow()
       } finally {
         closeDb(db)
       }
