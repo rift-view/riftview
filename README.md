@@ -104,3 +104,71 @@ Services, Inc. AWS, Amazon EC2, and all related marks are trademarks of
 Amazon.com, Inc. or its affiliates.
 
 See [NOTICE.md](./NOTICE.md) for third-party license acknowledgments.
+
+## Repository structure
+
+### Top-level
+
+- `apps/` — npm workspaces root containing the desktop app and CLI.
+- `apps/desktop/` — Electron app (main process, renderer, preload).
+- `apps/cli/` — node CLI (`riftview scan`, `risks`, `diff`, etc.).
+- `packages/` — shared workspaces.
+- `packages/shared/` — typed `NodeType`/`Edge` shape, `@riftview/shared/snapshot` canonical core, cloud types.
+- `packages/cloud-scan/` — AWS SDK-backed scan orchestrator.
+- `scripts/` — one-off maintenance scripts (e.g. `check-lockfile-optional-deps.py`).
+- `.github/workflows/` — CI (`ci.yml`) and release (`winget.yml`).
+- Tooling config at the repo root: `eslint.config.mjs`, `lefthook.yml`, `tsconfig.base.json`, `tsconfig.json`, `vitest.config.ts`, `package.json`, `package-lock.json`.
+
+### Desktop app subtree (most load-bearing)
+
+- `apps/desktop/src/main/` — main process: IPC handlers, history SQLite store, AWS scanner, `isDemoMode()`, capability gating.
+- `apps/desktop/src/main/history/` — versioned snapshot store (SQLite).
+- `apps/desktop/src/main/ipc/` — IPC channel registry + handlers.
+- `apps/desktop/src/main/aws/` — AWS scanner entry point used by the main process.
+- `apps/desktop/src/main/capability.ts` — Tier-1 protected; SecOps-reviewed.
+- `apps/desktop/src/preload/` — preload bridge exposing main-process APIs to the renderer.
+- `apps/desktop/src/renderer/` — React app (Canvas, Timeline strip, Inspector, modals).
+- `apps/desktop/tests/` — Playwright e2e (`e2e/`), IPC unit tests (`ipc/`), main-process tests (`main/`), renderer tests (`renderer/`).
+
+### CLI + shared packages
+
+- `apps/cli/cli/` — CLI command implementations; `apps/cli/cli/snapshot.ts` defines the JSON snapshot format.
+- `apps/cli/tests/integration/` — LocalStack-backed integration suite, including `fixtures/seed.tf`.
+- `packages/shared/src/snapshot/` — canonical snapshot core used by both desktop and CLI.
+- `packages/shared/src/types/cloud.ts` — `NodeType` literal union + integration edge types. Source of truth for what's scannable.
+
+### Build / dev commands
+
+From the repo root (verbatim from `package.json` scripts):
+
+- `npm install` — workspace install.
+- `npm run dev` — Electron dev with hot reload (delegates to `@riftview/desktop`).
+- `npm run lint` — eslint across workspaces.
+- `npm run typecheck` — tsc `--noEmit` across workspaces.
+- `npm test` — vitest unit suites.
+- `npm run test:watch` / `npm run test:ui` — vitest watch mode and UI.
+- `npm run test:integration` — CLI ↔ LocalStack integration suite.
+- `npm run test:e2e` — Playwright e2e (excludes `@release` specs).
+- `npm run test:e2e:release` / `npm run test:e2e:release:mac` — release-gated Playwright specs.
+- `npm run build` — build all workspaces.
+- `npm run build:cli` — CLI bundle only.
+- `npm run cli` — run the CLI from source via tsx.
+- `npm run start` / `npm run stories` — Electron production start, Ladle stories.
+- `npm run localstack:up` / `npm run localstack:down` — bring LocalStack + Terraform fixtures up/down for integration work.
+- `npm run format` — prettier write.
+
+For platform binaries, the desktop workspace exposes `npm run build:mac`, `npm run build:win`, and `npm run build:linux` (see the `Build` section above).
+
+### CI
+
+`.github/workflows/ci.yml` runs three jobs on every PR and push to `main`:
+
+- **`lockfile-guard`** — Python script that catches stripped optional-platform deps in `package-lock.json`.
+- **`fast`** — install + lint + typecheck + test + CLI build + bundle smoke + phantom-dep guard.
+- **`e2e`** — IPC contract walker + CLI ↔ LocalStack integration + Electron E2E smoke under xvfb (docker-compose brings up LocalStack).
+
+The `release` job is skipped except on release tags (`refs/tags/v*`), where it builds, signs, and publishes the desktop binaries for macOS and Linux.
+
+### Related repos
+
+Planning notes, operational automation, and internal tooling live in a separate private repo.
