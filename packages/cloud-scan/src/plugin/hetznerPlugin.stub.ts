@@ -27,9 +27,9 @@ async function* emptyEvents(): AsyncIterable<ApplyEvent> {
 export const hetznerPluginStub: RiftViewPlugin = {
   id: 'com.riftview.hetzner',
   displayName: 'Hetzner Cloud',
-  nodeTypes: ['hetzner-server', 'hetzner-volume', 'hetzner-network'],
+  nodeTypes: ['hetzner:server', 'hetzner:volume', 'hetzner:network'],
   nodeTypeMetadata: {
-    'hetzner-server': {
+    'hetzner:server': {
       label: 'SRV',
       borderColor: '#D50C2D',
       badgeColor: '#D50C2D',
@@ -37,7 +37,7 @@ export const hetznerPluginStub: RiftViewPlugin = {
       displayName: 'Hetzner Server',
       hasCreate: false
     },
-    'hetzner-volume': {
+    'hetzner:volume': {
       label: 'VOL',
       borderColor: '#D50C2D',
       badgeColor: '#D50C2D',
@@ -45,7 +45,7 @@ export const hetznerPluginStub: RiftViewPlugin = {
       displayName: 'Hetzner Volume',
       hasCreate: false
     },
-    'hetzner-network': {
+    'hetzner:network': {
       label: 'NET',
       borderColor: '#D50C2D',
       badgeColor: '#D50C2D',

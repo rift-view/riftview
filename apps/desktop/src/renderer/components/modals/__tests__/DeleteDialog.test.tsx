@@ -5,7 +5,7 @@ import type { CloudNode } from '@riftview/shared'
 
 const node: CloudNode = {
   id: 'vpc-0abc1234',
-  type: 'vpc',
+  type: 'aws:vpc',
   label: 'my-vpc',
   status: 'running',
   region: 'us-east-1',
@@ -43,13 +43,13 @@ describe('DeleteDialog', () => {
   })
 
   it('shows force-delete toggle for S3 bucket', () => {
-    const s3Node: CloudNode = { ...node, id: 'my-bucket', type: 's3' }
+    const s3Node: CloudNode = { ...node, id: 'my-bucket', type: 'aws:s3' }
     render(<DeleteDialog node={s3Node} onClose={vi.fn()} onConfirm={vi.fn()} />)
     expect(screen.getByText(/force delete/i)).toBeInTheDocument()
   })
 
   it('shows skip-final-snapshot toggle for RDS', () => {
-    const rdsNode: CloudNode = { ...node, id: 'mydb', type: 'rds' }
+    const rdsNode: CloudNode = { ...node, id: 'mydb', type: 'aws:rds' }
     render(<DeleteDialog node={rdsNode} onClose={vi.fn()} onConfirm={vi.fn()} />)
     expect(screen.getByText(/skip final snapshot/i)).toBeInTheDocument()
   })

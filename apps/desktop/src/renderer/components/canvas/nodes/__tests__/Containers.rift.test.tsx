@@ -115,14 +115,14 @@ describe('RegionZoneNode (Rift container)', () => {
 describe('ResourceGroupNode (Rift container)', () => {
   it('renders with the rift-zone root class', () => {
     const { container } = render(
-      <ResourceGroupNode {...makeProps({ nodeType: 'ec2', count: 5 }, { id: 'group-ec2' })} />
+      <ResourceGroupNode {...makeProps({ nodeType: 'aws:ec2', count: 5 }, { id: 'group-ec2' })} />
     )
     expect(container.querySelector('.rift-zone')).not.toBeNull()
   })
 
   it('renders rift-container-label with TYPE_LABEL and count', () => {
     const { container } = render(
-      <ResourceGroupNode {...makeProps({ nodeType: 'ec2', count: 5 }, { id: 'group-ec2' })} />
+      <ResourceGroupNode {...makeProps({ nodeType: 'aws:ec2', count: 5 }, { id: 'group-ec2' })} />
     )
     const label = container.querySelector('.rift-container-label')
     expect(label).not.toBeNull()

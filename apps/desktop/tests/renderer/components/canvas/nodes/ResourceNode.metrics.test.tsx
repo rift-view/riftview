@@ -52,14 +52,14 @@ describe('ResourceNode metric badges', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).riftview = { fetchMetrics }
 
-    render(<ResourceNode {...makeProps('lambda', { functionName: 'my-fn' })} />)
+    render(<ResourceNode {...makeProps('aws:lambda', { functionName: 'my-fn' })} />)
     await act(async () => {
       await Promise.resolve()
     })
 
     expect(fetchMetrics).toHaveBeenCalledOnce()
     expect(fetchMetrics).toHaveBeenCalledWith(
-      expect.objectContaining({ nodeType: 'lambda', resourceId: 'my-fn' })
+      expect.objectContaining({ nodeType: 'aws:lambda', resourceId: 'my-fn' })
     )
   })
 
@@ -71,7 +71,7 @@ describe('ResourceNode metric badges', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).riftview = { fetchMetrics }
 
-    render(<ResourceNode {...makeProps('lambda')} />)
+    render(<ResourceNode {...makeProps('aws:lambda')} />)
     await act(async () => {
       await Promise.resolve()
     })
@@ -87,7 +87,7 @@ describe('ResourceNode metric badges', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).riftview = { fetchMetrics }
 
-    render(<ResourceNode {...makeProps('s3')} />)
+    render(<ResourceNode {...makeProps('aws:s3')} />)
     await act(async () => {
       await Promise.resolve()
     })
@@ -101,7 +101,9 @@ describe('ResourceNode metric badges', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).riftview = { fetchMetrics }
 
-    const { unmount } = render(<ResourceNode {...makeProps('rds', { dbInstanceId: 'my-db' })} />)
+    const { unmount } = render(
+      <ResourceNode {...makeProps('aws:rds', { dbInstanceId: 'my-db' })} />
+    )
     await act(async () => {
       await Promise.resolve()
     })

@@ -7,7 +7,7 @@ import { useUIStore } from '../../store/ui'
 
 const liveNode: CloudNode = {
   id: 'live-1',
-  type: 'ec2',
+  type: 'aws:ec2',
   label: 'live',
   status: 'running',
   region: 'us-east-1',
@@ -16,7 +16,7 @@ const liveNode: CloudNode = {
 
 const snapshotNode: CloudNode = {
   id: 'snap-1',
-  type: 'ec2',
+  type: 'aws:ec2',
   label: 'snap',
   status: 'running',
   region: 'us-east-1',

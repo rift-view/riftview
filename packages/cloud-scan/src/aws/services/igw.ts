@@ -14,7 +14,7 @@ export function listInternetGateways(client: EC2Client, region: string): Promise
       const state = item.Attachments?.[0]?.State as string | undefined
       return {
         id,
-        type: 'igw',
+        type: 'aws:igw',
         label,
         status: state === 'available' ? 'running' : 'unknown',
         region,

@@ -10,7 +10,7 @@ import {
 function node(id: string, extra: Partial<CloudNode> = {}): CloudNode {
   return {
     id,
-    type: 'ec2',
+    type: 'aws:ec2',
     label: id,
     status: 'running',
     region: 'us-east-1',

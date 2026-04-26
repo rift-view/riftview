@@ -7,7 +7,7 @@ import type { CloudNode } from '@riftview/shared'
 export const DEMO_FIXTURE_NODES: CloudNode[] = [
   {
     id: 'i-demo-web',
-    type: 'ec2',
+    type: 'aws:ec2',
     label: 'demo-web',
     status: 'running',
     region: 'us-east-1',
@@ -15,7 +15,7 @@ export const DEMO_FIXTURE_NODES: CloudNode[] = [
   },
   {
     id: 'arn:aws:lambda:us-east-1:000000000000:function:demo-api',
-    type: 'lambda',
+    type: 'aws:lambda',
     label: 'demo-api',
     status: 'running',
     region: 'us-east-1',
@@ -23,7 +23,7 @@ export const DEMO_FIXTURE_NODES: CloudNode[] = [
   },
   {
     id: 'demo-assets',
-    type: 's3',
+    type: 'aws:s3',
     label: 'demo-assets',
     status: 'running',
     region: 'us-east-1',

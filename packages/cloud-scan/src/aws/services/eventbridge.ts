@@ -55,7 +55,7 @@ export async function listEventBuses(
 
         const node: CloudNode = {
           id: busArn,
-          type: 'eventbridge-bus',
+          type: 'aws:eventbridge-bus',
           label: bus.Name ?? '',
           status: 'running',
           region,

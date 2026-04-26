@@ -5,7 +5,7 @@ import { VpcNode } from './VpcNode'
 function makeVpcProps(label: string, cidr?: string, collapsed?: boolean): Record<string, unknown> {
   return {
     id: `story-vpc`,
-    type: 'vpc',
+    type: 'aws:vpc',
     selected: false,
     dragging: false,
     zIndex: 0,

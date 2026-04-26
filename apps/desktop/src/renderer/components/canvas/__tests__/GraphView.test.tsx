@@ -21,7 +21,7 @@ vi.mock('@xyflow/react', async (importOriginal) => {
 
 const vpc = (id: string): CloudNode => ({
   id,
-  type: 'vpc',
+  type: 'aws:vpc',
   label: id,
   status: 'running',
   region: 'us-east-1',

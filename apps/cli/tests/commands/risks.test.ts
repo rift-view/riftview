@@ -16,7 +16,7 @@ import type { ScanRunner, ScanRunnerResult } from '../../cli/commands/scan'
 function lambdaNoTimeout(id: string): CloudNode {
   return {
     id,
-    type: 'lambda',
+    type: 'aws:lambda',
     label: id,
     status: 'running',
     region: 'us-east-1',
@@ -29,7 +29,7 @@ function lambdaNoTimeout(id: string): CloudNode {
 function lambdaWarnOnly(id: string, queueId: string): CloudNode {
   return {
     id,
-    type: 'lambda',
+    type: 'aws:lambda',
     label: id,
     status: 'running',
     region: 'us-east-1',
@@ -41,7 +41,7 @@ function lambdaWarnOnly(id: string, queueId: string): CloudNode {
 function sqsNoDlq(id: string): CloudNode {
   return {
     id,
-    type: 'sqs',
+    type: 'aws:sqs',
     label: id,
     status: 'running',
     region: 'us-east-1',
@@ -53,7 +53,7 @@ function sqsNoDlq(id: string): CloudNode {
 function lambdaClean(id: string): CloudNode {
   return {
     id,
-    type: 'lambda',
+    type: 'aws:lambda',
     label: id,
     status: 'running',
     region: 'us-east-1',

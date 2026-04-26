@@ -25,7 +25,7 @@ export async function listStreams(
         if (!summary.StreamARN) continue
         rawNodes.push({
           id: summary.StreamARN,
-          type: 'kinesis',
+          type: 'aws:kinesis',
           label: summary.StreamName ?? summary.StreamARN,
           status: kinesisStatusToNodeStatus(summary.StreamStatus),
           region,

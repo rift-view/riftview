@@ -8,7 +8,7 @@ import type { CloudNode } from '@riftview/shared'
 describe('pluginCommands — routing', () => {
   const ec2Node: CloudNode = {
     id: 'i-001',
-    type: 'ec2',
+    type: 'aws:ec2',
     label: 'web',
     status: 'running',
     region: 'us-east-1',

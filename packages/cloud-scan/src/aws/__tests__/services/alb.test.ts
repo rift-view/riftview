@@ -26,7 +26,7 @@ describe('describeLoadBalancers', () => {
       .mockResolvedValueOnce({ TargetGroups: [] })
     const nodes = await describeLoadBalancers(mockClient, 'us-east-1')
     expect(nodes[0].label).toBe('prod-alb')
-    expect(nodes[0].type).toBe('alb')
+    expect(nodes[0].type).toBe('aws:alb')
     expect(nodes[0].status).toBe('running')
     expect(nodes[0].parentId).toBe('vpc-0abc')
   })

@@ -69,20 +69,20 @@ const VPC_PALETTE = ['#1976D2', '#9c27b0', '#0891b2', '#16a34a', '#ea580c', '#e1
 
 // Container node types that should be excluded from opacity overlays (blast radius / path trace)
 const OPACITY_CONTAINER_TYPES = new Set([
-  'vpc',
-  'subnet',
-  'security-group',
-  'nat-gateway',
+  'aws:vpc',
+  'aws:subnet',
+  'aws:security-group',
+  'aws:nat-gateway',
   'globalZone',
   'regionZone',
-  'apigw'
+  'aws:apigw'
 ])
 
-// Walk up parentId chain to find the VPC ancestor (type === 'vpc')
+// Walk up parentId chain to find the VPC ancestor (type === 'aws:vpc')
 function findVpcAncestor(node: CloudNode, byId: Map<string, CloudNode>): CloudNode | null {
   let current: CloudNode | undefined = node
   while (current) {
-    if (current.type === 'vpc') return current
+    if (current.type === 'aws:vpc') return current
     if (!current.parentId) return null
     current = byId.get(current.parentId)
   }
@@ -94,7 +94,7 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
 
   // Parent → child edges (skip apigw-route — handled separately below)
   nodes
-    .filter((n) => n.parentId && n.type !== 'apigw-route')
+    .filter((n) => n.parentId && n.type !== 'aws:apigw-route')
     .forEach((n) => {
       edges.push({
         id: `${n.parentId}-${n.id}`,
@@ -106,9 +106,9 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
     })
 
   // CloudFront → ACM cert edges
-  const acmNodes = nodes.filter((n) => n.type === 'acm')
-  const cfNodes = nodes.filter((n) => n.type === 'cloudfront')
-  const lambdaNodes = nodes.filter((n) => n.type === 'lambda')
+  const acmNodes = nodes.filter((n) => n.type === 'aws:acm')
+  const cfNodes = nodes.filter((n) => n.type === 'aws:cloudfront')
+  const lambdaNodes = nodes.filter((n) => n.type === 'aws:lambda')
 
   cfNodes.forEach((cf) => {
     // Cert edge (dotted)
@@ -130,7 +130,7 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
 
   // API Gateway route edges
   nodes
-    .filter((n) => n.type === 'apigw-route')
+    .filter((n) => n.type === 'aws:apigw-route')
     .forEach((route) => {
       // route → parent apigw
       if (route.parentId) {
@@ -182,11 +182,11 @@ function deriveEdges(nodes: CloudNode[]): Edge[] {
 
   // Reverse ALB → ECS edges (blast radius: ALB → ECS)
   for (const albNode of nodes) {
-    if (albNode.type !== 'alb') continue
+    if (albNode.type !== 'aws:alb') continue
     const tgArns = albNode.metadata.targetGroupArns as string[] | undefined
     if (!tgArns || tgArns.length === 0) continue
     for (const ecsNode of nodes) {
-      if (ecsNode.type !== 'ecs') continue
+      if (ecsNode.type !== 'aws:ecs') continue
       const linked = ecsNode.integrations?.some((i) => tgArns.includes(i.targetId))
       if (!linked) continue
       const edgeId = `integration-alb-ecs-${albNode.id}-${ecsNode.id}`
@@ -365,7 +365,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
   }, [blastRadiusId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Path trace ──────────────────────────────────────────────────────────────
-  const INTERNET_SOURCE_TYPES_GV = new Set(['igw', 'cloudfront', 'apigw'])
+  const INTERNET_SOURCE_TYPES_GV = new Set(['aws:igw', 'aws:cloudfront', 'aws:apigw'])
   const inboundMap = useMemo((): Map<string, string[]> => {
     const map = new Map<string, string[]>()
     for (const n of allNodes) {
@@ -443,7 +443,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
     const map = new Map<string, string>()
     let idx = 0
     visibleNodes.forEach((n) => {
-      if (n.type === 'vpc' && !map.has(n.id)) {
+      if (n.type === 'aws:vpc' && !map.has(n.id)) {
         map.set(n.id, VPC_PALETTE[idx % VPC_PALETTE.length])
         idx++
       }
@@ -474,13 +474,13 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
       // Use dedicated node types for ACM, CloudFront, and API Gateway
       const rfType =
-        n.type === 'acm'
+        n.type === 'aws:acm'
           ? 'acm'
-          : n.type === 'cloudfront'
+          : n.type === 'aws:cloudfront'
             ? 'cloudfront'
-            : n.type === 'apigw'
+            : n.type === 'aws:apigw'
               ? 'apigw'
-              : n.type === 'apigw-route'
+              : n.type === 'aws:apigw-route'
                 ? 'apigw-route'
                 : 'resource'
 
@@ -503,16 +503,18 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           nodeType: n.type,
           status: n.status,
           driftStatus: n.driftStatus,
-          vpcLabel: n.type !== 'vpc' && n.type !== 'subnet' ? vpcLabel : undefined,
-          vpcColor: n.type !== 'vpc' && n.type !== 'subnet' ? vpcColor : undefined,
+          vpcLabel: n.type !== 'aws:vpc' && n.type !== 'aws:subnet' ? vpcLabel : undefined,
+          vpcColor: n.type !== 'aws:vpc' && n.type !== 'aws:subnet' ? vpcColor : undefined,
           region: n.region,
           metadata: n.metadata,
           // API Gateway route extra fields
-          method: n.type === 'apigw-route' ? (n.metadata.method as string | undefined) : undefined,
-          path: n.type === 'apigw-route' ? (n.metadata.path as string | undefined) : undefined,
-          hasLambda: n.type === 'apigw-route' ? !!n.metadata.lambdaArn : undefined,
+          method:
+            n.type === 'aws:apigw-route' ? (n.metadata.method as string | undefined) : undefined,
+          path: n.type === 'aws:apigw-route' ? (n.metadata.path as string | undefined) : undefined,
+          hasLambda: n.type === 'aws:apigw-route' ? !!n.metadata.lambdaArn : undefined,
           // API Gateway container extra fields
-          endpoint: n.type === 'apigw' ? (n.metadata.endpoint as string | undefined) : undefined,
+          endpoint:
+            n.type === 'aws:apigw' ? (n.metadata.endpoint as string | undefined) : undefined,
           // Focus mode
           dimmed: highlightedIds !== null && !highlightedIds.has(n.id),
           // Lock mode
@@ -521,7 +523,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           annotation: annotations[n.id],
           // SNS subscriber labels
           subscribers:
-            n.type === 'sns' && n.integrations && n.integrations.length > 0
+            n.type === 'aws:sns' && n.integrations && n.integrations.length > 0
               ? n.integrations
                   .filter((i) => i.edgeType === 'subscription')
                   .map((i) => {
@@ -570,7 +572,13 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
 
     const all = [...mapped, ...importedFlowNodes, ...stickyFlowNodes]
     if (!driftFilterActive) return all
-    const DRIFT_CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw', 'globalZone', 'apigw-route'])
+    const DRIFT_CONTAINER_TYPES = new Set([
+      'aws:vpc',
+      'aws:subnet',
+      'aws:apigw',
+      'globalZone',
+      'aws:apigw-route'
+    ])
     return all.filter((fn) => {
       if (fn.type === 'sticky-note') return false
       const d = fn.data as { nodeType?: string; driftStatus?: string }
@@ -607,7 +615,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
       visibleNodes
         .filter(
           (n) =>
-            n.type === 'sns' &&
+            n.type === 'aws:sns' &&
             (n.integrations?.filter((i) => i.edgeType === 'subscription').length ?? 0) >= 2
         )
         .map((n) => n.id)

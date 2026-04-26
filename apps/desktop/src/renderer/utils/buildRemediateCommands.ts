@@ -25,7 +25,7 @@ function buildMatchedCommands(node: CloudNode): string[][] {
     return liveVal !== tfVal && tf[key] !== undefined ? tfVal : null
   }
 
-  if (node.type === 'lambda') {
+  if (node.type === 'aws:lambda') {
     const runtimeVal = diffed('runtime')
     const memoryVal = diffed('memorySize')
     const timeoutVal = diffed('timeout')
@@ -39,7 +39,7 @@ function buildMatchedCommands(node: CloudNode): string[][] {
     return [cmd]
   }
 
-  if (node.type === 'ec2') {
+  if (node.type === 'aws:ec2') {
     const instanceTypeVal = diffed('instanceType')
     if (!instanceTypeVal) return []
 
@@ -62,7 +62,7 @@ function buildMatchedCommands(node: CloudNode): string[][] {
     return [modify]
   }
 
-  if (node.type === 'rds') {
+  if (node.type === 'aws:rds') {
     const instanceClassVal = diffed('instanceClass')
     if (!instanceClassVal) return []
     return [

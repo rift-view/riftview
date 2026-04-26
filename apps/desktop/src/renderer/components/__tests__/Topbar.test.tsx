@@ -245,7 +245,7 @@ describe('Topbar — fix count chip', () => {
 describe('Topbar — cost pill & popover', () => {
   it('shows a formatted dollar total when costed nodes are present', () => {
     useCloudStore.setState({
-      nodes: [makeNode('i-1', 'ec2'), makeNode('i-2', 'ec2'), makeNode('b-1', 's3')]
+      nodes: [makeNode('i-1', 'aws:ec2'), makeNode('i-2', 'aws:ec2'), makeNode('b-1', 'aws:s3')]
     })
     render(<Topbar onScan={vi.fn()} />)
     // ec2 us-east-1 = 8.50 each, s3 = 2.30 → ~$19.30
@@ -255,7 +255,7 @@ describe('Topbar — cost pill & popover', () => {
 
   it('hovering the cost pill reveals a top-5 list with the "Top cost by node" header', async () => {
     useCloudStore.setState({
-      nodes: [makeNode('i-1', 'ec2'), makeNode('i-2', 'ec2'), makeNode('b-1', 's3')]
+      nodes: [makeNode('i-1', 'aws:ec2'), makeNode('i-2', 'aws:ec2'), makeNode('b-1', 'aws:s3')]
     })
     render(<Topbar onScan={vi.fn()} />)
     const pill = screen.getByText(/~\$19\.30\/mo/)
@@ -275,7 +275,7 @@ describe('Topbar — import dropdown', () => {
         {
           name: 'm1',
           resourceCount: 1,
-          nodes: [makeNode('x', 'ec2')]
+          nodes: [makeNode('x', 'aws:ec2')]
         }
       ]
     }
@@ -293,7 +293,7 @@ describe('Topbar — import dropdown', () => {
     })
     await waitFor(() => {
       expect(setImportedNodes).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ id: 'x', type: 'ec2' })])
+        expect.arrayContaining([expect.objectContaining({ id: 'x', type: 'aws:ec2' })])
       )
     })
   })
@@ -324,7 +324,7 @@ describe('Topbar — export dropdown', () => {
   })
 
   it('clicking "Terraform HCL" with nodes present calls window.riftview.exportTerraform', async () => {
-    const nodes = [makeNode('i-1', 'ec2')]
+    const nodes = [makeNode('i-1', 'aws:ec2')]
     useCloudStore.setState({ nodes })
     render(<Topbar onScan={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: /Export/i }))
@@ -335,7 +335,7 @@ describe('Topbar — export dropdown', () => {
   })
 
   it('clicking "Copy diagram" dispatches riftview:export-canvas with detail.format="clipboard"', () => {
-    useCloudStore.setState({ nodes: [makeNode('i-1', 'ec2')] })
+    useCloudStore.setState({ nodes: [makeNode('i-1', 'aws:ec2')] })
     const handler = vi.fn()
     window.addEventListener('riftview:export-canvas', handler as EventListener)
     try {

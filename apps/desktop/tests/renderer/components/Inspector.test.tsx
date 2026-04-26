@@ -23,7 +23,7 @@ vi.mock('../../../src/renderer/components/IamAdvisor', () => ({
 
 const EC2_NODE: CloudNode = {
   id: 'i-001',
-  type: 'ec2',
+  type: 'aws:ec2',
   label: 'web-server',
   status: 'running',
   region: 'us-east-1',

@@ -56,7 +56,14 @@ describe('EmptyCanvasState', () => {
   it('renders nothing when nodes exist', () => {
     useCloudStore.setState({
       nodes: [
-        { id: 'i-1', type: 'ec2', label: 'web', region: 'us-east-1', status: 'running', raw: {} }
+        {
+          id: 'i-1',
+          type: 'aws:ec2',
+          label: 'web',
+          region: 'us-east-1',
+          status: 'running',
+          raw: {}
+        }
       ]
     })
     const { container } = render(<EmptyCanvasState />)

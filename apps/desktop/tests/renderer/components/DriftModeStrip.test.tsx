@@ -6,7 +6,7 @@ import { useUIStore } from '../../../src/renderer/store/ui'
 import type { CloudNode } from '@riftview/shared'
 
 const baseNode = (id: string, driftStatus: CloudNode['driftStatus']): CloudNode =>
-  ({ id, type: 'ec2', label: id, region: 'us-east-1', metadata: {}, driftStatus }) as CloudNode
+  ({ id, type: 'aws:ec2', label: id, region: 'us-east-1', metadata: {}, driftStatus }) as CloudNode
 
 beforeEach(() => {
   window.riftview = {

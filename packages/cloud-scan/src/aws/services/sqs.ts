@@ -21,7 +21,7 @@ export async function listQueues(
     },
     map: (url, region): CloudNode => ({
       id: url,
-      type: 'sqs',
+      type: 'aws:sqs',
       label: url.split('/').pop() ?? url,
       status: 'running',
       region,

@@ -45,7 +45,7 @@ function plan(steps: RestoreStep[]): RestorePlan {
 describe('cost/compute — RIF-21', () => {
   describe('costForStep', () => {
     it('create of a NAT Gateway in us-east-1 models +$32.85/mo recurring', () => {
-      const e = costForStep(step({ targetType: 'nat-gateway', op: 'create' }))
+      const e = costForStep(step({ targetType: 'aws:nat-gateway', op: 'create' }))
       expect(e.recurringMonthly).toBe(32.85)
       expect(e.oneTime).toBe(0)
       expect(e.confidence).toBe('estimate')
@@ -53,12 +53,12 @@ describe('cost/compute — RIF-21', () => {
     })
 
     it('destroy of a NAT Gateway models -$32.85/mo (savings)', () => {
-      const e = costForStep(step({ targetType: 'nat-gateway', op: 'destroy' }))
+      const e = costForStep(step({ targetType: 'aws:nat-gateway', op: 'destroy' }))
       expect(e.recurringMonthly).toBe(-32.85)
     })
 
     it('update is modeled as $0 with an explanatory note (v1 scope)', () => {
-      const e = costForStep(step({ targetType: 'ec2', op: 'update' }))
+      const e = costForStep(step({ targetType: 'aws:ec2', op: 'update' }))
       expect(e.recurringMonthly).toBe(0)
       expect(e.oneTime).toBe(0)
       expect(e.notes?.[0]).toMatch(/update step/i)
@@ -72,15 +72,15 @@ describe('cost/compute — RIF-21', () => {
     })
 
     it('unknown region for a known NodeType is also unknown + note', () => {
-      const e = costForStep(step({ targetType: 'ec2', op: 'create', region: 'sa-east-1' }))
+      const e = costForStep(step({ targetType: 'aws:ec2', op: 'create', region: 'sa-east-1' }))
       expect(e.confidence).toBe('unknown')
       expect(e.notes?.[0]).toMatch(/sa-east-1/)
     })
 
     it('regional pricing differs — eu-west-1 NAT is more expensive than us-east-1', () => {
-      const east = costForStep(step({ targetType: 'nat-gateway', op: 'create' }))
+      const east = costForStep(step({ targetType: 'aws:nat-gateway', op: 'create' }))
       const euw = costForStep(
-        step({ targetType: 'nat-gateway', op: 'create', region: 'eu-west-1' })
+        step({ targetType: 'aws:nat-gateway', op: 'create', region: 'eu-west-1' })
       )
       expect(euw.recurringMonthly).toBeGreaterThan(east.recurringMonthly)
     })
@@ -96,23 +96,23 @@ describe('cost/compute — RIF-21', () => {
     })
 
     it('keys perStep map by stepId', () => {
-      const s1 = step({ stepId: 's1', targetType: 'nat-gateway', op: 'create' })
-      const s2 = step({ stepId: 's2', targetType: 'ec2', op: 'create' })
+      const s1 = step({ stepId: 's1', targetType: 'aws:nat-gateway', op: 'create' })
+      const s2 = step({ stepId: 's2', targetType: 'aws:ec2', op: 'create' })
       const cd = computeCostDelta(plan([s1, s2]))
       expect(Object.keys(cd.perStep).sort()).toEqual(['s1', 's2'])
     })
 
     it('aggregates recurringMonthly across steps', () => {
-      const s1 = step({ stepId: 's1', targetType: 'nat-gateway', op: 'create' }) // +32.85
-      const s2 = step({ stepId: 's2', targetType: 'ec2', op: 'create' }) // +7.5
-      const s3 = step({ stepId: 's3', targetType: 'rds', op: 'destroy' }) // -17.4
+      const s1 = step({ stepId: 's1', targetType: 'aws:nat-gateway', op: 'create' }) // +32.85
+      const s2 = step({ stepId: 's2', targetType: 'aws:ec2', op: 'create' }) // +7.5
+      const s3 = step({ stepId: 's3', targetType: 'aws:rds', op: 'destroy' }) // -17.4
       const cd = computeCostDelta(plan([s1, s2, s3]))
       // 32.85 + 7.5 - 17.4 = 22.95
       expect(cd.aggregate.recurringMonthly).toBe(22.95)
     })
 
     it('aggregate confidence is the weakest of per-step confidences', () => {
-      const s1 = step({ stepId: 's1', targetType: 'nat-gateway', op: 'create' }) // estimate
+      const s1 = step({ stepId: 's1', targetType: 'aws:nat-gateway', op: 'create' }) // estimate
       const s2 = step({ stepId: 's2', targetType: 'bespoke', op: 'create' }) // unknown
       const cd = computeCostDelta(plan([s1, s2]))
       expect(cd.aggregate.confidence).toBe('unknown')
@@ -127,12 +127,12 @@ describe('cost/compute — RIF-21', () => {
     })
 
     it('planId flows through to the output', () => {
-      const cd = computeCostDelta(plan([step({ targetType: 'ec2', op: 'create' })]))
+      const cd = computeCostDelta(plan([step({ targetType: 'aws:ec2', op: 'create' })]))
       expect(cd.planId).toBe('p1')
     })
 
     it('NAT-Gateway hero case: restoring one NAT surfaces ~$32/mo, not silent zero', () => {
-      const s1 = step({ stepId: 'nat-restore', targetType: 'nat-gateway', op: 'create' })
+      const s1 = step({ stepId: 'nat-restore', targetType: 'aws:nat-gateway', op: 'create' })
       const cd = computeCostDelta(plan([s1]))
       expect(cd.aggregate.recurringMonthly).toBeGreaterThan(30)
       expect(cd.aggregate.recurringMonthly).toBeLessThan(35)
@@ -146,8 +146,8 @@ describe('cost/compute — RIF-21', () => {
 
     it('coveredNodeTypes returns the priced set', () => {
       const types = coveredNodeTypes()
-      expect(types).toContain('ec2')
-      expect(types).toContain('nat-gateway')
+      expect(types).toContain('aws:ec2')
+      expect(types).toContain('aws:nat-gateway')
       expect(types.length).toBeGreaterThan(0)
     })
   })

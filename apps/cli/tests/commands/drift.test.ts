@@ -17,7 +17,7 @@ const FIXTURE = resolve(__dirname, '../fixtures/tfstate/basic.tfstate.json')
 function vpc(id: string): CloudNode {
   return {
     id,
-    type: 'vpc',
+    type: 'aws:vpc',
     label: id,
     status: 'running',
     region: 'us-east-1',
@@ -28,7 +28,7 @@ function vpc(id: string): CloudNode {
 function lambdaNode(id: string): CloudNode {
   return {
     id,
-    type: 'lambda',
+    type: 'aws:lambda',
     label: id,
     status: 'running',
     region: 'us-east-1',
@@ -39,7 +39,7 @@ function lambdaNode(id: string): CloudNode {
 function ec2(id: string): CloudNode {
   return {
     id,
-    type: 'ec2',
+    type: 'aws:ec2',
     label: id,
     status: 'running',
     region: 'us-east-1',
@@ -104,7 +104,7 @@ describe('drift command', () => {
         lambdaNode('fn-managed'),
         {
           id: 'bucket-tf-only',
-          type: 's3',
+          type: 'aws:s3',
           label: 'bucket-tf-only',
           status: 'running',
           region: 'us-east-1',
@@ -148,7 +148,7 @@ describe('drift command', () => {
         lambdaNode('fn-managed'),
         {
           id: 'bucket-tf-only',
-          type: 's3',
+          type: 'aws:s3',
           label: 'bucket-tf-only',
           status: 'running',
           region: 'us-east-1',

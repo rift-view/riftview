@@ -27,7 +27,7 @@ export async function listOpenSearchDomains(
     return (descRes.DomainStatusList ?? []).map(
       (domain): CloudNode => ({
         id: domain.ARN ?? domain.DomainName ?? 'unknown',
-        type: 'opensearch',
+        type: 'aws:opensearch',
         label: domain.DomainName ?? 'OpenSearch',
         status: osStatusToNodeStatus(domain.DomainProcessingStatus),
         region,

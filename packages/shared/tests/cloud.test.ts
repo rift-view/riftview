@@ -12,7 +12,7 @@ describe('CloudNode type', () => {
   it('accepts a valid CloudNode object', () => {
     const node: CloudNode = {
       id: 'arn:aws:ec2:us-east-1:123456789012:instance/i-0abc',
-      type: 'ec2',
+      type: 'aws:ec2',
       label: 'i-0abc',
       status: 'running',
       region: 'us-east-1',
@@ -25,7 +25,7 @@ describe('CloudNode type', () => {
   it('accepts a CloudNode with parentId', () => {
     const node: CloudNode = {
       id: 'i-0abc',
-      type: 'ec2',
+      type: 'aws:ec2',
       label: 'i-0abc',
       status: 'running',
       region: 'us-east-1',

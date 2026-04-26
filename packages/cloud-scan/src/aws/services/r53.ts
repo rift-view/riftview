@@ -14,7 +14,7 @@ export async function listHostedZones(client: Route53Client): Promise<CloudNode[
       zones.map(async (item): Promise<CloudNode> => {
         const base: CloudNode = {
           id: item.Id ?? '',
-          type: 'r53-zone',
+          type: 'aws:r53-zone',
           label: item.Name ?? '',
           status: 'running',
           region: 'global',

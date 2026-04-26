@@ -31,7 +31,7 @@ describe('listBuckets', () => {
     const nodes = await listBuckets(mockClient, 'us-east-1')
 
     expect(nodes[0].id).toBe('my-bucket')
-    expect(nodes[0].type).toBe('s3')
+    expect(nodes[0].type).toBe('aws:s3')
     expect(nodes[0].status).toBe('running')
     expect(nodes[0].metadata.publicAccessEnabled).toBe(false)
   })

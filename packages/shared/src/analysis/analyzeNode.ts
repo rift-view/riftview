@@ -3,7 +3,7 @@ import type { Advisory, CloudNode } from '../types/cloud'
 export function analyzeNode(node: CloudNode): Advisory[] {
   const advisories: Advisory[] = []
 
-  if (node.type === 'lambda') {
+  if (node.type === 'aws:lambda') {
     const timeout = node.metadata.timeout as number | undefined
     if (!timeout || timeout === 0) {
       advisories.push({
@@ -29,7 +29,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     }
   }
 
-  if (node.type === 'ec2' && node.metadata.hasPublicSsh === true) {
+  if (node.type === 'aws:ec2' && node.metadata.hasPublicSsh === true) {
     advisories.push({
       ruleId: 'ec2-public-ssh',
       severity: 'critical',
@@ -40,7 +40,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     })
   }
 
-  if (node.type === 's3' && node.metadata.publicAccessEnabled === true) {
+  if (node.type === 'aws:s3' && node.metadata.publicAccessEnabled === true) {
     advisories.push({
       ruleId: 's3-public-access',
       severity: 'critical',
@@ -51,7 +51,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     })
   }
 
-  if (node.type === 'rds' && !node.metadata.multiAZ) {
+  if (node.type === 'aws:rds' && !node.metadata.multiAZ) {
     advisories.push({
       ruleId: 'rds-no-multiaz',
       severity: 'warning',
@@ -62,7 +62,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     })
   }
 
-  if (node.type === 'sqs' && node.metadata.hasDlq === false) {
+  if (node.type === 'aws:sqs' && node.metadata.hasDlq === false) {
     advisories.push({
       ruleId: 'sqs-no-dlq',
       severity: 'warning',
@@ -73,7 +73,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     })
   }
 
-  if (node.type === 'rds') {
+  if (node.type === 'aws:rds') {
     if (node.metadata.deletionProtection === false) {
       advisories.push({
         ruleId: 'rds-no-deletion-protection',
@@ -99,7 +99,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     }
   }
 
-  if (node.type === 's3' && node.metadata.versioningEnabled === false) {
+  if (node.type === 'aws:s3' && node.metadata.versioningEnabled === false) {
     advisories.push({
       ruleId: 's3-no-versioning',
       severity: 'warning',
@@ -110,7 +110,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     })
   }
 
-  if (node.type === 'lambda' && node.metadata.hasDlq === false) {
+  if (node.type === 'aws:lambda' && node.metadata.hasDlq === false) {
     advisories.push({
       ruleId: 'lambda-no-dlq',
       severity: 'warning',
@@ -121,7 +121,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     })
   }
 
-  if (node.type === 'ecs') {
+  if (node.type === 'aws:ecs') {
     const desired = node.metadata.desiredCount as number | undefined
     const running = node.metadata.runningCount as number | undefined
     if (typeof desired === 'number' && typeof running === 'number' && running < desired) {
@@ -136,7 +136,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     }
   }
 
-  if (node.type === 'elasticache') {
+  if (node.type === 'aws:elasticache') {
     const engine = node.metadata.engine as string | undefined
     const clusterMode = node.metadata.clusterMode as string | undefined
     if (engine === 'redis' && clusterMode === 'standalone') {
@@ -151,7 +151,7 @@ export function analyzeNode(node: CloudNode): Advisory[] {
     }
   }
 
-  if (node.type === 'opensearch' && !node.parentId) {
+  if (node.type === 'aws:opensearch' && !node.parentId) {
     advisories.push({
       ruleId: 'opensearch-no-vpc',
       severity: 'warning',

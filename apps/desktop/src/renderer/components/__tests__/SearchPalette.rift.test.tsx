@@ -8,7 +8,7 @@ beforeEach(() => {
     nodes: [
       {
         id: 'i-aaa',
-        type: 'ec2',
+        type: 'aws:ec2',
         label: 'web-1',
         region: 'us-east-1',
         status: 'running',
@@ -17,7 +17,7 @@ beforeEach(() => {
       },
       {
         id: 'i-bbb',
-        type: 'ec2',
+        type: 'aws:ec2',
         label: 'web-2',
         region: 'us-east-1',
         status: 'running',

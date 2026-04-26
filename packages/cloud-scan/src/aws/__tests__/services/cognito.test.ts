@@ -22,7 +22,7 @@ describe('listUserPools', () => {
     const nodes = await listUserPools(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
-    expect(nodes[0].type).toBe('cognito')
+    expect(nodes[0].type).toBe('aws:cognito')
     expect(nodes[0].id).toBe(POOL_ID)
     expect(nodes[0].label).toBe('MyPool')
     expect(nodes[0].status).toBe('running')

@@ -25,7 +25,7 @@ function baseNode(overrides: Partial<CloudNode> = {}): CloudNode {
   return {
     id: 'arn:aws:lambda:us-east-1:123:function:foo',
     label: 'foo',
-    type: 'lambda',
+    type: 'aws:lambda',
     status: 'running',
     region: 'us-east-1',
     metadata: {},
