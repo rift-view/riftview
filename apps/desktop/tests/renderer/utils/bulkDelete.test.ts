@@ -14,9 +14,9 @@ const makeNode = (id: string, type: CloudNode['type'], label = id): CloudNode =>
 describe('bulk delete — flattened commands from multiple nodes', () => {
   it('produces one command per EC2 node', () => {
     const nodes: CloudNode[] = [
-      makeNode('i-001', 'ec2'),
-      makeNode('i-002', 'ec2'),
-      makeNode('i-003', 'ec2')
+      makeNode('i-001', 'aws:ec2'),
+      makeNode('i-002', 'aws:ec2'),
+      makeNode('i-003', 'aws:ec2')
     ]
     const commands = nodes.flatMap((n) => buildDeleteCommands(n))
     expect(commands).toHaveLength(3)
@@ -30,9 +30,9 @@ describe('bulk delete — flattened commands from multiple nodes', () => {
 
   it('produces mixed commands for mixed node types', () => {
     const nodes: CloudNode[] = [
-      makeNode('i-001', 'ec2'),
-      makeNode('my-bucket', 's3'),
-      makeNode('fn-name', 'lambda')
+      makeNode('i-001', 'aws:ec2'),
+      makeNode('my-bucket', 'aws:s3'),
+      makeNode('fn-name', 'aws:lambda')
     ]
     const commands = nodes.flatMap((n) => buildDeleteCommands(n))
     expect(commands).toHaveLength(3)
@@ -44,7 +44,7 @@ describe('bulk delete — flattened commands from multiple nodes', () => {
   it('includes both detach and delete commands for igw with vpcId', () => {
     const igwNode: CloudNode = {
       id: 'igw-abc',
-      type: 'igw',
+      type: 'aws:igw',
       label: 'igw-abc',
       status: 'running',
       region: 'us-east-1',
@@ -58,24 +58,24 @@ describe('bulk delete — flattened commands from multiple nodes', () => {
   })
 
   it('returns empty array for unsupported types (cloudfront)', () => {
-    const node = makeNode('dist-001', 'cloudfront')
+    const node = makeNode('dist-001', 'aws:cloudfront')
     const commands = buildDeleteCommands(node)
     expect(commands).toHaveLength(0)
   })
 
   it('flatMap over 3 nodes including igw produces correct total count', () => {
     const nodes: CloudNode[] = [
-      makeNode('i-001', 'ec2'),
+      makeNode('i-001', 'aws:ec2'),
       {
         id: 'igw-abc',
-        type: 'igw',
+        type: 'aws:igw',
         label: 'igw-abc',
         status: 'running',
         region: 'us-east-1',
         parentId: 'vpc-123',
         metadata: {}
       },
-      makeNode('fn-name', 'lambda')
+      makeNode('fn-name', 'aws:lambda')
     ]
     const commands = nodes.flatMap((n) => buildDeleteCommands(n))
     // ec2: 1, igw: 2, lambda: 1 = 4 total

@@ -30,7 +30,7 @@ export async function describeDBInstances(client: RDSClient, region: string): Pr
     return allInstances.map(
       (db): CloudNode => ({
         id: db.DBInstanceIdentifier ?? 'unknown',
-        type: 'rds',
+        type: 'aws:rds',
         label: db.DBInstanceIdentifier ?? 'RDS',
         status: rdsStatusToNodeStatus(db.DBInstanceStatus),
         region,

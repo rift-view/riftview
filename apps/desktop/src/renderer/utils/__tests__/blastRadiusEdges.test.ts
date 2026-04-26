@@ -9,7 +9,7 @@ function makeNode(
 ): CloudNode {
   return {
     id,
-    type: 'lambda',
+    type: 'aws:lambda',
     label: id,
     status: 'running',
     region: 'us-east-1',

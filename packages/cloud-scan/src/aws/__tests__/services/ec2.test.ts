@@ -38,7 +38,7 @@ describe('describeInstances', () => {
     const nodes: CloudNode[] = await describeInstances(mockClient, 'us-east-1')
     expect(nodes).toHaveLength(1)
     expect(nodes[0].id).toBe('i-0abc123')
-    expect(nodes[0].type).toBe('ec2')
+    expect(nodes[0].type).toBe('aws:ec2')
     expect(nodes[0].label).toBe('web-server')
     expect(nodes[0].status).toBe('running')
     expect(nodes[0].parentId).toBe('subnet-0abc')
@@ -182,7 +182,7 @@ describe('describeVpcs', () => {
       ]
     })
     const nodes = await describeVpcs(mockClient, 'us-east-1')
-    expect(nodes[0].type).toBe('vpc')
+    expect(nodes[0].type).toBe('aws:vpc')
     expect(nodes[0].label).toBe('main-vpc')
     expect(nodes[0].status).toBe('running')
   })
@@ -207,7 +207,7 @@ describe('describeSubnets', () => {
       ]
     })
     const nodes = await describeSubnets(mockClient, 'us-east-1')
-    expect(nodes[0].type).toBe('subnet')
+    expect(nodes[0].type).toBe('aws:subnet')
     expect(nodes[0].label).toBe('public-1')
     expect(nodes[0].parentId).toBe('vpc-0abc')
   })
@@ -226,7 +226,7 @@ describe('describeSecurityGroups', () => {
       ]
     })
     const nodes = await describeSecurityGroups(mockClient, 'us-east-1')
-    expect(nodes[0].type).toBe('security-group')
+    expect(nodes[0].type).toBe('aws:security-group')
     expect(nodes[0].label).toBe('sg-web')
     expect(nodes[0].parentId).toBe('vpc-0abc')
   })

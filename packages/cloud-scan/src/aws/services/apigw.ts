@@ -46,7 +46,7 @@ export async function listApis(client: ApiGatewayV2Client, region: string): Prom
 
         apiNodes.push({
           id: api.ApiId,
-          type: 'apigw',
+          type: 'aws:apigw',
           label: api.Name || api.ApiId,
           status: 'running',
           region,
@@ -142,7 +142,7 @@ async function listRoutes(
 
         routeNodes.push({
           id: `${apiId}/routes/${route.RouteId}`,
-          type: 'apigw-route',
+          type: 'aws:apigw-route',
           label: routeKey,
           status: 'running',
           region,

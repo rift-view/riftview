@@ -79,7 +79,7 @@ export async function describeLoadBalancers(
         const integrations = allIntegrations.length > 0 ? allIntegrations : undefined
         return {
           id: lb.LoadBalancerArn ?? lb.LoadBalancerName ?? 'unknown',
-          type: 'alb',
+          type: 'aws:alb',
           label: lb.LoadBalancerName ?? 'ALB',
           status: albStatusToNodeStatus(lb.State?.Code),
           region,

@@ -8,13 +8,13 @@ export interface DeleteOptions {
 
 export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): string[][] {
   switch (node.type) {
-    case 'vpc':
+    case 'aws:vpc':
       return [['ec2', 'delete-vpc', '--vpc-id', node.id]]
-    case 'ec2':
+    case 'aws:ec2':
       return [['ec2', 'terminate-instances', '--instance-ids', node.id]]
-    case 'security-group':
+    case 'aws:security-group':
       return [['ec2', 'delete-security-group', '--group-id', node.id]]
-    case 'rds': {
+    case 'aws:rds': {
       const cmds: string[][] = []
       if (opts.disableProtectionFirst) {
         cmds.push([
@@ -30,50 +30,50 @@ export function buildDeleteCommands(node: CloudNode, opts: DeleteOptions = {}): 
       cmds.push(deleteArgs)
       return cmds
     }
-    case 's3': {
+    case 'aws:s3': {
       const args = ['s3', 'rb', `s3://${node.id}`]
       if (opts.force) args.push('--force')
       return [args]
     }
-    case 'lambda':
+    case 'aws:lambda':
       return [['lambda', 'delete-function', '--function-name', node.id]]
-    case 'alb':
+    case 'aws:alb':
       return [['elbv2', 'delete-load-balancer', '--load-balancer-arn', node.id]]
-    case 'acm':
+    case 'aws:acm':
       return [['acm', 'delete-certificate', '--certificate-arn', node.id]]
-    case 'apigw':
+    case 'aws:apigw':
       return [['apigatewayv2', 'delete-api', '--api-id', node.id]]
-    case 'apigw-route': {
+    case 'aws:apigw-route': {
       const meta = node.metadata as { apiId: string; routeId: string }
       return [['apigatewayv2', 'delete-route', '--api-id', meta.apiId, '--route-id', meta.routeId]]
     }
-    case 'sqs':
+    case 'aws:sqs':
       return [
         ['sqs', 'delete-queue', '--queue-url', (node.metadata.url as string | undefined) ?? node.id]
       ]
-    case 'sns':
+    case 'aws:sns':
       return [['sns', 'delete-topic', '--topic-arn', node.id]]
-    case 'dynamo':
+    case 'aws:dynamo':
       return [['dynamodb', 'delete-table', '--table-name', node.label]]
-    case 'secret':
+    case 'aws:secret':
       return [['secretsmanager', 'delete-secret', '--secret-id', node.id]]
-    case 'ecr-repo':
+    case 'aws:ecr-repo':
       return [['ecr', 'delete-repository', '--repository-name', node.label, '--force']]
-    case 'sfn':
+    case 'aws:sfn':
       return [['stepfunctions', 'delete-state-machine', '--state-machine-arn', node.id]]
-    case 'eventbridge-bus':
+    case 'aws:eventbridge-bus':
       // The default event bus cannot be deleted
       if (node.label === 'default') return []
       return [['events', 'delete-event-bus', '--name', node.label]]
-    case 'r53-zone':
+    case 'aws:r53-zone':
       return [['route53', 'delete-hosted-zone', '--id', node.id]]
-    case 'ssm-param':
+    case 'aws:ssm-param':
       return [['ssm', 'delete-parameter', '--name', node.label]]
-    case 'subnet':
+    case 'aws:subnet':
       return [['ec2', 'delete-subnet', '--subnet-id', node.id]]
-    case 'nat-gateway':
+    case 'aws:nat-gateway':
       return [['ec2', 'delete-nat-gateway', '--nat-gateway-id', node.id]]
-    case 'igw': {
+    case 'aws:igw': {
       const vpcId = node.parentId ?? (node.metadata.vpcId as string | undefined)
       if (vpcId) {
         return [
@@ -95,12 +95,12 @@ export function buildQuickActionCommand(
   node: CloudNode,
   action: 'stop' | 'start' | 'reboot'
 ): string[][] {
-  if (node.type === 'ec2') {
+  if (node.type === 'aws:ec2') {
     if (action === 'stop') return [['ec2', 'stop-instances', '--instance-ids', node.id]]
     if (action === 'start') return [['ec2', 'start-instances', '--instance-ids', node.id]]
     if (action === 'reboot') return [['ec2', 'reboot-instances', '--instance-ids', node.id]]
   }
-  if (node.type === 'rds') {
+  if (node.type === 'aws:rds') {
     if (action === 'stop') return [['rds', 'stop-db-instance', '--db-instance-identifier', node.id]]
     if (action === 'start')
       return [['rds', 'start-db-instance', '--db-instance-identifier', node.id]]

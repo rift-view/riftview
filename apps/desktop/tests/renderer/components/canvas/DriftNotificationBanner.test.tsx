@@ -9,7 +9,7 @@ import type { CloudNode } from '@riftview/shared'
 
 const makeImportedNode = (id: string, driftStatus: CloudNode['driftStatus']): CloudNode => ({
   id,
-  type: 'ec2',
+  type: 'aws:ec2',
   label: id,
   status: 'running',
   region: 'us-east-1',

@@ -9,7 +9,7 @@ interface Props {
 
 export function RdsForm({ onChange, showErrors }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
-  const vpcs = nodes.filter((n) => n.type === 'vpc')
+  const vpcs = nodes.filter((n) => n.type === 'aws:vpc')
 
   const [form, setForm] = useState<Omit<RdsParams, 'resource'>>({
     identifier: '',

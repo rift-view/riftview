@@ -24,7 +24,7 @@ function n(
   return {
     id,
     label: id,
-    type: 'lambda',
+    type: 'aws:lambda',
     status: 'running',
     region: 'us-east-1',
     metadata: {},

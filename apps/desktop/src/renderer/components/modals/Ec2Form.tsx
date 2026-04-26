@@ -13,9 +13,9 @@ export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Elem
   const nodes = useCloudStore((s) => s.nodes)
   const keyPairs = useCloudStore((s) => s.keyPairs)
   const profile = useCloudStore((s) => s.profile)
-  const vpcs = nodes.filter((n) => n.type === 'vpc')
-  const subnets = nodes.filter((n) => n.type === 'subnet')
-  const sgs = nodes.filter((n) => n.type === 'security-group')
+  const vpcs = nodes.filter((n) => n.type === 'aws:vpc')
+  const subnets = nodes.filter((n) => n.type === 'aws:subnet')
+  const sgs = nodes.filter((n) => n.type === 'aws:security-group')
 
   const isLocal = !!profile.endpoint
   const [name, setName] = useState('')

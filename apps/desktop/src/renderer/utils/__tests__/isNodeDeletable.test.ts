@@ -14,7 +14,7 @@ function node(
 describe('isNodeDeletable', () => {
   it('EventBridge default bus → not deletable', () => {
     const result = isNodeDeletable(
-      node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/default', 'default')
+      node('aws:eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/default', 'default')
     )
     expect(result.deletable).toBe(false)
     expect(result.reason).toBe('Cannot delete the default EventBridge bus')
@@ -22,38 +22,38 @@ describe('isNodeDeletable', () => {
 
   it('EventBridge non-default bus → deletable', () => {
     const result = isNodeDeletable(
-      node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus', 'my-bus')
+      node('aws:eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus', 'my-bus')
     )
     expect(result.deletable).toBe(true)
     expect(result.reason).toBeUndefined()
   })
 
   it('RDS with deletionProtection: true → not deletable', () => {
-    const result = isNodeDeletable(node('rds', 'mydb', 'mydb', { deletionProtection: true }))
+    const result = isNodeDeletable(node('aws:rds', 'mydb', 'mydb', { deletionProtection: true }))
     expect(result.deletable).toBe(false)
     expect(result.reason).toBe('RDS deletion protection is enabled — disable it first')
   })
 
   it('RDS with deletionProtection: false → deletable', () => {
-    const result = isNodeDeletable(node('rds', 'mydb', 'mydb', { deletionProtection: false }))
+    const result = isNodeDeletable(node('aws:rds', 'mydb', 'mydb', { deletionProtection: false }))
     expect(result.deletable).toBe(true)
   })
 
   it('CloudFront without eTag → not deletable', () => {
-    const result = isNodeDeletable(node('cloudfront', 'ABCDEF123', 'My Distribution', {}))
+    const result = isNodeDeletable(node('aws:cloudfront', 'ABCDEF123', 'My Distribution', {}))
     expect(result.deletable).toBe(false)
     expect(result.reason).toBe('CloudFront ETag not available — re-scan to fetch it')
   })
 
   it('CloudFront with eTag → deletable', () => {
     const result = isNodeDeletable(
-      node('cloudfront', 'ABCDEF123', 'My Distribution', { eTag: 'E2QWRUHEXAMPLE' })
+      node('aws:cloudfront', 'ABCDEF123', 'My Distribution', { eTag: 'E2QWRUHEXAMPLE' })
     )
     expect(result.deletable).toBe(true)
   })
 
   it('EC2 instance → deletable', () => {
-    const result = isNodeDeletable(node('ec2', 'i-1234567890abcdef0'))
+    const result = isNodeDeletable(node('aws:ec2', 'i-1234567890abcdef0'))
     expect(result.deletable).toBe(true)
     expect(result.reason).toBeUndefined()
   })

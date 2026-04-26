@@ -8,7 +8,7 @@ vi.mock('electron', () => ({
 
 const makeNode = (id: string, status = 'running', label = id): CloudNode => ({
   id,
-  type: 'ec2',
+  type: 'aws:ec2',
   label,
   status: status as import('@riftview/shared').NodeStatus,
   region: 'us-east-1',

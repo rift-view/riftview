@@ -19,7 +19,7 @@ Object.defineProperty(window, 'riftview', {
 
 const EC2_NODE_A: CloudNode = {
   id: 'i-001',
-  type: 'ec2',
+  type: 'aws:ec2',
   label: 'server-a',
   status: 'running',
   region: 'us-east-1',
@@ -28,7 +28,7 @@ const EC2_NODE_A: CloudNode = {
 
 const EC2_NODE_B: CloudNode = {
   id: 'i-002',
-  type: 'ec2',
+  type: 'aws:ec2',
   label: 'server-b',
   status: 'running',
   region: 'us-east-1',
@@ -37,7 +37,7 @@ const EC2_NODE_B: CloudNode = {
 
 const S3_NODE: CloudNode = {
   id: 'my-bucket',
-  type: 's3',
+  type: 'aws:s3',
   label: 'my-bucket',
   status: 'running',
   region: 'us-east-1',

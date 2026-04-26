@@ -37,7 +37,7 @@ describe('listApis', () => {
 
     const nodes = await listApis(mockClient, 'us-east-1')
 
-    const routeNode = nodes.find((n) => n.type === 'apigw-route')
+    const routeNode = nodes.find((n) => n.type === 'aws:apigw-route')
     expect(routeNode).toBeDefined()
     expect(routeNode!.integrations).toHaveLength(1)
     expect(routeNode!.integrations![0].targetId).toBe(lambdaArn)
@@ -67,7 +67,7 @@ describe('listApis', () => {
 
     const nodes = await listApis(mockClient, 'us-east-1')
 
-    const routeNode = nodes.find((n) => n.type === 'apigw-route')
+    const routeNode = nodes.find((n) => n.type === 'aws:apigw-route')
     expect(routeNode).toBeDefined()
     expect(routeNode!.integrations).toBeUndefined()
   })
@@ -101,7 +101,7 @@ describe('listApis', () => {
 
     const nodes = await listApis(mockClient, 'us-east-1')
 
-    const routeNode = nodes.find((n) => n.type === 'apigw-route')
+    const routeNode = nodes.find((n) => n.type === 'aws:apigw-route')
     expect(routeNode).toBeDefined()
     expect(routeNode!.integrations).toBeUndefined()
   })
@@ -128,7 +128,7 @@ describe('listApis', () => {
     const nodes = await listApis(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
-    expect(nodes[0].type).toBe('apigw')
+    expect(nodes[0].type).toBe('aws:apigw')
     expect(nodes[0].id).toBe('api-123')
   })
 

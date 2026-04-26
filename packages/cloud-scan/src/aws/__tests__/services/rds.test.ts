@@ -20,7 +20,7 @@ describe('describeDBInstances', () => {
     })
     const nodes = await describeDBInstances(mockClient, 'us-east-1')
     expect(nodes[0].id).toBe('prod-db')
-    expect(nodes[0].type).toBe('rds')
+    expect(nodes[0].type).toBe('aws:rds')
     expect(nodes[0].status).toBe('running')
     expect(nodes[0].parentId).toBe('vpc-0abc')
     expect(nodes[0].metadata.multiAZ).toBe(true)

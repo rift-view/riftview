@@ -10,39 +10,57 @@ export type NodeStatus =
 
 export type DriftStatus = 'unmanaged' | 'missing' | 'matched'
 
-export type NodeType =
-  | 'ec2'
-  | 'vpc'
-  | 'subnet'
-  | 'rds'
-  | 's3'
-  | 'lambda'
-  | 'alb'
-  | 'security-group'
-  | 'igw'
-  | 'acm'
-  | 'cloudfront'
-  | 'apigw'
-  | 'apigw-route'
-  | 'sqs'
-  | 'secret'
-  | 'ecr-repo'
-  | 'sns'
-  | 'dynamo'
-  | 'ssm-param'
-  | 'nat-gateway'
-  | 'r53-zone'
-  | 'sfn'
-  | 'eventbridge-bus'
-  | 'ses'
-  | 'cognito'
-  | 'kinesis'
-  | 'ecs'
-  | 'elasticache'
-  | 'eks'
-  | 'opensearch'
-  | 'msk'
-  | 'unknown'
+/**
+ * Canonical list of all NodeType union members.
+ *
+ * Format: every namespaced member matches `^[a-z]+:[a-z0-9-]+$` (provider
+ * prefix + colon + resource kind). The lone exception is the `'unknown'`
+ * sentinel, which stays un-namespaced because it is shared across providers
+ * for unmapped scan results.
+ *
+ * Why a `const` array (not just a union):
+ *   - TypeScript types vanish at runtime; tests need a concrete handle on
+ *     the union members to assert e.g. naming-convention compliance
+ *     (see `__tests__/node-type-namespace.test.ts`).
+ *   - Future contract tests (RIFT-81) iterate this array to verify every
+ *     plugin's `nodeTypes` array agrees with what the renderer renders.
+ */
+export const NODE_TYPES = [
+  'aws:ec2',
+  'aws:vpc',
+  'aws:subnet',
+  'aws:rds',
+  'aws:s3',
+  'aws:lambda',
+  'aws:alb',
+  'aws:security-group',
+  'aws:igw',
+  'aws:acm',
+  'aws:cloudfront',
+  'aws:apigw',
+  'aws:apigw-route',
+  'aws:sqs',
+  'aws:secret',
+  'aws:ecr-repo',
+  'aws:sns',
+  'aws:dynamo',
+  'aws:ssm-param',
+  'aws:nat-gateway',
+  'aws:r53-zone',
+  'aws:sfn',
+  'aws:eventbridge-bus',
+  'aws:ses',
+  'aws:cognito',
+  'aws:kinesis',
+  'aws:ecs',
+  'aws:elasticache',
+  'aws:eks',
+  'aws:opensearch',
+  'aws:msk',
+  'unknown'
+] as const
+
+export type NodeType = (typeof NODE_TYPES)[number]
 
 export type EdgeType = 'trigger' | 'origin' | 'subscription'
 

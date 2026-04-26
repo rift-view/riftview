@@ -18,7 +18,7 @@ describe('listTopics', () => {
     const nodes = await listTopics(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
-    expect(nodes[0].type).toBe('sns')
+    expect(nodes[0].type).toBe('aws:sns')
     expect(nodes[0].label).toBe('my-topic')
     expect(nodes[0].id).toBe('arn:aws:sns:us-east-1:123456789:my-topic')
   })

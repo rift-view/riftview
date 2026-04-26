@@ -12,40 +12,40 @@ interface CloudMetric {
   unit: string
 }
 
-const METRIC_TYPES = new Set<NodeType>(['lambda', 'rds', 'ecs'])
+const METRIC_TYPES = new Set<NodeType>(['aws:lambda', 'aws:rds', 'aws:ecs'])
 
 const TYPE_LABEL = {
-  ec2: 'EC2',
-  vpc: 'VPC',
-  subnet: 'SUBNET',
-  rds: 'RDS',
-  s3: 'S3',
-  lambda: 'λ',
-  alb: 'ALB',
-  'security-group': 'SG',
-  igw: 'IGW',
-  acm: 'ACM',
-  cloudfront: 'CF',
-  apigw: 'APIGW',
-  'apigw-route': 'ROUTE',
-  sqs: 'SQS',
-  secret: 'SECRET',
-  'ecr-repo': 'ECR',
-  sns: 'SNS',
-  dynamo: 'DDB',
-  'ssm-param': 'SSM',
-  'nat-gateway': 'NAT',
-  'r53-zone': 'R53',
-  sfn: 'SFN',
-  'eventbridge-bus': 'EB',
-  ses: 'SES',
-  cognito: 'COGNITO',
-  kinesis: 'KDS',
-  ecs: 'ECS',
-  elasticache: 'REDIS',
-  eks: 'EKS',
-  opensearch: 'OS',
-  msk: 'MSK',
+  'aws:ec2': 'EC2',
+  'aws:vpc': 'VPC',
+  'aws:subnet': 'SUBNET',
+  'aws:rds': 'RDS',
+  'aws:s3': 'S3',
+  'aws:lambda': 'λ',
+  'aws:alb': 'ALB',
+  'aws:security-group': 'SG',
+  'aws:igw': 'IGW',
+  'aws:acm': 'ACM',
+  'aws:cloudfront': 'CF',
+  'aws:apigw': 'APIGW',
+  'aws:apigw-route': 'ROUTE',
+  'aws:sqs': 'SQS',
+  'aws:secret': 'SECRET',
+  'aws:ecr-repo': 'ECR',
+  'aws:sns': 'SNS',
+  'aws:dynamo': 'DDB',
+  'aws:ssm-param': 'SSM',
+  'aws:nat-gateway': 'NAT',
+  'aws:r53-zone': 'R53',
+  'aws:sfn': 'SFN',
+  'aws:eventbridge-bus': 'EB',
+  'aws:ses': 'SES',
+  'aws:cognito': 'COGNITO',
+  'aws:kinesis': 'KDS',
+  'aws:ecs': 'ECS',
+  'aws:elasticache': 'REDIS',
+  'aws:eks': 'EKS',
+  'aws:opensearch': 'OS',
+  'aws:msk': 'MSK',
   unknown: '?'
 } satisfies Record<NodeType, string>
 
@@ -74,37 +74,37 @@ interface ResourceNodeData {
 
 function getNodeMeta(nodeType: NodeType, m: Record<string, unknown>): string | undefined {
   switch (nodeType) {
-    case 'ec2':
+    case 'aws:ec2':
       return m.instanceType as string | undefined
-    case 'lambda':
+    case 'aws:lambda':
       return m.runtime as string | undefined
-    case 'rds':
+    case 'aws:rds':
       return m.engine as string | undefined
-    case 'eks':
+    case 'aws:eks':
       return m.version ? `k8s ${m.version as string}` : undefined
-    case 'elasticache':
+    case 'aws:elasticache':
       return (m.engine as string | undefined) ?? 'redis'
-    case 'ecs':
+    case 'aws:ecs':
       return m.launchType as string | undefined
-    case 'kinesis':
+    case 'aws:kinesis':
       return m.streamMode as string | undefined
-    case 'dynamo':
+    case 'aws:dynamo':
       return m.billingMode as string | undefined
-    case 'sqs':
+    case 'aws:sqs':
       return typeof m.messages === 'number' && m.messages > 0 ? `${m.messages} msg` : undefined
-    case 'alb':
+    case 'aws:alb':
       return m.type as string | undefined
-    case 'msk':
+    case 'aws:msk':
       return (m.instanceType as string | undefined) ?? (m.clusterType as string | undefined)
-    case 'opensearch':
+    case 'aws:opensearch':
       return m.engineVersion as string | undefined
-    case 'ssm-param':
+    case 'aws:ssm-param':
       return m.type as string | undefined
-    case 'sfn':
+    case 'aws:sfn':
       return m.type as string | undefined
-    case 'eventbridge-bus':
+    case 'aws:eventbridge-bus':
       return typeof m.ruleCount === 'number' && m.ruleCount > 0 ? `${m.ruleCount} rules` : undefined
-    case 'apigw':
+    case 'aws:apigw':
       return m.protocolType as string | undefined
     default:
       return undefined
@@ -145,8 +145,8 @@ export function ResourceNode({ id, data, selected, dragging }: NodeProps): React
 
     const resourceId: string = (() => {
       const m = d.metadata ?? {}
-      if (d.nodeType === 'lambda') return (m.functionName as string | undefined) ?? d.label
-      if (d.nodeType === 'rds') return (m.dbInstanceId as string | undefined) ?? d.label
+      if (d.nodeType === 'aws:lambda') return (m.functionName as string | undefined) ?? d.label
+      if (d.nodeType === 'aws:rds') return (m.dbInstanceId as string | undefined) ?? d.label
       // ecs
       return (
         ((m.clusterName as string | undefined) ?? '') +

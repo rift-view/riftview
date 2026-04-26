@@ -27,23 +27,23 @@ interface EditModalProps {
 }
 
 const RESOURCE_LABELS: Record<string, string> = {
-  vpc: 'VPC',
-  ec2: 'EC2 Instance',
-  'security-group': 'Security Group',
-  rds: 'RDS Instance',
-  s3: 'S3 Bucket',
-  lambda: 'Lambda Function',
-  alb: 'Load Balancer',
-  cloudfront: 'CloudFront Distribution',
-  apigw: 'API Gateway',
-  'eventbridge-bus': 'EventBridge Bus',
-  sqs: 'SQS Queue',
-  sns: 'SNS Topic',
-  'ecr-repo': 'ECR Repository',
-  secret: 'Secret',
-  dynamo: 'DynamoDB Table',
-  'ssm-param': 'SSM Parameter',
-  sfn: 'Step Functions State Machine'
+  'aws:vpc': 'VPC',
+  'aws:ec2': 'EC2 Instance',
+  'aws:security-group': 'Security Group',
+  'aws:rds': 'RDS Instance',
+  'aws:s3': 'S3 Bucket',
+  'aws:lambda': 'Lambda Function',
+  'aws:alb': 'Load Balancer',
+  'aws:cloudfront': 'CloudFront Distribution',
+  'aws:apigw': 'API Gateway',
+  'aws:eventbridge-bus': 'EventBridge Bus',
+  'aws:sqs': 'SQS Queue',
+  'aws:sns': 'SNS Topic',
+  'aws:ecr-repo': 'ECR Repository',
+  'aws:secret': 'Secret',
+  'aws:dynamo': 'DynamoDB Table',
+  'aws:ssm-param': 'SSM Parameter',
+  'aws:sfn': 'Step Functions State Machine'
 }
 
 export default function EditModal({ node, onClose }: EditModalProps): React.JSX.Element | null {
@@ -61,7 +61,7 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
 
   if (!node) return null
   // ACM certificates have no editable fields via the AWS CLI
-  if (node.type === 'acm') return null
+  if (node.type === 'aws:acm') return null
 
   const handleChange = (params: EditParams): void => {
     paramsRef.current = params
@@ -142,29 +142,31 @@ export default function EditModal({ node, onClose }: EditModalProps): React.JSX.
           </button>
         </div>
         <div className="modal-body">
-          {node.type === 'vpc' && (
+          {node.type === 'aws:vpc' && (
             <VpcEditForm node={node} onChange={handleChange} showErrors={showErrors} />
           )}
-          {node.type === 'ec2' && <Ec2EditForm node={node} onChange={handleChange} />}
-          {node.type === 'security-group' && <SgEditForm node={node} onChange={handleChange} />}
-          {node.type === 'rds' && <RdsEditForm node={node} onChange={handleChange} />}
-          {node.type === 's3' && <S3EditForm node={node} onChange={handleChange} />}
-          {node.type === 'lambda' && <LambdaEditForm node={node} onChange={handleChange} />}
-          {node.type === 'alb' && (
+          {node.type === 'aws:ec2' && <Ec2EditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:security-group' && <SgEditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:rds' && <RdsEditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:s3' && <S3EditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:lambda' && <LambdaEditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:alb' && (
             <AlbEditForm node={node} onChange={handleChange} showErrors={showErrors} />
           )}
-          {node.type === 'cloudfront' && <CloudFrontEditForm node={node} onChange={handleChange} />}
-          {node.type === 'apigw' && <ApigwEditForm node={node} onChange={handleChange} />}
-          {node.type === 'eventbridge-bus' && (
+          {node.type === 'aws:cloudfront' && (
+            <CloudFrontEditForm node={node} onChange={handleChange} />
+          )}
+          {node.type === 'aws:apigw' && <ApigwEditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:eventbridge-bus' && (
             <EventBridgeEditForm node={node} onChange={handleChange} />
           )}
-          {node.type === 'sqs' && <SqsEditForm node={node} onChange={handleChange} />}
-          {node.type === 'sns' && <SnsEditForm node={node} onChange={handleChange} />}
-          {node.type === 'ecr-repo' && <EcrEditForm node={node} onChange={handleChange} />}
-          {node.type === 'secret' && <SecretEditForm node={node} onChange={handleChange} />}
-          {node.type === 'dynamo' && <DynamoEditForm node={node} onChange={handleChange} />}
-          {node.type === 'ssm-param' && <SsmEditForm node={node} onChange={handleChange} />}
-          {node.type === 'sfn' && <SfnEditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:sqs' && <SqsEditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:sns' && <SnsEditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:ecr-repo' && <EcrEditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:secret' && <SecretEditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:dynamo' && <DynamoEditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:ssm-param' && <SsmEditForm node={node} onChange={handleChange} />}
+          {node.type === 'aws:sfn' && <SfnEditForm node={node} onChange={handleChange} />}
         </div>
         <div className="modal-foot">
           <button disabled={isRunning} onClick={onClose} className="btn btn-sm btn-ghost">

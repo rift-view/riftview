@@ -40,7 +40,7 @@ describe('listMskClusters', () => {
     const nodes = await listMskClusters(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
-    expect(nodes[0].type).toBe('msk')
+    expect(nodes[0].type).toBe('aws:msk')
     expect(nodes[0].id).toBe(CLUSTER_ARN)
     expect(nodes[0].label).toBe('my-cluster')
     expect(nodes[0].status).toBe('running')

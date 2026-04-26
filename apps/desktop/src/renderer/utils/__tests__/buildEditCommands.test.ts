@@ -13,23 +13,23 @@ function node(
 
 describe('buildEditCommands — VPC', () => {
   it('emits create-tags for name change', () => {
-    expect(buildEditCommands(node('vpc', 'vpc-123'), { resource: 'vpc', name: 'my-vpc' })).toEqual([
-      ['ec2', 'create-tags', '--resources', 'vpc-123', '--tags', 'Key=Name,Value=my-vpc']
-    ])
+    expect(
+      buildEditCommands(node('aws:vpc', 'vpc-123'), { resource: 'vpc', name: 'my-vpc' })
+    ).toEqual([['ec2', 'create-tags', '--resources', 'vpc-123', '--tags', 'Key=Name,Value=my-vpc']])
   })
 })
 
 describe('buildEditCommands — EC2', () => {
   it('name tag only', () => {
     expect(
-      buildEditCommands(node('ec2', 'i-123'), { resource: 'ec2', name: 'web-server' })
+      buildEditCommands(node('aws:ec2', 'i-123'), { resource: 'ec2', name: 'web-server' })
     ).toEqual([
       ['ec2', 'create-tags', '--resources', 'i-123', '--tags', 'Key=Name,Value=web-server']
     ])
   })
 
   it('instance type change on running instance: stop + modify + start', () => {
-    const cmds = buildEditCommands(node('ec2', 'i-123', 'running'), {
+    const cmds = buildEditCommands(node('aws:ec2', 'i-123', 'running'), {
       resource: 'ec2',
       instanceType: 't3.large'
     })
@@ -48,7 +48,7 @@ describe('buildEditCommands — EC2', () => {
   })
 
   it('instance type change on stopped instance: modify only, no start', () => {
-    const cmds = buildEditCommands(node('ec2', 'i-123', 'stopped'), {
+    const cmds = buildEditCommands(node('aws:ec2', 'i-123', 'stopped'), {
       resource: 'ec2',
       instanceType: 't3.large'
     })
@@ -73,7 +73,7 @@ describe('buildEditCommands — SG (rule diffing)', () => {
 
   it('authorizes new rules', () => {
     const cmds = buildEditCommands(
-      node('security-group', 'sg-abc', 'running', { rules: existingRules }),
+      node('aws:security-group', 'sg-abc', 'running', { rules: existingRules }),
       {
         resource: 'sg',
         rules: [...existingRules, { protocol: 'tcp', fromPort: 80, toPort: 80, cidr: '0.0.0.0/0' }]
@@ -94,7 +94,7 @@ describe('buildEditCommands — SG (rule diffing)', () => {
   it('revokes removed rules before authorizing new ones', () => {
     const newRules = [existingRules[0]] // only keep the 443 rule
     const cmds = buildEditCommands(
-      node('security-group', 'sg-abc', 'running', { rules: existingRules }),
+      node('aws:security-group', 'sg-abc', 'running', { rules: existingRules }),
       { resource: 'sg', rules: newRules }
     )
     expect(cmds).toEqual([
@@ -111,7 +111,7 @@ describe('buildEditCommands — SG (rule diffing)', () => {
 
   it('returns empty array when rules unchanged', () => {
     expect(
-      buildEditCommands(node('security-group', 'sg-abc', 'running', { rules: existingRules }), {
+      buildEditCommands(node('aws:security-group', 'sg-abc', 'running', { rules: existingRules }), {
         resource: 'sg',
         rules: existingRules
       })
@@ -121,7 +121,7 @@ describe('buildEditCommands — SG (rule diffing)', () => {
 
 describe('buildEditCommands — RDS', () => {
   it('modifies instance class', () => {
-    const cmds = buildEditCommands(node('rds', 'mydb'), {
+    const cmds = buildEditCommands(node('aws:rds', 'mydb'), {
       resource: 'rds',
       dbInstanceClass: 'db.t3.small'
     })
@@ -137,7 +137,7 @@ describe('buildEditCommands — RDS', () => {
   })
 
   it('enables deletion protection', () => {
-    const cmds = buildEditCommands(node('rds', 'mydb'), {
+    const cmds = buildEditCommands(node('aws:rds', 'mydb'), {
       resource: 'rds',
       deletionProtection: true
     })
@@ -146,7 +146,7 @@ describe('buildEditCommands — RDS', () => {
   })
 
   it('disables deletion protection', () => {
-    const cmds = buildEditCommands(node('rds', 'mydb'), {
+    const cmds = buildEditCommands(node('aws:rds', 'mydb'), {
       resource: 'rds',
       deletionProtection: false
     })
@@ -157,7 +157,7 @@ describe('buildEditCommands — RDS', () => {
 describe('buildEditCommands — S3', () => {
   it('enables versioning', () => {
     expect(
-      buildEditCommands(node('s3', 'my-bucket'), { resource: 's3', versioning: true })
+      buildEditCommands(node('aws:s3', 'my-bucket'), { resource: 's3', versioning: true })
     ).toEqual([
       [
         's3api',
@@ -171,7 +171,7 @@ describe('buildEditCommands — S3', () => {
   })
   it('suspends versioning', () => {
     expect(
-      buildEditCommands(node('s3', 'my-bucket'), { resource: 's3', versioning: false })
+      buildEditCommands(node('aws:s3', 'my-bucket'), { resource: 's3', versioning: false })
     ).toEqual([
       [
         's3api',
@@ -184,7 +184,7 @@ describe('buildEditCommands — S3', () => {
     ])
   })
   it('sets public access block', () => {
-    const cmds = buildEditCommands(node('s3', 'my-bucket'), {
+    const cmds = buildEditCommands(node('aws:s3', 'my-bucket'), {
       resource: 's3',
       blockPublicAccess: true
     })
@@ -195,7 +195,7 @@ describe('buildEditCommands — S3', () => {
 
 describe('buildEditCommands — Lambda', () => {
   it('updates memory and timeout', () => {
-    const cmds = buildEditCommands(node('lambda', 'my-fn'), {
+    const cmds = buildEditCommands(node('aws:lambda', 'my-fn'), {
       resource: 'lambda',
       memorySize: 256,
       timeout: 10
@@ -212,7 +212,7 @@ describe('buildEditCommands — Lambda', () => {
     ])
   })
   it('updates environment variables', () => {
-    const cmds = buildEditCommands(node('lambda', 'my-fn'), {
+    const cmds = buildEditCommands(node('aws:lambda', 'my-fn'), {
       resource: 'lambda',
       environment: { KEY: 'value' }
     })
@@ -223,7 +223,7 @@ describe('buildEditCommands — Lambda', () => {
 describe('buildEditCommands — ALB', () => {
   it('adds name tag', () => {
     expect(
-      buildEditCommands(node('alb', 'arn:aws:alb'), { resource: 'alb', name: 'my-alb' })
+      buildEditCommands(node('aws:alb', 'arn:aws:alb'), { resource: 'alb', name: 'my-alb' })
     ).toEqual([
       ['elbv2', 'add-tags', '--resource-arns', 'arn:aws:alb', '--tags', 'Key=Name,Value=my-alb']
     ])
@@ -233,7 +233,7 @@ describe('buildEditCommands — ALB', () => {
 describe('buildEditCommands — SQS', () => {
   it('emits set-queue-attributes with visibility timeout and retention period', () => {
     expect(
-      buildEditCommands(node('sqs', 'https://sqs.us-east-1.amazonaws.com/123/my-queue'), {
+      buildEditCommands(node('aws:sqs', 'https://sqs.us-east-1.amazonaws.com/123/my-queue'), {
         resource: 'sqs',
         queueUrl: 'https://sqs.us-east-1.amazonaws.com/123/my-queue',
         visibilityTimeout: 60,
@@ -255,7 +255,7 @@ describe('buildEditCommands — SQS', () => {
 describe('buildEditCommands — SNS', () => {
   it('emits set-topic-attributes with DisplayName', () => {
     expect(
-      buildEditCommands(node('sns', 'arn:aws:sns:us-east-1:123:my-topic'), {
+      buildEditCommands(node('aws:sns', 'arn:aws:sns:us-east-1:123:my-topic'), {
         resource: 'sns',
         topicArn: 'arn:aws:sns:us-east-1:123:my-topic',
         displayName: 'MySender'
@@ -275,7 +275,7 @@ describe('buildEditCommands — SNS', () => {
   })
 
   it('allows empty display name', () => {
-    const cmds = buildEditCommands(node('sns', 'arn:aws:sns:us-east-1:123:my-topic'), {
+    const cmds = buildEditCommands(node('aws:sns', 'arn:aws:sns:us-east-1:123:my-topic'), {
       resource: 'sns',
       topicArn: 'arn:aws:sns:us-east-1:123:my-topic',
       displayName: ''
@@ -296,7 +296,7 @@ describe('buildEditCommands — SNS', () => {
 describe('buildEditCommands — ECR', () => {
   it('emits two commands: put-image-tag-mutability and put-image-scanning-configuration', () => {
     const cmds = buildEditCommands(
-      node('ecr-repo', 'arn:aws:ecr:us-east-1:123:repository/my-repo'),
+      node('aws:ecr-repo', 'arn:aws:ecr:us-east-1:123:repository/my-repo'),
       {
         resource: 'ecr-repo',
         repositoryName: 'my-repo',
@@ -325,7 +325,7 @@ describe('buildEditCommands — ECR', () => {
 
   it('emits MUTABLE and scanOnPush=false', () => {
     const cmds = buildEditCommands(
-      node('ecr-repo', 'arn:aws:ecr:us-east-1:123:repository/my-repo'),
+      node('aws:ecr-repo', 'arn:aws:ecr:us-east-1:123:repository/my-repo'),
       {
         resource: 'ecr-repo',
         repositoryName: 'my-repo',
@@ -341,11 +341,14 @@ describe('buildEditCommands — ECR', () => {
 describe('buildEditCommands — Secret', () => {
   it('emits update-secret with description', () => {
     expect(
-      buildEditCommands(node('secret', 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret'), {
-        resource: 'secret',
-        secretId: 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret',
-        description: 'My secret'
-      })
+      buildEditCommands(
+        node('aws:secret', 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret'),
+        {
+          resource: 'secret',
+          secretId: 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret',
+          description: 'My secret'
+        }
+      )
     ).toEqual([
       [
         'secretsmanager',
@@ -360,7 +363,7 @@ describe('buildEditCommands — Secret', () => {
 
   it('allows empty description', () => {
     const cmds = buildEditCommands(
-      node('secret', 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret'),
+      node('aws:secret', 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret'),
       {
         resource: 'secret',
         secretId: 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret',
@@ -381,7 +384,7 @@ describe('buildEditCommands — Secret', () => {
 describe('buildEditCommands — EventBridge', () => {
   it('emits update-event-bus with bus name and description', () => {
     const n = {
-      ...node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus'),
+      ...node('aws:eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus'),
       label: 'my-bus'
     }
     expect(
@@ -395,7 +398,7 @@ describe('buildEditCommands — EventBridge', () => {
 
   it('emits empty description when not provided', () => {
     const n = {
-      ...node('eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus'),
+      ...node('aws:eventbridge-bus', 'arn:aws:events:us-east-1:123:event-bus/my-bus'),
       label: 'my-bus'
     }
     const cmds = buildEditCommands(n, {
@@ -410,7 +413,7 @@ describe('buildEditCommands — EventBridge', () => {
 describe('buildEditCommands — DynamoDB', () => {
   it('emits update-table with PAY_PER_REQUEST billing mode (no throughput args)', () => {
     expect(
-      buildEditCommands(node('dynamo', 'my-table'), {
+      buildEditCommands(node('aws:dynamo', 'my-table'), {
         resource: 'dynamo',
         tableName: 'my-table',
         billingMode: 'PAY_PER_REQUEST'
@@ -422,7 +425,7 @@ describe('buildEditCommands — DynamoDB', () => {
 
   it('emits update-table with PROVISIONED billing mode and provisioned-throughput args', () => {
     expect(
-      buildEditCommands(node('dynamo', 'my-table'), {
+      buildEditCommands(node('aws:dynamo', 'my-table'), {
         resource: 'dynamo',
         tableName: 'my-table',
         billingMode: 'PROVISIONED',
@@ -447,7 +450,7 @@ describe('buildEditCommands — DynamoDB', () => {
 describe('buildEditCommands — SSM Parameter', () => {
   it('emits put-parameter for a String param', () => {
     const n = {
-      ...node('ssm-param', 'arn:aws:ssm:us-east-1:123:parameter/my/key'),
+      ...node('aws:ssm-param', 'arn:aws:ssm:us-east-1:123:parameter/my/key'),
       label: '/my/key'
     }
     expect(
@@ -477,7 +480,7 @@ describe('buildEditCommands — SSM Parameter', () => {
 
   it('emits put-parameter for a SecureString param (caller supplies new value)', () => {
     const n = {
-      ...node('ssm-param', 'arn:aws:ssm:us-east-1:123:parameter/my/secret'),
+      ...node('aws:ssm-param', 'arn:aws:ssm:us-east-1:123:parameter/my/secret'),
       label: '/my/secret'
     }
     const cmds = buildEditCommands(n, {
@@ -495,7 +498,7 @@ describe('buildEditCommands — SSM Parameter', () => {
 })
 
 describe('buildEditCommands — SFN', () => {
-  const sfnNode = node('sfn', 'arn:aws:states:us-east-1:123456789012:stateMachine:my-sfn')
+  const sfnNode = node('aws:sfn', 'arn:aws:states:us-east-1:123456789012:stateMachine:my-sfn')
 
   it('updates definition only', () => {
     const def = JSON.stringify({ StartAt: 'A', States: { A: { Type: 'Pass', End: true } } })

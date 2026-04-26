@@ -41,7 +41,7 @@ describe('listEcsServices', () => {
     const nodes = await listEcsServices(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
-    expect(nodes[0].type).toBe('ecs')
+    expect(nodes[0].type).toBe('aws:ecs')
     expect(nodes[0].id).toBe(SERVICE_ARN)
     expect(nodes[0].label).toBe('my-svc')
     expect(nodes[0].status).toBe('running')

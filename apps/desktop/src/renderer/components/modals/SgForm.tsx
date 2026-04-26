@@ -13,7 +13,7 @@ const BLANK_RULE: Rule = { protocol: 'tcp', fromPort: 443, toPort: 443, cidr: '0
 
 export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
-  const vpcs = nodes.filter((n) => n.type === 'vpc')
+  const vpcs = nodes.filter((n) => n.type === 'aws:vpc')
 
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')

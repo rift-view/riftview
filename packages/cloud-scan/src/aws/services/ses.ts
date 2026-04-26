@@ -10,7 +10,7 @@ export async function listIdentities(client: SESClient, region: string): Promise
       for (const identity of res.Identities ?? []) {
         nodes.push({
           id: identity,
-          type: 'ses',
+          type: 'aws:ses',
           label: identity,
           status: 'running',
           region,

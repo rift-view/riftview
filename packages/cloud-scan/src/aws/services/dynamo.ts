@@ -30,7 +30,7 @@ export async function listTables(
       const table = descRes?.Table
       const baseNode: CloudNode = {
         id: name,
-        type: 'dynamo',
+        type: 'aws:dynamo',
         label: name,
         status: 'running',
         region,

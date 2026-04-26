@@ -35,7 +35,7 @@ function makeNode(id: string, type: NodeType, label = id, region = 'us-east-1'):
 
 beforeEach(() => {
   useCloudStore.setState({
-    nodes: [makeNode('i-1', 'ec2', 'one')],
+    nodes: [makeNode('i-1', 'aws:ec2', 'one')],
     scanStatus: 'idle',
     previousCounts: {},
     scanErrors: [],
@@ -119,8 +119,8 @@ describe('Sidebar redesign — service row (side-item)', () => {
 
   it('active service row additionally has side-item--active and data-active="true"', () => {
     useUIStore.setState({
-      activeFilterTypes: new Set<NodeType>(['ec2']),
-      activeSidebarType: 'ec2'
+      activeFilterTypes: new Set<NodeType>(['aws:ec2']),
+      activeSidebarType: 'aws:ec2'
     })
     render(<Sidebar />)
     const ec2Row = findServiceRow('EC2')
@@ -131,8 +131,8 @@ describe('Sidebar redesign — service row (side-item)', () => {
 
   it('non-active service rows do NOT have data-active="true"', () => {
     useUIStore.setState({
-      activeFilterTypes: new Set<NodeType>(['ec2']),
-      activeSidebarType: 'ec2'
+      activeFilterTypes: new Set<NodeType>(['aws:ec2']),
+      activeSidebarType: 'aws:ec2'
     })
     render(<Sidebar />)
     const lambdaRow = findServiceRow('Lambda')
@@ -146,9 +146,9 @@ describe('Sidebar redesign — count badge (side-count)', () => {
   it('count badge element is a child of the service row with class "side-count"', () => {
     useCloudStore.setState({
       nodes: [
-        makeNode('i-1', 'ec2', 'one'),
-        makeNode('i-2', 'ec2', 'two'),
-        makeNode('i-3', 'ec2', 'three')
+        makeNode('i-1', 'aws:ec2', 'one'),
+        makeNode('i-2', 'aws:ec2', 'two'),
+        makeNode('i-3', 'aws:ec2', 'three')
       ]
     })
     render(<Sidebar />)
@@ -204,8 +204,8 @@ describe('Sidebar redesign — SSM group row', () => {
     // Two ssm-param nodes sharing the /app prefix → one collapsible group.
     useCloudStore.setState({
       nodes: [
-        makeNode('p1', 'ssm-param', '/app/db/host'),
-        makeNode('p2', 'ssm-param', '/app/db/port')
+        makeNode('p1', 'aws:ssm-param', '/app/db/host'),
+        makeNode('p2', 'aws:ssm-param', '/app/db/port')
       ]
     })
     render(<Sidebar />)

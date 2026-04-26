@@ -68,7 +68,7 @@ import type { CloudNode } from '@riftview/shared'
 
 function n(
   id: string,
-  type: CloudNode['type'] = 'lambda',
+  type: CloudNode['type'] = 'aws:lambda',
   integrations?: { targetId: string; edgeType: 'trigger' | 'origin' | 'subscription' }[]
 ): CloudNode {
   return {
@@ -95,10 +95,10 @@ describe('CommandView blast radius integration', () => {
     setViewportSpy.mockClear()
     useCloudStore.setState({
       nodes: [
-        n('A', 'lambda', [{ targetId: 'B', edgeType: 'trigger' }]),
-        n('B', 'rds', [{ targetId: 'D', edgeType: 'trigger' }]),
-        n('C', 'ec2', [{ targetId: 'D', edgeType: 'trigger' }]), // unrelated chain C→D
-        n('D', 'sqs')
+        n('A', 'aws:lambda', [{ targetId: 'B', edgeType: 'trigger' }]),
+        n('B', 'aws:rds', [{ targetId: 'D', edgeType: 'trigger' }]),
+        n('C', 'aws:ec2', [{ targetId: 'D', edgeType: 'trigger' }]), // unrelated chain C→D
+        n('D', 'aws:sqs')
       ]
     })
     useUIStore.setState({

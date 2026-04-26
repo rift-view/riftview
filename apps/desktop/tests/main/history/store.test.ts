@@ -121,7 +121,7 @@ describe('history/store', () => {
       nodes: [
         {
           id: 'n1',
-          type: 'ec2',
+          type: 'aws:ec2',
           label: 'n1',
           status: 'running',
           region: 'us-east-1',

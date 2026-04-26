@@ -12,9 +12,9 @@ import type { PluginScanResult, RiftViewPlugin, ScanContext } from './types'
 export const vercelPluginStub: RiftViewPlugin = {
   id: 'com.riftview.vercel',
   displayName: 'Vercel',
-  nodeTypes: ['vercel-project', 'vercel-deployment', 'vercel-domain'],
+  nodeTypes: ['vercel:project', 'vercel:deployment', 'vercel:domain'],
   nodeTypeMetadata: {
-    'vercel-project': {
+    'vercel:project': {
       label: 'PRJ',
       borderColor: '#000000',
       badgeColor: '#000000',
@@ -22,7 +22,7 @@ export const vercelPluginStub: RiftViewPlugin = {
       displayName: 'Vercel Project',
       hasCreate: false
     },
-    'vercel-deployment': {
+    'vercel:deployment': {
       label: 'DEP',
       borderColor: '#000000',
       badgeColor: '#000000',
@@ -30,7 +30,7 @@ export const vercelPluginStub: RiftViewPlugin = {
       displayName: 'Vercel Deployment',
       hasCreate: false
     },
-    'vercel-domain': {
+    'vercel:domain': {
       label: 'DOM',
       borderColor: '#000000',
       badgeColor: '#000000',

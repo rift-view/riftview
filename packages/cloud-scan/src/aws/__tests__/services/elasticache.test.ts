@@ -34,7 +34,7 @@ describe('listCacheClusters', () => {
       const nodes = await listCacheClusters(mockClient, 'us-east-1')
 
       expect(nodes).toHaveLength(1)
-      expect(nodes[0].type).toBe('elasticache')
+      expect(nodes[0].type).toBe('aws:elasticache')
       expect(nodes[0].id).toBe('my-redis')
       expect(nodes[0].label).toBe('My Redis Cache')
       expect(nodes[0].status).toBe('running')
@@ -130,7 +130,7 @@ describe('listCacheClusters', () => {
       const nodes = await listCacheClusters(mockClient, 'us-east-1')
 
       expect(nodes).toHaveLength(1)
-      expect(nodes[0].type).toBe('elasticache')
+      expect(nodes[0].type).toBe('aws:elasticache')
       expect(nodes[0].id).toBe('my-memcached')
       expect(nodes[0].metadata.engine).toBe('memcached')
       expect(nodes[0].metadata.nodeType).toBe('cache.m6g.large')

@@ -8,7 +8,7 @@ import type { IamAnalysisResult } from '../../../src/renderer/types/iam'
 
 const EC2_NODE: CloudNode = {
   id: 'i-001',
-  type: 'ec2',
+  type: 'aws:ec2',
   label: 'web-server',
   status: 'running',
   region: 'us-east-1',
@@ -154,7 +154,7 @@ describe('IamAdvisor', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /analyze/i }))
     })
-    expect(analyzeIamMock).toHaveBeenCalledWith('i-001', 'ec2', {
+    expect(analyzeIamMock).toHaveBeenCalledWith('i-001', 'aws:ec2', {
       role: 'arn:aws:iam::123:role/MyRole'
     })
   })

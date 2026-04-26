@@ -70,14 +70,14 @@ export default function DeleteDialog({
             />
           </div>
 
-          {node.type === 's3' && (
+          {node.type === 'aws:s3' && (
             <label className="form-checkbox" style={{ marginBottom: 8 }}>
               <input type="checkbox" checked={force} onChange={(e) => setForce(e.target.checked)} />
               Force delete (removes all objects)
             </label>
           )}
 
-          {node.type === 'rds' && (
+          {node.type === 'aws:rds' && (
             <label className="form-checkbox" style={{ marginBottom: 8 }}>
               <input
                 type="checkbox"
@@ -88,7 +88,7 @@ export default function DeleteDialog({
             </label>
           )}
 
-          {node.type === 'rds' && node.metadata?.deletionProtection === true && (
+          {node.type === 'aws:rds' && node.metadata?.deletionProtection === true && (
             <label className="form-checkbox" style={{ marginBottom: 8 }}>
               <input
                 type="checkbox"

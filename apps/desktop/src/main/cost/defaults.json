@@ -3,36 +3,36 @@
   "generatedAt": "2026-04-20T00:00:00Z",
   "source": "bundled",
   "rates": {
-    "ec2": {
+    "aws:ec2": {
       "us-east-1": { "shapeMonthlyUsd": 7.5, "confidence": "estimate" },
       "us-west-2": { "shapeMonthlyUsd": 7.8, "confidence": "estimate" },
       "eu-west-1": { "shapeMonthlyUsd": 8.6, "confidence": "estimate" }
     },
-    "rds": {
+    "aws:rds": {
       "us-east-1": { "shapeMonthlyUsd": 17.4, "confidence": "estimate" },
       "us-west-2": { "shapeMonthlyUsd": 18.0, "confidence": "estimate" },
       "eu-west-1": { "shapeMonthlyUsd": 19.7, "confidence": "estimate" }
     },
-    "alb": {
+    "aws:alb": {
       "us-east-1": { "shapeMonthlyUsd": 18.0, "confidence": "estimate" },
       "us-west-2": { "shapeMonthlyUsd": 18.0, "confidence": "estimate" },
       "eu-west-1": { "shapeMonthlyUsd": 20.5, "confidence": "estimate" }
     },
-    "nat-gateway": {
+    "aws:nat-gateway": {
       "us-east-1": { "shapeMonthlyUsd": 32.85, "confidence": "estimate" },
       "us-west-2": { "shapeMonthlyUsd": 32.85, "confidence": "estimate" },
       "eu-west-1": { "shapeMonthlyUsd": 37.44, "confidence": "estimate" }
     },
-    "cloudfront": {
+    "aws:cloudfront": {
       "us-east-1": { "shapeMonthlyUsd": 0, "confidence": "unknown" }
     },
-    "elasticache": {
+    "aws:elasticache": {
       "us-east-1": { "shapeMonthlyUsd": 12.5, "confidence": "estimate" }
     },
-    "eks": {
+    "aws:eks": {
       "us-east-1": { "shapeMonthlyUsd": 73.0, "confidence": "estimate" }
     },
-    "opensearch": {
+    "aws:opensearch": {
       "us-east-1": { "shapeMonthlyUsd": 24.0, "confidence": "estimate" }
     }
   }

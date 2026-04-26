@@ -7,7 +7,7 @@ describe('computeDelta', () => {
     const nodes: CloudNode[] = [
       {
         id: 'a',
-        type: 'ec2',
+        type: 'aws:ec2',
         label: 'A',
         status: 'running',
         region: 'us-east-1',
@@ -23,7 +23,7 @@ describe('computeDelta', () => {
   it('detects added nodes', () => {
     const prev: CloudNode[] = []
     const next: CloudNode[] = [
-      { id: 'a', type: 'ec2', label: 'A', status: 'running', region: 'us-east-1', metadata: {} }
+      { id: 'a', type: 'aws:ec2', label: 'A', status: 'running', region: 'us-east-1', metadata: {} }
     ]
     const delta = computeDelta(prev, next)
     expect(delta.added).toHaveLength(1)
@@ -32,7 +32,7 @@ describe('computeDelta', () => {
 
   it('detects removed nodes', () => {
     const prev: CloudNode[] = [
-      { id: 'a', type: 'ec2', label: 'A', status: 'running', region: 'us-east-1', metadata: {} }
+      { id: 'a', type: 'aws:ec2', label: 'A', status: 'running', region: 'us-east-1', metadata: {} }
     ]
     const next: CloudNode[] = []
     const delta = computeDelta(prev, next)
@@ -42,10 +42,10 @@ describe('computeDelta', () => {
 
   it('detects status changes', () => {
     const prev: CloudNode[] = [
-      { id: 'a', type: 'ec2', label: 'A', status: 'running', region: 'us-east-1', metadata: {} }
+      { id: 'a', type: 'aws:ec2', label: 'A', status: 'running', region: 'us-east-1', metadata: {} }
     ]
     const next: CloudNode[] = [
-      { id: 'a', type: 'ec2', label: 'A', status: 'stopped', region: 'us-east-1', metadata: {} }
+      { id: 'a', type: 'aws:ec2', label: 'A', status: 'stopped', region: 'us-east-1', metadata: {} }
     ]
     const delta = computeDelta(prev, next)
     expect(delta.changed).toHaveLength(1)
@@ -55,7 +55,7 @@ describe('computeDelta', () => {
     const prev: CloudNode[] = [
       {
         id: 'a',
-        type: 'ec2',
+        type: 'aws:ec2',
         label: 'A',
         status: 'running',
         region: 'us-east-1',
@@ -65,7 +65,7 @@ describe('computeDelta', () => {
     const next: CloudNode[] = [
       {
         id: 'a',
-        type: 'ec2',
+        type: 'aws:ec2',
         label: 'A',
         status: 'running',
         region: 'us-east-1',

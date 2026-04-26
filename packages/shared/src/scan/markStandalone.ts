@@ -10,9 +10,18 @@ import type { CloudNode } from '@riftview/shared'
  *   - no other node's `integrations[].targetId` references it
  *
  * Container types (vpc, subnet, security-group, region-zone) are never
- * marked standalone — they are structural, not operational.
+ * marked standalone — they are structural, not operational. Note: the
+ * `region-zone` and `global-zone` entries are renderer-side pseudo-types
+ * that some scanners synthesise; they remain un-namespaced because they
+ * are not part of any plugin's NodeType union.
  */
-const CONTAINER_TYPES = new Set(['vpc', 'subnet', 'security-group', 'region-zone', 'global-zone'])
+const CONTAINER_TYPES = new Set([
+  'aws:vpc',
+  'aws:subnet',
+  'aws:security-group',
+  'region-zone',
+  'global-zone'
+])
 
 export function markStandaloneNodes(nodes: CloudNode[]): CloudNode[] {
   const referencedIds = new Set<string>()
