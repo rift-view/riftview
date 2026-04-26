@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { expectNodeTypeMetadataAlignment } from './helpers'
 
 vi.mock('electron', () => ({ BrowserWindow: vi.fn() }))
 
@@ -178,16 +179,7 @@ describe('awsPlugin', () => {
   })
 
   it('nodeTypeMetadata has an entry for every nodeType', () => {
-    for (const t of awsPlugin.nodeTypes as string[]) {
-      const meta = awsPlugin.nodeTypeMetadata[t]
-      expect(meta, `missing metadata for ${t}`).toBeDefined()
-      expect(typeof meta.label).toBe('string')
-      expect(typeof meta.borderColor).toBe('string')
-      expect(typeof meta.badgeColor).toBe('string')
-      expect(typeof meta.shortLabel).toBe('string')
-      expect(typeof meta.displayName).toBe('string')
-      expect(typeof meta.hasCreate).toBe('boolean')
-    }
+    expectNodeTypeMetadataAlignment(awsPlugin)
   })
 
   it('createCredentials calls createClients and returns clients', async () => {
