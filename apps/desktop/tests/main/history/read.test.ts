@@ -21,7 +21,7 @@ function node(
 ): CloudNode {
   return {
     id,
-    type: opts.type ?? 'ec2',
+    type: opts.type ?? 'aws:ec2',
     label: id,
     status: opts.status ?? 'running',
     region: opts.region ?? 'us-east-1',
@@ -213,37 +213,37 @@ describe('history/read', () => {
 
   describe('round-trip — write → read → deepEqual up to redactions', () => {
     const ALL_NODE_TYPES: NodeType[] = [
-      'ec2',
-      'vpc',
-      'subnet',
-      'rds',
-      's3',
-      'lambda',
-      'alb',
-      'security-group',
-      'igw',
-      'acm',
-      'cloudfront',
-      'apigw',
-      'apigw-route',
-      'sqs',
-      'secret',
-      'ecr-repo',
-      'sns',
-      'dynamo',
-      'ssm-param',
-      'nat-gateway',
-      'r53-zone',
-      'sfn',
-      'eventbridge-bus',
-      'ses',
-      'cognito',
-      'kinesis',
-      'ecs',
-      'elasticache',
-      'eks',
-      'opensearch',
-      'msk',
+      'aws:ec2',
+      'aws:vpc',
+      'aws:subnet',
+      'aws:rds',
+      'aws:s3',
+      'aws:lambda',
+      'aws:alb',
+      'aws:security-group',
+      'aws:igw',
+      'aws:acm',
+      'aws:cloudfront',
+      'aws:apigw',
+      'aws:apigw-route',
+      'aws:sqs',
+      'aws:secret',
+      'aws:ecr-repo',
+      'aws:sns',
+      'aws:dynamo',
+      'aws:ssm-param',
+      'aws:nat-gateway',
+      'aws:r53-zone',
+      'aws:sfn',
+      'aws:eventbridge-bus',
+      'aws:ses',
+      'aws:cognito',
+      'aws:kinesis',
+      'aws:ecs',
+      'aws:elasticache',
+      'aws:eks',
+      'aws:opensearch',
+      'aws:msk',
       'unknown'
     ]
 
@@ -280,7 +280,7 @@ describe('history/read', () => {
       const { db, stmts } = setupDb()
       try {
         const original: CloudNode = {
-          ...node('rich-1', { type: 'ec2' }),
+          ...node('rich-1', { type: 'aws:ec2' }),
           parentId: 'vpc-1',
           integrations: [{ targetId: 'rds-1', edgeType: 'trigger' }],
           tfMetadata: { resource: 'aws_instance.foo' },
@@ -312,7 +312,7 @@ describe('history/read', () => {
       const { db, stmts } = setupDb()
       try {
         const original: CloudNode = {
-          ...node('db-1', { type: 'rds' }),
+          ...node('db-1', { type: 'aws:rds' }),
           metadata: {
             engine: 'postgres',
             instanceClass: 'db.t3.micro',

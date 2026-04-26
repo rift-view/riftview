@@ -26,7 +26,7 @@ describe('listFunctions', () => {
       .mockResolvedValueOnce({ Environment: { Variables: {} } })
     const nodes = await listFunctions(mockClient, 'us-east-1')
     expect(nodes[0].id).toBe('arn:aws:lambda:us-east-1:123:function:my-fn')
-    expect(nodes[0].type).toBe('lambda')
+    expect(nodes[0].type).toBe('aws:lambda')
     expect(nodes[0].label).toBe('my-fn')
     expect(nodes[0].status).toBe('running')
   })

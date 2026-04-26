@@ -45,7 +45,7 @@ export async function listBuckets(client: S3Client, region: string): Promise<Clo
 
         const baseNode: CloudNode = {
           id: name,
-          type: 's3',
+          type: 'aws:s3',
           label: name,
           status: 'running',
           region,

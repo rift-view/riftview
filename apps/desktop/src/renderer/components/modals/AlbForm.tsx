@@ -9,9 +9,9 @@ interface Props {
 
 export function AlbForm({ onChange, showErrors }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
-  const vpcs = nodes.filter((n) => n.type === 'vpc')
-  const subnets = nodes.filter((n) => n.type === 'subnet')
-  const sgs = nodes.filter((n) => n.type === 'security-group')
+  const vpcs = nodes.filter((n) => n.type === 'aws:vpc')
+  const subnets = nodes.filter((n) => n.type === 'aws:subnet')
+  const sgs = nodes.filter((n) => n.type === 'aws:security-group')
 
   const [form, setForm] = useState<Omit<AlbParams, 'resource'>>({
     name: '',

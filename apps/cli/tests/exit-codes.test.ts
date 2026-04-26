@@ -45,7 +45,7 @@ describe('exit code matrix', () => {
   it('EXIT.OK (0) — `risks` without --fail-on, even with findings', async () => {
     const criticalNode: CloudNode = {
       id: 'fn-crit',
-      type: 'lambda',
+      type: 'aws:lambda',
       label: 'crit',
       status: 'running',
       region: 'us-east-1',
@@ -63,7 +63,7 @@ describe('exit code matrix', () => {
   it('EXIT.FINDINGS (1) — `risks --fail-on S2` trips on critical', async () => {
     const criticalNode: CloudNode = {
       id: 'fn-crit',
-      type: 'lambda',
+      type: 'aws:lambda',
       label: 'crit',
       status: 'running',
       region: 'us-east-1',

@@ -26,7 +26,7 @@ describe('listEventBuses', () => {
 
     expect(nodes).toHaveLength(1)
     expect(nodes[0].id).toBe(BUS_ARN)
-    expect(nodes[0].type).toBe('eventbridge-bus')
+    expect(nodes[0].type).toBe('aws:eventbridge-bus')
     expect(nodes[0].label).toBe('my-bus')
     expect(nodes[0].region).toBe('us-east-1')
   })

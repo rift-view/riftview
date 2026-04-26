@@ -13,7 +13,7 @@ export async function listRepositories(client: ECRClient, region: string): Promi
     return repos.map(
       (item): CloudNode => ({
         id: item.repositoryArn ?? '',
-        type: 'ecr-repo',
+        type: 'aws:ecr-repo',
         label: item.repositoryName ?? '',
         status: 'running',
         region,

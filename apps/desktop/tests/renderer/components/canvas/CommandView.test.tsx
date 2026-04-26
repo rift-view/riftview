@@ -12,15 +12,15 @@ afterEach(() => {
 
 describe('NODE_TIER', () => {
   it('places lambda in tier 2', () => {
-    expect(NODE_TIER['lambda']).toBe(2)
+    expect(NODE_TIER['aws:lambda']).toBe(2)
   })
 
   it('places rds in tier 3', () => {
-    expect(NODE_TIER['rds']).toBe(3)
+    expect(NODE_TIER['aws:rds']).toBe(3)
   })
 
   it('places sqs in tier 4', () => {
-    expect(NODE_TIER['sqs']).toBe(4)
+    expect(NODE_TIER['aws:sqs']).toBe(4)
   })
 })
 
@@ -30,38 +30,38 @@ describe('buildCommandNodes', () => {
   })
 
   it('places lambda nodes as type "resource"', () => {
-    const nodes = buildCommandNodes([makeNode('lambda')])
+    const nodes = buildCommandNodes([makeNode('aws:lambda')])
     const resourceNodes = nodes.filter((n) => n.type === 'resource')
     expect(resourceNodes).toHaveLength(1)
   })
 
   it('includes a tier-label node for each occupied tier', () => {
     // lambda (tier 2) and rds (tier 3) → 2 tier labels
-    const nodes = buildCommandNodes([makeNode('lambda'), makeNode('rds')])
+    const nodes = buildCommandNodes([makeNode('aws:lambda'), makeNode('aws:rds')])
     const tierLabels = nodes.filter((n) => n.type === 'tier-label')
     expect(tierLabels).toHaveLength(2)
   })
 
   it('excludes vpc from output nodes', () => {
-    const nodes = buildCommandNodes([makeNode('vpc')])
+    const nodes = buildCommandNodes([makeNode('aws:vpc')])
     const resourceNodes = nodes.filter((n) => n.type === 'resource')
     expect(resourceNodes).toHaveLength(0)
   })
 
   it('excludes subnet from output nodes', () => {
-    const nodes = buildCommandNodes([makeNode('subnet')])
+    const nodes = buildCommandNodes([makeNode('aws:subnet')])
     const resourceNodes = nodes.filter((n) => n.type === 'resource')
     expect(resourceNodes).toHaveLength(0)
   })
 
   it('excludes security-group from output nodes', () => {
-    const nodes = buildCommandNodes([makeNode('security-group')])
+    const nodes = buildCommandNodes([makeNode('aws:security-group')])
     const resourceNodes = nodes.filter((n) => n.type === 'resource')
     expect(resourceNodes).toHaveLength(0)
   })
 
   it('excludes nat-gateway from output nodes', () => {
-    const nodes = buildCommandNodes([makeNode('nat-gateway')])
+    const nodes = buildCommandNodes([makeNode('aws:nat-gateway')])
     const resourceNodes = nodes.filter((n) => n.type === 'resource')
     expect(resourceNodes).toHaveLength(0)
   })
@@ -74,14 +74,14 @@ describe('buildCommandNodes', () => {
   })
 
   it('tier-label nodes have draggable: false', () => {
-    const nodes = buildCommandNodes([makeNode('lambda')])
+    const nodes = buildCommandNodes([makeNode('aws:lambda')])
     const tierLabel = nodes.find((n) => n.type === 'tier-label')
     expect(tierLabel?.draggable).toBe(false)
   })
 
   it('resource nodes are positioned in a grid within their tier', () => {
-    const n1 = makeNode('lambda', 'lam-1')
-    const n2 = makeNode('ec2', 'ec2-1')
+    const n1 = makeNode('aws:lambda', 'lam-1')
+    const n2 = makeNode('aws:ec2', 'ec2-1')
     const nodes = buildCommandNodes([n1, n2])
     const resourceNodes = nodes.filter((n) => n.type === 'resource')
     // Both in tier 2 — they should have different x positions

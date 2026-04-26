@@ -85,7 +85,7 @@ export async function listStateMachines(client: SFNClient, region: string): Prom
       machines.map(async (item): Promise<CloudNode> => {
         const base: CloudNode = {
           id: item.stateMachineArn ?? '',
-          type: 'sfn',
+          type: 'aws:sfn',
           label: item.name ?? '',
           status: 'running',
           region,

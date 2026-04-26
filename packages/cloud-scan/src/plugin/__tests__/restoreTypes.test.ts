@@ -53,7 +53,7 @@ describe('plugin/restoreTypes — RIF-18 interface', () => {
     const sampleStep: RestoreStep = {
       stepId: '01ARZ3NDEKTSV4RRFFQ69G5FAW',
       op: 'destroy',
-      targetNode: { id: 'i-123', type: 'ec2', label: 'web-01', region: 'us-east-1' },
+      targetNode: { id: 'i-123', type: 'aws:ec2', label: 'web-01', region: 'us-east-1' },
       detail: { argv: [['ec2', 'terminate-instances', '--instance-ids', 'i-123']] },
       destructive: true
     }

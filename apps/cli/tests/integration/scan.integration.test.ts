@@ -54,8 +54,8 @@ describe('riftview scan — LocalStack integration', () => {
     // Three must-have types from seed.tf — a canary for the scan pipeline.
     // Not an exhaustive check; that would couple the test too tightly to
     // the current NodeType coverage of LocalStack Community-Archive.
-    expect(types).toContain('ec2')
-    expect(types).toContain('lambda')
-    expect(types).toContain('s3')
+    expect(types).toContain('aws:ec2')
+    expect(types).toContain('aws:lambda')
+    expect(types).toContain('aws:s3')
   })
 })

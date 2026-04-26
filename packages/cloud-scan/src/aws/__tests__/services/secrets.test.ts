@@ -20,7 +20,7 @@ describe('listSecrets', () => {
 
     expect(nodes).toHaveLength(1)
     expect(nodes[0].id).toBe(SECRET_ARN)
-    expect(nodes[0].type).toBe('secret')
+    expect(nodes[0].type).toBe('aws:secret')
     expect(nodes[0].label).toBe('my-secret')
     expect(nodes[0].region).toBe('us-east-1')
     // Only one API call total — no per-secret DescribeSecret calls

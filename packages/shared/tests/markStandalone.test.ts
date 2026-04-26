@@ -4,7 +4,7 @@ import type { CloudNode } from '../src/types/cloud'
 
 function n(
   id: string,
-  type: CloudNode['type'] = 'lambda',
+  type: CloudNode['type'] = 'aws:lambda',
   integrations?: { targetId: string; edgeType: 'trigger' | 'origin' | 'subscription' }[]
 ): CloudNode {
   return {
@@ -26,22 +26,22 @@ describe('markStandaloneNodes', () => {
   })
 
   it('marks node with outbound edge as NOT standalone', () => {
-    const nodes = [n('A', 'lambda', [{ targetId: 'B', edgeType: 'trigger' }]), n('B')]
+    const nodes = [n('A', 'aws:lambda', [{ targetId: 'B', edgeType: 'trigger' }]), n('B')]
     markStandaloneNodes(nodes)
     expect(nodes[0].metadata.standalone).toBe(false)
   })
 
   it('marks node with only inbound edge as NOT standalone', () => {
-    const nodes = [n('A', 'lambda', [{ targetId: 'B', edgeType: 'trigger' }]), n('B')]
+    const nodes = [n('A', 'aws:lambda', [{ targetId: 'B', edgeType: 'trigger' }]), n('B')]
     markStandaloneNodes(nodes)
     expect(nodes[1].metadata.standalone).toBe(false)
   })
 
   it('never marks container types standalone (vpc, subnet, security-group)', () => {
     const nodes: CloudNode[] = [
-      n('vpc-1', 'vpc'),
-      n('subnet-1', 'subnet'),
-      n('sg-1', 'security-group')
+      n('vpc-1', 'aws:vpc'),
+      n('subnet-1', 'aws:subnet'),
+      n('sg-1', 'aws:security-group')
     ]
     markStandaloneNodes(nodes)
     for (const node of nodes) {

@@ -9,7 +9,7 @@ vi.mock('../../../src/renderer/store/cloud', () => ({
       nodes: [
         {
           id: 'a',
-          type: 'lambda',
+          type: 'aws:lambda',
           label: 'Alpha',
           status: undefined,
           region: 'us-east-1',
@@ -17,7 +17,7 @@ vi.mock('../../../src/renderer/store/cloud', () => ({
         },
         {
           id: 'b',
-          type: 'lambda',
+          type: 'aws:lambda',
           label: 'Beta',
           status: undefined,
           region: 'us-east-1',
@@ -25,7 +25,7 @@ vi.mock('../../../src/renderer/store/cloud', () => ({
         },
         {
           id: 'c',
-          type: 'lambda',
+          type: 'aws:lambda',
           label: 'Gamma',
           status: undefined,
           region: 'us-east-1',

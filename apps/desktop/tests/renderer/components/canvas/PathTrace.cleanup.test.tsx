@@ -66,9 +66,9 @@ describe('CommandView — path trace setInterval cleanup on unmount', () => {
 
     // Seed the store with nodes that have integration edges so path trace
     // has something to walk.
-    const apigw = makeNode('apigw', 'apigw-1')
-    const lambda = makeNode('lambda', 'lambda-1')
-    const rds = makeNode('rds', 'rds-1')
+    const apigw = makeNode('aws:apigw', 'apigw-1')
+    const lambda = makeNode('aws:lambda', 'lambda-1')
+    const rds = makeNode('aws:rds', 'rds-1')
 
     // apigw → lambda → rds
     apigw.integrations = [{ targetId: 'lambda-1', edgeType: 'trigger' }]

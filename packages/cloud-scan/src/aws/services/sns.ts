@@ -16,7 +16,7 @@ export async function listTopics(client: SNSClient, region: string): Promise<Clo
     },
     map: (item, region): CloudNode => ({
       id: item.TopicArn ?? '',
-      type: 'sns',
+      type: 'aws:sns',
       label: item.TopicArn?.split(':').pop() ?? '',
       status: 'running',
       region,

@@ -13,7 +13,7 @@ vi.mock('../../../../../src/renderer/components/canvas/nodes/ActionRail', () => 
   ActionRail: () => null
 }))
 
-function makeProps(nodeType = 'ec2', metadata: Record<string, unknown> = {}): NodeProps {
+function makeProps(nodeType = 'aws:ec2', metadata: Record<string, unknown> = {}): NodeProps {
   return {
     id: 'test-node',
     type: 'resource',
@@ -39,19 +39,19 @@ describe('ResourceNode advisory badge', () => {
   })
 
   it('shows critical badge when ec2 has public SSH', () => {
-    render(<ResourceNode {...makeProps('ec2', { hasPublicSsh: true })} />)
+    render(<ResourceNode {...makeProps('aws:ec2', { hasPublicSsh: true })} />)
     const badge = document.querySelector('[title*="critical"]')
     expect(badge).not.toBeNull()
   })
 
   it('shows no badge when no advisories', () => {
-    render(<ResourceNode {...makeProps('ec2', {})} />)
+    render(<ResourceNode {...makeProps('aws:ec2', {})} />)
     expect(document.querySelector('[title*="critical"]')).toBeNull()
     expect(document.querySelector('[title*="warning"]')).toBeNull()
   })
 
   it('always-on: advisory badge visible without flag (OP_INTELLIGENCE always-on)', () => {
-    render(<ResourceNode {...makeProps('ec2', { hasPublicSsh: true })} />)
+    render(<ResourceNode {...makeProps('aws:ec2', { hasPublicSsh: true })} />)
     expect(document.querySelector('[title*="critical"]')).not.toBeNull()
   })
 })

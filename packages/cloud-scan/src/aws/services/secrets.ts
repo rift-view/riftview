@@ -26,7 +26,7 @@ export async function listSecrets(
   return secretList.map((item): CloudNode => {
     const baseNode: CloudNode = {
       id: item.ARN ?? '',
-      type: 'secret',
+      type: 'aws:secret',
       label: item.Name ?? item.ARN ?? '',
       status: 'running',
       region,

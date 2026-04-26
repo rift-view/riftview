@@ -35,7 +35,7 @@ describe('listStateMachines', () => {
     const nodes = await listStateMachines(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
-    expect(nodes[0].type).toBe('sfn')
+    expect(nodes[0].type).toBe('aws:sfn')
     expect(nodes[0].id).toBe(MACHINE_ARN)
     expect(nodes[0].label).toBe('my-machine')
     expect(nodes[0].status).toBe('running')

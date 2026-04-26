@@ -33,7 +33,7 @@ export default function NodeContextMenu({
   onClose
 }: NodeContextMenuProps): React.JSX.Element {
   const label = RESOURCE_LABELS[node.type] ?? node.type
-  const showStopStart = node.type === 'ec2' || node.type === 'rds'
+  const showStopStart = node.type === 'aws:ec2' || node.type === 'aws:rds'
 
   const menu: React.CSSProperties = {
     position: 'fixed',

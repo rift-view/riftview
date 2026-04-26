@@ -6,7 +6,7 @@ import type { CloudNode } from '@riftview/shared'
 function makeRdsNode(deletionProtection: boolean): CloudNode {
   return {
     id: 'db-instance-1',
-    type: 'rds',
+    type: 'aws:rds',
     label: 'My RDS',
     status: 'running',
     region: 'us-east-1',
@@ -17,7 +17,7 @@ function makeRdsNode(deletionProtection: boolean): CloudNode {
 function makeEc2Node(): CloudNode {
   return {
     id: 'i-0abc12345',
-    type: 'ec2',
+    type: 'aws:ec2',
     label: 'My EC2',
     status: 'running',
     region: 'us-east-1',

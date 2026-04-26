@@ -21,7 +21,7 @@ function baseNode(overrides: Partial<CloudNode> = {}): CloudNode {
   return {
     id: 'fn-arn',
     label: 'my-fn',
-    type: 'lambda',
+    type: 'aws:lambda',
     status: 'running',
     region: 'us-east-1',
     metadata: {},
@@ -90,7 +90,7 @@ describe('Inspector ADVISORIES section', () => {
   })
 
   it('vpc node with flag on → shows "No issues detected"', () => {
-    setup(baseNode({ type: 'vpc', metadata: {} }))
+    setup(baseNode({ type: 'aws:vpc', metadata: {} }))
     expect(screen.getByText('No issues detected')).toBeTruthy()
   })
 })
@@ -117,7 +117,7 @@ describe('Inspector Advisory Queue group-by-rule toggle', () => {
     ({
       id,
       label,
-      type: 'lambda',
+      type: 'aws:lambda',
       status: 'running',
       region: 'us-east-1',
       metadata: { timeout: 0 } // triggers lambda-no-timeout (critical)

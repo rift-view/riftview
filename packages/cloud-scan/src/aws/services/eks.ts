@@ -25,7 +25,7 @@ export async function listEksClusters(client: EKSClient, region: string): Promis
           const cluster = descRes.cluster
           return {
             id: cluster?.arn ?? name,
-            type: 'eks',
+            type: 'aws:eks',
             label: cluster?.name ?? name,
             status: eksStatusToNodeStatus(cluster?.status),
             region,
@@ -38,7 +38,7 @@ export async function listEksClusters(client: EKSClient, region: string): Promis
         } catch {
           return {
             id: name,
-            type: 'eks',
+            type: 'aws:eks',
             label: name,
             status: 'unknown',
             region,

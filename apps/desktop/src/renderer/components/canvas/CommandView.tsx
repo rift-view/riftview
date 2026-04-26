@@ -121,7 +121,7 @@ function buildCommandEdges(cloudNodes: CloudNode[], showIntegrations: boolean): 
 }
 
 // Internet-facing source node types for path trace
-const INTERNET_SOURCE_TYPES = new Set(['igw', 'cloudfront', 'apigw'])
+const INTERNET_SOURCE_TYPES = new Set(['aws:igw', 'aws:cloudfront', 'aws:apigw'])
 
 // ── CommandView ───────────────────────────────────────────────────────────────
 
@@ -362,9 +362,9 @@ export function CommandView({ onNodeContextMenu }: Props): React.JSX.Element {
   )
 
   // Context strip counts
-  const vpcCount = nodes.filter((n) => n.type === 'vpc').length
-  const subnetCount = nodes.filter((n) => n.type === 'subnet').length
-  const sgCount = nodes.filter((n) => n.type === 'security-group').length
+  const vpcCount = nodes.filter((n) => n.type === 'aws:vpc').length
+  const subnetCount = nodes.filter((n) => n.type === 'aws:subnet').length
+  const sgCount = nodes.filter((n) => n.type === 'aws:security-group').length
   const region = nodes[0]?.region ?? ''
 
   const blastNode = blastRadiusId ? nodes.find((n) => n.id === blastRadiusId) : null

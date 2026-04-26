@@ -16,7 +16,7 @@ function node(
 ): CloudNode {
   return {
     id,
-    type: opts.type ?? 'ec2',
+    type: opts.type ?? 'aws:ec2',
     label: id,
     status: opts.status ?? 'running',
     region: opts.region ?? 'us-east-1',
@@ -124,7 +124,7 @@ describe('history/write', () => {
             scanErrors: [],
             nodes: [
               {
-                ...node('db-1', { type: 'rds' }),
+                ...node('db-1', { type: 'aws:rds' }),
                 metadata: {
                   engine: 'postgres',
                   latestSnapshotArn: 'arn:aws:rds:us-east-1:123:snapshot:x'

@@ -15,7 +15,7 @@ beforeEach(() => {
 
 const props = {
   id: 'i-001',
-  data: { label: 'web-server', nodeType: 'ec2', status: 'running' },
+  data: { label: 'web-server', nodeType: 'aws:ec2', status: 'running' },
   selected: false
 } as unknown as NodeProps
 

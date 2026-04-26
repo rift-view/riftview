@@ -62,7 +62,7 @@ function selectNode(node: CloudNode): void {
 
 const EC2_RUNNING: CloudNode = {
   id: 'i-001',
-  type: 'ec2',
+  type: 'aws:ec2',
   label: 'web-server',
   status: 'running',
   region: 'us-east-1',
@@ -71,7 +71,7 @@ const EC2_RUNNING: CloudNode = {
 
 const SQS_NO_DLQ: CloudNode = {
   id: 'sqs-orders',
-  type: 'sqs',
+  type: 'aws:sqs',
   label: 'orders-queue',
   status: 'active',
   region: 'us-east-1',
@@ -80,7 +80,7 @@ const SQS_NO_DLQ: CloudNode = {
 
 const LAMBDA_WITH_METRICS: CloudNode = {
   id: 'fn-metrics',
-  type: 'lambda',
+  type: 'aws:lambda',
   label: 'metrics-fn',
   status: 'active',
   region: 'us-east-1',
@@ -249,7 +249,7 @@ describe('Inspector rift blast radius', () => {
   it('when blast radius is active, direction badges use .pill', () => {
     const lambda: CloudNode = {
       id: 'fn-root',
-      type: 'lambda',
+      type: 'aws:lambda',
       label: 'root-fn',
       status: 'active',
       region: 'us-east-1',
@@ -258,7 +258,7 @@ describe('Inspector rift blast radius', () => {
     }
     const queue: CloudNode = {
       id: 'q-down',
-      type: 'sqs',
+      type: 'aws:sqs',
       label: 'down-queue',
       status: 'active',
       region: 'us-east-1',

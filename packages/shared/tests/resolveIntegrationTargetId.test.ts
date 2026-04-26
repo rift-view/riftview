@@ -5,7 +5,7 @@ import type { CloudNode } from '../src/types/cloud'
 function makeNode(overrides: Partial<CloudNode>): CloudNode {
   return {
     id: 'node-id',
-    type: 's3',
+    type: 'aws:s3',
     label: 'test',
     status: 'running',
     region: 'us-east-1',
@@ -16,7 +16,7 @@ function makeNode(overrides: Partial<CloudNode>): CloudNode {
 
 describe('resolveIntegrationTargetId', () => {
   it('returns targetId unchanged when it already matches a node ID', () => {
-    const nodes = [makeNode({ id: 'arn:aws:s3:::my-bucket', type: 's3' })]
+    const nodes = [makeNode({ id: 'arn:aws:s3:::my-bucket', type: 'aws:s3' })]
     expect(resolveIntegrationTargetId(nodes, 'arn:aws:s3:::my-bucket')).toBe(
       'arn:aws:s3:::my-bucket'
     )
@@ -27,7 +27,7 @@ describe('resolveIntegrationTargetId', () => {
     const nodes = [
       makeNode({
         id: 'arn:aws:elasticloadbalancing:us-east-1:123456789:loadbalancer/app/my-alb/abc',
-        type: 'alb',
+        type: 'aws:alb',
         metadata: { dnsName: albDomain }
       })
     ]
@@ -41,7 +41,7 @@ describe('resolveIntegrationTargetId', () => {
     const nodes = [
       makeNode({
         id: 'arn:aws:apigateway:us-east-1::/restapis/abc123def',
-        type: 'apigw',
+        type: 'aws:apigw',
         metadata: { endpoint: `https://${apigwDomain}/prod` }
       })
     ]
@@ -55,7 +55,7 @@ describe('resolveIntegrationTargetId', () => {
     const nodes = [
       makeNode({
         id: 'apigw-node-id',
-        type: 'apigw',
+        type: 'aws:apigw',
         metadata: { endpoint: `${apigwDomain}/stage` }
       })
     ]
@@ -63,7 +63,7 @@ describe('resolveIntegrationTargetId', () => {
   })
 
   it('returns original targetId when no match is found', () => {
-    const nodes = [makeNode({ id: 'some-other-node', type: 's3' })]
+    const nodes = [makeNode({ id: 'some-other-node', type: 'aws:s3' })]
     expect(resolveIntegrationTargetId(nodes, 'unmatched-domain.example.com')).toBe(
       'unmatched-domain.example.com'
     )
@@ -78,26 +78,32 @@ describe('resolveIntegrationTargetId', () => {
   it('resolves CloudFront domain to CloudFront node id via metadata.domainName', () => {
     const cfDomain = 'd1234abcd.cloudfront.net'
     const nodes = [
-      makeNode({ id: 'EDFDVBD6EXAMPLE', type: 'cloudfront', metadata: { domainName: cfDomain } })
+      makeNode({
+        id: 'EDFDVBD6EXAMPLE',
+        type: 'aws:cloudfront',
+        metadata: { domainName: cfDomain }
+      })
     ]
     expect(resolveIntegrationTargetId(nodes, cfDomain)).toBe('EDFDVBD6EXAMPLE')
   })
 
   it('resolves RDS endpoint hostname to RDS node id via metadata.endpoint', () => {
     const rdsHost = 'my-db.cxxx.us-east-1.rds.amazonaws.com'
-    const nodes = [makeNode({ id: 'my-db-instance', type: 'rds', metadata: { endpoint: rdsHost } })]
+    const nodes = [
+      makeNode({ id: 'my-db-instance', type: 'aws:rds', metadata: { endpoint: rdsHost } })
+    ]
     expect(resolveIntegrationTargetId(nodes, rdsHost)).toBe('my-db-instance')
   })
 
   it('resolves ECR image URI (exact) to ECR node id', () => {
     const uri = '123456789.dkr.ecr.us-east-1.amazonaws.com/my-repo'
-    const nodes = [makeNode({ id: 'ecr-node-id', type: 'ecr-repo', metadata: { uri } })]
+    const nodes = [makeNode({ id: 'ecr-node-id', type: 'aws:ecr-repo', metadata: { uri } })]
     expect(resolveIntegrationTargetId(nodes, uri)).toBe('ecr-node-id')
   })
 
   it('resolves ECR image URI with tag to ECR node id', () => {
     const uri = '123456789.dkr.ecr.us-east-1.amazonaws.com/my-repo'
-    const nodes = [makeNode({ id: 'ecr-node-id', type: 'ecr-repo', metadata: { uri } })]
+    const nodes = [makeNode({ id: 'ecr-node-id', type: 'aws:ecr-repo', metadata: { uri } })]
     expect(resolveIntegrationTargetId(nodes, `${uri}:latest`)).toBe('ecr-node-id')
   })
 })

@@ -5,7 +5,7 @@ import type { CloudNode } from '../src/types/cloud'
 function makeApigw(id = 'apigw-1', integrations: CloudNode['integrations'] = []): CloudNode {
   return {
     id,
-    type: 'apigw',
+    type: 'aws:apigw',
     label: 'My API',
     status: 'running',
     region: 'us-east-1',
@@ -21,7 +21,7 @@ function makeLambda(
 ): CloudNode {
   return {
     id,
-    type: 'lambda',
+    type: 'aws:lambda',
     label: 'My Function',
     status: 'running',
     region: 'us-east-1',
@@ -36,7 +36,7 @@ function makeRds(
 ): CloudNode {
   return {
     id,
-    type: 'rds',
+    type: 'aws:rds',
     label: 'My DB',
     status: 'running',
     region: 'us-east-1',
@@ -147,7 +147,7 @@ function makeApigwWithThrottling(
 ): CloudNode {
   return {
     id,
-    type: 'apigw',
+    type: 'aws:apigw',
     label: 'My API',
     status: 'running',
     region: 'us-east-1',
@@ -163,7 +163,7 @@ function makeLambdaWithConcurrency(
 ): CloudNode {
   return {
     id,
-    type: 'lambda',
+    type: 'aws:lambda',
     label: 'My Function',
     status: 'running',
     region: 'us-east-1',
@@ -179,7 +179,7 @@ function makeSqs(
 ): CloudNode {
   return {
     id,
-    type: 'sqs',
+    type: 'aws:sqs',
     label: 'My Queue',
     status: 'running',
     region: 'us-east-1',
@@ -191,7 +191,7 @@ function makeSqs(
 function makeSns(id = 'sns-1', integrations: CloudNode['integrations'] = []): CloudNode {
   return {
     id,
-    type: 'sns',
+    type: 'aws:sns',
     label: 'My Topic',
     status: 'running',
     region: 'us-east-1',
@@ -264,7 +264,7 @@ describe('analyzeGraph — lambda-sqs-no-dlq', () => {
     const sqs = makeSqs('sqs-1', false)
     const lambda: CloudNode = {
       id: 'lambda-1',
-      type: 'lambda',
+      type: 'aws:lambda',
       label: 'My Function',
       status: 'running',
       region: 'us-east-1',
@@ -285,7 +285,7 @@ describe('analyzeGraph — lambda-sqs-no-dlq', () => {
     const sqs = makeSqs('sqs-1', true)
     const lambda: CloudNode = {
       id: 'lambda-1',
-      type: 'lambda',
+      type: 'aws:lambda',
       label: 'My Function',
       status: 'running',
       region: 'us-east-1',
@@ -304,7 +304,7 @@ describe('analyzeGraph — sns-sqs-lambda-no-dlq', () => {
   it('fires when full SNS→SQS→Lambda chain has no DLQ on SQS', () => {
     const lambda: CloudNode = {
       id: 'lambda-1',
-      type: 'lambda',
+      type: 'aws:lambda',
       label: 'My Function',
       status: 'running',
       region: 'us-east-1',
@@ -326,7 +326,7 @@ describe('analyzeGraph — sns-sqs-lambda-no-dlq', () => {
   it('does NOT fire when SQS has a DLQ', () => {
     const lambda: CloudNode = {
       id: 'lambda-1',
-      type: 'lambda',
+      type: 'aws:lambda',
       label: 'My Function',
       status: 'running',
       region: 'us-east-1',

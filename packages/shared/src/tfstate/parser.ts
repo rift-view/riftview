@@ -39,14 +39,14 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
       return {
         ...base,
         id: attrs['id'] as string,
-        type: 'ec2',
+        type: 'aws:ec2',
         label: (attrs['id'] as string) ?? name
       }
     case 'aws_vpc':
       return {
         ...base,
         id: attrs['id'] as string,
-        type: 'vpc',
+        type: 'aws:vpc',
         label:
           (attrs['tags'] as Record<string, string> | undefined)?.['Name'] ?? (attrs['id'] as string)
       }
@@ -54,7 +54,7 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
       return {
         ...base,
         id: attrs['id'] as string,
-        type: 'subnet',
+        type: 'aws:subnet',
         label: attrs['id'] as string,
         parentId: attrs['vpc_id'] as string | undefined
       }
@@ -62,47 +62,47 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
       return {
         ...base,
         id: attrs['id'] as string,
-        type: 'security-group',
+        type: 'aws:security-group',
         label: (attrs['name'] as string) ?? name
       }
     case 'aws_s3_bucket':
-      return { ...base, id: attrs['id'] as string, type: 's3', label: attrs['id'] as string }
+      return { ...base, id: attrs['id'] as string, type: 'aws:s3', label: attrs['id'] as string }
     case 'aws_lambda_function':
       return {
         ...base,
         id: attrs['function_name'] as string,
-        type: 'lambda',
+        type: 'aws:lambda',
         label: attrs['function_name'] as string
       }
     case 'aws_db_instance':
-      return { ...base, id: attrs['id'] as string, type: 'rds', label: attrs['id'] as string }
+      return { ...base, id: attrs['id'] as string, type: 'aws:rds', label: attrs['id'] as string }
     case 'aws_lb':
     case 'aws_alb':
       return {
         ...base,
         id: attrs['arn'] as string,
-        type: 'alb',
+        type: 'aws:alb',
         label: (attrs['name'] as string) ?? name
       }
     case 'aws_api_gateway_v2_api':
       return {
         ...base,
         id: attrs['id'] as string,
-        type: 'apigw',
+        type: 'aws:apigw',
         label: (attrs['name'] as string) ?? name
       }
     case 'aws_cloudfront_distribution':
       return {
         ...base,
         id: attrs['id'] as string,
-        type: 'cloudfront',
+        type: 'aws:cloudfront',
         label: (attrs['domain_name'] as string) ?? name
       }
     case 'aws_internet_gateway':
       return {
         ...base,
         id: attrs['id'] as string,
-        type: 'igw',
+        type: 'aws:igw',
         label:
           (attrs['tags'] as Record<string, string> | undefined)?.['Name'] ?? (attrs['id'] as string)
       }
@@ -110,7 +110,7 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
       return {
         ...base,
         id: attrs['id'] as string,
-        type: 'nat-gateway',
+        type: 'aws:nat-gateway',
         label:
           (attrs['tags'] as Record<string, string> | undefined)?.['Name'] ?? (attrs['id'] as string)
       }
@@ -119,7 +119,7 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
       return {
         ...base,
         id: attrs['arn'] as string,
-        type: 'sqs',
+        type: 'aws:sqs',
         label:
           ((attrs['url'] as string | undefined) ?? (attrs['arn'] as string)).split('/').pop() ??
           (attrs['arn'] as string)
@@ -128,14 +128,14 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
       return {
         ...base,
         id: attrs['arn'] as string,
-        type: 'sns',
+        type: 'aws:sns',
         label: (attrs['arn'] as string).split(':').pop() ?? (attrs['arn'] as string)
       }
     case 'aws_dynamodb_table':
       return {
         ...base,
         id: attrs['id'] as string,
-        type: 'dynamo',
+        type: 'aws:dynamo',
         label: attrs['id'] as string
       }
     case 'aws_ssm_parameter':
@@ -143,14 +143,14 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
       return {
         ...base,
         id: (attrs['arn'] as string | undefined) ?? (attrs['name'] as string),
-        type: 'ssm-param',
+        type: 'aws:ssm-param',
         label: attrs['name'] as string
       }
     case 'aws_secretsmanager_secret':
       return {
         ...base,
         id: attrs['arn'] as string,
-        type: 'secret',
+        type: 'aws:secret',
         label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string)
       }
     case 'aws_ecr_repository':
@@ -158,7 +158,7 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
       return {
         ...base,
         id: attrs['arn'] as string,
-        type: 'ecr-repo',
+        type: 'aws:ecr-repo',
         label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string)
       }
     case 'aws_route53_zone':
@@ -166,28 +166,28 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
       return {
         ...base,
         id: attrs['id'] as string,
-        type: 'r53-zone',
+        type: 'aws:r53-zone',
         label: (attrs['name'] as string | undefined) ?? (attrs['id'] as string)
       }
     case 'aws_sfn_state_machine':
       return {
         ...base,
         id: attrs['arn'] as string,
-        type: 'sfn',
+        type: 'aws:sfn',
         label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string)
       }
     case 'aws_cloudwatch_event_bus':
       return {
         ...base,
         id: attrs['arn'] as string,
-        type: 'eventbridge-bus',
+        type: 'aws:eventbridge-bus',
         label: (attrs['name'] as string | undefined) ?? (attrs['arn'] as string)
       }
     case 'aws_acm_certificate':
       return {
         ...base,
         id: attrs['arn'] as string,
-        type: 'acm',
+        type: 'aws:acm',
         label: (attrs['domain_name'] as string | undefined) ?? (attrs['arn'] as string)
       }
     case 'aws_apigatewayv2_route':
@@ -195,7 +195,7 @@ function mapResource(type: string, name: string, attrs: Record<string, unknown>)
       return {
         ...base,
         id: `${attrs['api_id'] as string}/routes/${attrs['id'] as string}`,
-        type: 'apigw-route',
+        type: 'aws:apigw-route',
         label: (attrs['route_key'] as string | undefined) ?? (attrs['id'] as string)
       }
     default:

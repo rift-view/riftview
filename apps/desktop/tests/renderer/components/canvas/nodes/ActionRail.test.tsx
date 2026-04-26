@@ -18,7 +18,7 @@ const mockBuildConsoleUrl = vi.mocked(buildConsoleUrl)
 
 const baseNode: CloudNode = {
   id: 'arn:aws:lambda:us-east-1:123:function:my-fn',
-  type: 'lambda',
+  type: 'aws:lambda',
   label: 'my-fn',
   status: 'running',
   region: 'us-east-1',

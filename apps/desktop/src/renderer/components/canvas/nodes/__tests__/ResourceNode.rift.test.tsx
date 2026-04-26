@@ -54,7 +54,7 @@ describe('ResourceNode (Rift editorial pattern)', () => {
   })
 
   it('renders rift-node-eye with the correct TYPE_LABEL for the node type', () => {
-    const { container } = render(<ResourceNode {...makeProps({ nodeType: 'lambda' })} />)
+    const { container } = render(<ResourceNode {...makeProps({ nodeType: 'aws:lambda' })} />)
     const eye = container.querySelector('.rift-node-eye')
     expect(eye).not.toBeNull()
     expect(eye?.textContent).toContain('λ')
@@ -79,13 +79,15 @@ describe('ResourceNode (Rift editorial pattern)', () => {
 
   it('renders advisory-badge when the node has advisories', () => {
     const { container } = render(
-      <ResourceNode {...makeProps({ nodeType: 'ec2', metadata: { hasPublicSsh: true } })} />
+      <ResourceNode {...makeProps({ nodeType: 'aws:ec2', metadata: { hasPublicSsh: true } })} />
     )
     expect(container.querySelector('.advisory-badge')).not.toBeNull()
   })
 
   it('does not render advisory-badge when the node has no advisories', () => {
-    const { container } = render(<ResourceNode {...makeProps({ nodeType: 'ec2', metadata: {} })} />)
+    const { container } = render(
+      <ResourceNode {...makeProps({ nodeType: 'aws:ec2', metadata: {} })} />
+    )
     expect(container.querySelector('.advisory-badge')).toBeNull()
   })
 

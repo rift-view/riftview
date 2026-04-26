@@ -9,7 +9,7 @@ export async function listParameters(client: SSMClient, region: string): Promise
     for (const p of res.Parameters ?? []) {
       nodes.push({
         id: p.ARN ?? p.Name ?? '',
-        type: 'ssm-param',
+        type: 'aws:ssm-param',
         label: p.Name ?? '',
         status: 'running',
         region,

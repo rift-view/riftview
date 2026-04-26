@@ -7,7 +7,7 @@ import type { CloudNode } from '@riftview/shared'
 import type { NodeFilter } from '../../../src/renderer/store/ui'
 import type { Edge } from '@xyflow/react'
 
-function node(id: string, type: CloudNode['type'] = 'ec2'): CloudNode {
+function node(id: string, type: CloudNode['type'] = 'aws:ec2'): CloudNode {
   return { id, type, label: id, status: 'running', region: 'us-east-1', metadata: {} }
 }
 
@@ -25,32 +25,32 @@ const typeFilter = (t: CloudNode['type']): NodeFilter => ({
 
 describe('applyNodeFilters — flowNodes exclusion', () => {
   it('returns all nodes when no filters are active', () => {
-    const nodes = [node('a', 'ec2'), node('b', 'rds'), node('c', 's3')]
+    const nodes = [node('a', 'aws:ec2'), node('b', 'aws:rds'), node('c', 'aws:s3')]
     expect(applyNodeFilters(nodes, [])).toHaveLength(3)
   })
 
   it('excludes nodes that do not match any active filter', () => {
-    const nodes = [node('a', 'ec2'), node('b', 'rds'), node('c', 's3')]
-    const result = applyNodeFilters(nodes, [typeFilter('ec2')])
+    const nodes = [node('a', 'aws:ec2'), node('b', 'aws:rds'), node('c', 'aws:s3')]
+    const result = applyNodeFilters(nodes, [typeFilter('aws:ec2')])
     expect(result.map((n) => n.id)).toEqual(['a'])
   })
 
   it('uses OR composition — includes node matching any filter', () => {
-    const nodes = [node('a', 'ec2'), node('b', 'rds'), node('c', 's3')]
-    const result = applyNodeFilters(nodes, [typeFilter('ec2'), typeFilter('rds')])
+    const nodes = [node('a', 'aws:ec2'), node('b', 'aws:rds'), node('c', 'aws:s3')]
+    const result = applyNodeFilters(nodes, [typeFilter('aws:ec2'), typeFilter('aws:rds')])
     expect(result.map((n) => n.id)).toEqual(['a', 'b'])
   })
 
   it('returns empty array when no nodes match any filter', () => {
-    const nodes = [node('a', 'ec2'), node('b', 'ec2')]
-    const result = applyNodeFilters(nodes, [typeFilter('rds')])
+    const nodes = [node('a', 'aws:ec2'), node('b', 'aws:ec2')]
+    const result = applyNodeFilters(nodes, [typeFilter('aws:rds')])
     expect(result).toHaveLength(0)
   })
 
   it('does not mutate original array', () => {
-    const nodes = [node('a', 'ec2'), node('b', 'rds')]
+    const nodes = [node('a', 'aws:ec2'), node('b', 'aws:rds')]
     const original = [...nodes]
-    applyNodeFilters(nodes, [typeFilter('ec2')])
+    applyNodeFilters(nodes, [typeFilter('aws:ec2')])
     expect(nodes).toEqual(original)
   })
 })
@@ -98,16 +98,16 @@ describe('filterEdgesByVisibleNodes — orphaned edge behavior', () => {
 describe('applyNodeFilters — selection clear precondition', () => {
   it('selected node is absent from result when it does not match filter', () => {
     const selectedId = 'rds-1'
-    const nodes = [node('ec2-1', 'ec2'), node(selectedId, 'rds')]
-    const visible = applyNodeFilters(nodes, [typeFilter('ec2')])
+    const nodes = [node('ec2-1', 'aws:ec2'), node(selectedId, 'aws:rds')]
+    const visible = applyNodeFilters(nodes, [typeFilter('aws:ec2')])
     const visibleIds = new Set(visible.map((n) => n.id))
     expect(visibleIds.has(selectedId)).toBe(false)
   })
 
   it('selected node is present in result when it matches the filter', () => {
     const selectedId = 'ec2-1'
-    const nodes = [node(selectedId, 'ec2'), node('rds-1', 'rds')]
-    const visible = applyNodeFilters(nodes, [typeFilter('ec2')])
+    const nodes = [node(selectedId, 'aws:ec2'), node('rds-1', 'aws:rds')]
+    const visible = applyNodeFilters(nodes, [typeFilter('aws:ec2')])
     const visibleIds = new Set(visible.map((n) => n.id))
     expect(visibleIds.has(selectedId)).toBe(true)
   })

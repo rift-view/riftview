@@ -10,37 +10,37 @@ export const REDACTED = '[redacted]' as const
 const SECRET_KEY_PATTERN = /password|secret|token|apikey|privatekey/i
 
 const DATA_KEYS: Record<NodeType, readonly string[]> = {
-  ec2: ['ebsSnapshotIds'],
-  rds: ['latestSnapshotArn', 'pitrEarliestRestoreTime'],
-  s3: ['versioningState', 'objectCountMarker'],
-  lambda: ['codeSha256', 'codeSource'],
-  sqs: ['inflightMessageCount'],
-  sns: ['inflightMessageCount'],
-  dynamo: ['pitrLatest', 'continuousBackupsStatus', 'onDemandBackupArn'],
-  'ssm-param': ['value', 'versionNumber', 'lastModified'],
-  'ecr-repo': ['imageDigests'],
-  'r53-zone': ['records', 'recordSetCount'],
-  sfn: ['recentExecutionCount'],
-  ses: ['sendQuota', 'sendLast24h'],
-  cognito: ['userCountMarker'],
-  kinesis: ['iteratorAgeMs', 'incomingRecordsMarker'],
-  elasticache: ['latestAutomaticSnapshotName'],
-  opensearch: ['latestAutomaticSnapshotRef'],
-  'eventbridge-bus': [],
-  vpc: [],
-  subnet: [],
-  alb: [],
-  'security-group': [],
-  igw: [],
-  acm: [],
-  cloudfront: [],
-  apigw: [],
-  'apigw-route': [],
-  secret: [],
-  'nat-gateway': [],
-  ecs: [],
-  eks: [],
-  msk: [],
+  'aws:ec2': ['ebsSnapshotIds'],
+  'aws:rds': ['latestSnapshotArn', 'pitrEarliestRestoreTime'],
+  'aws:s3': ['versioningState', 'objectCountMarker'],
+  'aws:lambda': ['codeSha256', 'codeSource'],
+  'aws:sqs': ['inflightMessageCount'],
+  'aws:sns': ['inflightMessageCount'],
+  'aws:dynamo': ['pitrLatest', 'continuousBackupsStatus', 'onDemandBackupArn'],
+  'aws:ssm-param': ['value', 'versionNumber', 'lastModified'],
+  'aws:ecr-repo': ['imageDigests'],
+  'aws:r53-zone': ['records', 'recordSetCount'],
+  'aws:sfn': ['recentExecutionCount'],
+  'aws:ses': ['sendQuota', 'sendLast24h'],
+  'aws:cognito': ['userCountMarker'],
+  'aws:kinesis': ['iteratorAgeMs', 'incomingRecordsMarker'],
+  'aws:elasticache': ['latestAutomaticSnapshotName'],
+  'aws:opensearch': ['latestAutomaticSnapshotRef'],
+  'aws:eventbridge-bus': [],
+  'aws:vpc': [],
+  'aws:subnet': [],
+  'aws:alb': [],
+  'aws:security-group': [],
+  'aws:igw': [],
+  'aws:acm': [],
+  'aws:cloudfront': [],
+  'aws:apigw': [],
+  'aws:apigw-route': [],
+  'aws:secret': [],
+  'aws:nat-gateway': [],
+  'aws:ecs': [],
+  'aws:eks': [],
+  'aws:msk': [],
   unknown: []
 }
 
@@ -64,19 +64,19 @@ function applyNodeTypeRules(
   data: Record<string, unknown>
 ): void {
   switch (type) {
-    case 'secret':
+    case 'aws:secret':
       for (const bag of [shape, data]) {
         if ('SecretString' in bag) bag.SecretString = REDACTED
         if ('SecretBinary' in bag) bag.SecretBinary = REDACTED
       }
       break
-    case 'ssm-param':
+    case 'aws:ssm-param':
       if (shape.type === 'SecureString') {
         if ('value' in shape) shape.value = REDACTED
         if ('value' in data) data.value = REDACTED
       }
       break
-    case 'lambda':
+    case 'aws:lambda':
       if (shape.environment && typeof shape.environment === 'object') {
         const env = shape.environment as Record<string, unknown>
         if (env.variables && typeof env.variables === 'object' && !Array.isArray(env.variables)) {
@@ -84,7 +84,7 @@ function applyNodeTypeRules(
         }
       }
       break
-    case 'acm':
+    case 'aws:acm':
       if ('PrivateKey' in shape) shape.PrivateKey = REDACTED
       break
   }

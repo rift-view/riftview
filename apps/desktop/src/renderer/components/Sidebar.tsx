@@ -11,69 +11,72 @@ const CATEGORIES: { label: string; services: ServiceDef[] }[] = [
   {
     label: 'Compute',
     services: [
-      { type: 'ec2', label: 'EC2', hasCreate: true },
-      { type: 'lambda', label: 'Lambda', hasCreate: true }
+      { type: 'aws:ec2', label: 'EC2', hasCreate: true },
+      { type: 'aws:lambda', label: 'Lambda', hasCreate: true }
     ]
   },
   {
     label: 'Networking',
     services: [
-      { type: 'vpc', label: 'VPC', hasCreate: true },
-      { type: 'subnet', label: 'Subnet', hasCreate: false },
-      { type: 'security-group', label: 'Security Group', hasCreate: true, resource: 'sg' },
-      { type: 'igw', label: 'IGW', hasCreate: false },
-      { type: 'nat-gateway', label: 'NAT Gateway', hasCreate: false }
+      { type: 'aws:vpc', label: 'VPC', hasCreate: true },
+      { type: 'aws:subnet', label: 'Subnet', hasCreate: false },
+      { type: 'aws:security-group', label: 'Security Group', hasCreate: true, resource: 'sg' },
+      { type: 'aws:igw', label: 'IGW', hasCreate: false },
+      { type: 'aws:nat-gateway', label: 'NAT Gateway', hasCreate: false }
     ]
   },
-  { label: 'Storage', services: [{ type: 's3', label: 'S3', hasCreate: true }] },
+  { label: 'Storage', services: [{ type: 'aws:s3', label: 'S3', hasCreate: true }] },
   {
     label: 'Database',
     services: [
-      { type: 'rds', label: 'RDS', hasCreate: true },
-      { type: 'dynamo', label: 'DynamoDB', hasCreate: true },
-      { type: 'elasticache', label: 'ElastiCache', hasCreate: false },
-      { type: 'opensearch', label: 'OpenSearch', hasCreate: false }
+      { type: 'aws:rds', label: 'RDS', hasCreate: true },
+      { type: 'aws:dynamo', label: 'DynamoDB', hasCreate: true },
+      { type: 'aws:elasticache', label: 'ElastiCache', hasCreate: false },
+      { type: 'aws:opensearch', label: 'OpenSearch', hasCreate: false }
     ]
   },
   {
     label: 'Messaging',
     services: [
-      { type: 'sqs', label: 'SQS', hasCreate: true },
-      { type: 'sns', label: 'SNS', hasCreate: true },
-      { type: 'eventbridge-bus', label: 'EventBridge', hasCreate: true },
-      { type: 'ses', label: 'SES', hasCreate: false },
-      { type: 'kinesis', label: 'Kinesis', hasCreate: false },
-      { type: 'msk', label: 'MSK', hasCreate: false }
+      { type: 'aws:sqs', label: 'SQS', hasCreate: true },
+      { type: 'aws:sns', label: 'SNS', hasCreate: true },
+      { type: 'aws:eventbridge-bus', label: 'EventBridge', hasCreate: true },
+      { type: 'aws:ses', label: 'SES', hasCreate: false },
+      { type: 'aws:kinesis', label: 'Kinesis', hasCreate: false },
+      { type: 'aws:msk', label: 'MSK', hasCreate: false }
     ]
   },
   {
     label: 'Edge & API',
     services: [
-      { type: 'cloudfront', label: 'CloudFront', hasCreate: true },
-      { type: 'apigw', label: 'API Gateway', hasCreate: true },
-      { type: 'apigw-route', label: 'API Route', hasCreate: false }
+      { type: 'aws:cloudfront', label: 'CloudFront', hasCreate: true },
+      { type: 'aws:apigw', label: 'API Gateway', hasCreate: true },
+      { type: 'aws:apigw-route', label: 'API Route', hasCreate: false }
     ]
   },
   {
     label: 'Security',
     services: [
-      { type: 'acm', label: 'ACM', hasCreate: true },
-      { type: 'secret', label: 'Secrets Manager', hasCreate: true },
-      { type: 'cognito', label: 'Cognito', hasCreate: false }
+      { type: 'aws:acm', label: 'ACM', hasCreate: true },
+      { type: 'aws:secret', label: 'Secrets Manager', hasCreate: true },
+      { type: 'aws:cognito', label: 'Cognito', hasCreate: false }
     ]
   },
   { label: 'Management', services: [] }, // SSM only — rendered via ssmGroups below
-  { label: 'Orchestration', services: [{ type: 'sfn', label: 'Step Functions', hasCreate: true }] },
+  {
+    label: 'Orchestration',
+    services: [{ type: 'aws:sfn', label: 'Step Functions', hasCreate: true }]
+  },
   {
     label: 'Containers',
     services: [
-      { type: 'ecr-repo', label: 'ECR', hasCreate: true, resource: 'ecr' },
-      { type: 'ecs', label: 'ECS', hasCreate: false },
-      { type: 'eks', label: 'EKS', hasCreate: false }
+      { type: 'aws:ecr-repo', label: 'ECR', hasCreate: true, resource: 'ecr' },
+      { type: 'aws:ecs', label: 'ECS', hasCreate: false },
+      { type: 'aws:eks', label: 'EKS', hasCreate: false }
     ]
   },
-  { label: 'Load Balancing', services: [{ type: 'alb', label: 'ALB', hasCreate: true }] },
-  { label: 'DNS', services: [{ type: 'r53-zone', label: 'Route 53', hasCreate: false }] }
+  { label: 'Load Balancing', services: [{ type: 'aws:alb', label: 'ALB', hasCreate: true }] },
+  { label: 'DNS', services: [{ type: 'aws:r53-zone', label: 'Route 53', hasCreate: false }] }
 ]
 
 function getTypeLabel(type: NodeType): string {
@@ -168,7 +171,7 @@ export function Sidebar(): React.JSX.Element {
   )
 
   const ssmGroups = useMemo<SsmGroup[]>(() => {
-    const ssmNodes = nodes.filter((n) => n.type === 'ssm-param')
+    const ssmNodes = nodes.filter((n) => n.type === 'aws:ssm-param')
     if (ssmNodes.length === 0) return []
 
     const byPrefix = new Map<string, CloudNode[]>()
@@ -202,7 +205,7 @@ export function Sidebar(): React.JSX.Element {
     return m
   }, [scanErrors, settings.showScanErrorBadges])
 
-  const ssmErrTooltip = errorsByType.get('ssm-param' as NodeType)
+  const ssmErrTooltip = errorsByType.get('aws:ssm-param' as NodeType)
 
   return (
     <div
@@ -225,7 +228,7 @@ export function Sidebar(): React.JSX.Element {
         const isManagement = cat.label === 'Management'
         const catCount =
           cat.services.reduce((sum, s) => sum + (counts[s.type] ?? 0), 0) +
-          (isManagement ? nodes.filter((n) => n.type === 'ssm-param').length : 0)
+          (isManagement ? nodes.filter((n) => n.type === 'aws:ssm-param').length : 0)
         const isExpanded = expandedCategories.has(cat.label)
 
         return (

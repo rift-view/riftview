@@ -12,7 +12,7 @@ import type { ScanRunner, ScanRunnerResult } from '../../cli/commands/scan'
 function lambdaNode(id: string, overrides: Partial<CloudNode> = {}): CloudNode {
   return {
     id,
-    type: 'lambda',
+    type: 'aws:lambda',
     label: id,
     status: 'running',
     region: 'us-east-1',
@@ -24,7 +24,7 @@ function lambdaNode(id: string, overrides: Partial<CloudNode> = {}): CloudNode {
 function publicS3(id: string): CloudNode {
   return {
     id,
-    type: 's3',
+    type: 'aws:s3',
     label: id,
     status: 'running',
     region: 'us-east-1',

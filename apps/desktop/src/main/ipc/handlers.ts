@@ -572,9 +572,9 @@ export function registerHandlers(win: BrowserWindow): void {
       const analyzePromise = (async (): Promise<IamAnalysisResult> => {
         try {
           let findings
-          if (nodeType === 'ec2') findings = await fetchEc2IamData(node, clients!)
-          else if (nodeType === 'lambda') findings = await fetchLambdaIamData(node, clients!)
-          else if (nodeType === 's3') findings = await fetchS3IamData(node, clients!)
+          if (nodeType === 'aws:ec2') findings = await fetchEc2IamData(node, clients!)
+          else if (nodeType === 'aws:lambda') findings = await fetchLambdaIamData(node, clients!)
+          else if (nodeType === 'aws:s3') findings = await fetchS3IamData(node, clients!)
           else findings = []
           return { nodeId, findings, fetchedAt: Date.now() }
         } catch (err) {

@@ -5,12 +5,12 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
   const byId = new Map(nodes.map((n) => [n.id, n]))
 
   for (const node of nodes) {
-    if (node.type !== 'apigw') continue
+    if (node.type !== 'aws:apigw') continue
 
     // Find Lambda targets via integrations
     const lambdaTargets = (node.integrations ?? [])
       .map((e) => byId.get(e.targetId))
-      .filter((n): n is CloudNode => n?.type === 'lambda')
+      .filter((n): n is CloudNode => n?.type === 'aws:lambda')
 
     for (const lambda of lambdaTargets) {
       const hasTimeout =
@@ -20,7 +20,7 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
       // Find RDS targets from this Lambda's integrations
       const rdsTargets = (lambda.integrations ?? [])
         .map((e) => byId.get(e.targetId))
-        .filter((n): n is CloudNode => n?.type === 'rds')
+        .filter((n): n is CloudNode => n?.type === 'aws:rds')
 
       for (const rds of rdsTargets) {
         const hasReplica =
@@ -40,14 +40,14 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
 
   // ── Advisory: apigw-lambda-no-concurrency-limit ────────────────────────────
   for (const node of nodes) {
-    if (node.type !== 'apigw') continue
+    if (node.type !== 'aws:apigw') continue
     const hasThrottling = node.metadata.throttlingBurstLimit != null
 
     if (hasThrottling) continue
 
     const lambdaTargets = (node.integrations ?? [])
       .map((e) => byId.get(e.targetId))
-      .filter((n): n is CloudNode => n?.type === 'lambda')
+      .filter((n): n is CloudNode => n?.type === 'aws:lambda')
 
     for (const lambda of lambdaTargets) {
       // Only fire if the scanner actually fetched this field.
@@ -69,11 +69,11 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
 
   // ── Advisory: lambda-sqs-no-dlq ────────────────────────────────────────────
   for (const node of nodes) {
-    if (node.type !== 'lambda') continue
+    if (node.type !== 'aws:lambda') continue
 
     const sqsTargets = (node.integrations ?? [])
       .map((e) => byId.get(e.targetId))
-      .filter((n): n is CloudNode => n?.type === 'sqs')
+      .filter((n): n is CloudNode => n?.type === 'aws:sqs')
 
     for (const sqs of sqsTargets) {
       if (sqs.metadata.hasDlq) continue
@@ -90,18 +90,18 @@ export function analyzeGraph(nodes: CloudNode[]): Advisory[] {
 
   // ── Advisory: sns-sqs-lambda-no-dlq ────────────────────────────────────────
   for (const node of nodes) {
-    if (node.type !== 'sns') continue
+    if (node.type !== 'aws:sns') continue
 
     const sqsTargets = (node.integrations ?? [])
       .map((e) => byId.get(e.targetId))
-      .filter((n): n is CloudNode => n?.type === 'sqs')
+      .filter((n): n is CloudNode => n?.type === 'aws:sqs')
 
     for (const sqs of sqsTargets) {
       if (sqs.metadata.hasDlq) continue
 
       const lambdaTargets = (sqs.integrations ?? [])
         .map((e) => byId.get(e.targetId))
-        .filter((n): n is CloudNode => n?.type === 'lambda')
+        .filter((n): n is CloudNode => n?.type === 'aws:lambda')
 
       for (const lambda of lambdaTargets) {
         advisories.push({

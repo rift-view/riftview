@@ -5,7 +5,7 @@ import type { TfModuleInfo } from '../../types/tfstate'
 import type { CloudNode } from '@riftview/shared'
 
 function makeNode(id: string): CloudNode {
-  return { id, type: 'ec2', label: id, status: 'running', region: 'us-east-1', metadata: {} }
+  return { id, type: 'aws:ec2', label: id, status: 'running', region: 'us-east-1', metadata: {} }
 }
 
 const moduleA: TfModuleInfo = {

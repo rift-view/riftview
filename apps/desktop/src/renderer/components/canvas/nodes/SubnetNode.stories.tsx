@@ -5,7 +5,7 @@ import { SubnetNode } from './SubnetNode'
 function makeSubnetProps(label: string, isPublic: boolean, az?: string): Record<string, unknown> {
   return {
     id: `story-subnet`,
-    type: 'subnet',
+    type: 'aws:subnet',
     selected: false,
     dragging: false,
     zIndex: 0,

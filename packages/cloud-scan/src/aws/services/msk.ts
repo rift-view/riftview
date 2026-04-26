@@ -32,7 +32,7 @@ export async function listMskClusters(
         const clusterArn = cluster.ClusterArn ?? cluster.ClusterName ?? 'unknown'
         const baseNode: CloudNode = {
           id: clusterArn,
-          type: 'msk',
+          type: 'aws:msk',
           label: cluster.ClusterName ?? 'MSK',
           status: mskStatusToNodeStatus(cluster.State),
           region,

@@ -14,37 +14,37 @@ function node(type: NodeType, metadata: Record<string, unknown> = {}): CloudNode
 }
 
 const ALL_NODE_TYPES: NodeType[] = [
-  'ec2',
-  'vpc',
-  'subnet',
-  'rds',
-  's3',
-  'lambda',
-  'alb',
-  'security-group',
-  'igw',
-  'acm',
-  'cloudfront',
-  'apigw',
-  'apigw-route',
-  'sqs',
-  'secret',
-  'ecr-repo',
-  'sns',
-  'dynamo',
-  'ssm-param',
-  'nat-gateway',
-  'r53-zone',
-  'sfn',
-  'eventbridge-bus',
-  'ses',
-  'cognito',
-  'kinesis',
-  'ecs',
-  'elasticache',
-  'eks',
-  'opensearch',
-  'msk',
+  'aws:ec2',
+  'aws:vpc',
+  'aws:subnet',
+  'aws:rds',
+  'aws:s3',
+  'aws:lambda',
+  'aws:alb',
+  'aws:security-group',
+  'aws:igw',
+  'aws:acm',
+  'aws:cloudfront',
+  'aws:apigw',
+  'aws:apigw-route',
+  'aws:sqs',
+  'aws:secret',
+  'aws:ecr-repo',
+  'aws:sns',
+  'aws:dynamo',
+  'aws:ssm-param',
+  'aws:nat-gateway',
+  'aws:r53-zone',
+  'aws:sfn',
+  'aws:eventbridge-bus',
+  'aws:ses',
+  'aws:cognito',
+  'aws:kinesis',
+  'aws:ecs',
+  'aws:elasticache',
+  'aws:eks',
+  'aws:opensearch',
+  'aws:msk',
   'unknown'
 ]
 
@@ -59,7 +59,7 @@ describe('history/transform', () => {
     })
 
     it('empty metadata produces empty shape and data', () => {
-      const rec = toSnapshotRecord(node('vpc'))
+      const rec = toSnapshotRecord(node('aws:vpc'))
       expect(rec.shape).toEqual({})
       expect(rec.data).toEqual({})
     })
@@ -67,14 +67,14 @@ describe('history/transform', () => {
 
   describe('shape/data split', () => {
     it('routes unknown-keyed metadata to shape by default', () => {
-      const rec = toSnapshotRecord(node('vpc', { cidr: '10.0.0.0/16', tenancy: 'default' }))
+      const rec = toSnapshotRecord(node('aws:vpc', { cidr: '10.0.0.0/16', tenancy: 'default' }))
       expect(rec.shape).toEqual({ cidr: '10.0.0.0/16', tenancy: 'default' })
       expect(rec.data).toEqual({})
     })
 
     it('routes documented data-pointer keys to data — RDS', () => {
       const rec = toSnapshotRecord(
-        node('rds', {
+        node('aws:rds', {
           engine: 'postgres',
           instanceClass: 'db.t3.micro',
           latestSnapshotArn: 'arn:aws:rds:us-east-1:123:snapshot:rds-db-auto-20260420',
@@ -90,17 +90,17 @@ describe('history/transform', () => {
 
     it('routes Lambda codeSha256 + codeSource to data', () => {
       const rec = toSnapshotRecord(
-        node('lambda', {
+        node('aws:lambda', {
           runtime: 'nodejs20.x',
           handler: 'index.handler',
           codeSha256: 'abc123',
-          codeSource: { type: 's3', bucket: 'b', key: 'k' }
+          codeSource: { type: 'aws:s3', bucket: 'b', key: 'k' }
         })
       )
       expect(rec.shape).toEqual({ runtime: 'nodejs20.x', handler: 'index.handler' })
       expect(rec.data).toEqual({
         codeSha256: 'abc123',
-        codeSource: { type: 's3', bucket: 'b', key: 'k' }
+        codeSource: { type: 'aws:s3', bucket: 'b', key: 'k' }
       })
     })
 
@@ -134,7 +134,7 @@ describe('history/transform', () => {
   describe('global key-name redaction', () => {
     it('redacts keys matching password/secret/token/apikey/privatekey (case-insensitive)', () => {
       const rec = toSnapshotRecord(
-        node('lambda', {
+        node('aws:lambda', {
           runtime: 'nodejs20.x',
           dbPassword: 'hunter2',
           API_TOKEN: 'bearer-xyz',
@@ -151,7 +151,7 @@ describe('history/transform', () => {
 
     it('redacts nested secret-shaped keys recursively', () => {
       const rec = toSnapshotRecord(
-        node('vpc', {
+        node('aws:vpc', {
           nested: { deep: { apiSecret: 's', normal: 1 } }
         })
       )
@@ -162,7 +162,7 @@ describe('history/transform', () => {
 
     it('redacts secret-shaped keys inside arrays of objects', () => {
       const rec = toSnapshotRecord(
-        node('vpc', {
+        node('aws:vpc', {
           rules: [
             { name: 'ok', password: 'pw1' },
             { name: 'also-ok', apikey: 'k2' }
@@ -179,7 +179,7 @@ describe('history/transform', () => {
   describe('per-NodeType redaction rules', () => {
     it('secret: redacts SecretString and SecretBinary if leaked into metadata', () => {
       const rec = toSnapshotRecord(
-        node('secret', {
+        node('aws:secret', {
           SecretString: 'plaintext-leak',
           SecretBinary: 'binarydata',
           arn: 'arn:aws:secretsmanager:us-east-1:123:secret:x'
@@ -192,21 +192,23 @@ describe('history/transform', () => {
 
     it('ssm-param SecureString: redacts value in both shape and data', () => {
       const rec = toSnapshotRecord(
-        node('ssm-param', { type: 'SecureString', value: 'sensitive-string' })
+        node('aws:ssm-param', { type: 'SecureString', value: 'sensitive-string' })
       )
       expect(rec.data.value).toBe(REDACTED)
       expect(rec.shape.type).toBe('SecureString')
     })
 
     it('ssm-param String: value flows through to data unmodified', () => {
-      const rec = toSnapshotRecord(node('ssm-param', { type: 'String', value: 'public-config' }))
+      const rec = toSnapshotRecord(
+        node('aws:ssm-param', { type: 'String', value: 'public-config' })
+      )
       expect(rec.data.value).toBe('public-config')
       expect(rec.shape.type).toBe('String')
     })
 
     it('lambda: collapses Environment.Variables values to keys-only', () => {
       const rec = toSnapshotRecord(
-        node('lambda', {
+        node('aws:lambda', {
           runtime: 'nodejs20.x',
           environment: {
             variables: {
@@ -222,7 +224,7 @@ describe('history/transform', () => {
 
     it('lambda: empty Environment.Variables becomes empty key list', () => {
       const rec = toSnapshotRecord(
-        node('lambda', {
+        node('aws:lambda', {
           environment: { variables: {} }
         })
       )
@@ -231,13 +233,13 @@ describe('history/transform', () => {
     })
 
     it('lambda: absent environment field — no crash', () => {
-      const rec = toSnapshotRecord(node('lambda', { runtime: 'nodejs20.x' }))
+      const rec = toSnapshotRecord(node('aws:lambda', { runtime: 'nodejs20.x' }))
       expect(rec.shape.runtime).toBe('nodejs20.x')
     })
 
     it('acm: redacts PrivateKey if leaked into metadata', () => {
       const rec = toSnapshotRecord(
-        node('acm', {
+        node('aws:acm', {
           domainName: 'example.com',
           PrivateKey: '-----BEGIN-----'
         })
@@ -259,8 +261,8 @@ describe('history/transform', () => {
 
   describe('determinism', () => {
     it('returns the same shape for equivalent input regardless of key order', () => {
-      const a = toSnapshotRecord(node('vpc', { cidr: '10.0.0.0/16', tenancy: 'default' }))
-      const b = toSnapshotRecord(node('vpc', { tenancy: 'default', cidr: '10.0.0.0/16' }))
+      const a = toSnapshotRecord(node('aws:vpc', { cidr: '10.0.0.0/16', tenancy: 'default' }))
+      const b = toSnapshotRecord(node('aws:vpc', { tenancy: 'default', cidr: '10.0.0.0/16' }))
       expect(a).toEqual(b)
     })
   })

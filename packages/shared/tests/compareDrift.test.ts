@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { compareDrift, applyDriftToState } from '../src/drift/compareDrift'
 import type { CloudNode } from '../src/types/cloud'
 
-function node(id: string, type: CloudNode['type'] = 'ec2', label = id): CloudNode {
+function node(id: string, type: CloudNode['type'] = 'aws:ec2', label = id): CloudNode {
   return {
     id,
     type,
@@ -13,7 +13,7 @@ function node(id: string, type: CloudNode['type'] = 'ec2', label = id): CloudNod
   }
 }
 
-function imported(id: string, type: CloudNode['type'] = 'ec2', label = id): CloudNode {
+function imported(id: string, type: CloudNode['type'] = 'aws:ec2', label = id): CloudNode {
   return {
     id,
     type,
@@ -71,8 +71,8 @@ describe('compareDrift', () => {
 
 describe('compareDrift — fuzzy label matching', () => {
   it('matches by normalised label when IDs differ, same type', () => {
-    const live = node('i-0abc123', 'ec2', 'my-web-server')
-    const imp = imported('aws_instance.my_web_server', 'ec2', 'my-web-server')
+    const live = node('i-0abc123', 'aws:ec2', 'my-web-server')
+    const imp = imported('aws_instance.my_web_server', 'aws:ec2', 'my-web-server')
     const result = compareDrift([live], [imp])
     expect(result.matched).toContain('i-0abc123')
     expect(result.unmanaged).toHaveLength(0)
@@ -81,15 +81,15 @@ describe('compareDrift — fuzzy label matching', () => {
   })
 
   it('normalises separators: hyphens, underscores, spaces treated the same', () => {
-    const live = node('i-111', 'ec2', 'my web server')
-    const imp = imported('aws_instance.my_web_server', 'ec2', 'my_web_server')
+    const live = node('i-111', 'aws:ec2', 'my web server')
+    const imp = imported('aws_instance.my_web_server', 'aws:ec2', 'my_web_server')
     const result = compareDrift([live], [imp])
     expect(result.matched).toContain('i-111')
   })
 
   it('does NOT fuzzy-match across different types', () => {
-    const live = node('bucket-abc', 's3', 'my-bucket')
-    const imp = imported('aws_lambda.my_bucket', 'lambda', 'my-bucket')
+    const live = node('bucket-abc', 'aws:s3', 'my-bucket')
+    const imp = imported('aws_lambda.my_bucket', 'aws:lambda', 'my-bucket')
     const result = compareDrift([live], [imp])
     expect(result.matched).toHaveLength(0)
     expect(result.unmanaged).toContain('bucket-abc')
@@ -97,9 +97,9 @@ describe('compareDrift — fuzzy label matching', () => {
   })
 
   it('exact ID match takes priority over fuzzy label match', () => {
-    const live = node('i-exact', 'ec2', 'shared-name')
-    const impExact = imported('i-exact', 'ec2', 'shared-name')
-    const impFuzzy = imported('aws_instance.other', 'ec2', 'shared-name')
+    const live = node('i-exact', 'aws:ec2', 'shared-name')
+    const impExact = imported('i-exact', 'aws:ec2', 'shared-name')
+    const impFuzzy = imported('aws_instance.other', 'aws:ec2', 'shared-name')
     const result = compareDrift([live], [impExact, impFuzzy])
     // should match exactly by ID, not fuzzily
     expect(result.matched).toContain('i-exact')
@@ -108,9 +108,9 @@ describe('compareDrift — fuzzy label matching', () => {
   })
 
   it('each imported node is only consumed once in fuzzy matching', () => {
-    const live1 = node('i-001', 'ec2', 'same-name')
-    const live2 = node('i-002', 'ec2', 'same-name')
-    const imp = imported('aws_instance.same_name', 'ec2', 'same-name')
+    const live1 = node('i-001', 'aws:ec2', 'same-name')
+    const live2 = node('i-002', 'aws:ec2', 'same-name')
+    const imp = imported('aws_instance.same_name', 'aws:ec2', 'same-name')
     const result = compareDrift([live1, live2], [imp])
     // Only one live node can claim the fuzzy match
     expect(result.matched).toHaveLength(1)
@@ -120,9 +120,9 @@ describe('compareDrift — fuzzy label matching', () => {
 
 describe('applyDriftToState — fuzzy matches', () => {
   it('copies tfMetadata from fuzzy-matched imported node', () => {
-    const live = node('i-0abc123', 'ec2', 'my-server')
+    const live = node('i-0abc123', 'aws:ec2', 'my-server')
     const imp = {
-      ...imported('aws_instance.my_server', 'ec2', 'my-server'),
+      ...imported('aws_instance.my_server', 'aws:ec2', 'my-server'),
       metadata: { instance_type: 't3.large' }
     }
     const result = applyDriftToState([live], [imp])
@@ -133,21 +133,21 @@ describe('applyDriftToState — fuzzy matches', () => {
   })
 
   it('fuzzy-matched imported node is removed from importedNodes', () => {
-    const live = node('i-xyz', 'ec2', 'web-server')
-    const imp = imported('aws_instance.web_server', 'ec2', 'web-server')
+    const live = node('i-xyz', 'aws:ec2', 'web-server')
+    const imp = imported('aws_instance.web_server', 'aws:ec2', 'web-server')
     const result = applyDriftToState([live], [imp])
     expect(result.importedNodes).toHaveLength(0)
   })
 
   it('both exact and fuzzy matches coexist correctly in the same call', () => {
-    const liveExact = node('i-exact', 'ec2', 'exact-node')
-    const liveFuzzy = node('i-fuzzy', 'ec2', 'fuzzy-node')
+    const liveExact = node('i-exact', 'aws:ec2', 'exact-node')
+    const liveFuzzy = node('i-fuzzy', 'aws:ec2', 'fuzzy-node')
     const impExact = {
-      ...imported('i-exact', 'ec2', 'exact-node'),
+      ...imported('i-exact', 'aws:ec2', 'exact-node'),
       metadata: { instance_type: 't3.small' }
     }
     const impFuzzy = {
-      ...imported('aws_instance.fuzzy_node', 'ec2', 'fuzzy-node'),
+      ...imported('aws_instance.fuzzy_node', 'aws:ec2', 'fuzzy-node'),
       metadata: { instance_type: 't3.large' }
     }
 

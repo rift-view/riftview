@@ -72,7 +72,7 @@ describe('buildCommands — igw', () => {
 describe('buildDeleteCommands — subnet', () => {
   const subnetNode: CloudNode = {
     id: 'subnet-0abc1234',
-    type: 'subnet',
+    type: 'aws:subnet',
     label: 'public-1',
     status: 'running',
     region: 'us-east-1',
@@ -92,7 +92,7 @@ describe('buildDeleteCommands — igw', () => {
   it('builds detach + delete when parentId is set', () => {
     const igwNode: CloudNode = {
       id: 'igw-0abc1234',
-      type: 'igw',
+      type: 'aws:igw',
       label: 'main-igw',
       status: 'running',
       region: 'us-east-1',
@@ -120,7 +120,7 @@ describe('buildDeleteCommands — igw', () => {
   it('builds only delete when no VPC attachment', () => {
     const igwNode: CloudNode = {
       id: 'igw-detached',
-      type: 'igw',
+      type: 'aws:igw',
       label: 'unattached-igw',
       status: 'unknown',
       region: 'us-east-1',
@@ -139,7 +139,7 @@ describe('buildDeleteCommands — igw', () => {
   it('falls back to metadata.vpcId when parentId is absent', () => {
     const igwNode: CloudNode = {
       id: 'igw-meta',
-      type: 'igw',
+      type: 'aws:igw',
       label: 'meta-igw',
       status: 'running',
       region: 'us-east-1',

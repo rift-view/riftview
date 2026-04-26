@@ -6,7 +6,7 @@ import type { CloudNode } from '@riftview/shared'
 
 const VPC_NODE: CloudNode = {
   id: 'vpc-0abc1234',
-  type: 'vpc',
+  type: 'aws:vpc',
   label: 'main-vpc',
   status: 'running',
   region: 'us-east-1',

@@ -11,7 +11,7 @@ interface Props {
 
 export default function CloudFrontEditForm({ node, onChange }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
-  const acmNodes = nodes.filter((n) => n.type === 'acm' && n.status === 'running')
+  const acmNodes = nodes.filter((n) => n.type === 'aws:acm' && n.status === 'running')
 
   const [form, setForm] = useState<CloudFrontEditParams>({
     resource: 'cloudfront',

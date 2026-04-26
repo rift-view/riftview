@@ -107,28 +107,28 @@ const TITLES: Record<string, string> = {
 
 // Maps form resource identifier to CloudNode NodeType
 const RESOURCE_TO_NODE_TYPE: Record<string, NodeType> = {
-  vpc: 'vpc',
-  ec2: 'ec2',
-  sg: 'security-group',
-  s3: 's3',
-  rds: 'rds',
-  lambda: 'lambda',
-  alb: 'alb',
-  acm: 'acm',
-  cloudfront: 'cloudfront',
-  apigw: 'apigw',
-  'apigw-route': 'apigw-route',
-  sqs: 'sqs',
-  sns: 'sns',
-  dynamo: 'dynamo',
-  secret: 'secret',
-  ecr: 'ecr-repo',
-  sfn: 'sfn',
-  'eventbridge-bus': 'eventbridge-bus',
-  'r53-zone': 'r53-zone',
-  'ssm-param': 'ssm-param',
-  subnet: 'subnet',
-  igw: 'igw'
+  vpc: 'aws:vpc',
+  ec2: 'aws:ec2',
+  sg: 'aws:security-group',
+  s3: 'aws:s3',
+  rds: 'aws:rds',
+  lambda: 'aws:lambda',
+  alb: 'aws:alb',
+  acm: 'aws:acm',
+  cloudfront: 'aws:cloudfront',
+  apigw: 'aws:apigw',
+  'apigw-route': 'aws:apigw-route',
+  sqs: 'aws:sqs',
+  sns: 'aws:sns',
+  dynamo: 'aws:dynamo',
+  secret: 'aws:secret',
+  ecr: 'aws:ecr-repo',
+  sfn: 'aws:sfn',
+  'eventbridge-bus': 'aws:eventbridge-bus',
+  'r53-zone': 'aws:r53-zone',
+  'ssm-param': 'aws:ssm-param',
+  subnet: 'aws:subnet',
+  igw: 'aws:igw'
 }
 
 export function CreateModal(): React.JSX.Element | null {
@@ -147,7 +147,7 @@ export function CreateModal(): React.JSX.Element | null {
   // When creating a route, the parent API is the currently selected node (if it's an apigw)
   const selectedNode = nodes.find((n) => n.id === selectedNodeId)
   const parentApiId =
-    activeCreate?.resource === 'apigw-route' && selectedNode?.type === 'apigw'
+    activeCreate?.resource === 'apigw-route' && selectedNode?.type === 'aws:apigw'
       ? selectedNode.id
       : ((activeCreate as { resource: string; view: string; parentId?: string } | null)?.parentId ??
         '')

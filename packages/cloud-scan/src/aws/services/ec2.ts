@@ -71,7 +71,7 @@ export async function describeInstances(client: EC2Client, region: string): Prom
       })
       return {
         id: i.InstanceId ?? 'unknown',
-        type: 'ec2',
+        type: 'aws:ec2',
         label: nameTag(i.Tags) ?? i.InstanceId ?? 'EC2',
         status: ec2StatusToNodeStatus(i.State?.Name),
         region,
@@ -99,7 +99,7 @@ export async function describeVpcs(client: EC2Client, region: string): Promise<C
     return (res.Vpcs ?? []).map(
       (v): CloudNode => ({
         id: v.VpcId ?? 'unknown',
-        type: 'vpc',
+        type: 'aws:vpc',
         label: nameTag(v.Tags) ?? v.VpcId ?? 'VPC',
         status: v.State === 'available' ? 'running' : 'pending',
         region,
@@ -117,7 +117,7 @@ export async function describeSubnets(client: EC2Client, region: string): Promis
     return (res.Subnets ?? []).map(
       (s): CloudNode => ({
         id: s.SubnetId ?? 'unknown',
-        type: 'subnet',
+        type: 'aws:subnet',
         label: nameTag(s.Tags) ?? s.SubnetId ?? 'Subnet',
         status: s.State === 'available' ? 'running' : 'pending',
         region,
@@ -143,7 +143,7 @@ export async function describeSecurityGroups(
     return (res.SecurityGroups ?? []).map(
       (sg): CloudNode => ({
         id: sg.GroupId ?? 'unknown',
-        type: 'security-group',
+        type: 'aws:security-group',
         label: sg.GroupName ?? sg.GroupId ?? 'SG',
         status: 'running',
         region,

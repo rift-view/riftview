@@ -6,7 +6,7 @@ function node(overrides: Partial<CloudNode>): CloudNode {
   return {
     id: 'test-id',
     label: 'test-label',
-    type: 'lambda',
+    type: 'aws:lambda',
     status: 'running',
     region: 'us-east-1',
     metadata: {},
@@ -16,13 +16,13 @@ function node(overrides: Partial<CloudNode>): CloudNode {
 
 describe('buildRemediateCommands', () => {
   it('unmanaged lambda → delete command', () => {
-    const result = buildRemediateCommands(node({ type: 'lambda', driftStatus: 'unmanaged' }))
+    const result = buildRemediateCommands(node({ type: 'aws:lambda', driftStatus: 'unmanaged' }))
     expect(result).toEqual([['lambda', 'delete-function', '--function-name', 'test-id']])
   })
 
   it('unmanaged eventbridge default bus → []', () => {
     const result = buildRemediateCommands(
-      node({ type: 'eventbridge-bus', label: 'default', driftStatus: 'unmanaged' })
+      node({ type: 'aws:eventbridge-bus', label: 'default', driftStatus: 'unmanaged' })
     )
     expect(result).toEqual([])
   })
@@ -93,7 +93,7 @@ describe('buildRemediateCommands', () => {
     const result = buildRemediateCommands(
       node({
         id: 'i-abc123',
-        type: 'ec2',
+        type: 'aws:ec2',
         status: 'running',
         driftStatus: 'matched',
         metadata: { instanceType: 't3.small' },
@@ -118,7 +118,7 @@ describe('buildRemediateCommands', () => {
     const result = buildRemediateCommands(
       node({
         id: 'i-abc123',
-        type: 'ec2',
+        type: 'aws:ec2',
         status: 'stopped',
         driftStatus: 'matched',
         metadata: { instanceType: 't3.small' },
@@ -141,7 +141,7 @@ describe('buildRemediateCommands', () => {
     const result = buildRemediateCommands(
       node({
         id: 'my-db',
-        type: 'rds',
+        type: 'aws:rds',
         driftStatus: 'matched',
         metadata: { instanceClass: 'db.t3.small' },
         tfMetadata: { instanceClass: 'db.t3.medium' }

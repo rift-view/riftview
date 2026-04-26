@@ -14,7 +14,7 @@ export default function Ec2EditForm({ node, onChange }: Props): React.JSX.Elemen
   const [instType, setInstType] = useState((node.metadata.instanceType as string) ?? 't3.micro')
   const [sgIds, setSgIds] = useState<string[]>((node.metadata.securityGroupIds as string[]) ?? [])
 
-  const sgs = nodes.filter((n) => n.type === 'security-group')
+  const sgs = nodes.filter((n) => n.type === 'aws:security-group')
 
   const emit = (overrides: Partial<Ec2EditParams>): void =>
     onChange({

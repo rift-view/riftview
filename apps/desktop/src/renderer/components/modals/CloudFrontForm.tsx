@@ -9,9 +9,9 @@ interface Props {
 
 export function CloudFrontForm({ onChange, showErrors }: Props): React.JSX.Element {
   const nodes = useCloudStore((s) => s.nodes)
-  const acmNodes = nodes.filter((n) => n.type === 'acm' && n.status === 'running')
-  const s3Nodes = nodes.filter((n) => n.type === 's3')
-  const albNodes = nodes.filter((n) => n.type === 'alb')
+  const acmNodes = nodes.filter((n) => n.type === 'aws:acm' && n.status === 'running')
+  const s3Nodes = nodes.filter((n) => n.type === 'aws:s3')
+  const albNodes = nodes.filter((n) => n.type === 'aws:alb')
 
   const [form, setForm] = useState<Omit<CloudFrontParams, 'resource'>>({
     comment: '',

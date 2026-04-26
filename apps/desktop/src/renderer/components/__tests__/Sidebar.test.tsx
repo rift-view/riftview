@@ -131,7 +131,7 @@ describe('Sidebar instant multi-select filter', () => {
     render(<Sidebar />)
     const ec2Row = screen.getByText('⬡ EC2').closest('div')!
     fireEvent.click(ec2Row)
-    expect(useUIStore.getState().activeFilterTypes.has('ec2')).toBe(true)
+    expect(useUIStore.getState().activeFilterTypes.has('aws:ec2')).toBe(true)
   })
 
   it('clicking a second type adds it to the active set', () => {
@@ -139,22 +139,22 @@ describe('Sidebar instant multi-select filter', () => {
     fireEvent.click(screen.getByText('⬡ EC2').closest('div')!)
     fireEvent.click(screen.getByText('⬡ Lambda').closest('div')!)
     const { activeFilterTypes } = useUIStore.getState()
-    expect(activeFilterTypes.has('ec2')).toBe(true)
-    expect(activeFilterTypes.has('lambda')).toBe(true)
+    expect(activeFilterTypes.has('aws:ec2')).toBe(true)
+    expect(activeFilterTypes.has('aws:lambda')).toBe(true)
   })
 
   it('clicking an active type deactivates it instantly', () => {
-    useUIStore.setState({ activeFilterTypes: new Set(['ec2']), activeSidebarType: 'ec2' })
+    useUIStore.setState({ activeFilterTypes: new Set(['aws:ec2']), activeSidebarType: 'aws:ec2' })
     render(<Sidebar />)
     fireEvent.click(screen.getByText('⬡ EC2').closest('div')!)
-    expect(useUIStore.getState().activeFilterTypes.has('ec2')).toBe(false)
+    expect(useUIStore.getState().activeFilterTypes.has('aws:ec2')).toBe(false)
   })
 
   it('sets command preview to include all active type labels when filter applied', () => {
     useCloudStore.setState({
       nodes: [
-        { id: '1', type: 'ec2', label: 'i-1', region: 'us-east-1', raw: {} },
-        { id: '2', type: 'lambda', label: 'fn-1', region: 'us-east-1', raw: {} }
+        { id: '1', type: 'aws:ec2', label: 'i-1', region: 'us-east-1', raw: {} },
+        { id: '2', type: 'aws:lambda', label: 'fn-1', region: 'us-east-1', raw: {} }
       ]
     })
     render(<Sidebar />)
@@ -169,7 +169,7 @@ describe('Sidebar instant multi-select filter', () => {
 
   it('clears command preview and filter when all types deselected', () => {
     useCloudStore.setState({
-      nodes: [{ id: '1', type: 'ec2', label: 'i-1', region: 'us-east-1', raw: {} }]
+      nodes: [{ id: '1', type: 'aws:ec2', label: 'i-1', region: 'us-east-1', raw: {} }]
     })
     render(<Sidebar />)
     const ec2Row = screen.getByText('⬡ EC2').closest('div')!

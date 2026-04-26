@@ -48,7 +48,7 @@ export async function listDistributions(client: CloudFrontClient): Promise<Cloud
 
       const node: CloudNode = {
         id: dist.Id ?? 'unknown',
-        type: 'cloudfront',
+        type: 'aws:cloudfront',
         label: dist.Comment || dist.DomainName || dist.Id || 'CloudFront',
         status: cfStatusToNodeStatus(dist.Status),
         region: 'global',

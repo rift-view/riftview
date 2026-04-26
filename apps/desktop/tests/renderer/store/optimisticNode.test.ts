@@ -17,7 +17,7 @@ import type { CloudNode } from '@riftview/shared'
 
 const makeOptimisticNode = (id: string): CloudNode => ({
   id,
-  type: 'ec2',
+  type: 'aws:ec2',
   label: 'New EC2',
   status: 'creating',
   region: 'us-east-1',
@@ -60,7 +60,7 @@ describe('optimistic node store operations', () => {
   it('removeOptimisticNode only removes the matching node', () => {
     const keepNode: CloudNode = {
       id: 'real-node',
-      type: 'vpc',
+      type: 'aws:vpc',
       label: 'prod-vpc',
       status: 'running',
       region: 'us-east-1',
@@ -102,7 +102,7 @@ describe('optimistic node store operations', () => {
 
     const pendingNode: CloudNode = {
       id: pendingId,
-      type: 'ec2',
+      type: 'aws:ec2',
       label: 'Creating',
       status: 'creating',
       region: 'us-east-1',
@@ -135,7 +135,7 @@ describe('optimistic node store operations', () => {
 
     const realNode: CloudNode = {
       id: 'i-0abc1234',
-      type: 'ec2',
+      type: 'aws:ec2',
       label: 'New EC2',
       status: 'running',
       region: 'us-east-1',

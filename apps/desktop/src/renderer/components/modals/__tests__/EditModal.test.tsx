@@ -5,7 +5,7 @@ import type { CloudNode } from '@riftview/shared'
 
 const vpcNode: CloudNode = {
   id: 'vpc-123',
-  type: 'vpc',
+  type: 'aws:vpc',
   label: 'my-vpc',
   status: 'running',
   region: 'us-east-1',
@@ -14,7 +14,7 @@ const vpcNode: CloudNode = {
 
 const acmNode: CloudNode = {
   id: 'arn:aws:acm:us-east-1:123456789:certificate/abc',
-  type: 'acm',
+  type: 'aws:acm',
   label: 'example.com',
   status: 'running',
   region: 'us-east-1',
@@ -23,7 +23,7 @@ const acmNode: CloudNode = {
 
 const eventBridgeNode: CloudNode = {
   id: 'arn:aws:events:us-east-1:123456789:event-bus/my-bus',
-  type: 'eventbridge-bus',
+  type: 'aws:eventbridge-bus',
   label: 'my-bus',
   status: 'running',
   region: 'us-east-1',
@@ -69,7 +69,7 @@ describe('EditModal', () => {
   describe('SQS edit form', () => {
     const sqsNode: CloudNode = {
       id: 'https://sqs.us-east-1.amazonaws.com/123/my-queue',
-      type: 'sqs',
+      type: 'aws:sqs',
       label: 'my-queue',
       status: 'running',
       region: 'us-east-1',
@@ -102,7 +102,7 @@ describe('EditModal', () => {
   describe('SNS edit form', () => {
     const snsNode: CloudNode = {
       id: 'arn:aws:sns:us-east-1:123:my-topic',
-      type: 'sns',
+      type: 'aws:sns',
       label: 'my-topic',
       status: 'running',
       region: 'us-east-1',
@@ -132,7 +132,7 @@ describe('EditModal', () => {
   describe('ECR edit form', () => {
     const ecrNode: CloudNode = {
       id: 'arn:aws:ecr:us-east-1:123:repository/my-repo',
-      type: 'ecr-repo',
+      type: 'aws:ecr-repo',
       label: 'my-repo',
       status: 'running',
       region: 'us-east-1',
@@ -166,7 +166,7 @@ describe('EditModal', () => {
   describe('Secret edit form', () => {
     const secretNode: CloudNode = {
       id: 'arn:aws:secretsmanager:us-east-1:123:secret/my-secret',
-      type: 'secret',
+      type: 'aws:secret',
       label: 'my-secret',
       status: 'running',
       region: 'us-east-1',
@@ -198,7 +198,7 @@ describe('EditModal', () => {
   describe('DynamoDB edit form', () => {
     const dynamoNode: CloudNode = {
       id: 'my-table',
-      type: 'dynamo',
+      type: 'aws:dynamo',
       label: 'my-table',
       status: 'running',
       region: 'us-east-1',
@@ -264,7 +264,7 @@ describe('EditModal', () => {
   describe('SSM Parameter edit form', () => {
     const ssmStringNode: CloudNode = {
       id: 'arn:aws:ssm:us-east-1:123:parameter/my/key',
-      type: 'ssm-param',
+      type: 'aws:ssm-param',
       label: '/my/key',
       status: 'running',
       region: 'us-east-1',
@@ -273,7 +273,7 @@ describe('EditModal', () => {
 
     const ssmSecureNode: CloudNode = {
       id: 'arn:aws:ssm:us-east-1:123:parameter/my/secret',
-      type: 'ssm-param',
+      type: 'aws:ssm-param',
       label: '/my/secret',
       status: 'running',
       region: 'us-east-1',

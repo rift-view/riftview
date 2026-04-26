@@ -22,7 +22,7 @@ describe('pendingNodes', () => {
   it('addPendingNode adds a ghost node', () => {
     const ghost = {
       id: 'pending:abc',
-      type: 'vpc' as const,
+      type: 'aws:vpc' as const,
       label: 'New VPC',
       status: 'creating' as const,
       region: 'us-east-1',
@@ -36,7 +36,7 @@ describe('pendingNodes', () => {
   it('removePendingNode removes by id', () => {
     const ghost = {
       id: 'pending:abc',
-      type: 'vpc' as const,
+      type: 'aws:vpc' as const,
       label: 'New VPC',
       status: 'creating' as const,
       region: 'us-east-1',
@@ -50,7 +50,7 @@ describe('pendingNodes', () => {
   it('clearPendingNodes empties all', () => {
     const ghost = {
       id: 'pending:abc',
-      type: 'vpc' as const,
+      type: 'aws:vpc' as const,
       label: 'New VPC',
       status: 'creating' as const,
       region: 'us-east-1',
@@ -213,7 +213,7 @@ describe('scanGeneration', () => {
     const store = createCloudStore()
     const node = {
       id: 'n1',
-      type: 'vpc' as const,
+      type: 'aws:vpc' as const,
       label: 'VPC',
       status: 'active' as const,
       region: 'us-east-1',
@@ -237,7 +237,7 @@ describe('scanGeneration', () => {
     store.getState().incrementGeneration() // generation = 1
     const node = {
       id: 'n1',
-      type: 'vpc' as const,
+      type: 'aws:vpc' as const,
       label: 'VPC',
       status: 'active' as const,
       region: 'us-east-1',
@@ -252,7 +252,7 @@ describe('scanGeneration', () => {
     const gen = store.getState().scanGeneration
     const node = {
       id: 'n1',
-      type: 'vpc' as const,
+      type: 'aws:vpc' as const,
       label: 'VPC',
       status: 'active' as const,
       region: 'us-east-1',
@@ -268,7 +268,7 @@ describe('scanGeneration', () => {
     store.getState().incrementGeneration() // generation now = 1, staleGen = 0
     const node = {
       id: 'n1',
-      type: 'vpc' as const,
+      type: 'aws:vpc' as const,
       label: 'VPC',
       status: 'active' as const,
       region: 'us-east-1',
@@ -338,7 +338,7 @@ describe('clearImportedNodes', () => {
   it('clears importedNodes array', () => {
     const node = {
       id: 'i-123',
-      type: 'ec2' as const,
+      type: 'aws:ec2' as const,
       label: 'Instance',
       status: 'active' as const,
       region: 'us-east-1',
@@ -353,7 +353,7 @@ describe('clearImportedNodes', () => {
   it('removes drift metadata from live nodes', () => {
     const nodeWithDrift = {
       id: 'i-123',
-      type: 'ec2' as const,
+      type: 'aws:ec2' as const,
       label: 'Instance',
       status: 'active' as const,
       region: 'us-east-1',

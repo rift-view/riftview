@@ -74,7 +74,7 @@ const NODE_TYPES = {
   ...getPluginNodeComponents()
 }
 
-const CONTAINER_TYPES = new Set(['vpc', 'subnet', 'apigw'])
+const CONTAINER_TYPES = new Set(['aws:vpc', 'aws:subnet', 'aws:apigw'])
 
 // Node types that are structural chrome — always full opacity during blast radius / path trace
 const OPACITY_CONTAINER_TYPES = new Set([
@@ -88,7 +88,7 @@ const OPACITY_CONTAINER_TYPES = new Set([
 ])
 
 // Internet-facing source node types for path trace
-const INTERNET_SOURCE_TYPES = new Set(['igw', 'cloudfront', 'apigw'])
+const INTERNET_SOURCE_TYPES = new Set(['aws:igw', 'aws:cloudfront', 'aws:apigw'])
 
 const RES_W = 150
 const RES_H = 66
@@ -194,7 +194,7 @@ function buildFlowNodes(
       const col = i % GLOBAL_COLS
       const row = Math.floor(i / GLOBAL_COLS)
       const nodeType =
-        n.type === 'acm' ? 'acm' : n.type === 'cloudfront' ? 'cloudfront' : 'resource'
+        n.type === 'aws:acm' ? 'acm' : n.type === 'aws:cloudfront' ? 'cloudfront' : 'resource'
       nodes.push({
         id: n.id,
         type: nodeType,
@@ -221,12 +221,12 @@ function buildFlowNodes(
   }
 
   // Bucket regional nodes by role
-  const vpcs = regionalNodes.filter((n) => n.type === 'vpc')
-  const subnets = regionalNodes.filter((n) => n.type === 'subnet')
-  const apigws = regionalNodes.filter((n) => n.type === 'apigw')
-  const apigwRoutes = regionalNodes.filter((n) => n.type === 'apigw-route')
+  const vpcs = regionalNodes.filter((n) => n.type === 'aws:vpc')
+  const subnets = regionalNodes.filter((n) => n.type === 'aws:subnet')
+  const apigws = regionalNodes.filter((n) => n.type === 'aws:apigw')
+  const apigwRoutes = regionalNodes.filter((n) => n.type === 'aws:apigw-route')
   const resources = regionalNodes.filter(
-    (n) => !CONTAINER_TYPES.has(n.type) && n.type !== 'apigw-route'
+    (n) => !CONTAINER_TYPES.has(n.type) && n.type !== 'aws:apigw-route'
   )
 
   const subnetsByVpc = new Map<string, CloudNode[]>()
@@ -281,7 +281,7 @@ function buildFlowNodes(
 
     nodes.push({
       id: vpc.id,
-      type: 'vpc',
+      type: 'aws:vpc',
       position: { x: vpcX, y: vpcY },
       style: { width: vpcW, height: effectiveVpcH },
       dragHandle: '.cb-zone-drag-handle',
@@ -300,7 +300,7 @@ function buildFlowNodes(
         const isCollapsed = collapsedSubnets.has(subnet.id)
         nodes.push({
           id: subnet.id,
-          type: 'subnet',
+          type: 'aws:subnet',
           parentId: vpc.id,
           extent: 'parent',
           position: { x: subX, y: VPC_LABEL + VPC_PAD },
@@ -478,7 +478,7 @@ function buildFlowNodes(
 
     nodes.push({
       id: api.id,
-      type: 'apigw',
+      type: 'aws:apigw',
       position: { x: vpcX, y: vpcY },
       style: { width: apigwW, height: apigwHFinal },
       data: {
@@ -493,7 +493,7 @@ function buildFlowNodes(
     routes.forEach((route, ri) => {
       nodes.push({
         id: route.id,
-        type: 'apigw-route',
+        type: 'aws:apigw-route',
         parentId: api.id,
         extent: 'parent',
         position: {
@@ -593,8 +593,8 @@ function buildFlowNodes(
 // Build topology edges: route → lambda, integration edges
 function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
   const edges: Edge[] = []
-  const lambdaNodes = cloudNodes.filter((n) => n.type === 'lambda')
-  const routeNodes = cloudNodes.filter((n) => n.type === 'apigw-route')
+  const lambdaNodes = cloudNodes.filter((n) => n.type === 'aws:lambda')
+  const routeNodes = cloudNodes.filter((n) => n.type === 'aws:apigw-route')
 
   // Route → Lambda integration edges (dotted)
   routeNodes.forEach((route) => {
@@ -635,11 +635,11 @@ function buildTopologyEdges(cloudNodes: CloudNode[]): Edge[] {
   // ALB nodes store the same target group ARNs in metadata.targetGroupArns[].
   // A blast radius starting at the ALB must propagate to ECS, so emit the reverse edge here.
   for (const albNode of cloudNodes) {
-    if (albNode.type !== 'alb') continue
+    if (albNode.type !== 'aws:alb') continue
     const tgArns = albNode.metadata.targetGroupArns as string[] | undefined
     if (!tgArns || tgArns.length === 0) continue
     for (const ecsNode of cloudNodes) {
-      if (ecsNode.type !== 'ecs') continue
+      if (ecsNode.type !== 'aws:ecs') continue
       const linked = ecsNode.integrations?.some((i) => tgArns.includes(i.targetId))
       if (!linked) continue
       const edgeId = `integration-alb-ecs-${albNode.id}-${ecsNode.id}`
@@ -918,7 +918,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       if (n.extent === 'parent') {
         // Child nodes: only patch data for lock indicator, no position override
         // For subnet nodes, inject the toggleSubnet callback
-        if (n.type === 'subnet') {
+        if (n.type === 'aws:subnet') {
           return {
             ...n,
             style: { ...n.style, ...multiSelectStyle },
@@ -952,7 +952,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       }
 
       // For top-level VPC nodes, inject toggleVpc callback
-      if (n.type === 'vpc') {
+      if (n.type === 'aws:vpc') {
         return {
           ...n,
           position,
@@ -968,7 +968,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       }
 
       // For top-level apigw nodes, inject toggleApigw callback
-      if (n.type === 'apigw') {
+      if (n.type === 'aws:apigw') {
         return {
           ...n,
           position,
@@ -984,7 +984,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       }
 
       // For top-level subnet nodes (no parentId), also inject toggleSubnet
-      if (n.type === 'subnet') {
+      if (n.type === 'aws:subnet') {
         return {
           ...n,
           position,
@@ -1011,7 +1011,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
     // Augment SNS nodes with subscriber labels
     const snsSubscriberMap = new Map<string, string[]>()
     for (const n of allNodes) {
-      if (n.type !== 'sns' || !n.integrations) continue
+      if (n.type !== 'aws:sns' || !n.integrations) continue
       const labels = n.integrations
         .filter((i) => i.edgeType === 'subscription')
         .map((i) => {
@@ -1245,7 +1245,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
       visibleNodes
         .filter(
           (n) =>
-            n.type === 'sns' &&
+            n.type === 'aws:sns' &&
             (n.integrations?.filter((i) => i.edgeType === 'subscription').length ?? 0) >= 2
         )
         .map((n) => n.id)

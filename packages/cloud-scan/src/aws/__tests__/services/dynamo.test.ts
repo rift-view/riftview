@@ -27,7 +27,7 @@ describe('listTables', () => {
 
     expect(nodes).toHaveLength(1)
     expect(nodes[0].id).toBe(TABLE_NAME)
-    expect(nodes[0].type).toBe('dynamo')
+    expect(nodes[0].type).toBe('aws:dynamo')
     expect(nodes[0].label).toBe(TABLE_NAME)
     expect(nodes[0].region).toBe('us-east-1')
   })

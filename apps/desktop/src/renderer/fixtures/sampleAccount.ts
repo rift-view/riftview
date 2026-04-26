@@ -6,7 +6,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // VPC
   {
     id: 'vpc-0sample1',
-    type: 'vpc',
+    type: 'aws:vpc',
     label: 'sample-vpc',
     status: 'running',
     region: REGION,
@@ -16,7 +16,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // Subnets
   {
     id: 'subnet-pub1',
-    type: 'subnet',
+    type: 'aws:subnet',
     label: 'public-1a',
     status: 'running',
     region: REGION,
@@ -25,7 +25,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   },
   {
     id: 'subnet-priv1',
-    type: 'subnet',
+    type: 'aws:subnet',
     label: 'private-1a',
     status: 'running',
     region: REGION,
@@ -36,7 +36,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // Security Group
   {
     id: 'sg-0sample1',
-    type: 'security-group',
+    type: 'aws:security-group',
     label: 'web-sg',
     status: 'running',
     region: REGION,
@@ -47,7 +47,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // Internet Gateway
   {
     id: 'igw-0sample1',
-    type: 'igw',
+    type: 'aws:igw',
     label: 'sample-igw',
     status: 'running',
     region: REGION,
@@ -58,7 +58,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // EC2 — public subnet
   {
     id: 'i-0sample01',
-    type: 'ec2',
+    type: 'aws:ec2',
     label: 'web-server-1',
     status: 'running',
     region: REGION,
@@ -69,7 +69,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // EC2 — private subnet
   {
     id: 'i-0sample02',
-    type: 'ec2',
+    type: 'aws:ec2',
     label: 'app-server-1',
     status: 'running',
     region: REGION,
@@ -80,7 +80,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // RDS
   {
     id: 'sample-db',
-    type: 'rds',
+    type: 'aws:rds',
     label: 'sample-db',
     status: 'running',
     region: REGION,
@@ -96,7 +96,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // Lambda
   {
     id: 'arn:aws:lambda:us-east-1:123456789012:function:api-handler',
-    type: 'lambda',
+    type: 'aws:lambda',
     label: 'api-handler',
     status: 'running',
     region: REGION,
@@ -106,7 +106,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // API Gateway
   {
     id: 'abc123sample',
-    type: 'apigw',
+    type: 'aws:apigw',
     label: 'sample-api',
     status: 'running',
     region: REGION,
@@ -116,7 +116,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // API Gateway Route
   {
     id: 'abc123sample-GET-items',
-    type: 'apigw-route',
+    type: 'aws:apigw-route',
     label: 'GET /items',
     status: 'running',
     region: REGION,
@@ -127,7 +127,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // S3
   {
     id: 'sample-assets-bucket',
-    type: 's3',
+    type: 'aws:s3',
     label: 'sample-assets-bucket',
     status: 'running',
     region: REGION,
@@ -137,7 +137,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // SQS — id is queue URL (enables SNS→SQS edges)
   {
     id: 'https://sqs.us-east-1.amazonaws.com/123456789012/job-queue',
-    type: 'sqs',
+    type: 'aws:sqs',
     label: 'job-queue',
     status: 'running',
     region: REGION,
@@ -147,7 +147,7 @@ export const SAMPLE_NODES: CloudNode[] = [
   // ALB
   {
     id: 'arn:aws:elasticloadbalancing:us-east-1:123456789012:loadbalancer/app/sample-alb/abc123',
-    type: 'alb',
+    type: 'aws:alb',
     label: 'sample-alb',
     status: 'running',
     region: REGION,

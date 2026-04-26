@@ -62,7 +62,7 @@ describe('PluginRegistry', () => {
   it('scanAll merges results from all plugins', async () => {
     const nodeA = {
       id: 'a',
-      type: 'ec2' as const,
+      type: 'aws:ec2' as const,
       label: 'A',
       status: 'running' as const,
       region: 'us-east-1',
@@ -70,7 +70,7 @@ describe('PluginRegistry', () => {
     }
     const nodeB = {
       id: 'b',
-      type: 'ec2' as const,
+      type: 'aws:ec2' as const,
       label: 'B',
       status: 'running' as const,
       region: 'us-east-1',

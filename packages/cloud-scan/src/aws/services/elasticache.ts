@@ -29,7 +29,7 @@ export async function listCacheClusters(
           if (!rg.ReplicationGroupId) continue
           nodes.push({
             id: rg.ReplicationGroupId,
-            type: 'elasticache',
+            type: 'aws:elasticache',
             label: rg.Description?.trim() || rg.ReplicationGroupId,
             status: ecStatusToNodeStatus(rg.Status),
             region,
@@ -60,7 +60,7 @@ export async function listCacheClusters(
           if (cluster.Engine !== 'memcached') continue
           nodes.push({
             id: cluster.CacheClusterId,
-            type: 'elasticache',
+            type: 'aws:elasticache',
             label: cluster.CacheClusterId,
             status: ecStatusToNodeStatus(cluster.CacheClusterStatus),
             region,

@@ -98,7 +98,7 @@ describe('TimelineStrip (RIFT-38)', () => {
       nodes: [
         {
           id: 'n1',
-          type: 'ec2',
+          type: 'aws:ec2',
           label: 'host-1',
           status: 'running',
           region: 'us-east-1',

@@ -18,15 +18,15 @@ describe('useUIStore — activeFilters', () => {
   })
 
   it('addFilter adds a filter', () => {
-    const f: NodeFilter = { id: 'test', label: 'Test', test: (n) => n.type === 'ec2' }
+    const f: NodeFilter = { id: 'test', label: 'Test', test: (n) => n.type === 'aws:ec2' }
     useUIStore.getState().addFilter(f)
     expect(useUIStore.getState().activeFilters).toHaveLength(1)
     expect(useUIStore.getState().activeFilters[0].id).toBe('test')
   })
 
   it('addFilter replaces existing filter with same id (upsert)', () => {
-    const f1: NodeFilter = { id: 'sidebar-type', label: 'EC2', test: (n) => n.type === 'ec2' }
-    const f2: NodeFilter = { id: 'sidebar-type', label: 'S3', test: (n) => n.type === 's3' }
+    const f1: NodeFilter = { id: 'sidebar-type', label: 'EC2', test: (n) => n.type === 'aws:ec2' }
+    const f2: NodeFilter = { id: 'sidebar-type', label: 'S3', test: (n) => n.type === 'aws:s3' }
     useUIStore.getState().addFilter(f1)
     useUIStore.getState().addFilter(f2)
     const filters = useUIStore.getState().activeFilters
@@ -35,7 +35,7 @@ describe('useUIStore — activeFilters', () => {
   })
 
   it('removeFilter removes by id', () => {
-    const f: NodeFilter = { id: 'sidebar-type', label: 'EC2', test: (n) => n.type === 'ec2' }
+    const f: NodeFilter = { id: 'sidebar-type', label: 'EC2', test: (n) => n.type === 'aws:ec2' }
     useUIStore.getState().addFilter(f)
     useUIStore.getState().removeFilter('sidebar-type')
     expect(useUIStore.getState().activeFilters).toHaveLength(0)
@@ -68,11 +68,15 @@ describe('useUIStore — activeFilters', () => {
   })
 
   it('OR composition: node passes if any filter matches', () => {
-    const ec2 = makeNode('ec2')
-    const s3 = makeNode('s3')
-    const rds = makeNode('rds')
-    useUIStore.getState().addFilter({ id: 'type-ec2', label: 'EC2', test: (n) => n.type === 'ec2' })
-    useUIStore.getState().addFilter({ id: 'type-s3', label: 'S3', test: (n) => n.type === 's3' })
+    const ec2 = makeNode('aws:ec2')
+    const s3 = makeNode('aws:s3')
+    const rds = makeNode('aws:rds')
+    useUIStore
+      .getState()
+      .addFilter({ id: 'type-ec2', label: 'EC2', test: (n) => n.type === 'aws:ec2' })
+    useUIStore
+      .getState()
+      .addFilter({ id: 'type-s3', label: 'S3', test: (n) => n.type === 'aws:s3' })
     const filters = useUIStore.getState().activeFilters
     expect(filters.some((f) => f.test(ec2))).toBe(true)
     expect(filters.some((f) => f.test(s3))).toBe(true)

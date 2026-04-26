@@ -90,7 +90,7 @@ const SERVICE_SCANNERS: Record<string, ServiceScanner> = {
 }
 
 const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
-  ec2: {
+  'aws:ec2': {
     label: 'EC2',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -98,7 +98,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'EC2 Instance',
     hasCreate: true
   },
-  vpc: {
+  'aws:vpc': {
     label: 'VPC',
     borderColor: '#1976D2',
     badgeColor: '#1976D2',
@@ -106,7 +106,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'VPC',
     hasCreate: true
   },
-  subnet: {
+  'aws:subnet': {
     label: 'SUBNET',
     borderColor: '#4CAF50',
     badgeColor: '#4CAF50',
@@ -114,7 +114,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'Subnet',
     hasCreate: true
   },
-  rds: {
+  'aws:rds': {
     label: 'RDS',
     borderColor: '#4CAF50',
     badgeColor: '#4CAF50',
@@ -122,7 +122,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'RDS Instance',
     hasCreate: true
   },
-  s3: {
+  'aws:s3': {
     label: 'S3',
     borderColor: '#64b5f6',
     badgeColor: '#64b5f6',
@@ -130,7 +130,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'S3 Bucket',
     hasCreate: true
   },
-  lambda: {
+  'aws:lambda': {
     label: 'λ',
     borderColor: '#64b5f6',
     badgeColor: '#64b5f6',
@@ -138,7 +138,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'Lambda Function',
     hasCreate: true
   },
-  alb: {
+  'aws:alb': {
     label: 'ALB',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -146,7 +146,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'Load Balancer',
     hasCreate: true
   },
-  'security-group': {
+  'aws:security-group': {
     label: 'SG',
     borderColor: '#9c27b0',
     badgeColor: '#9c27b0',
@@ -154,7 +154,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'Security Group',
     hasCreate: true
   },
-  igw: {
+  'aws:igw': {
     label: 'IGW',
     borderColor: '#4CAF50',
     badgeColor: '#4CAF50',
@@ -162,7 +162,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'Internet Gateway',
     hasCreate: false
   },
-  acm: {
+  'aws:acm': {
     label: 'ACM',
     borderColor: '#64b5f6',
     badgeColor: '#64b5f6',
@@ -170,7 +170,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'ACM Certificate',
     hasCreate: true
   },
-  cloudfront: {
+  'aws:cloudfront': {
     label: 'CF',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -178,7 +178,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'CloudFront Distribution',
     hasCreate: true
   },
-  apigw: {
+  'aws:apigw': {
     label: 'APIGW',
     borderColor: '#8b5cf6',
     badgeColor: '#8b5cf6',
@@ -186,7 +186,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'API Gateway',
     hasCreate: true
   },
-  'apigw-route': {
+  'aws:apigw-route': {
     label: 'ROUTE',
     borderColor: '#22c55e',
     badgeColor: '#22c55e',
@@ -194,7 +194,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'API Gateway Route',
     hasCreate: true
   },
-  sqs: {
+  'aws:sqs': {
     label: 'SQS',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -202,7 +202,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'SQS Queue',
     hasCreate: true
   },
-  secret: {
+  'aws:secret': {
     label: 'SECRET',
     borderColor: '#22c55e',
     badgeColor: '#22c55e',
@@ -210,7 +210,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'Secrets Manager Secret',
     hasCreate: true
   },
-  'ecr-repo': {
+  'aws:ecr-repo': {
     label: 'ECR',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -218,7 +218,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'ECR Repository',
     hasCreate: true
   },
-  sns: {
+  'aws:sns': {
     label: 'SNS',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -226,7 +226,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'SNS Topic',
     hasCreate: true
   },
-  dynamo: {
+  'aws:dynamo': {
     label: 'DDB',
     borderColor: '#64b5f6',
     badgeColor: '#64b5f6',
@@ -234,7 +234,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'DynamoDB Table',
     hasCreate: true
   },
-  'ssm-param': {
+  'aws:ssm-param': {
     label: 'SSM',
     borderColor: '#22c55e',
     badgeColor: '#22c55e',
@@ -242,7 +242,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'SSM Parameter',
     hasCreate: true
   },
-  'nat-gateway': {
+  'aws:nat-gateway': {
     label: 'NAT',
     borderColor: '#4CAF50',
     badgeColor: '#4CAF50',
@@ -250,7 +250,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'NAT Gateway',
     hasCreate: false
   },
-  'r53-zone': {
+  'aws:r53-zone': {
     label: 'R53',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -258,7 +258,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'Route 53 Hosted Zone',
     hasCreate: true
   },
-  sfn: {
+  'aws:sfn': {
     label: 'SFN',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -266,7 +266,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'Step Functions State Machine',
     hasCreate: true
   },
-  'eventbridge-bus': {
+  'aws:eventbridge-bus': {
     label: 'EB',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -274,7 +274,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'EventBridge Bus',
     hasCreate: true
   },
-  ses: {
+  'aws:ses': {
     label: 'SES',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -282,7 +282,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'SES Identity',
     hasCreate: false
   },
-  cognito: {
+  'aws:cognito': {
     label: 'COGNITO',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -290,7 +290,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'Cognito User Pool',
     hasCreate: false
   },
-  kinesis: {
+  'aws:kinesis': {
     label: 'KDS',
     borderColor: '#8b5cf6',
     badgeColor: '#8b5cf6',
@@ -298,7 +298,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'Kinesis Data Stream',
     hasCreate: false
   },
-  ecs: {
+  'aws:ecs': {
     label: 'ECS',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -306,7 +306,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'ECS Service',
     hasCreate: false
   },
-  elasticache: {
+  'aws:elasticache': {
     label: 'REDIS',
     borderColor: '#22c55e',
     badgeColor: '#22c55e',
@@ -314,7 +314,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'ElastiCache Cluster',
     hasCreate: false
   },
-  eks: {
+  'aws:eks': {
     label: 'EKS',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -322,7 +322,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'EKS Cluster',
     hasCreate: false
   },
-  opensearch: {
+  'aws:opensearch': {
     label: 'OS',
     borderColor: '#005EB8',
     badgeColor: '#005EB8',
@@ -330,7 +330,7 @@ const NODE_TYPE_METADATA: Readonly<Record<string, NodeTypeMetadata>> = {
     displayName: 'OpenSearch Domain',
     hasCreate: false
   },
-  msk: {
+  'aws:msk': {
     label: 'MSK',
     borderColor: '#FF9900',
     badgeColor: '#FF9900',
@@ -354,37 +354,37 @@ export const awsPlugin: RiftViewPlugin = {
   versionFormat: 'scan-snapshot',
 
   nodeTypes: [
-    'ec2',
-    'vpc',
-    'subnet',
-    'rds',
-    's3',
-    'lambda',
-    'alb',
-    'security-group',
-    'igw',
-    'acm',
-    'cloudfront',
-    'apigw',
-    'apigw-route',
-    'sqs',
-    'secret',
-    'ecr-repo',
-    'sns',
-    'dynamo',
-    'ssm-param',
-    'nat-gateway',
-    'r53-zone',
-    'sfn',
-    'eventbridge-bus',
-    'ses',
-    'cognito',
-    'kinesis',
-    'ecs',
-    'elasticache',
-    'eks',
-    'opensearch',
-    'msk',
+    'aws:ec2',
+    'aws:vpc',
+    'aws:subnet',
+    'aws:rds',
+    'aws:s3',
+    'aws:lambda',
+    'aws:alb',
+    'aws:security-group',
+    'aws:igw',
+    'aws:acm',
+    'aws:cloudfront',
+    'aws:apigw',
+    'aws:apigw-route',
+    'aws:sqs',
+    'aws:secret',
+    'aws:ecr-repo',
+    'aws:sns',
+    'aws:dynamo',
+    'aws:ssm-param',
+    'aws:nat-gateway',
+    'aws:r53-zone',
+    'aws:sfn',
+    'aws:eventbridge-bus',
+    'aws:ses',
+    'aws:cognito',
+    'aws:kinesis',
+    'aws:ecs',
+    'aws:elasticache',
+    'aws:eks',
+    'aws:opensearch',
+    'aws:msk',
     'unknown'
   ],
 

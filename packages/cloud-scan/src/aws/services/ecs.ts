@@ -77,7 +77,7 @@ export async function listEcsServices(client: ECSClient, region: string): Promis
             const firstSubnet = svc.networkConfiguration?.awsvpcConfiguration?.subnets?.[0]
             nodes.push({
               id: svc.serviceArn,
-              type: 'ecs',
+              type: 'aws:ecs',
               label: svc.serviceName ?? svc.serviceArn,
               status: ecsStatusToNodeStatus(svc.status),
               region,

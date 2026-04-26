@@ -25,7 +25,7 @@ export async function listNatGateways(client: EC2Client, region: string): Promis
       const label = item.Tags?.find((t) => t.Key === 'Name')?.Value ?? id
       return {
         id,
-        type: 'nat-gateway',
+        type: 'aws:nat-gateway',
         label,
         status: mapNatState(item.State),
         region,

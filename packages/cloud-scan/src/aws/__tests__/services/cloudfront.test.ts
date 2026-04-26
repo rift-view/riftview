@@ -27,7 +27,7 @@ describe('listDistributions', () => {
 
     expect(nodes).toHaveLength(1)
     expect(nodes[0].id).toBe('E1ABC123')
-    expect(nodes[0].type).toBe('cloudfront')
+    expect(nodes[0].type).toBe('aws:cloudfront')
     expect(nodes[0].region).toBe('global')
     expect(nodes[0].integrations).toBeUndefined()
   })

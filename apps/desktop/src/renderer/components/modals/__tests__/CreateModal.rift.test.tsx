@@ -62,7 +62,7 @@ describe('DeleteDialog rift shell', () => {
   it('uses .modal with fault left border and eyebrow "DELETE"', () => {
     const node: CloudNode = {
       id: 'i-1',
-      type: 'ec2',
+      type: 'aws:ec2',
       label: 'gone',
       status: 'running',
       region: 'us-east-1',

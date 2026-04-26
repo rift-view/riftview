@@ -142,7 +142,7 @@ export async function listFunctions(client: LambdaClient, region: string): Promi
         const integrations = allIntegrations.length > 0 ? allIntegrations : undefined
         return {
           id: fn.FunctionArn ?? fn.FunctionName ?? 'unknown',
-          type: 'lambda',
+          type: 'aws:lambda',
           label: fn.FunctionName ?? 'Lambda',
           status: lambdaStatusToNodeStatus(fn.State),
           region,

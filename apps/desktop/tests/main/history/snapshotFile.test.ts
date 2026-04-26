@@ -31,7 +31,7 @@ function makeSnapshot(): Snapshot {
     nodes: [
       {
         id: 'i-abc',
-        type: 'ec2',
+        type: 'aws:ec2',
         label: 'api',
         status: 'running',
         region: 'us-east-1',
@@ -128,7 +128,7 @@ describe('snapshotFile', () => {
       timestamp: '2026-04-20T10:00:00.000Z',
       durationMs: 0,
       // missing id
-      nodes: [{ type: 'ec2', label: 'x', status: 'running', region: 'us-east-1' } as never],
+      nodes: [{ type: 'aws:ec2', label: 'x', status: 'running', region: 'us-east-1' } as never],
       edges: [],
       scanErrors: [],
       topRisks: []

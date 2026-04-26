@@ -17,7 +17,7 @@ describe('parseTfState', () => {
     })
     const nodes = parseTfState(raw)
     expect(nodes).toHaveLength(1)
-    expect(nodes[0].type).toBe('ec2')
+    expect(nodes[0].type).toBe('aws:ec2')
     expect(nodes[0].status).toBe('imported')
   })
 
@@ -28,7 +28,7 @@ describe('parseTfState', () => {
       tags: { Name: 'main-vpc' }
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('vpc')
+    expect(nodes[0].type).toBe('aws:vpc')
   })
 
   it('maps aws_subnet to subnet node', () => {
@@ -39,7 +39,7 @@ describe('parseTfState', () => {
       availability_zone: 'us-east-1a'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('subnet')
+    expect(nodes[0].type).toBe('aws:subnet')
   })
 
   it('maps aws_security_group to security-group node', () => {
@@ -50,13 +50,13 @@ describe('parseTfState', () => {
       description: 'Web SG'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('security-group')
+    expect(nodes[0].type).toBe('aws:security-group')
   })
 
   it('maps aws_s3_bucket to s3 node', () => {
     const raw = minimal('aws_s3_bucket', { id: 'my-bucket', region: 'us-east-1' })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('s3')
+    expect(nodes[0].type).toBe('aws:s3')
   })
 
   it('maps aws_lambda_function to lambda node', () => {
@@ -67,7 +67,7 @@ describe('parseTfState', () => {
       timeout: 30
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('lambda')
+    expect(nodes[0].type).toBe('aws:lambda')
   })
 
   it('maps aws_db_instance to rds node', () => {
@@ -78,7 +78,7 @@ describe('parseTfState', () => {
       db_subnet_group_name: 'default'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('rds')
+    expect(nodes[0].type).toBe('aws:rds')
   })
 
   it('maps aws_lb to alb node', () => {
@@ -89,7 +89,7 @@ describe('parseTfState', () => {
       subnets: []
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('alb')
+    expect(nodes[0].type).toBe('aws:alb')
   })
 
   it('maps aws_alb to alb node', () => {
@@ -100,7 +100,7 @@ describe('parseTfState', () => {
       subnets: []
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('alb')
+    expect(nodes[0].type).toBe('aws:alb')
   })
 
   it('maps aws_api_gateway_v2_api to apigw node', () => {
@@ -110,7 +110,7 @@ describe('parseTfState', () => {
       protocol_type: 'HTTP'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('apigw')
+    expect(nodes[0].type).toBe('aws:apigw')
   })
 
   it('maps aws_cloudfront_distribution to cloudfront node', () => {
@@ -119,7 +119,7 @@ describe('parseTfState', () => {
       domain_name: 'd111111abcdef8.cloudfront.net'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('cloudfront')
+    expect(nodes[0].type).toBe('aws:cloudfront')
   })
 
   it('maps aws_internet_gateway to igw node', () => {
@@ -129,7 +129,7 @@ describe('parseTfState', () => {
       tags: { Name: 'main-igw' }
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('igw')
+    expect(nodes[0].type).toBe('aws:igw')
     expect(nodes[0].id).toBe('igw-abc123')
     expect(nodes[0].label).toBe('main-igw')
   })
@@ -137,7 +137,7 @@ describe('parseTfState', () => {
   it('maps aws_nat_gateway to nat-gateway node', () => {
     const raw = minimal('aws_nat_gateway', { id: 'nat-abc123', subnet_id: 'sub-1' })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('nat-gateway')
+    expect(nodes[0].type).toBe('aws:nat-gateway')
     expect(nodes[0].id).toBe('nat-abc123')
   })
 
@@ -147,7 +147,7 @@ describe('parseTfState', () => {
       url: 'https://sqs.us-east-1.amazonaws.com/123456789/my-queue'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('sqs')
+    expect(nodes[0].type).toBe('aws:sqs')
     expect(nodes[0].id).toBe('arn:aws:sqs:us-east-1:123456789:my-queue')
     expect(nodes[0].label).toBe('my-queue')
   })
@@ -155,7 +155,7 @@ describe('parseTfState', () => {
   it('maps aws_sns_topic to sns node using topic ARN as ID', () => {
     const raw = minimal('aws_sns_topic', { arn: 'arn:aws:sns:us-east-1:123456789:my-topic' })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('sns')
+    expect(nodes[0].type).toBe('aws:sns')
     expect(nodes[0].id).toBe('arn:aws:sns:us-east-1:123456789:my-topic')
     expect(nodes[0].label).toBe('my-topic')
   })
@@ -163,7 +163,7 @@ describe('parseTfState', () => {
   it('maps aws_dynamodb_table to dynamo node using table name as ID', () => {
     const raw = minimal('aws_dynamodb_table', { id: 'my-table', hash_key: 'id' })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('dynamo')
+    expect(nodes[0].type).toBe('aws:dynamo')
     expect(nodes[0].id).toBe('my-table')
   })
 
@@ -174,7 +174,7 @@ describe('parseTfState', () => {
       type: 'String'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('ssm-param')
+    expect(nodes[0].type).toBe('aws:ssm-param')
     expect(nodes[0].id).toBe('arn:aws:ssm:us-east-1:123456789:parameter/my-param')
     expect(nodes[0].label).toBe('/my-param')
   })
@@ -182,7 +182,7 @@ describe('parseTfState', () => {
   it('maps aws_ssm_parameter to ssm-param node falling back to name when no ARN', () => {
     const raw = minimal('aws_ssm_parameter', { name: '/my-param', type: 'String' })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('ssm-param')
+    expect(nodes[0].type).toBe('aws:ssm-param')
     expect(nodes[0].id).toBe('/my-param')
   })
 
@@ -192,7 +192,7 @@ describe('parseTfState', () => {
       name: 'my-secret'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('secret')
+    expect(nodes[0].type).toBe('aws:secret')
     expect(nodes[0].id).toBe('arn:aws:secretsmanager:us-east-1:123456789:secret:my-secret-abc123')
     expect(nodes[0].label).toBe('my-secret')
   })
@@ -203,7 +203,7 @@ describe('parseTfState', () => {
       name: 'my-repo'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('ecr-repo')
+    expect(nodes[0].type).toBe('aws:ecr-repo')
     expect(nodes[0].id).toBe('arn:aws:ecr:us-east-1:123456789:repository/my-repo')
     expect(nodes[0].label).toBe('my-repo')
   })
@@ -211,7 +211,7 @@ describe('parseTfState', () => {
   it('maps aws_route53_zone to r53-zone node using hosted zone ID path', () => {
     const raw = minimal('aws_route53_zone', { id: '/hostedzone/Z1234ABCD', name: 'example.com.' })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('r53-zone')
+    expect(nodes[0].type).toBe('aws:r53-zone')
     expect(nodes[0].id).toBe('/hostedzone/Z1234ABCD')
     expect(nodes[0].label).toBe('example.com.')
   })
@@ -222,7 +222,7 @@ describe('parseTfState', () => {
       name: 'my-machine'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('sfn')
+    expect(nodes[0].type).toBe('aws:sfn')
     expect(nodes[0].id).toBe('arn:aws:states:us-east-1:123456789:stateMachine:my-machine')
     expect(nodes[0].label).toBe('my-machine')
   })
@@ -233,7 +233,7 @@ describe('parseTfState', () => {
       name: 'my-bus'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('eventbridge-bus')
+    expect(nodes[0].type).toBe('aws:eventbridge-bus')
     expect(nodes[0].id).toBe('arn:aws:events:us-east-1:123456789:event-bus/my-bus')
     expect(nodes[0].label).toBe('my-bus')
   })
@@ -244,7 +244,7 @@ describe('parseTfState', () => {
       domain_name: 'example.com'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('acm')
+    expect(nodes[0].type).toBe('aws:acm')
     expect(nodes[0].id).toBe('arn:aws:acm:us-east-1:123456789:certificate/abc-123')
     expect(nodes[0].label).toBe('example.com')
   })
@@ -256,7 +256,7 @@ describe('parseTfState', () => {
       route_key: 'GET /users'
     })
     const nodes = parseTfState(raw)
-    expect(nodes[0].type).toBe('apigw-route')
+    expect(nodes[0].type).toBe('aws:apigw-route')
     expect(nodes[0].id).toBe('abc123/routes/route-xyz')
     expect(nodes[0].label).toBe('GET /users')
   })

@@ -33,7 +33,7 @@ describe('listEksClusters', () => {
     const nodes = await listEksClusters(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
-    expect(nodes[0].type).toBe('eks')
+    expect(nodes[0].type).toBe('aws:eks')
     expect(nodes[0].id).toBe(CLUSTER_ARN)
     expect(nodes[0].label).toBe(CLUSTER_NAME)
     expect(nodes[0].status).toBe('running')

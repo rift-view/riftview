@@ -5,48 +5,53 @@ import type { CloudNode, NodeType } from '@riftview/shared'
 
 export const NODE_TIER: Partial<Record<NodeType, number>> = {
   // Tier 0 — Internet / DNS
-  igw: 0,
-  cloudfront: 0,
-  acm: 0,
-  'r53-zone': 0,
+  'aws:igw': 0,
+  'aws:cloudfront': 0,
+  'aws:acm': 0,
+  'aws:r53-zone': 0,
 
   // Tier 1 — Edge / Gateway
-  alb: 1,
-  apigw: 1,
-  'apigw-route': 1,
+  'aws:alb': 1,
+  'aws:apigw': 1,
+  'aws:apigw-route': 1,
 
   // Tier 2 — Compute
-  lambda: 2,
-  ec2: 2,
-  ecs: 2,
-  eks: 2,
+  'aws:lambda': 2,
+  'aws:ec2': 2,
+  'aws:ecs': 2,
+  'aws:eks': 2,
 
   // Tier 3 — Data
-  rds: 3,
-  dynamo: 3,
-  s3: 3,
-  opensearch: 3,
-  kinesis: 3,
-  elasticache: 3,
-  msk: 3,
+  'aws:rds': 3,
+  'aws:dynamo': 3,
+  'aws:s3': 3,
+  'aws:opensearch': 3,
+  'aws:kinesis': 3,
+  'aws:elasticache': 3,
+  'aws:msk': 3,
 
   // Tier 4 — Messaging
-  sqs: 4,
-  sns: 4,
-  'eventbridge-bus': 4,
-  sfn: 4,
-  ses: 4,
+  'aws:sqs': 4,
+  'aws:sns': 4,
+  'aws:eventbridge-bus': 4,
+  'aws:sfn': 4,
+  'aws:ses': 4,
 
   // Tier 5 — Config / Identity
-  'ssm-param': 5,
-  secret: 5,
-  cognito: 5,
-  'ecr-repo': 5
+  'aws:ssm-param': 5,
+  'aws:secret': 5,
+  'aws:cognito': 5,
+  'aws:ecr-repo': 5
 }
 
 export const DEFAULT_TIER = 6
 
-const EXCLUDED: Set<NodeType> = new Set(['vpc', 'subnet', 'security-group', 'nat-gateway'])
+const EXCLUDED: Set<NodeType> = new Set([
+  'aws:vpc',
+  'aws:subnet',
+  'aws:security-group',
+  'aws:nat-gateway'
+])
 
 const TIER_NAMES = ['Internet', 'Edge', 'Compute', 'Data', 'Messaging', 'Config', 'Other'] as const
 

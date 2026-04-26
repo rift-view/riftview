@@ -38,7 +38,7 @@ export async function listCertificates(client: ACMClient): Promise<CloudNode[]> 
 
           return {
             id: arn,
-            type: 'acm',
+            type: 'aws:acm',
             label: cert.DomainName ?? arn,
             status: acmStatusToNodeStatus(cert.Status),
             region: 'global',

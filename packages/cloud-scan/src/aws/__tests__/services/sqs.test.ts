@@ -26,7 +26,7 @@ describe('listQueues', () => {
 
     expect(nodes).toHaveLength(1)
     expect(nodes[0].id).toBe(QUEUE_ARN)
-    expect(nodes[0].type).toBe('sqs')
+    expect(nodes[0].type).toBe('aws:sqs')
     expect(nodes[0].label).toBe('my-queue')
     expect(nodes[0].region).toBe('us-east-1')
   })
@@ -64,7 +64,7 @@ describe('listQueues', () => {
 
     expect(nodes).toHaveLength(1)
     expect(nodes[0].id).toBe(QUEUE_URL)
-    expect(nodes[0].type).toBe('sqs')
+    expect(nodes[0].type).toBe('aws:sqs')
     expect(nodes[0].integrations).toBeUndefined()
   })
 })

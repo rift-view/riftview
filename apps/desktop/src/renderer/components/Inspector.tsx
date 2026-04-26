@@ -21,7 +21,7 @@ interface CloudMetric {
   value: number
   unit: string
 }
-const METRIC_TYPES = new Set<NodeType>(['lambda', 'rds', 'ecs'])
+const METRIC_TYPES = new Set<NodeType>(['aws:lambda', 'aws:rds', 'aws:ecs'])
 
 function statusPillClass(status: string): string {
   if (status === 'running' || status === 'active') return 'pill pill-ok'
@@ -733,8 +733,8 @@ export function Inspector({
     if (!window.riftview?.fetchMetrics) return
     const m = node.metadata ?? {}
     const resourceId: string = (() => {
-      if (node.type === 'lambda') return (m.functionName as string | undefined) ?? node.label
-      if (node.type === 'rds') return (m.dbInstanceId as string | undefined) ?? node.label
+      if (node.type === 'aws:lambda') return (m.functionName as string | undefined) ?? node.label
+      if (node.type === 'aws:rds') return (m.dbInstanceId as string | undefined) ?? node.label
       return (
         ((m.clusterName as string | undefined) ?? '') +
         '/' +
@@ -749,7 +749,7 @@ export function Inspector({
       .catch(() => setCwMetrics([]))
   }, [node])
 
-  const IAM_SUPPORTED_TYPES: NodeType[] = ['ec2', 'lambda', 's3']
+  const IAM_SUPPORTED_TYPES: NodeType[] = ['aws:ec2', 'aws:lambda', 'aws:s3']
 
   return (
     <div
@@ -1631,7 +1631,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   )
 
   // ACM
-  if (node.type === 'acm') {
+  if (node.type === 'aws:acm') {
     return (
       <div className="insp-section">
         <div className="insp-label">CERTIFICATE</div>
@@ -1689,7 +1689,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // CloudFront
-  if (node.type === 'cloudfront') {
+  if (node.type === 'aws:cloudfront') {
     return (
       <div className="insp-section">
         <div className="insp-label">DISTRIBUTION</div>
@@ -1742,9 +1742,9 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // API Gateway
-  if (node.type === 'apigw') {
+  if (node.type === 'aws:apigw') {
     const routeCount = nodes.filter(
-      (n) => n.type === 'apigw-route' && n.parentId === node.id
+      (n) => n.type === 'aws:apigw-route' && n.parentId === node.id
     ).length
     return (
       <div className="insp-section">
@@ -1787,7 +1787,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // API Gateway Route
-  if (node.type === 'apigw-route') {
+  if (node.type === 'aws:apigw-route') {
     const api = nodes.find((n) => n.id === node.metadata.apiId)
     return (
       <div className="insp-section">
@@ -1815,7 +1815,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // Lambda
-  if (node.type === 'lambda') {
+  if (node.type === 'aws:lambda') {
     const rows = [
       { k: 'RUNTIME', v: node.metadata.runtime as string | undefined },
       { k: 'HANDLER', v: node.metadata.handler as string | undefined },
@@ -1843,7 +1843,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // ECS
-  if (node.type === 'ecs') {
+  if (node.type === 'aws:ecs') {
     return (
       <div className="insp-section">
         <div className="insp-label">SERVICE</div>
@@ -1884,7 +1884,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // RDS
-  if (node.type === 'rds') {
+  if (node.type === 'aws:rds') {
     return (
       <div className="insp-section">
         <div className="insp-label">DATABASE</div>
@@ -1935,7 +1935,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // SQS
-  if (node.type === 'sqs') {
+  if (node.type === 'aws:sqs') {
     return (
       <div className="insp-section">
         <div className="insp-label">QUEUE STATS</div>
@@ -1963,7 +1963,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // DynamoDB
-  if (node.type === 'dynamo') {
+  if (node.type === 'aws:dynamo') {
     const rows = [
       { k: 'BILLING', v: node.metadata.billingMode as string | undefined },
       {
@@ -1996,7 +1996,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // EC2
-  if (node.type === 'ec2') {
+  if (node.type === 'aws:ec2') {
     const rows = [
       { k: 'TYPE', v: node.metadata.instanceType as string | undefined },
       { k: 'AMI', v: node.metadata.ami as string | undefined },
@@ -2096,7 +2096,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // SNS
-  if (node.type === 'sns') {
+  if (node.type === 'aws:sns') {
     return (
       <div className="insp-section">
         <div className="insp-label">TOPIC</div>
@@ -2117,7 +2117,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // ECR
-  if (node.type === 'ecr-repo') {
+  if (node.type === 'aws:ecr-repo') {
     return (
       <div className="insp-section">
         <div className="insp-label">REPOSITORY</div>
@@ -2133,7 +2133,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // ElastiCache
-  if (node.type === 'elasticache') {
+  if (node.type === 'aws:elasticache') {
     const rows = [
       { k: 'ENGINE', v: node.metadata.engine as string | undefined },
       { k: 'NODE TYPE', v: node.metadata.nodeType as string | undefined },
@@ -2160,7 +2160,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
   }
 
   // EKS
-  if (node.type === 'eks') {
+  if (node.type === 'aws:eks') {
     const rows = [
       { k: 'VERSION', v: node.metadata.version as string | undefined },
       { k: 'ENDPOINT', v: node.metadata.endpoint as string | undefined }

@@ -5,7 +5,7 @@ import type { CloudNode } from '@riftview/shared'
 
 const makeNode = (id: string): CloudNode => ({
   id,
-  type: 'ec2',
+  type: 'aws:ec2',
   label: id,
   status: 'running',
   region: 'us-east-1',

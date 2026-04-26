@@ -36,7 +36,7 @@ export async function listUserPools(
       poolIds.map(async (poolId): Promise<CloudNode> => {
         const base: CloudNode = {
           id: poolId,
-          type: 'cognito',
+          type: 'aws:cognito',
           label: poolId,
           status: 'running',
           region,

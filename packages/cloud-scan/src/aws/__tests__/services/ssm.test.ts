@@ -28,7 +28,7 @@ describe('listParameters', () => {
     const nodes = await listParameters(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
-    expect(nodes[0].type).toBe('ssm-param')
+    expect(nodes[0].type).toBe('aws:ssm-param')
     expect(nodes[0].id).toBe(PARAM_ARN)
     expect(nodes[0].label).toBe('/my-param')
     expect(nodes[0].status).toBe('running')

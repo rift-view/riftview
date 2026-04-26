@@ -28,7 +28,7 @@ describe('listRepositories', () => {
     const nodes = await listRepositories(mockClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
-    expect(nodes[0].type).toBe('ecr-repo')
+    expect(nodes[0].type).toBe('aws:ecr-repo')
     expect(nodes[0].id).toBe(REPO_ARN)
     expect(nodes[0].label).toBe('my-app')
     expect(nodes[0].status).toBe('running')

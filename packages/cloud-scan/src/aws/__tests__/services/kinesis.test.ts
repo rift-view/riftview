@@ -34,7 +34,7 @@ describe('listStreams', () => {
     const nodes = await listStreams(mockClient, mockLambdaClient, 'us-east-1')
 
     expect(nodes).toHaveLength(1)
-    expect(nodes[0].type).toBe('kinesis')
+    expect(nodes[0].type).toBe('aws:kinesis')
     expect(nodes[0].id).toBe(STREAM_ARN)
     expect(nodes[0].label).toBe('my-stream')
     expect(nodes[0].status).toBe('running')

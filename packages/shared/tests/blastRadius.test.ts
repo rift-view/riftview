@@ -8,7 +8,7 @@ function makeNode(
 ): CloudNode {
   return {
     id,
-    type: 'lambda',
+    type: 'aws:lambda',
     label: id,
     status: 'running',
     region: 'us-east-1',
@@ -79,7 +79,7 @@ describe('buildBlastRadius', () => {
   it('resolves DNS-name targetIds (ALB case) to real node IDs in member set', () => {
     const apigw: CloudNode = {
       id: 'apigw-1',
-      type: 'apigw',
+      type: 'aws:apigw',
       label: 'api',
       status: 'running',
       region: 'us-east-1',
@@ -88,7 +88,7 @@ describe('buildBlastRadius', () => {
     }
     const alb: CloudNode = {
       id: 'alb-1',
-      type: 'alb',
+      type: 'aws:alb',
       label: 'alb',
       status: 'running',
       region: 'us-east-1',
@@ -103,7 +103,7 @@ describe('buildBlastRadius', () => {
   it('resolves targetIds on backward BFS too (upstream by resolved id)', () => {
     const lambda: CloudNode = {
       id: 'lambda-1',
-      type: 'lambda',
+      type: 'aws:lambda',
       label: 'fn',
       status: 'running',
       region: 'us-east-1',
@@ -112,7 +112,7 @@ describe('buildBlastRadius', () => {
     }
     const rds: CloudNode = {
       id: 'rds-1',
-      type: 'rds',
+      type: 'aws:rds',
       label: 'db',
       status: 'running',
       region: 'us-east-1',

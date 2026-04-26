@@ -109,7 +109,7 @@ describe('RIFT-40 snapshot file round-trip', () => {
           nodes: [
             {
               id: 'i-1',
-              type: 'ec2',
+              type: 'aws:ec2',
               label: 'one',
               status: 'running',
               region: 'eu-west-1',
