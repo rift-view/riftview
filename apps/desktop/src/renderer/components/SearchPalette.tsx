@@ -35,6 +35,11 @@ const TYPE_BADGE_COLOR = {
   'aws:eks': '#FF9900',
   'aws:opensearch': '#005EB8',
   'aws:msk': '#FF9900',
+  'hetzner:server': '#D50C2D',
+  'hetzner:network': '#D50C2D',
+  'hetzner:volume': '#D50C2D',
+  'hetzner:firewall': '#D50C2D',
+  'hetzner:ssh-key': '#D50C2D',
   unknown: '#6b7280'
 } satisfies Record<NodeType, string>
 
@@ -70,6 +75,11 @@ const TYPE_SHORT = {
   'aws:eks': 'EKS',
   'aws:opensearch': 'OS',
   'aws:msk': 'MSK',
+  'hetzner:server': 'SRV',
+  'hetzner:network': 'NET',
+  'hetzner:volume': 'VOL',
+  'hetzner:firewall': 'FW',
+  'hetzner:ssh-key': 'SSH',
   unknown: '?'
 } satisfies Record<NodeType, string>
 

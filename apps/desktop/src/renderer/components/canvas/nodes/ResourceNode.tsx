@@ -46,6 +46,11 @@ const TYPE_LABEL = {
   'aws:eks': 'EKS',
   'aws:opensearch': 'OS',
   'aws:msk': 'MSK',
+  'hetzner:server': 'SRV',
+  'hetzner:network': 'NET',
+  'hetzner:volume': 'VOL',
+  'hetzner:firewall': 'FW',
+  'hetzner:ssh-key': 'SSH',
   unknown: '?'
 } satisfies Record<NodeType, string>
 
