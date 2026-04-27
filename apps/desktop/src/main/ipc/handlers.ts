@@ -54,6 +54,7 @@ import type { NodeType } from '@riftview/shared'
 import { isDemoMode } from '../capability'
 import { signPlanProjection, verifyPlanProjection } from '../restore/hmac'
 import { mintPlanToken, lookupPlanToken, consumePlanToken } from '../restore/planStore'
+import { computeCostDelta } from '../cost/compute'
 
 type TerraformDeployResult =
   | { status: 'success'; output: string }
@@ -916,8 +917,7 @@ export function registerHandlers(win: BrowserWindow): void {
       if (typeof planToken !== 'string') return null
       const entry = lookupPlanToken(planToken)
       if (!entry) return null
-      // Full cost computation is RIF-21's scope. Return null until wired.
-      return null
+      return computeCostDelta(entry.plan)
     })
 
     ipcMain.handle(IPC.RESTORE_CANCEL, async (_, applyId: unknown) => {
