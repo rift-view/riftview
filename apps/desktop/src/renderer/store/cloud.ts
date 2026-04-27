@@ -57,6 +57,14 @@ interface CloudState {
   clearScanErrors: () => void
   setImportedNodes: (nodes: CloudNode[]) => void
   clearImportedNodes: () => void
+  /**
+   * Wholesale replace the live-scan node slot. Used by the RIFT-77 scan-file
+   * import path (and potentially future CLI-stream replays). Distinct from
+   * `setImportedNodes`, which is the *drift overlay* — those nodes get diffed
+   * against `nodes` to drive the unmanaged/missing badges. `replaceNodes`
+   * just swaps the canvas state.
+   */
+  replaceNodes: (nodes: CloudNode[], scannedAt?: Date) => void
   setPreviousCounts: (c: Record<string, number>) => void
   patchNodeStatus: (id: string, status: NodeStatus) => void
 }
@@ -172,6 +180,17 @@ export const useCloudStore = create<CloudState>((set) => ({
     }))
     useUIStore.getState().resetDriftFilter()
   },
+  replaceNodes: (nodes, scannedAt) =>
+    set((state) => ({
+      nodes,
+      // Bump generation so any in-flight scan delta gets discarded — the
+      // imported scan is now the authoritative state.
+      scanGeneration: state.scanGeneration + 1,
+      // Clear drift overlay + scan errors; the imported scan is a fresh truth.
+      importedNodes: [],
+      scanErrors: [],
+      lastScannedAt: scannedAt ?? new Date()
+    })),
   setPreviousCounts: (c) => set({ previousCounts: c }),
   patchNodeStatus: (id, status) =>
     set((state) => ({
@@ -267,6 +286,14 @@ export function createCloudStore(): StoreApi<CloudState> {
       }))
       useUIStore.getState().resetDriftFilter()
     },
+    replaceNodes: (nodes, scannedAt) =>
+      set((state) => ({
+        nodes,
+        scanGeneration: state.scanGeneration + 1,
+        importedNodes: [],
+        scanErrors: [],
+        lastScannedAt: scannedAt ?? new Date()
+      })),
     setPreviousCounts: (c) => set({ previousCounts: c }),
     patchNodeStatus: (id, status) =>
       set((state) => ({

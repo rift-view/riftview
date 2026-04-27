@@ -22,6 +22,14 @@ import {
   snapshotFileIdentity,
   snapshotToFile
 } from '../history/snapshotFile'
+import {
+  ScanFileError,
+  buildScanFile,
+  parseScanFile,
+  scanFileDefaultName,
+  serializeScanFile,
+  type ScanFileEdge
+} from '../scan/scanFile'
 import { CliEngine } from '../cli/engine'
 import { pluginRegistry } from '@riftview/cloud-scan'
 import {
@@ -819,6 +827,127 @@ export function registerHandlers(win: BrowserWindow): void {
           const code =
             err instanceof SnapshotFileError ? err.code : (err as NodeJS.ErrnoException).code
           console.error('[ipc] snapshot:import failed', { code })
+          return { ok: false, error: (err as Error).message ?? 'import failed', code }
+        }
+      }
+    )
+
+    // RIFT-77: live current-scan file bridge. Distinct from the snapshot-file
+    // handlers above — this round-trips the renderer's in-memory scan slot,
+    // doesn't touch SQLite. Same demo-mode gate applies.
+    ipcMain.handle(
+      IPC.SCAN_EXPORT_JSON,
+      async (
+        _,
+        args: unknown
+      ): Promise<{ ok: true; path: string } | { ok: false; error: string; code?: string }> => {
+        try {
+          if (!args || typeof args !== 'object') {
+            return { ok: false, error: 'args must be an object', code: 'invalid_args' }
+          }
+          const a = args as {
+            nodes?: unknown
+            scannedAt?: unknown
+            profile?: unknown
+            edges?: unknown
+          }
+          if (!Array.isArray(a.nodes)) {
+            return { ok: false, error: 'nodes must be an array', code: 'invalid_args' }
+          }
+          if (typeof a.scannedAt !== 'string' || Number.isNaN(Date.parse(a.scannedAt))) {
+            return {
+              ok: false,
+              error: 'scannedAt must be an ISO date string',
+              code: 'invalid_args'
+            }
+          }
+          if (typeof a.profile !== 'string') {
+            return { ok: false, error: 'profile must be a string', code: 'invalid_args' }
+          }
+          const edges =
+            a.edges === undefined
+              ? undefined
+              : Array.isArray(a.edges)
+                ? (a.edges as ScanFileEdge[])
+                : undefined
+
+          const file = buildScanFile({
+            nodes: a.nodes as CloudNode[],
+            scannedAt: a.scannedAt,
+            profile: a.profile,
+            edges
+          })
+          const defaultName = scanFileDefaultName(a.profile, a.scannedAt)
+          const dlgResult = mainWindow
+            ? await dialog.showSaveDialog(mainWindow, {
+                defaultPath: defaultName,
+                filters: [{ name: 'RiftView Scan', extensions: ['json'] }]
+              })
+            : await dialog.showSaveDialog({
+                defaultPath: defaultName,
+                filters: [{ name: 'RiftView Scan', extensions: ['json'] }]
+              })
+
+          if (dlgResult.canceled || !dlgResult.filePath) {
+            return { ok: false, error: 'cancelled', code: 'cancelled' }
+          }
+
+          const text = serializeScanFile(file)
+          await fsp.writeFile(dlgResult.filePath, text, 'utf-8')
+          console.log('[ipc] scan:export-json ok', {
+            path: dlgResult.filePath,
+            nodeCount: file.nodes.length
+          })
+          return { ok: true, path: dlgResult.filePath }
+        } catch (err) {
+          const code = err instanceof ScanFileError ? err.code : (err as NodeJS.ErrnoException).code
+          console.error('[ipc] scan:export-json failed', { code })
+          return { ok: false, error: (err as Error).message ?? 'export failed', code }
+        }
+      }
+    )
+
+    ipcMain.handle(
+      IPC.SCAN_IMPORT_JSON,
+      async (): Promise<
+        | {
+            ok: true
+            nodes: CloudNode[]
+            edges?: ScanFileEdge[]
+            scannedAt: string
+            profile: string
+          }
+        | { ok: false; error: string; code?: string }
+      > => {
+        try {
+          const dlgResult = mainWindow
+            ? await dialog.showOpenDialog(mainWindow, {
+                filters: [{ name: 'RiftView Scan', extensions: ['json'] }],
+                properties: ['openFile']
+              })
+            : await dialog.showOpenDialog({
+                filters: [{ name: 'RiftView Scan', extensions: ['json'] }],
+                properties: ['openFile']
+              })
+          if (dlgResult.canceled || !dlgResult.filePaths[0]) {
+            return { ok: false, error: 'cancelled', code: 'cancelled' }
+          }
+          const raw = await fsp.readFile(dlgResult.filePaths[0], 'utf-8')
+          const file = parseScanFile(raw)
+          console.log('[ipc] scan:import-json ok', {
+            nodeCount: file.nodes.length,
+            edgeCount: file.edges?.length ?? 0
+          })
+          return {
+            ok: true,
+            nodes: file.nodes,
+            edges: file.edges,
+            scannedAt: file.scannedAt,
+            profile: file.profile
+          }
+        } catch (err) {
+          const code = err instanceof ScanFileError ? err.code : (err as NodeJS.ErrnoException).code
+          console.error('[ipc] scan:import-json failed', { code })
           return { ok: false, error: (err as Error).message ?? 'import failed', code }
         }
       }
