@@ -35,7 +35,7 @@ interface RiftviewRestoreApi {
     steps: unknown[]
     error?: string
   }>
-  estimateCostDelta(planToken: string): Promise<unknown>
+  estimateCostDelta(planToken: string): Promise<import('@riftview/cloud-scan').CostDelta | null>
   confirmStep(
     planToken: string,
     stepId: string,
