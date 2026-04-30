@@ -20,6 +20,14 @@ name: Release Rehearsal
 
 on:
   workflow_dispatch:
+  # Temporary push trigger: GHA's workflow_dispatch requires the workflow file
+  # to exist on the default branch before it can be triggered. This rehearsal
+  # workflow is being introduced in this very change, so push triggers off the
+  # rehearsal branch are the only way to capture the first pre-merge evidence
+  # run. Removed in a follow-up commit once the workflow lands on main.
+  push:
+    branches:
+      - burkii/rift-new-b-rehearsal
 
 jobs:
   rehearsal:
