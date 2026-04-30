@@ -12,27 +12,59 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  lockfile-guard:
-    # Fails fast if package-lock.json has optionalDependencies without
-    # resolved entries — catches npm/cli#4828 strips that otherwise only
-    # surface as cryptic "Cannot find module '...<platform>.node'" errors
-    # on platforms that weren't the install author's.
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check lockfile has no stripped platform deps
-        run: python3 scripts/check-lockfile-optional-deps.py
-
   fast:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Need full history for the lockfile-change guard to walk PR commits.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
+      - name: Lockfile change guard
+        # pnpm-lock.yaml regeneration is reserved for Renovate / Dependabot.
+        # Local devs must NOT regenerate the lockfile (see RIFT-70). PRs that
+        # touch the lockfile from a non-bot commit fail this step unless the
+        # PR carries the 'lockfile-override-approved' label (UI-reviewable
+        # escape hatch — labels only, NOT commit-message gating).
+        if: github.event_name == 'pull_request'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet "$PR_BASE_SHA" "$PR_HEAD_SHA" -- pnpm-lock.yaml; then
+            echo "pnpm-lock.yaml unchanged in this PR"
+            exit 0
+          fi
+          # Author email pattern: 49699333+dependabot[bot]@users.noreply.github.com,
+          # 29139614+renovate[bot]@users.noreply.github.com, or the unprefixed forms.
+          BAD=$(git log --pretty=format:'%H %ae' "$PR_BASE_SHA..$PR_HEAD_SHA" -- pnpm-lock.yaml \
+            | grep -vE ' ([0-9]+\+)?(renovate|dependabot)\[bot\]@users\.noreply\.github\.com$' \
+            || true)
+          if [ -z "$BAD" ]; then
+            echo "pnpm-lock.yaml changed only in bot commits — OK"
+            exit 0
+          fi
+          LABELS=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name' || true)
+          if printf '%s\n' "$LABELS" | grep -qx 'lockfile-override-approved'; then
+            echo "pnpm-lock.yaml change approved via 'lockfile-override-approved' label"
+            exit 0
+          fi
+          echo "::error::This PR modifies pnpm-lock.yaml outside Renovate/Dependabot."
+          echo "To proceed: add the 'lockfile-override-approved' label and re-run this job."
+          echo "Or: revert pnpm-lock.yaml changes if unintended (the lockfile is maintained by Renovate by default — see CLAUDE.md § Supply chain)."
+          echo "Offending commits:"
+          echo "$BAD"
+          exit 1
       - name: Guard — @riftview/shared has no electron imports
         # Belt-and-suspenders: the CLI bundle marks electron external, but
         # any electron import in shared source would still bloat esbuild's
@@ -43,38 +75,68 @@ jobs:
             exit 1
           fi
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
       - name: Typecheck
-        run: npm run typecheck
+        run: pnpm run typecheck
       - name: Test
-        run: npm test
+        run: pnpm test
       - name: Build CLI
-        run: npm run build:cli
+        run: pnpm run build:cli
       - name: CLI bundle smoke — `riftview version --output json`
         run: |
           out=$(node apps/cli/out/index.js version --output json)
           echo "$out"
           echo "$out" | node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));if(d.schemaVersion!==1){console.error("bad schemaVersion:",d.schemaVersion);process.exit(1)}'
-      - name: CLI phantom-dep guard (pack + install in isolation)
+      - name: CLI phantom-dep guard (pnpm pack + isolated install)
         # Catches the class of failure that commit 7f50643 had to recover
         # from: hoisting-masked runtime deps in apps/cli. Packing all three
-        # workspaces (shared, cloud-scan, cli) and installing the tarballs
-        # in a fresh directory resolves only what apps/cli declares. If the
-        # CLI secretly relies on a package declared only by apps/desktop (or
-        # any other non-transitive workspace), this isolated install fails.
+        # publishable workspaces (shared, cloud-scan, cli) and installing the
+        # tarballs in a fresh directory resolves only what apps/cli declares.
+        # If the CLI secretly relies on a package declared only by another
+        # non-transitive workspace, this isolated install fails.
+        #
+        # Different from pnpm's strict install-time symlink integrity: this
+        # validates the *published tarball shape* — the `files` field plus
+        # the declared-dep closure of @riftview/cli, @riftview/shared, and
+        # @riftview/cloud-scan — which is what npm consumers will resolve.
         run: |
           set -euo pipefail
-          TMPDIR=$(mktemp -d)
+          TARBALL_DIR=$(mktemp -d)
           for ws in packages/shared packages/cloud-scan apps/cli; do
-            ( cd "$ws" && npm pack --pack-destination "$TMPDIR" )
+            ( cd "$ws" && pnpm pack --pack-destination "$TARBALL_DIR" )
           done
-          cd "$TMPDIR"
-          mkdir guard-install && cd guard-install
-          npm init -y > /dev/null
-          npm install --prefix . \
-            "$TMPDIR"/riftview-shared-*.tgz \
-            "$TMPDIR"/riftview-cloud-scan-*.tgz \
-            "$TMPDIR"/riftview-cli-*.tgz
+          # pnpm pack rewrites workspace:* → resolved versions in the tarball
+          # manifests, so the published shape is identical to what an npm
+          # consumer downloads. To install the three tarballs together in an
+          # isolated dir we need to redirect cli's @riftview/shared and
+          # @riftview/cloud-scan deps to the local tarballs (otherwise pnpm
+          # tries to fetch them from the registry, where they don't exist).
+          # pnpm.overrides is the right hook: it doesn't bypass cli's own
+          # dep declarations — it only rewrites which artifact satisfies
+          # them. A truly missing transitive dep (real phantom) still fails
+          # because the override only covers @riftview/* names.
+          GUARD_DIR=$(mktemp -d)
+          cd "$GUARD_DIR"
+          SHARED_TGZ=$(ls "$TARBALL_DIR"/riftview-shared-*.tgz)
+          CLOUD_SCAN_TGZ=$(ls "$TARBALL_DIR"/riftview-cloud-scan-*.tgz)
+          CLI_TGZ=$(ls "$TARBALL_DIR"/riftview-cli-*.tgz)
+          cat > package.json <<JSON
+          {
+            "name": "guard-install",
+            "version": "1.0.0",
+            "private": true,
+            "dependencies": {
+              "@riftview/cli": "file:${CLI_TGZ}"
+            },
+            "pnpm": {
+              "overrides": {
+                "@riftview/shared": "file:${SHARED_TGZ}",
+                "@riftview/cloud-scan": "file:${CLOUD_SCAN_TGZ}"
+              }
+            }
+          }
+          JSON
+          pnpm install
           node node_modules/@riftview/cli/out/index.js version --output json | \
             node -e 'const d=JSON.parse(require("fs").readFileSync(0,"utf8"));if(d.schemaVersion!==1){console.error("guard: bad schemaVersion",d.schemaVersion);process.exit(1)}'
           echo "::notice::CLI resolves with only its declared deps — no phantoms"
@@ -95,15 +157,16 @@ jobs:
       AWS_ENDPOINT_URL: http://localhost:4566
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.x
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
       - name: Start LocalStack
         run: docker compose -f .localstack/compose.yml up -d
       - name: Wait for LocalStack
@@ -112,17 +175,17 @@ jobs:
         working-directory: apps/cli/tests/integration/fixtures
         run: terraform init -input=false && terraform apply -auto-approve -input=false
       - name: Build CLI
-        run: npm run build:cli
+        run: pnpm run build:cli
       - name: IPC contract
         run: npx vitest run apps/desktop/tests/ipc
       - name: CLI ↔ LocalStack integration
-        run: npm run test:integration
+        run: pnpm run test:integration
       - name: Install Playwright browsers (with Linux deps for xvfb)
         run: npx playwright install --with-deps chromium
       - name: Build desktop for E2E
-        run: npm run build --workspace=@riftview/desktop
+        run: pnpm --filter @riftview/desktop run build
       - name: Electron E2E smoke (demo mode, xvfb)
-        run: xvfb-run -a npm run test:e2e
+        run: xvfb-run -a pnpm run test:e2e
         env:
           CI: 'true'
       - name: Upload Playwright report on failure
@@ -164,12 +227,13 @@ jobs:
       AWS_ENDPOINT_URL: http://localhost:4566
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
       # --- Linux-only LocalStack prereqs ---
       - uses: hashicorp/setup-terraform@v3
         if: runner.os == 'Linux'
@@ -191,26 +255,38 @@ jobs:
       - name: Build desktop bundles (electron-vite)
         working-directory: apps/desktop
         run: npx electron-vite build
+      - name: pnpm deploy (self-contained app tree for electron-builder)
+        # electron-builder's app-builder doesn't follow pnpm's isolated
+        # virtual store deeply enough to find 3-level transitive deps
+        # (e.g. ms via debug via builder-util-runtime via electron-updater),
+        # so the unpacked binary boots into a hung main process. `pnpm deploy`
+        # produces a flat self-contained tree at apps/desktop/deploy/ that
+        # electron-builder packs correctly. See apps/desktop/electron-builder.yml
+        # `directories.output: ../dist` — artifacts still land at the path
+        # the @release Playwright fixture expects.
+        working-directory: apps/desktop
+        run: pnpm run deploy
       - name: Rebuild native modules against Electron ABI
-        # Installs Electron-targeted prebuilds for native deps (better-sqlite3).
-        # `npm ci` above fetched the Node-ABI prebuilds so the fast job's
-        # vitest unit tests can load them. Packaging for Electron requires the
-        # ABI matching Electron's bundled Node (v140 on Electron 39); without
-        # this step the packaged .node is silently unloadable at runtime and
-        # the snapshot history store no-ops (see CLAUDE.md § Native modules).
+        # Installs Electron-targeted prebuilds for native deps (better-sqlite3)
+        # inside apps/desktop/deploy/node_modules. The repo's main
+        # node_modules/better-sqlite3 stays Node-ABI, so the fast job's
+        # vitest tests still load it correctly. Packaging for Electron
+        # requires the ABI matching Electron's bundled Node (v140 on Electron 39);
+        # without this step the packaged .node is silently unloadable at runtime
+        # and the snapshot history store no-ops (see CLAUDE.md § Native modules).
         working-directory: apps/desktop
-        run: npm run rebuild
+        run: pnpm run rebuild
       - name: Build unsigned binary (for @release E2E)
-        working-directory: apps/desktop
-        run: npx electron-builder --dir
+        working-directory: apps/desktop/deploy
+        run: pnpm exec electron-builder --dir
       - name: Run @release E2E (Linux — full LocalStack)
         if: runner.os == 'Linux'
-        run: xvfb-run -a npm run test:e2e:release
+        run: xvfb-run -a pnpm run test:e2e:release
         env:
           CI: 'true'
       - name: Run @release E2E (mac — demo-mode smoke)
         if: runner.os == 'macOS'
-        run: npm run test:e2e:release:mac
+        run: pnpm run test:e2e:release:mac
         env:
           CI: 'true'
       - name: Upload Playwright report on failure
@@ -229,8 +305,14 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libfuse2
       - name: Build signed and publish
-        working-directory: apps/desktop
-        run: npx electron-vite build && npx electron-builder --${{ matrix.platform }} --publish always
+        # The unsigned --dir build in the previous step already produced a
+        # working artifact at apps/desktop/dist/<platform>-<arch>/. The
+        # publish step rebuilds the signed binary from the same deploy/
+        # tree (electron-vite output is already in deploy/out, deps are
+        # already rebuilt for Electron-ABI in deploy/node_modules — no
+        # need to repeat either).
+        working-directory: apps/desktop/deploy
+        run: pnpm exec electron-builder --${{ matrix.platform }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.CSC_LINK }}

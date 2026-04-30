@@ -15,5 +15,8 @@
   },
   "dependencies": {
     "ini": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/ini": "^4.1.1"
   }
 }

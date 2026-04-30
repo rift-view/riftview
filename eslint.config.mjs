@@ -7,7 +7,13 @@ import eslintPluginReactHooks from 'eslint-plugin-react-hooks'
 import eslintPluginReactRefresh from 'eslint-plugin-react-refresh'
 
 export default defineConfig(
-  { ignores: ['**/node_modules', '**/dist', '**/out'] },
+  // `**/deploy` is the apps/desktop pnpm-deploy intermediate produced by
+  // `pnpm run deploy` (see apps/desktop/package.json scripts and
+  // electron-builder.yml `directories.output`). It copies source files
+  // including the Playwright fixtures, which the originals are already
+  // excused from below — without this ignore the deploy copies would
+  // re-trip rules.
+  { ignores: ['**/node_modules', '**/dist', '**/out', '**/deploy'] },
   tseslint.configs.recommended,
   eslintPluginReact.configs.flat.recommended,
   eslintPluginReact.configs.flat['jsx-runtime'],

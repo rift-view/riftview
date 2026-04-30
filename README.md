@@ -47,38 +47,42 @@ See [`apps/cli/README.md`](./apps/cli/README.md) for the full reference: command
 
 ## Repository layout
 
-This is an npm workspaces monorepo. Three workspaces:
+This is a pnpm workspaces monorepo. Workspaces:
 
 - `apps/desktop` — the Electron app (private, not published)
 - `apps/cli` — `@riftview/cli` (published to npm)
 - `packages/shared` — platform-agnostic analysis, graph, drift, and scan primitives reused by both apps
+- `packages/cloud-scan` — AWS SDK plugin registry and client factory
 
-Root `package.json` hoists devDeps; `npm install` at the root sets up all three.
+The package manager is pinned via the `packageManager` field in
+`package.json`. Install pnpm via [the official guide](https://pnpm.io/installation)
+or Corepack (`corepack enable`) — `pnpm install` at the root sets up
+every workspace.
 
 ## Development
 
 ### Apple Silicon prereq
 
-RiftView's snapshot store uses `better-sqlite3`, a native module. On Apple Silicon Macs, Node must be `arm64` or the Electron runtime will fail to load the native binary. If you installed Node via Intel Homebrew (`/usr/local/bin/node`), either switch to `/opt/homebrew` Node, use nvm, or run `npx @electron/rebuild` after `npm install` to rebuild native modules against Electron's arch.
+RiftView's snapshot store uses `better-sqlite3`, a native module. On Apple Silicon Macs, Node must be `arm64` or the Electron runtime will fail to load the native binary. If you installed Node via Intel Homebrew (`/usr/local/bin/node`), either switch to `/opt/homebrew` Node, use nvm, or run `npx @electron/rebuild` after `pnpm install` to rebuild native modules against Electron's arch.
 
 ```bash
-# Install dependencies
-npm install
+# Install dependencies (pnpm — see packageManager field in package.json)
+pnpm install
 
 # One-time: install the pre-commit hook (prettier + eslint on staged files)
-npx lefthook install
+pnpm exec lefthook install
 
 # Start dev server
-npm run dev
+pnpm run dev
 
 # Run tests
-npm test
+pnpm test
 
 # Typecheck
-npm run typecheck
+pnpm run typecheck
 
 # Lint
-npm run lint
+pnpm run lint
 ```
 
 For the LocalStack-backed CLI integration tests, see
@@ -88,13 +92,13 @@ For the LocalStack-backed CLI integration tests, see
 
 ```bash
 # macOS
-npm run build:mac
+pnpm run build:mac
 
 # Windows
-npm run build:win
+pnpm run build:win
 
 # Linux
-npm run build:linux
+pnpm run build:linux
 ```
 
 ## Legal
@@ -109,15 +113,15 @@ See [NOTICE.md](./NOTICE.md) for third-party license acknowledgments.
 
 ### Top-level
 
-- `apps/` — npm workspaces root containing the desktop app and CLI.
+- `apps/` — pnpm workspaces root containing the desktop app and CLI.
 - `apps/desktop/` — Electron app (main process, renderer, preload).
 - `apps/cli/` — node CLI (`riftview scan`, `risks`, `diff`, etc.).
 - `packages/` — shared workspaces.
 - `packages/shared/` — typed `NodeType`/`Edge` shape, `@riftview/shared/snapshot` canonical core, cloud types.
 - `packages/cloud-scan/` — AWS SDK-backed scan orchestrator.
-- `scripts/` — one-off maintenance scripts (e.g. `check-lockfile-optional-deps.py`).
+- `scripts/` — one-off maintenance scripts (e.g. `wait-localstack.sh`).
 - `.github/workflows/` — CI (`ci.yml`) and release (`winget.yml`).
-- Tooling config at the repo root: `eslint.config.mjs`, `lefthook.yml`, `tsconfig.base.json`, `tsconfig.json`, `vitest.config.ts`, `package.json`, `package-lock.json`.
+- Tooling config at the repo root: `eslint.config.mjs`, `lefthook.yml`, `tsconfig.base.json`, `tsconfig.json`, `vitest.config.ts`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `renovate.json`.
 
 ### Desktop app subtree (most load-bearing)
 
@@ -141,30 +145,29 @@ See [NOTICE.md](./NOTICE.md) for third-party license acknowledgments.
 
 From the repo root (verbatim from `package.json` scripts):
 
-- `npm install` — workspace install.
-- `npm run dev` — Electron dev with hot reload (delegates to `@riftview/desktop`).
-- `npm run lint` — eslint across workspaces.
-- `npm run typecheck` — tsc `--noEmit` across workspaces.
-- `npm test` — vitest unit suites.
-- `npm run test:watch` / `npm run test:ui` — vitest watch mode and UI.
-- `npm run test:integration` — CLI ↔ LocalStack integration suite.
-- `npm run test:e2e` — Playwright e2e (excludes `@release` specs).
-- `npm run test:e2e:release` / `npm run test:e2e:release:mac` — release-gated Playwright specs.
-- `npm run build` — build all workspaces.
-- `npm run build:cli` — CLI bundle only.
-- `npm run cli` — run the CLI from source via tsx.
-- `npm run start` / `npm run stories` — Electron production start, Ladle stories.
-- `npm run localstack:up` / `npm run localstack:down` — bring LocalStack + Terraform fixtures up/down for integration work.
-- `npm run format` — prettier write.
+- `pnpm install` — workspace install (uses the version pinned in `packageManager`).
+- `pnpm run dev` — Electron dev with hot reload (delegates to `@riftview/desktop`).
+- `pnpm run lint` — eslint across workspaces.
+- `pnpm run typecheck` — tsc `--noEmit` across workspaces.
+- `pnpm test` — vitest unit suites.
+- `pnpm run test:watch` / `pnpm run test:ui` — vitest watch mode and UI.
+- `pnpm run test:integration` — CLI ↔ LocalStack integration suite.
+- `pnpm run test:e2e` — Playwright e2e (excludes `@release` specs).
+- `pnpm run test:e2e:release` / `pnpm run test:e2e:release:mac` — release-gated Playwright specs.
+- `pnpm run build` — build all workspaces.
+- `pnpm run build:cli` — CLI bundle only.
+- `pnpm run cli` — run the CLI from source via tsx.
+- `pnpm run start` / `pnpm run stories` — Electron production start, Ladle stories.
+- `pnpm run localstack:up` / `pnpm run localstack:down` — bring LocalStack + Terraform fixtures up/down for integration work.
+- `pnpm run format` — prettier write.
 
-For platform binaries, the desktop workspace exposes `npm run build:mac`, `npm run build:win`, and `npm run build:linux` (see the `Build` section above).
+For platform binaries, the desktop workspace exposes `pnpm run build:mac`, `pnpm run build:win`, and `pnpm run build:linux` (see the `Build` section above).
 
 ### CI
 
-`.github/workflows/ci.yml` runs three jobs on every PR and push to `main`:
+`.github/workflows/ci.yml` runs two jobs on every PR and push to `main`:
 
-- **`lockfile-guard`** — Python script that catches stripped optional-platform deps in `package-lock.json`.
-- **`fast`** — install + lint + typecheck + test + CLI build + bundle smoke + phantom-dep guard.
+- **`fast`** — install + lockfile-change guard (PR-only) + lint + typecheck + test + CLI build + bundle smoke + phantom-dep guard (`pnpm pack` + isolated install).
 - **`e2e`** — IPC contract walker + CLI ↔ LocalStack integration + Electron E2E smoke under xvfb (docker-compose brings up LocalStack).
 
 The `release` job is skipped except on release tags (`refs/tags/v*`), where it builds, signs, and publishes the desktop binaries for macOS and Linux.
