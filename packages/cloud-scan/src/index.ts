@@ -21,7 +21,7 @@ export { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from './aws/iam/f
 export { pluginRegistry, PluginRegistry } from './plugin/registry'
 export { awsPlugin } from './plugin/awsPlugin'
 export { vercelPluginStub } from './plugin/vercelPlugin.stub'
-export { hetznerPluginStub } from './plugin/hetznerPlugin.stub'
+export { hetznerPlugin } from './plugin/hetznerPlugin'
 export { registerBuiltinPlugins } from './plugin/boot'
 
 // Plugin + restore types (re-export all for consumers)

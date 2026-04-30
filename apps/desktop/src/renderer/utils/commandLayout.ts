@@ -41,7 +41,12 @@ export const NODE_TIER: Partial<Record<NodeType, number>> = {
   'aws:ssm-param': 5,
   'aws:secret': 5,
   'aws:cognito': 5,
-  'aws:ecr-repo': 5
+  'aws:ecr-repo': 5,
+
+  // Hetzner — mirrors AWS tiers by role
+  'hetzner:server': 2, // compute (tier-equivalent of aws:ec2)
+  'hetzner:volume': 3, // data
+  'hetzner:ssh-key': 5 // identity
 }
 
 export const DEFAULT_TIER = 6
@@ -50,7 +55,10 @@ const EXCLUDED: Set<NodeType> = new Set([
   'aws:vpc',
   'aws:subnet',
   'aws:security-group',
-  'aws:nat-gateway'
+  'aws:nat-gateway',
+  // Hetzner network / firewall behave like VPC / SG — context, not tier rows.
+  'hetzner:network',
+  'hetzner:firewall'
 ])
 
 const TIER_NAMES = ['Internet', 'Edge', 'Compute', 'Data', 'Messaging', 'Config', 'Other'] as const

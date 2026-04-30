@@ -41,6 +41,13 @@ const DATA_KEYS: Record<NodeType, readonly string[]> = {
   'aws:ecs': [],
   'aws:eks': [],
   'aws:msk': [],
+  // Hetzner — conservative v1 set; expand once drift detection is wired.
+  // Server mirrors aws:ec2 (track ebs-equivalent state via attached volumes).
+  'hetzner:server': ['attachedVolumes'],
+  'hetzner:network': [],
+  'hetzner:volume': [],
+  'hetzner:firewall': [],
+  'hetzner:ssh-key': [],
   unknown: []
 }
 

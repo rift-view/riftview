@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { awsPlugin } from '../awsPlugin'
-import { hetznerPluginStub } from '../hetznerPlugin.stub'
+import { hetznerPlugin } from '../hetznerPlugin'
 import { vercelPluginStub } from '../vercelPlugin.stub'
 import type {
   ApplyEvent,
@@ -17,24 +17,28 @@ describe('plugin/restoreTypes — RIF-18 interface', () => {
       expect(awsPlugin.versionFormat).toBe('scan-snapshot')
     })
 
-    it('hetznerPluginStub declares its own versionFormat id', () => {
-      expect(hetznerPluginStub.versionFormat).toBe('hetzner-cloud-api-v1')
+    it('hetznerPlugin (RIFT-103) opts out with versionFormat="unsupported"', () => {
+      // Doc D Decision 1: snapshot-export is AWS-only for v1.
+      expect(hetznerPlugin.versionFormat).toBe('unsupported')
     })
 
     it('vercelPluginStub declares versionFormat="unsupported"', () => {
       expect(vercelPluginStub.versionFormat).toBe('unsupported')
     })
 
-    it('opted-in plugins (stub) expose all six snapshot-export methods (RIF-18 + RIF-20 amendments)', () => {
-      expect(typeof hetznerPluginStub.listVersions).toBe('function')
-      expect(typeof hetznerPluginStub.planRestore).toBe('function')
-      expect(typeof hetznerPluginStub.applyRestore).toBe('function')
-      expect(typeof hetznerPluginStub.confirmStep).toBe('function')
-      expect(typeof hetznerPluginStub.cancel).toBe('function')
-      expect(typeof hetznerPluginStub.estimateCostDelta).toBe('function')
+    it('opted-in plugin (awsPlugin) exposes all six snapshot-export methods (RIF-18 + RIF-20 amendments)', () => {
+      expect(typeof awsPlugin.listVersions).toBe('function')
+      expect(typeof awsPlugin.planRestore).toBe('function')
+      expect(typeof awsPlugin.applyRestore).toBe('function')
+      expect(typeof awsPlugin.confirmStep).toBe('function')
+      expect(typeof awsPlugin.cancel).toBe('function')
+      expect(typeof awsPlugin.estimateCostDelta).toBe('function')
     })
 
-    it('opted-out plugin (stub) leaves snapshot-export methods undefined', () => {
+    it('opted-out plugins (hetzner, vercel stub) leave snapshot-export methods undefined', () => {
+      expect(hetznerPlugin.planRestore).toBeUndefined()
+      expect(hetznerPlugin.applyRestore).toBeUndefined()
+      expect(hetznerPlugin.estimateCostDelta).toBeUndefined()
       expect(vercelPluginStub.planRestore).toBeUndefined()
       expect(vercelPluginStub.applyRestore).toBeUndefined()
       expect(vercelPluginStub.estimateCostDelta).toBeUndefined()

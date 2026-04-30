@@ -57,6 +57,11 @@ export const NODE_TYPES = [
   'aws:eks',
   'aws:opensearch',
   'aws:msk',
+  'hetzner:server',
+  'hetzner:network',
+  'hetzner:volume',
+  'hetzner:firewall',
+  'hetzner:ssh-key',
   'unknown'
 ] as const
 
