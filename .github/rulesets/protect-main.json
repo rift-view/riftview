@@ -1,0 +1,46 @@
+{
+  "id": 15373828,
+  "name": "Protect Main",
+  "target": "branch",
+  "source_type": "Repository",
+  "source": "rift-view/riftview",
+  "enforcement": "active",
+  "conditions": { "ref_name": { "exclude": [], "include": ["~DEFAULT_BRANCH"] } },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 0,
+        "dismiss_stale_reviews_on_push": false,
+        "required_reviewers": [],
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false,
+        "allowed_merge_methods": ["merge", "squash", "rebase"]
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": false,
+        "do_not_enforce_on_create": false,
+        "required_status_checks": [
+          { "context": "fast" },
+          { "context": "e2e" },
+          { "context": "lockfile-guard" }
+        ]
+      }
+    }
+  ],
+  "node_id": "RRS_lACqUmVwb3NpdG9yec5IZ4DqzgDqlgQ",
+  "created_at": "2026-04-21T19:31:47.112-04:00",
+  "updated_at": "2026-04-22T16:24:19.788-04:00",
+  "bypass_actors": [],
+  "current_user_can_bypass": "never",
+  "_links": {
+    "self": { "href": "https://api.github.com/repos/rift-view/riftview/rulesets/15373828" },
+    "html": { "href": "https://github.com/rift-view/riftview/rules/15373828" }
+  }
+}
