@@ -22,7 +22,6 @@ brand/
 scripts/*
 # Public scripts used by CI / contributors — explicitly tracked.
 !scripts/wait-localstack.sh
-!scripts/check-lockfile-optional-deps.py
 .vscode/
 
 # Superpowers / brainstorm runtime state
