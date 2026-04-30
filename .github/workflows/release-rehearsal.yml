@@ -110,10 +110,6 @@ jobs:
         working-directory: apps/desktop/deploy
         run: pnpm exec electron-builder --dir
 
-      - name: List dist tree (evidence)
-        shell: bash
-        run: ls -laR apps/desktop/dist | head -100
-
       - name: Run @release E2E (Linux — full LocalStack tier)
         if: matrix.tier == 'full'
         run: xvfb-run -a pnpm run test:e2e:release
