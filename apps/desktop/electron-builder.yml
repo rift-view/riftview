@@ -2,6 +2,15 @@ appId: com.riftview.desktop
 productName: RiftView
 directories:
   buildResources: build
+  # The build pipeline runs electron-builder from apps/desktop/deploy/ —
+  # `pnpm deploy` produces a self-contained tree there with all transitive
+  # deps copied flat into deploy/node_modules (electron-builder's app-builder
+  # walks pnpm-lock.yaml and silently drops 3-level-deep transitives like
+  # `ms` under pnpm's isolated layout, so the deploy step is what gets the
+  # tree into a shape app-builder can pack correctly). Writing artifacts
+  # to ../dist keeps the output at apps/desktop/dist/ — the path the
+  # @release Playwright fixtures already expect.
+  output: ../dist
 files:
   - '!**/.vscode/*'
   - '!src/*'

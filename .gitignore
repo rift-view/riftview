@@ -22,7 +22,6 @@ brand/
 scripts/*
 # Public scripts used by CI / contributors — explicitly tracked.
 !scripts/wait-localstack.sh
-!scripts/check-lockfile-optional-deps.py
 .vscode/
 
 # Superpowers / brainstorm runtime state
@@ -35,6 +34,8 @@ RiftViewMemory/
 dist/
 out/
 node_modules/
+# pnpm deploy intermediate (used by apps/desktop electron-builder pipeline)
+apps/desktop/deploy/
 
 # Playwright Electron E2E artifacts
 test-results/

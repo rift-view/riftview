@@ -3,14 +3,11 @@
   "private": true,
   "version": "0.2.0",
   "description": "RiftView monorepo — desktop, CLI, and shared analysis library",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@10.33.1+sha512.05ba3c1d5d1c18f68df06470d74055e62d41fc110a0c660db1b2dfb2785327f04cf0f68345d4609bc52089e7fa0343c31593b2f9594e2c5d5da426230acc9820",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "pnpm -r --if-present run typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
@@ -20,15 +17,26 @@
     "test:e2e:release:mac": "cd apps/desktop && RIFTVIEW_BUILT_APP=1 npx playwright test --grep @release-mac",
     "localstack:up": "docker compose -f .localstack/compose.yml up -d && ./scripts/wait-localstack.sh && cd apps/cli/tests/integration/fixtures && terraform init -input=false && terraform apply -auto-approve",
     "localstack:down": "docker compose -f .localstack/compose.yml down -v",
-    "build": "npm run build --workspaces --if-present",
-    "build:cli": "npm run build --workspace=@riftview/cli",
+    "build": "pnpm -r --if-present run build",
+    "build:cli": "pnpm --filter @riftview/cli run build",
     "cli": "tsx apps/cli/cli/bin.ts",
-    "dev": "npm run dev --workspace=@riftview/desktop",
-    "start": "npm run start --workspace=@riftview/desktop",
-    "stories": "npm run stories --workspace=@riftview/desktop"
+    "dev": "pnpm --filter @riftview/desktop run dev",
+    "start": "pnpm --filter @riftview/desktop run start",
+    "stories": "pnpm --filter @riftview/desktop run stories"
   },
-  "overrides": {
-    "vite": "^7.2.6"
+  "pnpm": {
+    "overrides": {
+      "vite": "^7.2.6"
+    },
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "better-sqlite3",
+      "electron",
+      "esbuild",
+      "lefthook",
+      "msw",
+      "unrs-resolver"
+    ]
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",

@@ -9,7 +9,10 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     css: true,
     // Playwright Electron E2E specs live under tests/e2e/ and are run by
-    // `npm run test:e2e` (npx playwright test). Vitest must not collect them.
-    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**']
+    // `pnpm run test:e2e` (npx playwright test). Vitest must not collect them.
+    // `deploy/` is the apps/desktop pnpm-deploy intermediate produced by
+    // `pnpm run deploy` — it copies the source tree (including tests),
+    // which would otherwise double the collected test count.
+    exclude: ['**/node_modules/**', '**/dist/**', '**/deploy/**', 'tests/e2e/**']
   }
 })
