@@ -59,7 +59,9 @@ jobs:
             echo "pnpm-lock.yaml change approved via 'lockfile-override-approved' label"
             exit 0
           fi
-          echo "::error::pnpm-lock.yaml was modified by non-bot commits without the 'lockfile-override-approved' label."
+          echo "::error::This PR modifies pnpm-lock.yaml outside Renovate/Dependabot."
+          echo "To proceed: add the 'lockfile-override-approved' label and re-run this job."
+          echo "Or: revert pnpm-lock.yaml changes if unintended (the lockfile is maintained by Renovate by default — see CLAUDE.md § Supply chain)."
           echo "Offending commits:"
           echo "$BAD"
           exit 1
