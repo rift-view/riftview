@@ -79,6 +79,52 @@ Three rules a contributor needs to internalize:
    individual ones. Lockfile maintenance runs the first of each
    month. Don't ungroup unless you have a reason.
 
+## Desktop packaging pipeline (pnpm deploy + electron-builder)
+
+The desktop binary is built via a deploy-then-package flow rather than
+running `electron-builder` directly against the workspace. Reason:
+electron-builder's `app-builder` collects the dep tree by reading
+`pnpm-lock.yaml` and, under pnpm's isolated layout, silently drops
+3-level-deep transitive packages (concretely `ms`, reached via `debug` →
+`builder-util-runtime` → `electron-updater`). The packaged `.app` then
+contains a half-resolved `node_modules` tree, the main process hangs at
+the first eager `require('electron-updater')` call, and Playwright sees
+"firstWindow timeout" with no logs. `pnpm deploy` produces a flat,
+self-contained tree at `apps/desktop/deploy/` that electron-builder
+packs correctly.
+
+Build pipeline (chained inside `apps/desktop` `build:unpack`,
+`build:mac`, `build:linux`, `build:win`):
+
+1. `electron-vite build` — bundles the main, preload, and renderer
+   into `apps/desktop/out/`.
+2. `pnpm --filter @riftview/desktop --prod deploy ./deploy` — copies
+   the workspace's `package.json`, `out/`, `build/`, and (importantly)
+   a flat `node_modules` with ALL transitive deps into
+   `apps/desktop/deploy/`. Requires `inject-workspace-packages=true`
+   in the root `.npmrc` so `@riftview/cloud-scan` and `@riftview/shared`
+   are bundled into the deploy as real packages instead of symlinks.
+3. `cd deploy && electron-builder install-app-deps` — replaces
+   `deploy/node_modules/better-sqlite3/build/Release/better_sqlite3.node`
+   with the Electron-ABI prebuild. The repo's main `node_modules/`
+   stays Node-ABI, so unit tests still load the binary.
+4. `cd deploy && electron-builder --dir` (or `--mac`, `--linux`,
+   `--win`) — produces the artifact. `electron-builder.yml` sets
+   `directories.output: ../dist`, so the artifact lands at
+   `apps/desktop/dist/<platform>-<arch>/` — the path the @release
+   Playwright fixtures expect.
+
+`apps/desktop/electron-builder.yml` keeps `npmRebuild: false` because
+electron-builder's built-in `npm rebuild` would target the installing
+Node's ABI, not Electron's — the explicit `install-app-deps` step is
+what produces the right binary.
+
+Side-effect (good news): unlike the npm-era flow, running `build:unpack`
+no longer rewrites the in-tree `better-sqlite3.node`. The Electron-ABI
+binary lives only in `apps/desktop/deploy/node_modules/`, which is
+.gitignored and recreated each build. Running `pnpm test` immediately
+after `build:unpack` works without restoration.
+
 ## Native modules (better-sqlite3)
 
 The desktop app uses `better-sqlite3` for the snapshot history DB. Native
@@ -91,27 +137,14 @@ keeps two regimes separated by pipeline phase:
    postinstall (gated by `pnpm.onlyBuiltDependencies`) downloads the
    **Node-ABI** prebuild that matches the installing Node's
    `NODE_MODULE_VERSION`. The `fast` CI job runs `vitest` unit tests against
-   SQLite directly, so this binary must be Node-loadable.
-2. **Packaging phase (before `electron-builder --dir`)** — run
-   `pnpm run rebuild` (= `electron-builder install-app-deps`, which uses
-   `@electron/rebuild`) to swap in the **Electron-ABI** prebuild matching the
-   Electron major declared in `apps/desktop/package.json`. `electron-builder`
-   then packages the Electron-compatible `.node` into the `.app`.
-
-The `apps/desktop` build scripts (`build:unpack`, `build:mac`, `build:linux`,
-`build:win`) chain `pnpm run rebuild` between `electron-vite build` and
-`electron-builder`, and the CI release job runs the same step before
-`electron-builder --dir`. `apps/desktop/electron-builder.yml` keeps
-`npmRebuild: false` because electron-builder's built-in `npm rebuild` would
-target the installing Node's ABI, not Electron's — the explicit `install-app-deps`
-step is what produces the right binary.
-
-Side-effect for local dev: after running `build:unpack`, the in-tree
-`node_modules/.pnpm/better-sqlite3@*/node_modules/better-sqlite3/build/Release/better_sqlite3.node`
-is now Electron-ABI. Re-running `pnpm test` in that state fails with a
-`NODE_MODULE_VERSION` mismatch. Restore with
-`pnpm rebuild better-sqlite3` (no env overrides) before running unit tests
-again, or just `pnpm install`.
+   SQLite directly, so this binary must be Node-loadable. The deploy step
+   leaves this binary alone.
+2. **Packaging phase (`pnpm run rebuild`, run AFTER `pnpm run deploy`)** —
+   `electron-builder install-app-deps` (the script body of `pnpm run rebuild`)
+   swaps in the **Electron-ABI** prebuild matching the Electron major
+   declared in `apps/desktop/package.json`, but ONLY inside
+   `apps/desktop/deploy/node_modules/`. `electron-builder --dir` then
+   packages that Electron-compatible `.node` into the `.app`.
 
 When bumping the `electron` devDependency, verify `better-sqlite3` ships a
 matching `electron-v<ABI>` prebuild for every packaged platform

@@ -253,18 +253,30 @@ jobs:
       - name: Build desktop bundles (electron-vite)
         working-directory: apps/desktop
         run: npx electron-vite build
+      - name: pnpm deploy (self-contained app tree for electron-builder)
+        # electron-builder's app-builder doesn't follow pnpm's isolated
+        # virtual store deeply enough to find 3-level transitive deps
+        # (e.g. ms via debug via builder-util-runtime via electron-updater),
+        # so the unpacked binary boots into a hung main process. `pnpm deploy`
+        # produces a flat self-contained tree at apps/desktop/deploy/ that
+        # electron-builder packs correctly. See apps/desktop/electron-builder.yml
+        # `directories.output: ../dist` — artifacts still land at the path
+        # the @release Playwright fixture expects.
+        working-directory: apps/desktop
+        run: pnpm run deploy
       - name: Rebuild native modules against Electron ABI
-        # Installs Electron-targeted prebuilds for native deps (better-sqlite3).
-        # `pnpm install` above fetched the Node-ABI prebuilds so the fast job's
-        # vitest unit tests can load them. Packaging for Electron requires the
-        # ABI matching Electron's bundled Node (v140 on Electron 39); without
-        # this step the packaged .node is silently unloadable at runtime and
-        # the snapshot history store no-ops (see CLAUDE.md § Native modules).
+        # Installs Electron-targeted prebuilds for native deps (better-sqlite3)
+        # inside apps/desktop/deploy/node_modules. The repo's main
+        # node_modules/better-sqlite3 stays Node-ABI, so the fast job's
+        # vitest tests still load it correctly. Packaging for Electron
+        # requires the ABI matching Electron's bundled Node (v140 on Electron 39);
+        # without this step the packaged .node is silently unloadable at runtime
+        # and the snapshot history store no-ops (see CLAUDE.md § Native modules).
         working-directory: apps/desktop
         run: pnpm run rebuild
       - name: Build unsigned binary (for @release E2E)
-        working-directory: apps/desktop
-        run: npx electron-builder --dir
+        working-directory: apps/desktop/deploy
+        run: pnpm exec electron-builder --dir
       - name: Run @release E2E (Linux — full LocalStack)
         if: runner.os == 'Linux'
         run: xvfb-run -a pnpm run test:e2e:release
@@ -291,8 +303,14 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libfuse2
       - name: Build signed and publish
-        working-directory: apps/desktop
-        run: npx electron-vite build && npx electron-builder --${{ matrix.platform }} --publish always
+        # The unsigned --dir build in the previous step already produced a
+        # working artifact at apps/desktop/dist/<platform>-<arch>/. The
+        # publish step rebuilds the signed binary from the same deploy/
+        # tree (electron-vite output is already in deploy/out, deps are
+        # already rebuilt for Electron-ABI in deploy/node_modules — no
+        # need to repeat either).
+        working-directory: apps/desktop/deploy
+        run: pnpm exec electron-builder --${{ matrix.platform }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
