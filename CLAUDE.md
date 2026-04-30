@@ -119,12 +119,6 @@ electron-builder's built-in `npm rebuild` would target the installing
 Node's ABI, not Electron's — the explicit `install-app-deps` step is
 what produces the right binary.
 
-Side-effect (good news): unlike the npm-era flow, running `build:unpack`
-no longer rewrites the in-tree `better-sqlite3.node`. The Electron-ABI
-binary lives only in `apps/desktop/deploy/node_modules/`, which is
-.gitignored and recreated each build. Running `pnpm test` immediately
-after `build:unpack` works without restoration.
-
 ## Native modules (better-sqlite3)
 
 The desktop app uses `better-sqlite3` for the snapshot history DB. Native
@@ -137,14 +131,25 @@ keeps two regimes separated by pipeline phase:
    postinstall (gated by `pnpm.onlyBuiltDependencies`) downloads the
    **Node-ABI** prebuild that matches the installing Node's
    `NODE_MODULE_VERSION`. The `fast` CI job runs `vitest` unit tests against
-   SQLite directly, so this binary must be Node-loadable. The deploy step
-   leaves this binary alone.
+   SQLite directly, so this binary must be Node-loadable.
 2. **Packaging phase (`pnpm run rebuild`, run AFTER `pnpm run deploy`)** —
    `electron-builder install-app-deps` (the script body of `pnpm run rebuild`)
    swaps in the **Electron-ABI** prebuild matching the Electron major
-   declared in `apps/desktop/package.json`, but ONLY inside
-   `apps/desktop/deploy/node_modules/`. `electron-builder --dir` then
-   packages that Electron-compatible `.node` into the `.app`.
+   declared in `apps/desktop/package.json`. Even though the script is
+   invoked from `apps/desktop/deploy/`, `@electron/rebuild` walks up to
+   the workspace root and replaces both the deploy copy AND the in-tree
+   workspace copy of the binary — so the deploy gets the binary it needs
+   for packaging, and the in-tree copy is now the wrong ABI for vitest.
+
+Side-effect for local dev: after running `build:unpack`, the in-tree
+`node_modules/better-sqlite3/build/Release/better_sqlite3.node` is
+Electron-ABI. Re-running `pnpm test` in that state fails with a
+`NODE_MODULE_VERSION` mismatch (the rebuild step is silently no-op on a
+plain `pnpm rebuild better-sqlite3` because pnpm short-circuits when the
+build is "already done"). To restore Node-ABI, the most reliable path
+is `rm -rf node_modules apps/*/node_modules packages/*/node_modules &&
+pnpm install`, which re-fetches the Node-ABI prebuild fresh. CI doesn't
+hit this because each job starts on a clean runner.
 
 When bumping the `electron` devDependency, verify `better-sqlite3` ships a
 matching `electron-v<ABI>` prebuild for every packaged platform
