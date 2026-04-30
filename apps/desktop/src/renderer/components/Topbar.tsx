@@ -174,6 +174,61 @@ export function Topbar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
     }
   }
 
+  // RIFT-77: live-scan JSON file bridge. Distinct from `snapshotFile` above —
+  // saves the in-memory scan, not a SQLite history version. Same demo-mode
+  // gate (api === undefined under demo).
+  async function handleExportScanFile(): Promise<void> {
+    setExportOpen(false)
+    const api = window.riftview.scanFile
+    if (!api) {
+      useUIStore.getState().showToast('Scan export is disabled in demo mode', 'error')
+      return
+    }
+    if (nodes.length === 0) {
+      useUIStore.getState().showToast('Nothing to export — run a scan first', 'error')
+      return
+    }
+    try {
+      const result = await api.export({
+        nodes,
+        scannedAt: (lastScannedAt ?? new Date()).toISOString(),
+        profile: profile.name
+      })
+      if (!result.ok) {
+        if (result.code === 'cancelled') return
+        useUIStore.getState().showToast(`Scan export failed: ${result.error}`, 'error')
+        return
+      }
+      useUIStore.getState().showToast('Scan exported as JSON', 'success')
+    } catch (err) {
+      useUIStore.getState().showToast(`Scan export failed: ${(err as Error).message}`, 'error')
+    }
+  }
+
+  async function handleImportScanFile(): Promise<void> {
+    setImportOpen(false)
+    const api = window.riftview.scanFile
+    if (!api) {
+      useUIStore.getState().showToast('Scan import is disabled in demo mode', 'error')
+      return
+    }
+    try {
+      const result = await api.import()
+      if (!result.ok) {
+        if (result.code === 'cancelled') return
+        useUIStore.getState().showToast(`Scan import failed: ${result.error}`, 'error')
+        return
+      }
+      useCloudStore.getState().replaceNodes(result.nodes, new Date(result.scannedAt))
+      window.dispatchEvent(new CustomEvent('riftview:fitview'))
+      useUIStore
+        .getState()
+        .showToast(`Loaded ${result.nodes.length} resources from JSON`, 'success')
+    } catch (err) {
+      useUIStore.getState().showToast(`Scan import failed: ${(err as Error).message}`, 'error')
+    }
+  }
+
   async function handleExportSnapshotFile(): Promise<void> {
     setExportOpen(false)
     const api = window.riftview.snapshotFile
@@ -583,6 +638,23 @@ export function Topbar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
               </button>
               <button
                 className="rift-dropdown-item"
+                data-testid="topbar-import-scan-json"
+                disabled={!window.riftview.scanFile}
+                title={
+                  window.riftview.scanFile
+                    ? 'Load a previously-saved scan JSON file'
+                    : 'Disabled in demo mode'
+                }
+                onClick={() => {
+                  void handleImportScanFile()
+                }}
+              >
+                <span aria-hidden>⤓</span>
+                <span style={{ flex: 1 }}>Scan from JSON</span>
+                <span style={{ fontSize: 9, color: 'var(--fg-dim)' }}>.json</span>
+              </button>
+              <button
+                className="rift-dropdown-item"
                 onClick={() => {
                   setImportOpen(false)
                   window.dispatchEvent(new CustomEvent('riftview:show-templates'))
@@ -661,6 +733,25 @@ export function Topbar({ onScan, fixCount = 0 }: Props): React.JSX.Element {
               >
                 <span aria-hidden>⎘</span>
                 <span style={{ flex: 1 }}>Snapshot</span>
+                <span style={{ fontSize: 9, color: 'var(--fg-dim)' }}>.json</span>
+              </button>
+              <button
+                className="rift-dropdown-item"
+                data-testid="topbar-export-scan-json"
+                disabled={!window.riftview.scanFile || nodes.length === 0}
+                title={
+                  !window.riftview.scanFile
+                    ? 'Disabled in demo mode'
+                    : nodes.length === 0
+                      ? 'Run a scan first'
+                      : 'Save the current scan as a portable JSON file'
+                }
+                onClick={() => {
+                  void handleExportScanFile()
+                }}
+              >
+                <span aria-hidden>⤒</span>
+                <span style={{ flex: 1 }}>Scan as JSON</span>
                 <span style={{ fontSize: 9, color: 'var(--fg-dim)' }}>.json</span>
               </button>
               <button

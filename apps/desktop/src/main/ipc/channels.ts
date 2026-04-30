@@ -51,6 +51,12 @@ export const IPC = {
   // RIFT-40: CLI ↔ desktop file-level interop. Both absent in demo mode.
   SNAPSHOT_EXPORT: 'snapshot:export', // invoke({versionId}) → { ok, path? , error? }
   SNAPSHOT_IMPORT: 'snapshot:import', // invoke() → { ok, versionId?, accountMismatch?, error? }
+  // RIFT-77: live current-scan file bridge — distinct from RIFT-40's history-
+  // snapshot bridge above. Both absent in demo mode (the preload omits the
+  // `scanFile` key entirely). Round-trips the in-memory scan; not stored in
+  // SQLite, just a portable JSON blob.
+  SCAN_EXPORT_JSON: 'scan:export-json', // invoke({nodes, scannedAt, profile, edges?}) → { ok, path? , error? }
+  SCAN_IMPORT_JSON: 'scan:import-json', // invoke() → { ok, nodes, scannedAt, profile, edges? } | { ok: false, error }
 
   // --- RESTORE (SecOps review required per handler) ---
   // Channels below carry the restore flow. Conditionally registered:

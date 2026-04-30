@@ -108,4 +108,30 @@ describe('preload bridge', () => {
     expect(api.snapshotFile).toBeUndefined()
     delete process.env.RIFTVIEW_DEMO_MODE
   })
+
+  it('exposes window.riftview.scanFile when not in demo mode (RIFT-77)', async () => {
+    delete process.env.RIFTVIEW_DEMO_MODE
+    await import('../../src/preload/index')
+    const riftviewCall = vi
+      .mocked(contextBridge.exposeInMainWorld)
+      .mock.calls.find((c) => c[0] === 'riftview')
+    const api = riftviewCall?.[1] as Record<string, unknown>
+    expect(api).toBeDefined()
+    expect(api.scanFile).toBeDefined()
+    const scanFile = api.scanFile as Record<string, unknown>
+    expect(typeof scanFile.export).toBe('function')
+    expect(typeof scanFile.import).toBe('function')
+  })
+
+  it('window.riftview.scanFile is absent in demo mode (RIFT-77)', async () => {
+    process.env.RIFTVIEW_DEMO_MODE = '1'
+    await import('../../src/preload/index')
+    const riftviewCall = vi
+      .mocked(contextBridge.exposeInMainWorld)
+      .mock.calls.find((c) => c[0] === 'riftview')
+    const api = riftviewCall?.[1] as Record<string, unknown>
+    expect(api).toBeDefined()
+    expect(api.scanFile).toBeUndefined()
+    delete process.env.RIFTVIEW_DEMO_MODE
+  })
 })

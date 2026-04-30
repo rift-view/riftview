@@ -1,3 +1,33 @@
+interface RiftviewScanFileApi {
+  /**
+   * Export the live in-memory scan to a user-chosen .json file. Main process
+   * prompts with showSaveDialog; returns `{ ok: false, code: 'cancelled' }` on
+   * abort. Distinct from `snapshotFile.exportSnapshot` (RIFT-40), which
+   * exports a stored history version from SQLite.
+   */
+  export(args: {
+    nodes: import('@riftview/shared').CloudNode[]
+    scannedAt: string
+    profile: string
+    edges?: { source: string; target: string; label?: string }[]
+  }): Promise<{ ok: true; path: string } | { ok: false; error: string; code?: string }>
+  /**
+   * Import a RiftView live-scan JSON file. Returns the parsed envelope; the
+   * renderer is responsible for swapping it into the cloud store via the
+   * `replaceNodes` action. Does NOT persist into SQLite.
+   */
+  import(): Promise<
+    | {
+        ok: true
+        nodes: import('@riftview/shared').CloudNode[]
+        edges?: { source: string; target: string; label?: string }[]
+        scannedAt: string
+        profile: string
+      }
+    | { ok: false; error: string; code?: string }
+  >
+}
+
 interface RiftviewSnapshotFileApi {
   /**
    * Export a stored snapshot version to a user-chosen .json file.
@@ -188,6 +218,13 @@ interface Window {
      * to know whether to show the Export/Import Snapshot menu items).
      */
     snapshotFile?: RiftviewSnapshotFileApi
+    /**
+     * Live-scan JSON file bridge (RIFT-77). Undefined in demo mode — the
+     * renderer probes `window.riftview.scanFile === undefined` to grey out
+     * the "Scan as JSON" / "Scan from JSON" menu items. Distinct from
+     * `snapshotFile`: exports the live current scan, not a SQLite history version.
+     */
+    scanFile?: RiftviewScanFileApi
     /**
      * Restore surface — undefined when demo mode is active (amendment d, RIF-20 2026-04-21).
      * Renderer probes `window.riftview.restore === undefined` as the capability check.

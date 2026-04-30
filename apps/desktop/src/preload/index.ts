@@ -226,6 +226,22 @@ contextBridge.exposeInMainWorld('riftview', {
         }
       }),
 
+  // RIFT-77: live-scan JSON file bridge. Same demo-mode gate as snapshotFile —
+  // renderer probes `window.riftview.scanFile === undefined` for capability.
+  ...(_isDemoMode
+    ? {}
+    : {
+        scanFile: {
+          export: (args: {
+            nodes: import('@riftview/shared').CloudNode[]
+            scannedAt: string
+            profile: string
+            edges?: { source: string; target: string; label?: string }[]
+          }) => ipcRenderer.invoke(IPC.SCAN_EXPORT_JSON, args),
+          import: () => ipcRenderer.invoke(IPC.SCAN_IMPORT_JSON)
+        }
+      }),
+
   // E2E-only helpers — absent from preload surface unless RIFTVIEW_E2E=1.
   // Keeps production builds free of test affordances.
   ...(_isE2EMode
