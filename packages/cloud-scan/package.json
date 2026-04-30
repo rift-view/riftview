@@ -41,6 +41,6 @@
     "@aws-sdk/client-sqs": "^3.1012.0",
     "@aws-sdk/client-ssm": "^3.1012.0",
     "@aws-sdk/client-sts": "^3.1029.0",
-    "@riftview/shared": "*"
+    "@riftview/shared": "workspace:*"
   }
 }
