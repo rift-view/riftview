@@ -1,0 +1,66 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "America/New_York",
+  "schedule": ["before 6am on Monday"],
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump",
+  "rebaseWhen": "conflicted",
+  "prConcurrentLimit": 6,
+  "branchConcurrentLimit": 6,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on the first day of the month"],
+    "automerge": false
+  },
+  "packageRules": [
+    {
+      "description": "AWS SDK v3 client packages — bumped together to keep request signing / middleware versions consistent across the cloud-scan plugin",
+      "matchPackagePatterns": ["^@aws-sdk/"],
+      "groupName": "aws-sdk",
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "description": "Smithy runtime — coupled to @aws-sdk versions but published independently; group separately so an SDK bump that is awaiting a smithy release doesn't block the SDK PR",
+      "matchPackagePatterns": ["^@smithy/"],
+      "groupName": "smithy",
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "description": "TypeScript ESLint — parser and rules ship in lockstep; mismatched versions break the rule schema",
+      "matchPackagePatterns": ["^@typescript-eslint/"],
+      "groupName": "typescript-eslint",
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "description": "Tailwind CSS v4 packages — engine and Vite plugin are version-coupled in v4",
+      "matchPackagePatterns": ["^tailwindcss$", "^@tailwindcss/"],
+      "groupName": "tailwindcss",
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "description": "Vitest core + companion packages — bump together to avoid type-vs-runtime version skew",
+      "matchPackagePatterns": ["^vitest$", "^@vitest/"],
+      "groupName": "vitest",
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "description": "GitHub Actions in workflow YAML — matches the Renovate App's Workflows: Read & Write permission (RIFT-70 audit)",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "schedule": ["before 6am on Monday"]
+    },
+    {
+      "description": "pnpm itself — packageManager field; minor/patch only via Renovate, manual review for majors",
+      "matchPackageNames": ["pnpm"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Electron major bumps need coordinated better-sqlite3 prebuild verification (see CLAUDE.md § Native modules); never auto-merge",
+      "matchPackageNames": ["electron"],
+      "matchUpdateTypes": ["major"],
+      "labels": ["dependencies", "needs-native-module-verification"]
+    }
+  ]
+}
