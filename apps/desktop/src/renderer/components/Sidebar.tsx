@@ -260,7 +260,21 @@ export function Sidebar(): React.JSX.Element {
                       onClick={() => handleTypeClick(s.type)}
                       className={`side-item ${isActive ? 'side-item--active' : ''}`.trim()}
                       data-active={isActive ? 'true' : undefined}
+                      data-testid={`sidebar-service-${s.type}`}
                       draggable={s.hasCreate}
+                      onDragStart={(e) => {
+                        // GraphView/TopologyView's onDrop reads this string and
+                        // forwards it to setActiveCreate({ resource, ... }), which
+                        // CreateModal switches on using the unprefixed CreateModal
+                        // key (e.g. 'sqs', 'sg', 'eventbridge-bus'). Strip the
+                        // `aws:` namespace prefix added by RIFT-80, and prefer
+                        // the explicit `resource` override when the chip's
+                        // CreateModal key diverges from its NodeType (sg, ecr).
+                        // Without this handler the dataTransfer is empty and the
+                        // drop silently no-ops (RIFT-78).
+                        const resource = s.resource ?? s.type.replace(/^aws:/, '')
+                        e.dataTransfer.setData('text/plain', resource)
+                      }}
                       role="button"
                     >
                       <span className="side-item-name">
