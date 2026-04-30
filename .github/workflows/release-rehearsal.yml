@@ -1,0 +1,164 @@
+name: Release Rehearsal
+
+# RIFT-NEW-B: pre-pilot unsigned `electron-builder --dir` rehearsal across the
+# three packaged platforms. Mirrors the `release` job in ci.yml up through the
+# unsigned binary build + @release Playwright tier — but is gated on
+# workflow_dispatch (not a tag) and has NO publish/signing step. Use this
+# before cutting any pilot-facing tag against pnpm-lock.yaml.
+#
+# Asymmetric tier matches the production release job: Linux gets the full
+# @release suite (LocalStack-backed scan + snapshot roundtrip exercises the
+# better-sqlite3 history store path); macOS and Windows get @release-mac
+# (the misnomered demo tag — historical name, but the spec is platform-portable
+# and is what the existing mac matrix entry runs). Reason: GHA macos-latest
+# (arm64) can't nested-virtualize Docker for LocalStack, and Windows runners
+# can't run Linux containers natively. The demo tier still gates the
+# end-to-end binary boot + canvas + Inspector + IPC surface, which catches
+# the failure modes RIFT-NEW-B is rehearsing for: a packaging pipeline that
+# silently produces a binary that crashes on launch (the @electron/windows-sign
+# regression class noted in commit 7f50643).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rehearsal:
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+            tier: demo
+          - os: ubuntu-latest
+            platform: linux
+            tier: full
+          - os: windows-latest
+            platform: win
+            tier: demo
+    runs-on: ${{ matrix.os }}
+    env:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://localhost:4566
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # --- Linux-only LocalStack prereqs (full tier) ---
+      - uses: hashicorp/setup-terraform@v3
+        if: matrix.tier == 'full'
+        with:
+          terraform_version: 1.9.x
+      - name: Start LocalStack
+        if: matrix.tier == 'full'
+        run: docker compose -f .localstack/compose.yml up -d
+      - name: Wait for LocalStack
+        if: matrix.tier == 'full'
+        run: ./scripts/wait-localstack.sh
+      - name: Seed LocalStack
+        if: matrix.tier == 'full'
+        working-directory: apps/cli/tests/integration/fixtures
+        run: terraform init -input=false && terraform apply -auto-approve -input=false
+
+      # --- All platforms: build the binary + run Playwright ---
+      - name: Install Playwright browsers
+        # --with-deps only matters on Linux; harmless no-op on mac/win.
+        run: npx playwright install --with-deps chromium
+
+      - name: Build desktop bundles (electron-vite)
+        working-directory: apps/desktop
+        run: npx electron-vite build
+
+      - name: pnpm deploy (self-contained app tree for electron-builder)
+        # See ci.yml `release` job for the full rationale; identical flow here.
+        working-directory: apps/desktop
+        run: pnpm run deploy
+
+      - name: Rebuild native modules against Electron ABI
+        # better-sqlite3 ABI swap — runner-arch prebuild for the Electron major
+        # declared in apps/desktop/package.json. On Windows runners (x64) this
+        # downloads electron-v<abi>-win32-x64; on macos-latest arm64 it fetches
+        # darwin-arm64; on ubuntu-latest x64 it fetches linux-x64. If the
+        # prebuild catalog ever drops a target ABI we'll see this step fail.
+        working-directory: apps/desktop
+        run: pnpm run rebuild
+
+      - name: Build unsigned binary (electron-builder --dir)
+        # No --mac/--win/--linux flag — let electron-builder pick the host
+        # platform target. --dir produces dist/<platform>-<arch>[-]unpacked/
+        # which the @release Playwright fixtures resolve to via electronApp.ts.
+        # No signing, no notarization, no publish — this is a pre-pilot smoke,
+        # not a release.
+        working-directory: apps/desktop/deploy
+        run: pnpm exec electron-builder --dir
+
+      - name: List dist tree (evidence)
+        shell: bash
+        run: ls -laR apps/desktop/dist | head -100
+
+      - name: Run @release E2E (Linux — full LocalStack tier)
+        if: matrix.tier == 'full'
+        run: xvfb-run -a pnpm run test:e2e:release
+        env:
+          CI: 'true'
+
+      - name: Run @release E2E (mac/win — demo tier)
+        # `pnpm run test:e2e:release:mac` runs --grep @release-mac. Tag name
+        # is historical (mac was the first demo-tier platform); the spec is
+        # cross-platform and is the right gate for any runner that can't run
+        # LocalStack.
+        if: matrix.tier == 'demo'
+        run: pnpm run test:e2e:release:mac
+        env:
+          CI: 'true'
+
+      # --- Always upload artifacts so the Linear comment can link them ---
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-rehearsal-${{ matrix.platform }}
+          path: apps/desktop/tests/e2e/playwright-report
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Capture evidence (dist listing + binary path probe)
+        if: always()
+        shell: bash
+        env:
+          RUNNER_TEMP_BASH: ${{ runner.temp }}
+        run: |
+          mkdir -p "$RUNNER_TEMP_BASH/rehearsal-evidence"
+          ls -laR apps/desktop/dist > "$RUNNER_TEMP_BASH/rehearsal-evidence/dist-tree.txt" 2>&1 || true
+          # Probe the resolveBuiltBinary path the @release fixture would use,
+          # so the Linear comment can link a deterministic per-platform path
+          # without parsing Playwright HTML.
+          {
+            echo "platform=${{ matrix.platform }}"
+            echo "os=${{ matrix.os }}"
+            echo "tier=${{ matrix.tier }}"
+            echo "---"
+            find apps/desktop/dist -maxdepth 4 -type f \( -name '*.exe' -o -name 'RiftView' -o -name 'riftview' \) 2>/dev/null || true
+          } > "$RUNNER_TEMP_BASH/rehearsal-evidence/binary-probe.txt"
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rehearsal-evidence-${{ matrix.platform }}
+          path: ${{ runner.temp }}/rehearsal-evidence
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: LocalStack logs on failure
+        if: failure() && matrix.tier == 'full'
+        run: docker compose -f .localstack/compose.yml logs localstack | tail -200

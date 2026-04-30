@@ -27,7 +27,7 @@ export async function launchApp(opts: LaunchOptions = {}): Promise<ElectronAppli
   // @release tier: launch the built binary (the artifact that publishes),
   // not the dev entry. Same specs run against both modes — only the
   // launch target changes. Platform-aware path: macOS (arm64/intel/universal),
-  // Linux unpacked. Windows deferred per roadmap.
+  // Linux unpacked, Windows unpacked (rehearsal-only — no Windows publish today).
   if (process.env.RIFTVIEW_BUILT_APP === '1') {
     const executablePath = resolveBuiltBinary(repoRoot)
     return electron.launch({
@@ -81,6 +81,28 @@ function resolveBuiltBinary(repoRoot: string): string {
       )
     }
     return resolve(unpackedDir, candidates[0])
+  }
+  if (platform === 'win32') {
+    // electron-builder writes `--dir` output to dist/win-unpacked/ for x64
+    // and dist/win-arm64-unpacked/ for arm64. The launcher exe name comes
+    // from `win.executableName` in electron-builder.yml — scan for *.exe
+    // at the unpacked-dir root (filter the bundled DLLs and resource exes
+    // that live in subdirectories) so a config rename doesn't break us.
+    const candidateDirs = ['dist/win-arm64-unpacked', 'dist/win-unpacked']
+    for (const rel of candidateDirs) {
+      const unpackedDir = resolve(repoRoot, 'apps', 'desktop', rel)
+      if (!existsSync(unpackedDir)) continue
+      const entries = readdirSync(unpackedDir)
+      const exes = entries.filter((n) => n.toLowerCase().endsWith('.exe'))
+      if (exes.length === 0) continue
+      // Prefer an exe whose base matches productName/executableName conventions
+      // (riftview.exe, RiftView.exe). Fall back to the first .exe found.
+      const preferred = exes.find((n) => /^riftview\.exe$/i.test(n)) ?? exes[0]
+      return resolve(unpackedDir, preferred)
+    }
+    throw new Error(
+      `RIFTVIEW_BUILT_APP=1 but no Windows binary found. Ran \`electron-builder --dir --win\`? Checked: ${candidateDirs.join(', ')}`
+    )
   }
   throw new Error(`RIFTVIEW_BUILT_APP=1 is not supported on platform: ${platform}`)
 }
