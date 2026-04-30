@@ -400,5 +400,12 @@ export const terraformGenerators: TerraformGeneratorMap = {
   'aws:eks': generateEks,
   'aws:opensearch': generateOpenSearch,
   'aws:msk': generateMsk,
+  // Hetzner — Terraform export is AWS-only for v1 (RIFT-103). Empty string
+  // means "not yet supported for export" per the TerraformBlock contract.
+  'hetzner:server': () => '',
+  'hetzner:network': () => '',
+  'hetzner:volume': () => '',
+  'hetzner:firewall': () => '',
+  'hetzner:ssh-key': () => '',
   unknown: () => ''
 }

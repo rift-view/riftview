@@ -1,5 +1,6 @@
 import { pluginRegistry } from './registry'
 import { awsPlugin } from './awsPlugin'
+import { hetznerPlugin } from './hetznerPlugin'
 
 let registered = false
 
@@ -11,5 +12,6 @@ let registered = false
 export function registerBuiltinPlugins(): void {
   if (registered) return
   pluginRegistry.register(awsPlugin)
+  pluginRegistry.register(hetznerPlugin)
   registered = true
 }
