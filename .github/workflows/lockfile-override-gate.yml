@@ -1,0 +1,168 @@
+name: Lockfile override gate
+
+# Why this exists (RIFT-110 supply-chain audit, item 4):
+# The `fast` CI job's "Lockfile change guard" honors the
+# `lockfile-override-approved` label as the escape hatch for an emergency
+# manual lockfile edit. Without this gate, any user with write access can
+# apply the label and bypass the guard with no review trail. This workflow
+# requires that the override label be backed by an approving review from a
+# non-author CODEOWNER of pnpm-lock.yaml. If the label is applied without
+# qualifying approval, the workflow removes the label, posts an explainer
+# comment, and fails — which both blocks the override and surfaces the
+# event in the PR audit timeline.
+#
+# `pull_request_target` is required so the workflow has `pull-requests: write`
+# on PRs from forks. Safety: we never check out PR head — only the base
+# CODEOWNERS file via sparse-checkout — so an attacker can't get script
+# execution from a malicious PR head.
+
+on:
+  pull_request_target:
+    types: [labeled, unlabeled, synchronize, reopened, opened]
+  pull_request_review:
+    types: [submitted, dismissed, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: lockfile-override-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      OVERRIDE_LABEL: lockfile-override-approved
+      REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+    steps:
+      - name: Checkout base CODEOWNERS (sparse, no PR head)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: |
+            .github/CODEOWNERS
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify non-self CODEOWNER approval
+        run: |
+          set -euo pipefail
+
+          # 1. Is the override label currently present?
+          LABELS=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json labels --jq '.labels[].name')
+          if ! printf '%s\n' "$LABELS" | grep -qx "$OVERRIDE_LABEL"; then
+            echo "Override label '$OVERRIDE_LABEL' not present on PR #$PR_NUMBER — gate is a no-op."
+            exit 0
+          fi
+          echo "Override label '$OVERRIDE_LABEL' present. Verifying non-author CODEOWNER approval..."
+
+          # 2. Resolve owners-of(pnpm-lock.yaml) from base CODEOWNERS.
+          #    Last matching pattern wins (standard CODEOWNERS semantics).
+          if [ ! -f .github/CODEOWNERS ]; then
+            echo "::error::.github/CODEOWNERS not found at base ref — cannot determine owners"
+            exit 1
+          fi
+          OWNERS=$(awk '
+            /^[[:space:]]*#/ { next }
+            NF < 2 { next }
+            {
+              pat = $1
+              if (pat == "*" || pat == "**" || pat == "pnpm-lock.yaml" || pat == "/pnpm-lock.yaml") {
+                $1 = ""
+                sub(/^[[:space:]]+/, "")
+                last = $0
+              }
+            }
+            END { print last }
+          ' .github/CODEOWNERS)
+          if [ -z "$OWNERS" ]; then
+            echo "::error::No CODEOWNERS rule matches pnpm-lock.yaml — add a rule and re-run"
+            exit 1
+          fi
+          echo "CODEOWNERS owners-of(pnpm-lock.yaml): $OWNERS"
+
+          # 3. Resolve owner tokens (@user or @org/team) into a flat login set.
+          OWNER_LOGINS=()
+          for tok in $OWNERS; do
+            case "$tok" in
+              @*/*)
+                team_path="${tok#@}"
+                org="${team_path%/*}"
+                slug="${team_path#*/}"
+                members=$(gh api "/orgs/$org/teams/$slug/members" --jq '.[].login' 2>/dev/null || true)
+                for m in $members; do OWNER_LOGINS+=("$m"); done
+                ;;
+              @*)
+                OWNER_LOGINS+=("${tok#@}")
+                ;;
+            esac
+          done
+          if [ "${#OWNER_LOGINS[@]}" -eq 0 ]; then
+            echo "::error::CODEOWNERS owners did not resolve to any user logins: $OWNERS"
+            exit 1
+          fi
+          echo "Resolved CODEOWNER logins: ${OWNER_LOGINS[*]}"
+          echo "PR author (excluded from self-approval): $PR_AUTHOR"
+
+          # 4. Latest review state per reviewer. A later "request changes"
+          #    or "dismissed" review supersedes an earlier APPROVED — same
+          #    semantics GitHub branch protection uses.
+          REVIEWS=$(gh api --paginate "/repos/$REPO/pulls/$PR_NUMBER/reviews")
+          APPROVED_REVIEWERS=$(printf '%s' "$REVIEWS" | jq -r '
+            map(select(.user != null))
+            | group_by(.user.login)
+            | map(sort_by(.submitted_at // "") | last)
+            | map(select(.state == "APPROVED"))
+            | .[].user.login
+          ')
+          echo "Latest-state APPROVED reviewers: $APPROVED_REVIEWERS"
+
+          # 5. Intersect APPROVED reviewers ∩ owner logins, excluding PR_AUTHOR.
+          QUALIFYING=""
+          while IFS= read -r reviewer; do
+            [ -z "$reviewer" ] && continue
+            if [ "$reviewer" = "$PR_AUTHOR" ]; then
+              echo "  - $reviewer: SELF — does not count"
+              continue
+            fi
+            for owner in "${OWNER_LOGINS[@]}"; do
+              if [ "$reviewer" = "$owner" ]; then
+                QUALIFYING="$reviewer"
+                break
+              fi
+            done
+            if [ -n "$QUALIFYING" ]; then break; fi
+          done <<< "$APPROVED_REVIEWERS"
+
+          if [ -n "$QUALIFYING" ]; then
+            echo "Override approved by non-author CODEOWNER: $QUALIFYING"
+            exit 0
+          fi
+
+          # 6. No qualifying approval. Remove label, comment, fail.
+          echo "::error::'$OVERRIDE_LABEL' applied without a non-author CODEOWNER approving review"
+          gh pr edit "$PR_NUMBER" --repo "$REPO" --remove-label "$OVERRIDE_LABEL"
+
+          BODY_FILE=$(mktemp)
+          {
+            echo "The \`$OVERRIDE_LABEL\` label was removed by the **Lockfile override gate** workflow."
+            echo
+            echo "This PR modifies \`pnpm-lock.yaml\` outside Renovate/Dependabot. The override path requires an approving review from a non-author owner listed in [\`.github/CODEOWNERS\`](.github/CODEOWNERS) for \`pnpm-lock.yaml\`."
+            echo
+            echo "Eligible CODEOWNER approvers (excluding the PR author \`$PR_AUTHOR\`):"
+            for owner in "${OWNER_LOGINS[@]}"; do
+              if [ "$owner" != "$PR_AUTHOR" ]; then
+                echo "- @$owner"
+              fi
+            done
+            echo
+            echo "Re-apply the label after a qualifying approval. Background: RIFT-110, \`.github/workflows/lockfile-override-gate.yml\`."
+          } > "$BODY_FILE"
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file "$BODY_FILE"
+          exit 1
