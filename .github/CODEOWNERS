@@ -1,0 +1,25 @@
+# RiftView CODEOWNERS — supply-chain & build-system-critical files.
+#
+# Rationale (RIFT-110 supply-chain audit, post-merge addendum to RIFT-70):
+# the `lockfile-override-approved` label is the audit-trail-friendly escape
+# hatch for the lockfile-change CI guard. Without an approval gate, any
+# write-access user can apply the label and bypass the guard. CODEOWNERS
+# names the supply-chain owners; `.github/workflows/lockfile-override-gate.yml`
+# enforces that the override label requires an approving review from a
+# non-author owner of pnpm-lock.yaml.
+#
+# Standard CODEOWNERS semantics: last matching pattern wins. Add the most
+# specific rules at the bottom.
+
+# Default owners — every path falls back to the maintainer set.
+*                       @3urkii @juliushamm
+
+# Supply-chain & build-system surface — explicit so the override-gate
+# workflow can grep owners-of(pnpm-lock.yaml) deterministically.
+/pnpm-lock.yaml         @3urkii @juliushamm
+/package.json           @3urkii @juliushamm
+/renovate.json          @3urkii @juliushamm
+/.github/CODEOWNERS     @3urkii @juliushamm
+/.github/workflows/     @3urkii @juliushamm
+/.github/rulesets/      @3urkii @juliushamm
+/.github/scripts/       @3urkii @juliushamm

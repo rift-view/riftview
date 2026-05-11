@@ -57,6 +57,12 @@
       "enabled": false
     },
     {
+      "description": "pnpm minor/patch on the packageManager field — Renovate's npm manager rotates the corepack sha512 integrity hash on each bump (verified RIFT-110 audit). Tagged supply-chain so the rotation PR is visually distinct from regular dep groups in the PR list.",
+      "matchPackageNames": ["pnpm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "labels": ["dependencies", "supply-chain"]
+    },
+    {
       "description": "Electron major bumps need coordinated better-sqlite3 prebuild verification (see CLAUDE.md § Native modules); never auto-merge",
       "matchPackageNames": ["electron"],
       "matchUpdateTypes": ["major"],
