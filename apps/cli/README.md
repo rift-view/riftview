@@ -1,11 +1,13 @@
 # @riftview/cli
 
-CI-first AWS scan, risks, drift, and diff for [RiftView](https://github.com/rift-view/riftview).
+CI-first cloud scan, risks, drift, and diff for [RiftView](https://github.com/rift-view/riftview).
 
-- **Read-only:** every subcommand uses the AWS SDK in read mode. Write operations live in the desktop app.
+- **Read-only:** every subcommand uses the provider SDK in read mode. Write operations live in the desktop app.
 - **Stable JSON:** every command emits `schemaVersion: 1` on `--output json`. Any breaking change bumps the version.
 - **Deterministic exit codes:** CI pipelines can gate on 0/1/2/3/4 without parsing output.
 - Single self-contained Node bundle — no Electron, no persistent state.
+
+> AWS is the only shipping provider today (examples below assume AWS). Hetzner and Azure plugin support is in progress — see the [Providers](https://github.com/rift-view/riftview#providers) table in the root README.
 
 ## Install
 
@@ -61,10 +63,18 @@ Options:
   "regions": ["us-east-1"],
   "timestamp": "2026-04-20T12:00:00.000Z",
   "durationMs": 4213,
-  "nodes": [ /* CloudNode[] */ ],
-  "edges": [ /* source/target/edgeType triples, flattened from node.integrations */ ],
-  "scanErrors": [ /* per-service partial failures */ ],
-  "topRisks": [ /* max 3 severity-sorted advisories */ ]
+  "nodes": [
+    /* CloudNode[] */
+  ],
+  "edges": [
+    /* source/target/edgeType triples, flattened from node.integrations */
+  ],
+  "scanErrors": [
+    /* per-service partial failures */
+  ],
+  "topRisks": [
+    /* max 3 severity-sorted advisories */
+  ]
 }
 ```
 
@@ -128,23 +138,23 @@ Outputs build metadata: semver, git commit, build date, Node version. Same paylo
 
 ## Global options
 
-| Flag | Effect |
-|---|---|
+| Flag                        | Effect                                        |
+| --------------------------- | --------------------------------------------- |
 | `--output <pretty \| json>` | default `pretty`; machine readers pass `json` |
-| `-v, --version` | semver only, then exit 0 |
-| `-h, --help` | show help for root or subcommand |
+| `-v, --version`             | semver only, then exit 0                      |
+| `-h, --help`                | show help for root or subcommand              |
 
 `NO_COLOR=1` and non-TTY stdout suppress ANSI codes in pretty output.
 
 ## Exit codes
 
-| Code | Constant | Cause | Example |
-|---|---|---|---|
-| 0 | `OK` | successful run | `scan` completed; `risks` without `--fail-on`; `diff` regardless of content |
-| 1 | `FINDINGS` | gate tripped | `risks --fail-on S2` and any critical/warning present; `drift --fail-on-drift` and drift found |
-| 2 | `USAGE` | bad invocation or unreadable input | unknown subcommand, missing `--state`, unreadable snapshot, mismatched `schemaVersion` |
-| 3 | `AUTH` | AWS credential failure | expired SSO, invalid access key, `AccessDenied` |
-| 4 | `RUNTIME` | unexpected error | anything not covered above |
+| Code | Constant   | Cause                              | Example                                                                                        |
+| ---- | ---------- | ---------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 0    | `OK`       | successful run                     | `scan` completed; `risks` without `--fail-on`; `diff` regardless of content                    |
+| 1    | `FINDINGS` | gate tripped                       | `risks --fail-on S2` and any critical/warning present; `drift --fail-on-drift` and drift found |
+| 2    | `USAGE`    | bad invocation or unreadable input | unknown subcommand, missing `--state`, unreadable snapshot, mismatched `schemaVersion`         |
+| 3    | `AUTH`     | AWS credential failure             | expired SSO, invalid access key, `AccessDenied`                                                |
+| 4    | `RUNTIME`  | unexpected error                   | anything not covered above                                                                     |
 
 CI pipelines can `set -e` and branch on `$?` directly — the contract is enforced by `apps/cli/tests/exit-codes.test.ts`.
 
@@ -193,8 +203,8 @@ jobs:
 For a risks gate on a pre-captured snapshot:
 
 ```yaml
-      - run: riftview scan --snapshot scan.json
-      - run: riftview risks --snapshot scan.json --fail-on S2
+- run: riftview scan --snapshot scan.json
+- run: riftview risks --snapshot scan.json --fail-on S2
 ```
 
 ## Source

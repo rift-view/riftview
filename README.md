@@ -1,37 +1,62 @@
 # RiftView
 
-**The incident diagnostic layer AWS doesn't have.**
+**The incident diagnostic layer your cloud doesn't have.**
 
-The AWS console is organized by service silo. When something breaks, you open 4 tabs to answer one question: _what else is connected to this?_ RiftView answers it in 10 seconds.
+Your cloud console is organized by service silo. When something breaks, you open 4 tabs to answer one question: _what else is connected to this?_ RiftView answers it in 30 seconds.
 
 ## What it does
 
 - **Blast radius** — single-click any resource to see what breaks if it fails. Everything unrelated dims. No tabs, no guessing.
-- **Live cross-service graph** — scans your entire AWS account in one pass, across every service, and holds it as a connected graph. Always current.
+- **Live cross-service graph** — scans your entire cloud account in one pass, across every service your provider exposes, and holds it as a connected graph. Always current.
 - **Top risks** — immediately after scan, shows your 3 highest-severity chain-of-failure risks. Not 40 warnings — the 3 things that matter.
 - **Drift detection** — compares live infrastructure against your Terraform state. Shows exactly what drifted and generates the fix commands.
-- **Guided remediation** — execute AWS CLI fix commands from inside the app. No copy-pasting.
+- **Guided remediation** — execute provider CLI fix commands from inside the app. No copy-pasting.
 
-## Why not just use the AWS console?
+## Why not just use the cloud console?
 
-The console is a service browser. It cannot show you cross-service relationships. It cannot tell you what breaks if an SQS queue goes down. It cannot compare your live infra to your IaC. RiftView does all three — and the graph is always live, so you can trust the answers.
+The console is a service browser. It cannot show you cross-service relationships. It cannot tell you what breaks if a queue goes down. It cannot compare your live infra to your IaC. RiftView does all three — and the graph is always live, so you can trust the answers.
+
+## Providers
+
+| Provider | Status                | Auth                                |
+| -------- | --------------------- | ----------------------------------- |
+| AWS      | **Shipping** (v0.2.0) | `~/.aws/credentials`, env vars, SSO |
+| Hetzner  | In progress           | API token                           |
+| Azure    | Planned               | —                                   |
+
+The scanner is provider-agnostic at the graph layer (see `packages/cloud-scan/` and `packages/shared/src/types/cloud.ts`). New providers slot in as additional plugin packages.
 
 ## Quick start
 
-1. Install: download the latest release
-2. Open RiftView and select your AWS profile
-3. Hit Scan — your infrastructure appears as a connected graph in seconds
+1. Install: download the latest release for macOS or Linux.
+2. Open RiftView and select your provider profile (AWS today; Hetzner and Azure to follow).
+3. Hit Scan — your infrastructure appears as a connected graph in seconds.
 4. Click any node to see blast radius. Check the Top Risks panel for chain-of-failure advisories.
+
+### AWS
+
+- Credentials: `~/.aws/credentials`, environment variables, or an active SSO session.
+- Required IAM permissions: see the onboarding screen for the full list.
+- All scanner calls are read-only; write operations go through the guided-remediation flow with explicit confirmation.
+
+### Hetzner
+
+_Coming soon._ Plugin and provider profile in progress; this section will document the API-token flow when the integration ships.
+
+### Azure
+
+_Planned for a future release._
 
 ## Requirements
 
-- AWS credentials configured (`~/.aws/credentials` or environment variables)
-- Required IAM permissions: see the onboarding screen for the full list
-- macOS 13+ (Windows support planned)
+- macOS 13+ or Linux (Windows support planned).
+- A configured cloud provider — see [Providers](#providers).
 
 ## Stack
 
 Electron 32 · React 19 · TypeScript · React Flow v12 · AWS SDK v3 · Tailwind CSS 4
+
+The AWS SDK is the only provider SDK shipping today. Hetzner and Azure SDKs land alongside their respective plugin packages.
 
 ## CLI
 
@@ -42,6 +67,8 @@ npm install -g @riftview/cli
 riftview scan --profile prod
 riftview drift --state terraform.tfstate --fail-on-drift
 ```
+
+The `--profile` flag is AWS-shaped today; per-provider auth flags arrive alongside the matching scanner plugins.
 
 See [`apps/cli/README.md`](./apps/cli/README.md) for the full reference: command flags, JSON output schema, exit codes, and a GitHub Actions example.
 
@@ -103,11 +130,15 @@ pnpm run build:linux
 
 ## Legal
 
-RiftView is not affiliated with, endorsed by, or sponsored by Amazon Web
-Services, Inc. AWS, Amazon EC2, and all related marks are trademarks of
-Amazon.com, Inc. or its affiliates.
+RiftView is an independent tool, not affiliated with, endorsed by, or
+sponsored by Amazon Web Services, Inc. or any other cloud provider. AWS,
+Amazon EC2, and all related marks are trademarks of Amazon.com, Inc. or
+its affiliates. Hetzner is a trademark of Hetzner Online GmbH. Microsoft
+Azure is a trademark of Microsoft Corporation. All other service marks
+referenced are trademarks of their respective owners.
 
-See [NOTICE.md](./NOTICE.md) for third-party license acknowledgments.
+See [NOTICE.md](./NOTICE.md) for third-party license acknowledgments and
+the full attribution list.
 
 ## Repository structure
 
