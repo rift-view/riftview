@@ -22,6 +22,7 @@ brand/
 scripts/*
 # Public scripts used by CI / contributors — explicitly tracked.
 !scripts/wait-localstack.sh
+!scripts/check-pnpm-version.sh
 .vscode/
 
 # Superpowers / brainstorm runtime state
