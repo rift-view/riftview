@@ -1,4 +1,4 @@
-import type { IamFinding } from '@riftview/shared'
+import type { IamFinding } from './types'
 
 // Main-process only types — not exported to renderer
 export interface PolicyStatement {
