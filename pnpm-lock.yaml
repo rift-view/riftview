@@ -78,9 +78,6 @@ importers:
 
   apps/desktop:
     dependencies:
-      '@aws-sdk/client-cloudfront':
-        specifier: ^3.1011.0
-        version: 3.1039.0
       '@electron-toolkit/preload':
         specifier: ^3.0.2
         version: 3.0.2(electron@39.8.8)
