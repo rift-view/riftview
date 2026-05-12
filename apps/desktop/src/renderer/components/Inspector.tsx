@@ -1771,7 +1771,7 @@ function renderMetadataSection(args: RenderMetadataArgs): React.JSX.Element {
             <div className="insp-actions">
               <button
                 onClick={() => {
-                  setActiveCreate({ resource: 'apigw-route', view: 'topology' })
+                  setActiveCreate({ resource: 'aws:apigw-route', view: 'topology' })
                   if (onAddRoute) onAddRoute(node.id)
                 }}
                 className="btn btn-sm btn-primary"

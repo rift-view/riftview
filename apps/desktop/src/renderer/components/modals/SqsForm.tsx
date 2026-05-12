@@ -16,7 +16,7 @@ export function SqsForm({ onChange, showErrors }: Props): React.JSX.Element {
 
   const emit = (n: string, f: boolean, vt: string): void => {
     onChange({
-      resource: 'sqs',
+      resource: 'aws:sqs',
       name: n,
       fifo: f || undefined,
       visibilityTimeout: vt ? Number(vt) : undefined

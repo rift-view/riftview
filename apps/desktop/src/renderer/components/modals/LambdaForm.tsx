@@ -25,7 +25,7 @@ export function LambdaForm({ onChange, showErrors }: Props): React.JSX.Element {
   const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]): void => {
     const next = { ...form, [k]: v }
     setForm(next)
-    onChange({ resource: 'lambda', ...next })
+    onChange({ resource: 'aws:lambda', ...next })
   }
 
   const err = showErrors ?? false

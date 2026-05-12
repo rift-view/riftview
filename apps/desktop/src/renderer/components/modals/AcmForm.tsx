@@ -19,7 +19,7 @@ export function AcmForm({ onChange, showErrors }: Props): React.JSX.Element {
   const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]): void => {
     const next = { ...form, [k]: v }
     setForm(next)
-    onChange({ resource: 'acm', ...next })
+    onChange({ resource: 'aws:acm', ...next })
   }
 
   const updateSans = (newInputs: string[]): void => {

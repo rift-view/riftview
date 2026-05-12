@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useUIStore } from '../../store/ui'
 import { useCloudStore } from '../../store/cloud'
 import { computeTidyLayout } from '../../utils/tidyLayout'
+import type { NodeType } from '@riftview/shared'
 
 interface Props {
   x: number
@@ -9,26 +10,26 @@ interface Props {
   onClose: () => void
 }
 
-const CREATABLE = [
-  { resource: 'vpc', label: 'New VPC' },
-  { resource: 'ec2', label: 'New EC2 Instance' },
-  { resource: 'sg', label: 'New Security Group' },
-  { resource: 's3', label: 'New S3 Bucket' },
-  { resource: 'rds', label: 'New RDS Instance' },
-  { resource: 'lambda', label: 'New Lambda Function' },
-  { resource: 'alb', label: 'New ALB' },
-  { resource: 'acm', label: 'New ACM Certificate' },
-  { resource: 'cloudfront', label: 'New CloudFront Distribution' },
-  { resource: 'apigw', label: 'New API Gateway' },
-  { resource: 'sqs', label: 'New SQS Queue' }
-] as const
+const CREATABLE: readonly { resource: NodeType; label: string }[] = [
+  { resource: 'aws:vpc', label: 'New VPC' },
+  { resource: 'aws:ec2', label: 'New EC2 Instance' },
+  { resource: 'aws:security-group', label: 'New Security Group' },
+  { resource: 'aws:s3', label: 'New S3 Bucket' },
+  { resource: 'aws:rds', label: 'New RDS Instance' },
+  { resource: 'aws:lambda', label: 'New Lambda Function' },
+  { resource: 'aws:alb', label: 'New ALB' },
+  { resource: 'aws:acm', label: 'New ACM Certificate' },
+  { resource: 'aws:cloudfront', label: 'New CloudFront Distribution' },
+  { resource: 'aws:apigw', label: 'New API Gateway' },
+  { resource: 'aws:sqs', label: 'New SQS Queue' }
+]
 
 export function CanvasContextMenu({ x, y, onClose }: Props): React.JSX.Element {
   const setActiveCreate = useUIStore((s) => s.setActiveCreate)
   const view = useUIStore((s) => s.view)
   const applyTidyLayout = useUIStore((s) => s.applyTidyLayout)
   const nodes = useCloudStore((s) => s.nodes)
-  const [pendingResource, setPendingResource] = useState<string | null>(null)
+  const [pendingResource, setPendingResource] = useState<NodeType | null>(null)
 
   const menuStyle: React.CSSProperties = {
     position: 'fixed',

@@ -21,7 +21,7 @@ export function SubnetCreateForm({ onChange, showErrors }: Props): React.JSX.Ele
 
   const emit = (v: string, c: string, az: string): void => {
     onChange({
-      resource: 'subnet',
+      resource: 'aws:subnet',
       vpcId: v,
       cidrBlock: c,
       availabilityZone: az || undefined

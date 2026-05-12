@@ -5,7 +5,7 @@ import { useCliStore } from '../store/cli'
 import type { NodeType, CloudNode } from '@riftview/shared'
 import { SCAN_KEY_TO_TYPE } from '../utils/scanKeyMap'
 
-type ServiceDef = { type: NodeType; label: string; hasCreate: boolean; resource?: string }
+type ServiceDef = { type: NodeType; label: string; hasCreate: boolean }
 
 const CATEGORIES: { label: string; services: ServiceDef[] }[] = [
   {
@@ -20,7 +20,7 @@ const CATEGORIES: { label: string; services: ServiceDef[] }[] = [
     services: [
       { type: 'aws:vpc', label: 'VPC', hasCreate: true },
       { type: 'aws:subnet', label: 'Subnet', hasCreate: false },
-      { type: 'aws:security-group', label: 'Security Group', hasCreate: true, resource: 'sg' },
+      { type: 'aws:security-group', label: 'Security Group', hasCreate: true },
       { type: 'aws:igw', label: 'IGW', hasCreate: false },
       { type: 'aws:nat-gateway', label: 'NAT Gateway', hasCreate: false }
     ]
@@ -70,7 +70,7 @@ const CATEGORIES: { label: string; services: ServiceDef[] }[] = [
   {
     label: 'Containers',
     services: [
-      { type: 'aws:ecr-repo', label: 'ECR', hasCreate: true, resource: 'ecr' },
+      { type: 'aws:ecr-repo', label: 'ECR', hasCreate: true },
       { type: 'aws:ecs', label: 'ECS', hasCreate: false },
       { type: 'aws:eks', label: 'EKS', hasCreate: false }
     ]
@@ -262,19 +262,11 @@ export function Sidebar(): React.JSX.Element {
                       data-active={isActive ? 'true' : undefined}
                       data-testid={`sidebar-service-${s.type}`}
                       draggable={s.hasCreate}
-                      onDragStart={(e) => {
-                        // GraphView/TopologyView's onDrop reads this string and
-                        // forwards it to setActiveCreate({ resource, ... }), which
-                        // CreateModal switches on using the unprefixed CreateModal
-                        // key (e.g. 'sqs', 'sg', 'eventbridge-bus'). Strip the
-                        // `aws:` namespace prefix added by RIFT-80, and prefer
-                        // the explicit `resource` override when the chip's
-                        // CreateModal key diverges from its NodeType (sg, ecr).
-                        // Without this handler the dataTransfer is empty and the
-                        // drop silently no-ops (RIFT-78).
-                        const resource = s.resource ?? s.type.replace(/^aws:/, '')
-                        e.dataTransfer.setData('text/plain', resource)
-                      }}
+                      onDragStart={
+                        s.hasCreate
+                          ? (e) => e.dataTransfer.setData('text/plain', s.type)
+                          : undefined
+                      }
                       role="button"
                     >
                       <span className="side-item-name">

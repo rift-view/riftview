@@ -38,7 +38,7 @@ describe('SubnetCreateForm', () => {
     })
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        resource: 'subnet',
+        resource: 'aws:subnet',
         cidrBlock: '10.0.1.0/24'
       })
     )

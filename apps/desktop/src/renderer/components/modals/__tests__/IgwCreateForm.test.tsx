@@ -12,7 +12,7 @@ describe('IgwCreateForm', () => {
     const onChange = vi.fn()
     render(<IgwCreateForm onChange={onChange} />)
     fireEvent.change(screen.getByPlaceholderText('my-igw'), { target: { value: 'main-igw' } })
-    expect(onChange).toHaveBeenCalledWith({ resource: 'igw', name: 'main-igw' })
+    expect(onChange).toHaveBeenCalledWith({ resource: 'aws:igw', name: 'main-igw' })
   })
 
   it('calls onChange with name undefined when field is cleared', () => {
@@ -22,6 +22,6 @@ describe('IgwCreateForm', () => {
     fireEvent.change(input, { target: { value: 'temp' } })
     fireEvent.change(input, { target: { value: '' } })
     const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0]
-    expect(lastCall).toEqual({ resource: 'igw', name: undefined })
+    expect(lastCall).toEqual({ resource: 'aws:igw', name: undefined })
   })
 })

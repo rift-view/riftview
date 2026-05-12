@@ -14,7 +14,7 @@ export function SnsForm({ onChange, showErrors }: Props): React.JSX.Element {
   const nameInvalid = err && !name.trim()
 
   const emit = (n: string, f: boolean): void => {
-    onChange({ resource: 'sns', name: n, fifo: f || undefined })
+    onChange({ resource: 'aws:sns', name: n, fifo: f || undefined })
   }
 
   return (

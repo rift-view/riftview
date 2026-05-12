@@ -30,44 +30,44 @@ it('renders nothing when activeCreate is null', () => {
 })
 
 it('renders VPC form title when activeCreate is vpc', () => {
-  useUIStore.setState({ activeCreate: { resource: 'vpc', view: 'topology' } })
+  useUIStore.setState({ activeCreate: { resource: 'aws:vpc', view: 'topology' } })
   render(<CreateModal />)
   expect(screen.getByText(/new vpc/i)).toBeInTheDocument()
 })
 
 it('renders S3 form title when activeCreate is s3', () => {
-  useUIStore.setState({ activeCreate: { resource: 's3', view: 'topology' } })
+  useUIStore.setState({ activeCreate: { resource: 'aws:s3', view: 'topology' } })
   render(<CreateModal />)
   expect(screen.getByText(/new s3 bucket/i)).toBeInTheDocument()
 })
 
 it('closes when Cancel is clicked', async () => {
-  useUIStore.setState({ activeCreate: { resource: 'vpc', view: 'topology' } })
+  useUIStore.setState({ activeCreate: { resource: 'aws:vpc', view: 'topology' } })
   render(<CreateModal />)
   await userEvent.click(screen.getByText(/cancel/i))
   expect(useUIStore.getState().activeCreate).toBeNull()
 })
 
 it('renders RDS form title when activeCreate is rds', () => {
-  useUIStore.setState({ activeCreate: { resource: 'rds', view: 'topology' } })
+  useUIStore.setState({ activeCreate: { resource: 'aws:rds', view: 'topology' } })
   render(<CreateModal />)
   expect(screen.getByText(/new rds instance/i)).toBeInTheDocument()
 })
 
 it('renders Lambda form title when activeCreate is lambda', () => {
-  useUIStore.setState({ activeCreate: { resource: 'lambda', view: 'topology' } })
+  useUIStore.setState({ activeCreate: { resource: 'aws:lambda', view: 'topology' } })
   render(<CreateModal />)
   expect(screen.getByText(/new lambda function/i)).toBeInTheDocument()
 })
 
 it('renders ALB form title when activeCreate is alb', () => {
-  useUIStore.setState({ activeCreate: { resource: 'alb', view: 'topology' } })
+  useUIStore.setState({ activeCreate: { resource: 'aws:alb', view: 'topology' } })
   render(<CreateModal />)
   expect(screen.getByText(/new alb/i)).toBeInTheDocument()
 })
 
 it('blocks submission and does not call runCli when required ALB fields are empty', async () => {
-  useUIStore.getState().setActiveCreate({ resource: 'alb', view: 'topology' })
+  useUIStore.getState().setActiveCreate({ resource: 'aws:alb', view: 'topology' })
   const runCli = vi.fn().mockResolvedValue({ code: 0 })
   window.riftview = { ...window.riftview, runCli }
 
@@ -79,7 +79,7 @@ it('blocks submission and does not call runCli when required ALB fields are empt
 
 it('blocks submission and does not call runCli when required VPC fields are empty', async () => {
   // Set activeCreate to 'vpc' with empty form (name='', cidr='')
-  useUIStore.getState().setActiveCreate({ resource: 'vpc', view: 'topology' })
+  useUIStore.getState().setActiveCreate({ resource: 'aws:vpc', view: 'topology' })
   const runCli = vi.fn().mockResolvedValue({ code: 0 })
   // Override the runCli mock (use same mock pattern as existing tests in this file)
   window.riftview = { ...window.riftview, runCli }
@@ -92,13 +92,13 @@ it('blocks submission and does not call runCli when required VPC fields are empt
 })
 
 it('renders R53 hosted zone form title when activeCreate is r53-zone', () => {
-  useUIStore.setState({ activeCreate: { resource: 'r53-zone', view: 'topology' } })
+  useUIStore.setState({ activeCreate: { resource: 'aws:r53-zone', view: 'topology' } })
   render(<CreateModal />)
   expect(screen.getByText(/new hosted zone/i)).toBeInTheDocument()
 })
 
 it('blocks submission and does not call runCli when R53 domain name is empty', async () => {
-  useUIStore.getState().setActiveCreate({ resource: 'r53-zone', view: 'topology' })
+  useUIStore.getState().setActiveCreate({ resource: 'aws:r53-zone', view: 'topology' })
   const runCli = vi.fn().mockResolvedValue({ code: 0 })
   window.riftview = { ...window.riftview, runCli }
 
@@ -109,13 +109,13 @@ it('blocks submission and does not call runCli when R53 domain name is empty', a
 })
 
 it('renders SSM Parameter form title when activeCreate is ssm-param', () => {
-  useUIStore.setState({ activeCreate: { resource: 'ssm-param', view: 'topology' } })
+  useUIStore.setState({ activeCreate: { resource: 'aws:ssm-param', view: 'topology' } })
   render(<CreateModal />)
   expect(screen.getByText(/new ssm parameter/i)).toBeInTheDocument()
 })
 
 it('blocks submission and does not call runCli when SSM param name and value are empty', async () => {
-  useUIStore.getState().setActiveCreate({ resource: 'ssm-param', view: 'topology' })
+  useUIStore.getState().setActiveCreate({ resource: 'aws:ssm-param', view: 'topology' })
   const runCli = vi.fn().mockResolvedValue({ code: 0 })
   window.riftview = { ...window.riftview, runCli }
 
@@ -126,13 +126,13 @@ it('blocks submission and does not call runCli when SSM param name and value are
 })
 
 it('renders Subnet form title when activeCreate is subnet', () => {
-  useUIStore.setState({ activeCreate: { resource: 'subnet', view: 'topology' } })
+  useUIStore.setState({ activeCreate: { resource: 'aws:subnet', view: 'topology' } })
   render(<CreateModal />)
   expect(screen.getByText(/new subnet/i)).toBeInTheDocument()
 })
 
 it('blocks submission and does not call runCli when subnet vpcId and cidrBlock are empty', async () => {
-  useUIStore.getState().setActiveCreate({ resource: 'subnet', view: 'topology' })
+  useUIStore.getState().setActiveCreate({ resource: 'aws:subnet', view: 'topology' })
   const runCli = vi.fn().mockResolvedValue({ code: 0 })
   window.riftview = { ...window.riftview, runCli }
 
@@ -143,7 +143,7 @@ it('blocks submission and does not call runCli when subnet vpcId and cidrBlock a
 })
 
 it('renders Internet Gateway form title when activeCreate is igw', () => {
-  useUIStore.setState({ activeCreate: { resource: 'igw', view: 'topology' } })
+  useUIStore.setState({ activeCreate: { resource: 'aws:igw', view: 'topology' } })
   render(<CreateModal />)
   expect(screen.getByText(/new internet gateway/i)).toBeInTheDocument()
 })

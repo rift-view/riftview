@@ -61,7 +61,11 @@ interface UIState {
   selectedNodeIds: Set<string>
   selectedEdgeId: string | null
   selectedEdgeInfo: SelectedEdgeInfo | null
-  activeCreate: { resource: string; view: ViewKey; dropPosition?: { x: number; y: number } } | null
+  activeCreate: {
+    resource: NodeType
+    view: ViewKey
+    dropPosition?: { x: number; y: number }
+  } | null
   toast: { message: string; type: 'success' | 'error' } | null
   nodePositions: {
     topology: Record<string, { x: number; y: number }>

@@ -14,7 +14,7 @@ export function ApigwForm({ onChange, showErrors }: Props): React.JSX.Element {
 
   const emit = (nextName: string, nextCors: string[]): void => {
     const corsOrigins = nextCors.filter((s) => s.trim() !== '')
-    onChange({ resource: 'apigw', name: nextName, corsOrigins })
+    onChange({ resource: 'aws:apigw', name: nextName, corsOrigins })
   }
 
   const updateCors = (newInputs: string[]): void => {

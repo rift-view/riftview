@@ -18,7 +18,7 @@ export function SsmCreateForm({ onChange, showErrors }: Props): React.JSX.Elemen
 
   const emit = (n: string, v: string, t: 'String' | 'StringList', d: string): void => {
     onChange({
-      resource: 'ssm-param',
+      resource: 'aws:ssm-param',
       name: n,
       value: v,
       paramType: t,

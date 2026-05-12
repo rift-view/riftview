@@ -21,7 +21,7 @@ Object.defineProperty(window, 'riftview', {
 
 beforeEach(() => {
   useCloudStore.setState({ nodes: [], importedNodes: [] })
-  useUIStore.setState({ activeCreate: { resource: 'vpc', view: 'topology' } })
+  useUIStore.setState({ activeCreate: { resource: 'aws:vpc', view: 'topology' } })
   useCliStore.setState({ commandPreview: [], pendingCommand: null })
 })
 

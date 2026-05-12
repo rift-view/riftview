@@ -22,7 +22,7 @@ export function EventBusForm({ onChange, showErrors }: Props): React.JSX.Element
           placeholder="my-event-bus"
           onChange={(e) => {
             setName(e.target.value)
-            onChange({ resource: 'eventbridge-bus', name: e.target.value })
+            onChange({ resource: 'aws:eventbridge-bus', name: e.target.value })
           }}
         />
       </div>

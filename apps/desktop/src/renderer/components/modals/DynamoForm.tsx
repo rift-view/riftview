@@ -16,7 +16,7 @@ export function DynamoForm({ onChange, showErrors }: Props): React.JSX.Element {
   const err = showErrors ?? false
 
   const emit = (tn: string, hk: string, bm: 'PAY_PER_REQUEST' | 'PROVISIONED'): void => {
-    onChange({ resource: 'dynamo', tableName: tn, hashKey: hk, billingMode: bm })
+    onChange({ resource: 'aws:dynamo', tableName: tn, hashKey: hk, billingMode: bm })
   }
 
   const tableInvalid = err && !tableName.trim()

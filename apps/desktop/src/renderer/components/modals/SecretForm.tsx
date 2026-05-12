@@ -15,7 +15,7 @@ export function SecretForm({ onChange, showErrors }: Props): React.JSX.Element {
   const valueInvalid = err && !value.trim()
 
   const emit = (n: string, v: string): void => {
-    onChange({ resource: 'secret', name: n, value: v })
+    onChange({ resource: 'aws:secret', name: n, value: v })
   }
 
   return (

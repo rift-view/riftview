@@ -45,7 +45,7 @@ export function Ec2Form({ onChange, showErrors = false }: Props): React.JSX.Elem
     setKeyName(next.keyName)
     setSubnetId(next.subnetId)
     setSecurityGroupIds(next.securityGroupIds)
-    onChange({ resource: 'ec2', ...next })
+    onChange({ resource: 'aws:ec2', ...next })
   }
 
   function toggleSg(id: string): void {

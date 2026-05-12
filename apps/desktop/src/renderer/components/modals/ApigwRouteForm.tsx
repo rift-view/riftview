@@ -16,7 +16,7 @@ export function ApigwRouteForm({ apiId, onChange, showErrors }: Props): React.JS
   const err = showErrors ?? false
 
   const emit = (m: string, p: string): void => {
-    onChange({ resource: 'apigw-route', apiId, method: m, path: p })
+    onChange({ resource: 'aws:apigw-route', apiId, method: m, path: p })
   }
 
   const pathError = err && (!path.trim() || !path.startsWith('/'))
