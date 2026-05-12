@@ -5,6 +5,6 @@ import { defineConfig } from 'vitest/config'
 // See apps/desktop/vitest.config.ts for desktop test setup.
 export default defineConfig({
   test: {
-    projects: ['apps/*', 'packages/*']
+    projects: ['apps/*', 'packages/*', 'scripts']
   }
 })
