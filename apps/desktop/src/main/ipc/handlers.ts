@@ -525,6 +525,7 @@ export function registerHandlers(win: BrowserWindow): void {
 
   // List AWS credential profiles from ~/.aws/credentials
   ipcMain.handle(IPC.AWS_LIST_PROFILES, (): string[] => {
+    if (process.env.RIFTVIEW_NO_PROFILES === '1') return []
     const credFile = path.join(os.homedir(), '.aws', 'credentials')
     try {
       const raw = fs.readFileSync(credFile, 'utf-8')

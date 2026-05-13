@@ -74,6 +74,17 @@ jobs:
             echo "::error::@riftview/shared must not import electron"
             exit 1
           fi
+      - name: Guard — no-restricted-paths ESLint rule is armed
+        run: |
+          echo 'import { IPC } from "../../desktop/src/main/ipc/channels"; export default IPC;' > apps/cli/cli/__test_forbidden_import.ts
+          if pnpm eslint apps/cli/cli/__test_forbidden_import.ts 2>&1 | grep -q 'no-restricted-paths'; then
+            echo "✓ import/no-restricted-paths rule is armed"
+          else
+            echo "::error::import/no-restricted-paths did NOT fire — eslint-import-resolver-typescript may be missing"
+            rm -f apps/cli/cli/__test_forbidden_import.ts
+            exit 1
+          fi
+          rm -f apps/cli/cli/__test_forbidden_import.ts
       - name: Lint
         run: pnpm run lint
       - name: Typecheck
