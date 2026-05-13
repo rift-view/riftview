@@ -14,7 +14,8 @@ export {
 // EC2 helper used by desktop scanner
 export { describeKeyPairs } from './aws/services/ec2'
 
-// IAM helpers (used by desktop handlers)
+// IAM types + helpers (used by desktop handlers)
+export type { IamSeverity, IamFinding, IamAnalysisResult } from './aws/iam/types'
 export { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from './aws/iam/fetcher'
 
 // Plugin registry + built-in plugins
