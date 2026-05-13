@@ -1,5 +1,7 @@
 import { test, expect } from './fixtures'
 
+test.use({ appLaunchOptions: { env: { RIFTVIEW_NO_PROFILES: '1' } } })
+
 test.describe('launch + empty-state onboarding', () => {
   test('app boots with no AWS profile and renders the onboarding', async ({ page }) => {
     // Collect renderer console errors for the duration of the test.
@@ -13,7 +15,7 @@ test.describe('launch + empty-state onboarding', () => {
     await expect(page).toHaveTitle(/RiftView/, { timeout: 10_000 })
 
     // Onboarding surface is rendered when no AWS profile is present.
-    // CI has no ~/.aws/credentials, so listProfiles() resolves to [].
+    // RIFTVIEW_NO_PROFILES=1 forces listProfiles() → [] regardless of ~/.aws/credentials.
     await expect(page.getByTestId('onboarding')).toBeVisible({ timeout: 5_000 })
 
     // Give the renderer a beat to surface any delayed errors.

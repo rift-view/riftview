@@ -13,6 +13,7 @@ function configPath(): string {
 }
 
 export function listProfiles(): AwsProfile[] {
+  if (process.env.RIFTVIEW_NO_PROFILES === '1') return []
   const credPath = credentialsPath()
   if (!fs.existsSync(credPath)) return []
 
