@@ -5,6 +5,7 @@
   "description": "RiftView monorepo — desktop, CLI, and shared analysis library",
   "packageManager": "pnpm@10.33.1+sha512.05ba3c1d5d1c18f68df06470d74055e62d41fc110a0c660db1b2dfb2785327f04cf0f68345d4609bc52089e7fa0343c31593b2f9594e2c5d5da426230acc9820",
   "scripts": {
+    "preinstall": "./scripts/check-pnpm-version.sh",
     "format": "prettier --write .",
     "lint": "eslint --cache .",
     "typecheck": "pnpm -r --if-present run typecheck",
