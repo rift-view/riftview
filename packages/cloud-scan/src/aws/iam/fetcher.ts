@@ -11,7 +11,7 @@ import { GetBucketPolicyCommand } from '@aws-sdk/client-s3'
 import type { AwsClients } from '../client'
 import type { CloudNode } from '@riftview/shared'
 import { evaluatePolicy } from './evaluator'
-import type { IamFinding } from '@riftview/shared'
+import type { IamFinding } from './types'
 
 interface PolicyDocument {
   Statement: Array<{
