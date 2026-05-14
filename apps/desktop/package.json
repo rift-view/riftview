@@ -24,6 +24,7 @@
     "stories": "ladle serve"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudfront": "^3.1011.0",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@fontsource-variable/libre-franklin": "^5.2.8",
