@@ -23,6 +23,9 @@ scripts/*
 # Public scripts used by CI / contributors — explicitly tracked.
 !scripts/wait-localstack.sh
 !scripts/check-pnpm-version.sh
+!scripts/check-lockfile-author.sh
+!scripts/vitest.config.ts
+!scripts/__tests__/
 .vscode/
 
 # Superpowers / brainstorm runtime state

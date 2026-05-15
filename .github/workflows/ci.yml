@@ -44,11 +44,15 @@ jobs:
             echo "pnpm-lock.yaml unchanged in this PR"
             exit 0
           fi
-          # Author email pattern: 49699333+dependabot[bot]@users.noreply.github.com,
-          # 29139614+renovate[bot]@users.noreply.github.com, or the unprefixed forms.
-          BAD=$(git log --pretty=format:'%H %ae' "$PR_BASE_SHA..$PR_HEAD_SHA" -- pnpm-lock.yaml \
-            | grep -vE ' ([0-9]+\+)?(renovate|dependabot)\[bot\]@users\.noreply\.github\.com$' \
-            || true)
+          # Bot email detection delegated to scripts/check-lockfile-author.sh
+          # (unit-tested, covers Renovate, Dependabot, GitHub Actions bot).
+          BAD=""
+          while IFS=' ' read -r sha email; do
+            if ! scripts/check-lockfile-author.sh "$email"; then
+              BAD="${BAD}${sha} ${email}"$'\n'
+            fi
+          done < <(git log --pretty=format:'%H %ae' "$PR_BASE_SHA..$PR_HEAD_SHA" -- pnpm-lock.yaml)
+          BAD="${BAD%$'\n'}"
           if [ -z "$BAD" ]; then
             echo "pnpm-lock.yaml changed only in bot commits — OK"
             exit 0
