@@ -14,6 +14,16 @@ export {
 // EC2 helper used by desktop scanner
 export { describeKeyPairs } from './aws/services/ec2'
 
+// CloudFront CRUD commands (used by desktop IPC handlers)
+export {
+  cfCreateDistribution,
+  cfUpdateDistribution,
+  cfDeleteDistribution,
+  cfCreateInvalidation,
+  type CreateDistributionParams,
+  type UpdateDistributionParams
+} from './aws/services/cloudfront-commands'
+
 // IAM types + helpers (used by desktop handlers)
 export type { IamSeverity, IamFinding, IamAnalysisResult } from './aws/iam/types'
 export { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from './aws/iam/fetcher'
