@@ -24,7 +24,7 @@ export function AlbForm({ onChange, showErrors }: Props): React.JSX.Element {
   const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]): void => {
     const next = { ...form, [k]: v }
     setForm(next)
-    onChange({ resource: 'alb', ...next })
+    onChange({ resource: 'aws:alb', ...next })
   }
 
   const err = showErrors ?? false

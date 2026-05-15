@@ -14,7 +14,7 @@ export function R53CreateForm({ onChange, showErrors }: Props): React.JSX.Elemen
   const domainInvalid = err && !domainName.trim()
 
   const emit = (d: string, p: boolean): void => {
-    onChange({ resource: 'r53-zone', domainName: d, isPrivate: p })
+    onChange({ resource: 'aws:r53-zone', domainName: d, isPrivate: p })
   }
 
   return (

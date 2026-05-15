@@ -20,7 +20,7 @@ export function S3Form({ onChange, showErrors = false }: Props): React.JSX.Eleme
     setBucketName(next.bucketName)
     setRegion(next.region)
     setBlockPublicAccess(next.blockPublicAccess)
-    onChange({ resource: 's3', ...next })
+    onChange({ resource: 'aws:s3', ...next })
   }
 
   const nameInvalid = showErrors && !bucketName.trim()

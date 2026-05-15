@@ -26,7 +26,7 @@ export function CloudFrontForm({ onChange, showErrors }: Props): React.JSX.Eleme
   const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]): void => {
     const next = { ...form, [k]: v }
     setForm(next)
-    onChange({ resource: 'cloudfront', ...next })
+    onChange({ resource: 'aws:cloudfront', ...next })
   }
 
   const updateOrigin = (i: number, field: 'id' | 'domainName', value: string): void => {

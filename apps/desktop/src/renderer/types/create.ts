@@ -1,14 +1,14 @@
 // src/renderer/types/create.ts
 
 export interface VpcParams {
-  resource: 'vpc'
+  resource: 'aws:vpc'
   name: string
   cidr: string
   tenancy: 'default' | 'dedicated'
 }
 
 export interface Ec2Params {
-  resource: 'ec2'
+  resource: 'aws:ec2'
   name: string
   amiId: string
   instanceType: string
@@ -18,7 +18,7 @@ export interface Ec2Params {
 }
 
 export interface SgParams {
-  resource: 'sg'
+  resource: 'aws:security-group'
   name: string
   description: string
   vpcId: string
@@ -31,14 +31,14 @@ export interface SgParams {
 }
 
 export interface S3Params {
-  resource: 's3'
+  resource: 'aws:s3'
   bucketName: string
   region: string
   blockPublicAccess: boolean
 }
 
 export interface RdsParams {
-  resource: 'rds'
+  resource: 'aws:rds'
   identifier: string
   engine: 'mysql' | 'postgres' | 'mariadb'
   instanceClass: string
@@ -52,7 +52,7 @@ export interface RdsParams {
 }
 
 export interface LambdaParams {
-  resource: 'lambda'
+  resource: 'aws:lambda'
   name: string
   runtime: 'nodejs20.x' | 'python3.12' | 'java21' | 'go1.x'
   handler: string
@@ -65,7 +65,7 @@ export interface LambdaParams {
 }
 
 export interface AlbParams {
-  resource: 'alb'
+  resource: 'aws:alb'
   name: string
   scheme: 'internet-facing' | 'internal'
   subnetIds: string[]
@@ -74,14 +74,14 @@ export interface AlbParams {
 }
 
 export interface AcmParams {
-  resource: 'acm'
+  resource: 'aws:acm'
   domainName: string
   subjectAlternativeNames: string[]
   validationMethod: 'DNS' | 'EMAIL'
 }
 
 export interface CloudFrontParams {
-  resource: 'cloudfront'
+  resource: 'aws:cloudfront'
   comment: string
   origins: Array<{ id: string; domainName: string }>
   defaultRootObject: string
@@ -90,75 +90,75 @@ export interface CloudFrontParams {
 }
 
 export interface ApigwParams {
-  resource: 'apigw'
+  resource: 'aws:apigw'
   name: string
   corsOrigins: string[]
 }
 
 export interface ApigwRouteParams {
-  resource: 'apigw-route'
+  resource: 'aws:apigw-route'
   apiId: string
   method: string
   path: string
 }
 
 export interface SqsParams {
-  resource: 'sqs'
+  resource: 'aws:sqs'
   name: string
   fifo?: boolean
   visibilityTimeout?: number
 }
 export interface SnsParams {
-  resource: 'sns'
+  resource: 'aws:sns'
   name: string
   fifo?: boolean
 }
 export interface DynamoParams {
-  resource: 'dynamo'
+  resource: 'aws:dynamo'
   tableName: string
   hashKey: string
   billingMode?: 'PAY_PER_REQUEST' | 'PROVISIONED'
 }
 export interface SecretParams {
-  resource: 'secret'
+  resource: 'aws:secret'
   name: string
   value: string
 }
 export interface EcrParams {
-  resource: 'ecr'
+  resource: 'aws:ecr-repo'
   name: string
 }
 export interface SfnParams {
-  resource: 'sfn'
+  resource: 'aws:sfn'
   name: string
   type?: 'STANDARD' | 'EXPRESS'
   roleArn: string
   definition: string
 }
 export interface EventBusParams {
-  resource: 'eventbridge-bus'
+  resource: 'aws:eventbridge-bus'
   name: string
 }
 export interface R53ZoneParams {
-  resource: 'r53-zone'
+  resource: 'aws:r53-zone'
   domainName: string
   isPrivate: boolean
 }
 export interface CreateSsmParamParams {
-  resource: 'ssm-param'
+  resource: 'aws:ssm-param'
   name: string
   value: string
   paramType: 'String' | 'StringList'
   description?: string
 }
 export interface CreateSubnetParams {
-  resource: 'subnet'
+  resource: 'aws:subnet'
   vpcId: string
   cidrBlock: string
   availabilityZone?: string
 }
 export interface CreateIgwParams {
-  resource: 'igw'
+  resource: 'aws:igw'
   name?: string
 }
 

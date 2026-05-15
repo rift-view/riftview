@@ -27,7 +27,7 @@ export function RdsForm({ onChange, showErrors }: Props): React.JSX.Element {
   const update = <K extends keyof typeof form>(k: K, v: (typeof form)[K]): void => {
     const next = { ...form, [k]: v }
     setForm(next)
-    onChange({ resource: 'rds', ...next })
+    onChange({ resource: 'aws:rds', ...next })
   }
 
   const err = showErrors ?? false

@@ -10,7 +10,7 @@ export function IgwCreateForm({ onChange }: Props): React.JSX.Element {
   const [name, setName] = useState('')
 
   const emit = (n: string): void => {
-    onChange({ resource: 'igw', name: n || undefined })
+    onChange({ resource: 'aws:igw', name: n || undefined })
   }
 
   return (

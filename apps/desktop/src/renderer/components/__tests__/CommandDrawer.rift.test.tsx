@@ -54,7 +54,7 @@ describe('CommandDrawer rift shell', () => {
   })
 
   it('Run button uses .btn-primary when a command is queued', () => {
-    useUIStore.setState({ activeCreate: { resource: 'ec2', view: 'topology' } })
+    useUIStore.setState({ activeCreate: { resource: 'aws:ec2', view: 'topology' } })
     useCliStore.setState({ commandPreview: ['aws ec2 run-instances …'] })
     const { container } = render(<CommandDrawer />)
     const run = container.querySelector('button.btn-primary') as HTMLButtonElement | null

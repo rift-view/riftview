@@ -31,104 +31,78 @@ import { IgwCreateForm } from './IgwCreateForm'
 function validateParams(params: CreateParams | null): boolean {
   if (!params) return false
   switch (params.resource) {
-    case 'vpc':
+    case 'aws:vpc':
       return !!(params.name && params.cidr)
-    case 'ec2':
+    case 'aws:ec2':
       return !!(params.name && params.amiId && params.instanceType)
-    case 'sg':
+    case 'aws:security-group':
       return !!(params.name && params.description && params.vpcId)
-    case 's3':
+    case 'aws:s3':
       return !!params.bucketName
-    case 'rds':
+    case 'aws:rds':
       return !!(params.identifier && params.masterUsername && params.masterPassword)
-    case 'lambda':
+    case 'aws:lambda':
       return !!(params.name && params.roleArn && params.handler)
-    case 'alb':
+    case 'aws:alb':
       return !!(params.name && params.subnetIds.length >= 2 && params.securityGroupIds.length >= 1)
-    case 'acm':
+    case 'aws:acm':
       return !!params.domainName
-    case 'cloudfront':
+    case 'aws:cloudfront':
       return !!(params.comment && params.origins.length > 0)
-    case 'apigw':
+    case 'aws:apigw':
       return !!params.name
-    case 'apigw-route':
+    case 'aws:apigw-route':
       return !!(params.apiId && params.path && params.path.startsWith('/'))
-    case 'sqs':
+    case 'aws:sqs':
       return !!params.name
-    case 'sns':
+    case 'aws:sns':
       return !!params.name
-    case 'dynamo':
+    case 'aws:dynamo':
       return !!(params.tableName && params.hashKey)
-    case 'secret':
+    case 'aws:secret':
       return !!(params.name && params.value)
-    case 'ecr':
+    case 'aws:ecr-repo':
       return !!params.name
-    case 'sfn':
+    case 'aws:sfn':
       return !!(params.name && params.roleArn && params.definition)
-    case 'eventbridge-bus':
+    case 'aws:eventbridge-bus':
       return !!params.name
-    case 'r53-zone':
+    case 'aws:r53-zone':
       return !!params.domainName
-    case 'ssm-param':
+    case 'aws:ssm-param':
       return !!(params.name && params.value)
-    case 'subnet':
+    case 'aws:subnet':
       return !!(params.vpcId && params.cidrBlock)
-    case 'igw':
+    case 'aws:igw':
       return true
     default:
       return true
   }
 }
 
-const TITLES: Record<string, string> = {
-  vpc: 'New VPC',
-  ec2: 'New EC2 Instance',
-  sg: 'New Security Group',
-  s3: 'New S3 Bucket',
-  rds: 'New RDS Instance',
-  lambda: 'New Lambda Function',
-  alb: 'New ALB',
-  acm: 'New ACM Certificate',
-  cloudfront: 'New CloudFront Distribution',
-  apigw: 'New API Gateway',
-  'apigw-route': 'New API Route',
-  sqs: 'New SQS Queue',
-  sns: 'New SNS Topic',
-  dynamo: 'New DynamoDB Table',
-  secret: 'New Secret',
-  ecr: 'New ECR Repository',
-  sfn: 'New Step Functions State Machine',
-  'eventbridge-bus': 'New EventBridge Bus',
-  'r53-zone': 'New Hosted Zone',
-  'ssm-param': 'New SSM Parameter',
-  subnet: 'New Subnet',
-  igw: 'New Internet Gateway'
-}
-
-// Maps form resource identifier to CloudNode NodeType
-const RESOURCE_TO_NODE_TYPE: Record<string, NodeType> = {
-  vpc: 'aws:vpc',
-  ec2: 'aws:ec2',
-  sg: 'aws:security-group',
-  s3: 'aws:s3',
-  rds: 'aws:rds',
-  lambda: 'aws:lambda',
-  alb: 'aws:alb',
-  acm: 'aws:acm',
-  cloudfront: 'aws:cloudfront',
-  apigw: 'aws:apigw',
-  'apigw-route': 'aws:apigw-route',
-  sqs: 'aws:sqs',
-  sns: 'aws:sns',
-  dynamo: 'aws:dynamo',
-  secret: 'aws:secret',
-  ecr: 'aws:ecr-repo',
-  sfn: 'aws:sfn',
-  'eventbridge-bus': 'aws:eventbridge-bus',
-  'r53-zone': 'aws:r53-zone',
-  'ssm-param': 'aws:ssm-param',
-  subnet: 'aws:subnet',
-  igw: 'aws:igw'
+const TITLES: Partial<Record<NodeType, string>> = {
+  'aws:vpc': 'New VPC',
+  'aws:ec2': 'New EC2 Instance',
+  'aws:security-group': 'New Security Group',
+  'aws:s3': 'New S3 Bucket',
+  'aws:rds': 'New RDS Instance',
+  'aws:lambda': 'New Lambda Function',
+  'aws:alb': 'New ALB',
+  'aws:acm': 'New ACM Certificate',
+  'aws:cloudfront': 'New CloudFront Distribution',
+  'aws:apigw': 'New API Gateway',
+  'aws:apigw-route': 'New API Route',
+  'aws:sqs': 'New SQS Queue',
+  'aws:sns': 'New SNS Topic',
+  'aws:dynamo': 'New DynamoDB Table',
+  'aws:secret': 'New Secret',
+  'aws:ecr-repo': 'New ECR Repository',
+  'aws:sfn': 'New Step Functions State Machine',
+  'aws:eventbridge-bus': 'New EventBridge Bus',
+  'aws:r53-zone': 'New Hosted Zone',
+  'aws:ssm-param': 'New SSM Parameter',
+  'aws:subnet': 'New Subnet',
+  'aws:igw': 'New Internet Gateway'
 }
 
 export function CreateModal(): React.JSX.Element | null {
@@ -147,10 +121,10 @@ export function CreateModal(): React.JSX.Element | null {
   // When creating a route, the parent API is the currently selected node (if it's an apigw)
   const selectedNode = nodes.find((n) => n.id === selectedNodeId)
   const parentApiId =
-    activeCreate?.resource === 'apigw-route' && selectedNode?.type === 'aws:apigw'
+    activeCreate?.resource === 'aws:apigw-route' && selectedNode?.type === 'aws:apigw'
       ? selectedNode.id
-      : ((activeCreate as { resource: string; view: string; parentId?: string } | null)?.parentId ??
-        '')
+      : ((activeCreate as { resource: NodeType; view: string; parentId?: string } | null)
+          ?.parentId ?? '')
 
   const [showErrors, setShowErrors] = useState(false)
 
@@ -173,7 +147,7 @@ export function CreateModal(): React.JSX.Element | null {
   function handleChange(params: CreateParams): void {
     paramsRef.current = params
     try {
-      if (params.resource === 'cloudfront') {
+      if (params.resource === 'aws:cloudfront') {
         setCommandPreview(['[CloudFront distribution will be created via SDK]'])
         return
       }
@@ -198,45 +172,45 @@ export function CreateModal(): React.JSX.Element | null {
 
   function deriveOptimisticLabel(params: CreateParams): string {
     switch (params.resource) {
-      case 'ec2':
+      case 'aws:ec2':
         return (params as { name?: string }).name || 'New EC2'
-      case 'rds':
+      case 'aws:rds':
         return (params as { identifier?: string }).identifier || 'New RDS'
-      case 's3':
+      case 'aws:s3':
         return (params as { bucketName?: string }).bucketName || 'New S3'
-      case 'lambda':
+      case 'aws:lambda':
         return (params as { name?: string }).name || 'New Lambda'
-      case 'alb':
+      case 'aws:alb':
         return (params as { name?: string }).name || 'New ALB'
-      case 'vpc':
+      case 'aws:vpc':
         return (params as { name?: string }).name || 'New VPC'
-      case 'acm':
+      case 'aws:acm':
         return (params as { domainName?: string }).domainName || 'New Certificate'
-      case 'cloudfront':
+      case 'aws:cloudfront':
         return (params as { comment?: string }).comment || 'New Distribution'
-      case 'apigw':
+      case 'aws:apigw':
         return (params as { name?: string }).name || 'New API'
-      case 'sqs':
+      case 'aws:sqs':
         return (params as { name?: string }).name || 'New Queue'
-      case 'sns':
+      case 'aws:sns':
         return (params as { name?: string }).name || 'New Topic'
-      case 'dynamo':
+      case 'aws:dynamo':
         return (params as { tableName?: string }).tableName || 'New Table'
-      case 'secret':
+      case 'aws:secret':
         return (params as { name?: string }).name || 'New Secret'
-      case 'ecr':
+      case 'aws:ecr-repo':
         return (params as { name?: string }).name || 'New Repository'
-      case 'sfn':
+      case 'aws:sfn':
         return (params as { name?: string }).name || 'New State Machine'
-      case 'eventbridge-bus':
+      case 'aws:eventbridge-bus':
         return (params as { name?: string }).name || 'New Event Bus'
-      case 'r53-zone':
+      case 'aws:r53-zone':
         return (params as { domainName?: string }).domainName || 'New Hosted Zone'
-      case 'ssm-param':
+      case 'aws:ssm-param':
         return (params as { name?: string }).name || 'New Parameter'
-      case 'subnet':
+      case 'aws:subnet':
         return (params as { cidrBlock?: string }).cidrBlock || 'New Subnet'
-      case 'igw':
+      case 'aws:igw':
         return (params as { name?: string }).name || 'New Internet Gateway'
       default:
         return `New ${params.resource}`
@@ -255,13 +229,13 @@ export function CreateModal(): React.JSX.Element | null {
     // Optimistic node — goes into the main nodes array so the next scan can replace it
     // For S3, use the bucket name as the ID so applyDelta overwrites it cleanly (scanner uses b.Name as ID)
     const optimisticId =
-      activeCreate.resource === 's3'
+      activeCreate.resource === 'aws:s3'
         ? (paramsRef.current as { bucketName: string }).bucketName
         : `optimistic-${Date.now()}`
     optimisticIdRef.current = optimisticId
     addOptimisticNode({
       id: optimisticId,
-      type: RESOURCE_TO_NODE_TYPE[activeCreate.resource] ?? 'ec2',
+      type: activeCreate.resource,
       label: deriveOptimisticLabel(paramsRef.current),
       status: 'creating',
       region,
@@ -273,7 +247,7 @@ export function CreateModal(): React.JSX.Element | null {
     pendingIdRef.current = id
     addPendingNode({
       id,
-      type: RESOURCE_TO_NODE_TYPE[activeCreate.resource] ?? 'ec2',
+      type: activeCreate.resource,
       label: 'Creating…',
       status: 'creating',
       region,
@@ -282,7 +256,7 @@ export function CreateModal(): React.JSX.Element | null {
     clearCliOutput()
 
     const runPromise =
-      paramsRef.current!.resource === 'cloudfront'
+      paramsRef.current!.resource === 'aws:cloudfront'
         ? window.riftview.createCloudFront(paramsRef.current! as CloudFrontParams)
         : window.riftview.runCli(
             resolveCreateCommands(
@@ -337,70 +311,70 @@ export function CreateModal(): React.JSX.Element | null {
           </button>
         </div>
         <div className="modal-body">
-          {activeCreate.resource === 'vpc' && (
+          {activeCreate.resource === 'aws:vpc' && (
             <VpcForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'ec2' && (
+          {activeCreate.resource === 'aws:ec2' && (
             <Ec2Form onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'sg' && (
+          {activeCreate.resource === 'aws:security-group' && (
             <SgForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 's3' && (
+          {activeCreate.resource === 'aws:s3' && (
             <S3Form onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'rds' && (
+          {activeCreate.resource === 'aws:rds' && (
             <RdsForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'lambda' && (
+          {activeCreate.resource === 'aws:lambda' && (
             <LambdaForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'alb' && (
+          {activeCreate.resource === 'aws:alb' && (
             <AlbForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'acm' && (
+          {activeCreate.resource === 'aws:acm' && (
             <AcmForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'cloudfront' && (
+          {activeCreate.resource === 'aws:cloudfront' && (
             <CloudFrontForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'apigw' && (
+          {activeCreate.resource === 'aws:apigw' && (
             <ApigwForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'apigw-route' && (
+          {activeCreate.resource === 'aws:apigw-route' && (
             <ApigwRouteForm onChange={handleChange} showErrors={showErrors} apiId={parentApiId} />
           )}
-          {activeCreate.resource === 'sqs' && (
+          {activeCreate.resource === 'aws:sqs' && (
             <SqsForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'sns' && (
+          {activeCreate.resource === 'aws:sns' && (
             <SnsForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'dynamo' && (
+          {activeCreate.resource === 'aws:dynamo' && (
             <DynamoForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'secret' && (
+          {activeCreate.resource === 'aws:secret' && (
             <SecretForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'ecr' && (
+          {activeCreate.resource === 'aws:ecr-repo' && (
             <EcrForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'sfn' && (
+          {activeCreate.resource === 'aws:sfn' && (
             <SfnForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'eventbridge-bus' && (
+          {activeCreate.resource === 'aws:eventbridge-bus' && (
             <EventBusForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'r53-zone' && (
+          {activeCreate.resource === 'aws:r53-zone' && (
             <R53CreateForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'ssm-param' && (
+          {activeCreate.resource === 'aws:ssm-param' && (
             <SsmCreateForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'subnet' && (
+          {activeCreate.resource === 'aws:subnet' && (
             <SubnetCreateForm onChange={handleChange} showErrors={showErrors} />
           )}
-          {activeCreate.resource === 'igw' && (
+          {activeCreate.resource === 'aws:igw' && (
             <IgwCreateForm onChange={handleChange} showErrors={showErrors} />
           )}
         </div>

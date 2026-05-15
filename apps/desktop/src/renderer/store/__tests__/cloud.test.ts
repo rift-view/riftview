@@ -134,12 +134,12 @@ describe('settings', () => {
 
 describe('activeCreate', () => {
   it('setActiveCreate stores the value', () => {
-    useUIStore.getState().setActiveCreate({ resource: 'vpc', view: 'topology' })
-    expect(useUIStore.getState().activeCreate?.resource).toBe('vpc')
+    useUIStore.getState().setActiveCreate({ resource: 'aws:vpc', view: 'topology' })
+    expect(useUIStore.getState().activeCreate?.resource).toBe('aws:vpc')
   })
 
   it('setActiveCreate(null) clears it', () => {
-    useUIStore.getState().setActiveCreate({ resource: 'vpc', view: 'topology' })
+    useUIStore.getState().setActiveCreate({ resource: 'aws:vpc', view: 'topology' })
     useUIStore.getState().setActiveCreate(null)
     expect(useUIStore.getState().activeCreate).toBeNull()
   })

@@ -15,7 +15,7 @@ import type {
 describe('buildCommands: vpc', () => {
   it('returns one command with correct args', () => {
     const params: VpcParams = {
-      resource: 'vpc',
+      resource: 'aws:vpc',
       name: 'my-vpc',
       cidr: '10.0.0.0/16',
       tenancy: 'default'
@@ -31,7 +31,7 @@ describe('buildCommands: vpc', () => {
 
   it('includes name tag', () => {
     const params: VpcParams = {
-      resource: 'vpc',
+      resource: 'aws:vpc',
       name: 'my-vpc',
       cidr: '10.0.0.0/16',
       tenancy: 'default'
@@ -44,7 +44,7 @@ describe('buildCommands: vpc', () => {
 describe('buildCommands: ec2', () => {
   it('returns one command with run-instances', () => {
     const params: Ec2Params = {
-      resource: 'ec2',
+      resource: 'aws:ec2',
       name: 'web',
       amiId: 'ami-123',
       instanceType: 't3.micro',
@@ -65,7 +65,7 @@ describe('buildCommands: ec2', () => {
 describe('buildCommands: sg', () => {
   it('returns create + one authorize per rule, using --group-id placeholder', () => {
     const params: SgParams = {
-      resource: 'sg',
+      resource: 'aws:security-group',
       name: 'web-sg',
       description: 'web',
       vpcId: 'vpc-123',
@@ -85,7 +85,7 @@ describe('buildCommands: sg', () => {
 
   it('returns just create-security-group when no rules', () => {
     const params: SgParams = {
-      resource: 'sg',
+      resource: 'aws:security-group',
       name: 'empty-sg',
       description: 'd',
       vpcId: 'vpc-123',
@@ -100,7 +100,7 @@ describe('buildCommands: sg', () => {
 describe('buildCommands: s3', () => {
   it('returns create-bucket + put-public-access-block for non-us-east-1 with blockPublicAccess', () => {
     const params: S3Params = {
-      resource: 's3',
+      resource: 'aws:s3',
       bucketName: 'my-bucket',
       region: 'eu-west-1',
       blockPublicAccess: true
@@ -114,7 +114,7 @@ describe('buildCommands: s3', () => {
 
   it('returns one create-bucket for us-east-1 with no blockPublicAccess', () => {
     const params: S3Params = {
-      resource: 's3',
+      resource: 'aws:s3',
       bucketName: 'my-bucket',
       region: 'us-east-1',
       blockPublicAccess: false
@@ -128,7 +128,7 @@ describe('buildCommands: s3', () => {
 
 describe('buildCommands — RDS', () => {
   const baseRds: RdsParams = {
-    resource: 'rds',
+    resource: 'aws:rds',
     identifier: 'mydb',
     engine: 'mysql',
     instanceClass: 'db.t3.micro',
@@ -158,7 +158,7 @@ describe('buildCommands — RDS', () => {
 
 describe('buildCommands — Lambda', () => {
   const baseLambda: LambdaParams = {
-    resource: 'lambda',
+    resource: 'aws:lambda',
     name: 'my-fn',
     runtime: 'nodejs20.x',
     handler: 'index.handler',
@@ -189,7 +189,7 @@ describe('buildCommands — Lambda', () => {
 
 describe('buildCommands — ALB', () => {
   const baseAlb: AlbParams = {
-    resource: 'alb',
+    resource: 'aws:alb',
     name: 'my-alb',
     scheme: 'internet-facing',
     subnetIds: ['subnet-1', 'subnet-2'],
@@ -212,7 +212,7 @@ describe('buildCommands — ALB', () => {
 describe('buildCommands — R53 Hosted Zone', () => {
   it('generates create-hosted-zone command for public zone', () => {
     const params: R53ZoneParams = {
-      resource: 'r53-zone',
+      resource: 'aws:r53-zone',
       domainName: 'example.com',
       isPrivate: false
     }
@@ -230,7 +230,7 @@ describe('buildCommands — R53 Hosted Zone', () => {
 
   it('generates create-hosted-zone command for private zone', () => {
     const params: R53ZoneParams = {
-      resource: 'r53-zone',
+      resource: 'aws:r53-zone',
       domainName: 'internal.example.com',
       isPrivate: true
     }
@@ -245,7 +245,7 @@ describe('buildCommands — R53 Hosted Zone', () => {
 describe('buildCommands: ssm-param', () => {
   it('creates put-parameter command with all fields', () => {
     const cmds = buildCommands({
-      resource: 'ssm-param',
+      resource: 'aws:ssm-param',
       name: '/my/app/config',
       value: 'hello',
       paramType: 'String',
@@ -269,7 +269,7 @@ describe('buildCommands: ssm-param', () => {
 
   it('omits --description when not provided', () => {
     const cmds = buildCommands({
-      resource: 'ssm-param',
+      resource: 'aws:ssm-param',
       name: '/my/key',
       value: 'val',
       paramType: 'StringList'

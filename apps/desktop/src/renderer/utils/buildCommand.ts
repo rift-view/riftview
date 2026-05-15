@@ -32,7 +32,7 @@ import type {
  */
 export function buildCommands(params: CreateParams): string[][] {
   switch (params.resource) {
-    case 'vpc':
+    case 'aws:vpc':
       return [
         [
           'ec2',
@@ -46,7 +46,7 @@ export function buildCommands(params: CreateParams): string[][] {
         ]
       ]
 
-    case 'ec2': {
+    case 'aws:ec2': {
       const ec2Args: string[] = [
         'ec2',
         'run-instances',
@@ -66,47 +66,47 @@ export function buildCommands(params: CreateParams): string[][] {
       return [ec2Args]
     }
 
-    case 'sg':
+    case 'aws:security-group':
       return buildSgCommands(params)
 
-    case 's3':
+    case 'aws:s3':
       return buildS3Commands(params)
 
-    case 'rds':
+    case 'aws:rds':
       return buildRdsCommands(params as RdsParams)
-    case 'lambda':
+    case 'aws:lambda':
       return buildLambdaCommands(params as LambdaParams)
-    case 'alb':
+    case 'aws:alb':
       return buildAlbCommands(params as AlbParams)
-    case 'acm':
+    case 'aws:acm':
       return buildAcmCommands(params as AcmParams)
-    case 'cloudfront':
+    case 'aws:cloudfront':
       return [] // CloudFront create uses SDK via IPC, not CLI
-    case 'apigw':
+    case 'aws:apigw':
       return buildApigwCommands(params as ApigwParams)
-    case 'apigw-route':
+    case 'aws:apigw-route':
       return buildApigwRouteCommands(params as ApigwRouteParams)
-    case 'sqs':
+    case 'aws:sqs':
       return buildSqsCommands(params as SqsParams)
-    case 'sns':
+    case 'aws:sns':
       return buildSnsCommands(params as SnsParams)
-    case 'dynamo':
+    case 'aws:dynamo':
       return buildDynamoCommands(params as DynamoParams)
-    case 'secret':
+    case 'aws:secret':
       return buildSecretCommands(params as SecretParams)
-    case 'ecr':
+    case 'aws:ecr-repo':
       return buildEcrCommands(params as EcrParams)
-    case 'sfn':
+    case 'aws:sfn':
       return buildSfnCommands(params as SfnParams)
-    case 'eventbridge-bus':
+    case 'aws:eventbridge-bus':
       return buildEventBusCommands(params as EventBusParams)
-    case 'r53-zone':
+    case 'aws:r53-zone':
       return buildR53ZoneCommands(params as R53ZoneParams)
-    case 'ssm-param':
+    case 'aws:ssm-param':
       return buildSsmParamCommands(params as CreateSsmParamParams)
-    case 'subnet':
+    case 'aws:subnet':
       return buildSubnetCommands(params as CreateSubnetParams)
-    case 'igw':
+    case 'aws:igw':
       return buildIgwCommands(params as CreateIgwParams)
   }
 }

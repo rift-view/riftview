@@ -9,7 +9,7 @@ import type { CloudNode } from '@riftview/shared'
 describe('buildCommands — subnet', () => {
   it('builds create-subnet with required fields', () => {
     const params: CreateSubnetParams = {
-      resource: 'subnet',
+      resource: 'aws:subnet',
       vpcId: 'vpc-0abc1234',
       cidrBlock: '10.0.1.0/24'
     }
@@ -27,7 +27,7 @@ describe('buildCommands — subnet', () => {
 
   it('appends --availability-zone when provided', () => {
     const params: CreateSubnetParams = {
-      resource: 'subnet',
+      resource: 'aws:subnet',
       vpcId: 'vpc-0abc1234',
       cidrBlock: '10.0.2.0/24',
       availabilityZone: 'us-east-1a'
@@ -39,7 +39,7 @@ describe('buildCommands — subnet', () => {
 
   it('does not append --availability-zone when omitted', () => {
     const params: CreateSubnetParams = {
-      resource: 'subnet',
+      resource: 'aws:subnet',
       vpcId: 'vpc-0abc1234',
       cidrBlock: '10.0.1.0/24'
     }
@@ -52,14 +52,14 @@ describe('buildCommands — subnet', () => {
 
 describe('buildCommands — igw', () => {
   it('builds create-internet-gateway without tag when no name', () => {
-    const params: CreateIgwParams = { resource: 'igw' }
+    const params: CreateIgwParams = { resource: 'aws:igw' }
     const cmds = buildCommands(params)
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).toEqual(['ec2', 'create-internet-gateway'])
   })
 
   it('builds create-internet-gateway with tag-specifications when name provided', () => {
-    const params: CreateIgwParams = { resource: 'igw', name: 'main-igw' }
+    const params: CreateIgwParams = { resource: 'aws:igw', name: 'main-igw' }
     const cmds = buildCommands(params)
     expect(cmds).toHaveLength(1)
     expect(cmds[0]).toContain('--tag-specifications')

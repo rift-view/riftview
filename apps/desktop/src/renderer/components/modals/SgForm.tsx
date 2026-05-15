@@ -25,25 +25,25 @@ export function SgForm({ onChange, showErrors = false }: Props): React.JSX.Eleme
     setName(next.name)
     setDescription(next.description)
     setVpcId(next.vpcId)
-    onChange({ resource: 'sg', inboundRules: rules, ...next })
+    onChange({ resource: 'aws:security-group', inboundRules: rules, ...next })
   }
 
   function updateRule(i: number, partial: Partial<Rule>): void {
     const next = rules.map((r, idx) => (idx === i ? { ...r, ...partial } : r))
     setRules(next)
-    onChange({ resource: 'sg', name, description, vpcId, inboundRules: next })
+    onChange({ resource: 'aws:security-group', name, description, vpcId, inboundRules: next })
   }
 
   function addRule(): void {
     const next = [...rules, { ...BLANK_RULE }]
     setRules(next)
-    onChange({ resource: 'sg', name, description, vpcId, inboundRules: next })
+    onChange({ resource: 'aws:security-group', name, description, vpcId, inboundRules: next })
   }
 
   function removeRule(i: number): void {
     const next = rules.filter((_, idx) => idx !== i)
     setRules(next)
-    onChange({ resource: 'sg', name, description, vpcId, inboundRules: next })
+    onChange({ resource: 'aws:security-group', name, description, vpcId, inboundRules: next })
   }
 
   return (

@@ -18,7 +18,7 @@ export function VpcForm({ onChange, showErrors = false }: Props): React.JSX.Elem
     setName(next.name)
     setCidr(next.cidr)
     setTenancy(next.tenancy)
-    onChange({ resource: 'vpc', ...next })
+    onChange({ resource: 'aws:vpc', ...next })
   }
 
   const nameInvalid = showErrors && !name.trim()

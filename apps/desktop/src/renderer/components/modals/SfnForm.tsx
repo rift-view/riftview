@@ -28,7 +28,7 @@ export function SfnForm({ onChange, showErrors }: Props): React.JSX.Element {
   const defInvalid = err && !definition.trim()
 
   const emit = (n: string, t: 'STANDARD' | 'EXPRESS', r: string, d: string): void => {
-    onChange({ resource: 'sfn', name: n, type: t, roleArn: r, definition: d })
+    onChange({ resource: 'aws:sfn', name: n, type: t, roleArn: r, definition: d })
   }
 
   return (

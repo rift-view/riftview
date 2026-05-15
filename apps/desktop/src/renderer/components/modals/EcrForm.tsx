@@ -22,7 +22,7 @@ export function EcrForm({ onChange, showErrors }: Props): React.JSX.Element {
           placeholder="my-app/service"
           onChange={(e) => {
             setName(e.target.value)
-            onChange({ resource: 'ecr', name: e.target.value })
+            onChange({ resource: 'aws:ecr-repo', name: e.target.value })
           }}
         />
       </div>
