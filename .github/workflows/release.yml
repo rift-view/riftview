@@ -1,0 +1,130 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: ${{ github.workflow_ref }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify main CI green on this commit
+        run: |
+          sha="${{ github.sha }}"
+          fast_conclusion=$(gh api repos/${{ github.repository }}/commits/$sha/check-runs \
+            --jq '[.check_runs[] | select(.name == "fast")] | .[0].conclusion // "missing"')
+          e2e_conclusion=$(gh api repos/${{ github.repository }}/commits/$sha/check-runs \
+            --jq '[.check_runs[] | select(.name == "e2e")] | .[0].conclusion // "missing"')
+          echo "fast: $fast_conclusion, e2e: $e2e_conclusion"
+          if [[ "$fast_conclusion" != "success" || "$e2e_conclusion" != "success" ]]; then
+            echo "::error::CI not green on $sha (fast=$fast_conclusion, e2e=$e2e_conclusion). Push tag after main CI passes."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    needs: [verify-ci]
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: ubuntu-latest
+            platform: linux
+    runs-on: ${{ matrix.os }}
+    # Asymmetric gate:
+    #   Linux: full LocalStack-backed @release spec (scan-blast-radius)
+    #   macOS: lighter @release-mac spec (demo mode, no LocalStack)
+    # macos-latest (macos-15 arm64) can't run Docker — colima can't nested-
+    # virtualize on current GHA Apple Silicon runners. The mac spec gates
+    # boot + canvas + Inspector which catches mac-specific regressions
+    # (signing, ABI, native modules) without needing AWS plumbing.
+    env:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://localhost:4566
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      # --- Linux-only LocalStack prereqs ---
+      - uses: hashicorp/setup-terraform@v3
+        if: runner.os == 'Linux'
+        with:
+          terraform_version: 1.9.x
+      - name: Start LocalStack
+        if: runner.os == 'Linux'
+        run: docker compose -f .localstack/compose.yml up -d
+      - name: Wait for LocalStack
+        if: runner.os == 'Linux'
+        run: ./scripts/wait-localstack.sh
+      - name: Seed LocalStack
+        if: runner.os == 'Linux'
+        working-directory: apps/cli/tests/integration/fixtures
+        run: terraform init -input=false && terraform apply -auto-approve -input=false
+      # --- Both platforms build the binary + run Playwright ---
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Build desktop bundles (electron-vite)
+        working-directory: apps/desktop
+        run: npx electron-vite build
+      - name: Rebuild native modules against Electron ABI
+        # Installs Electron-targeted prebuilds for native deps (better-sqlite3).
+        # `npm ci` above fetched the Node-ABI prebuilds so the fast job's
+        # vitest unit tests can load them. Packaging for Electron requires the
+        # ABI matching Electron's bundled Node (v140 on Electron 39); without
+        # this step the packaged .node is silently unloadable at runtime and
+        # the snapshot history store no-ops (see CLAUDE.md § Native modules).
+        working-directory: apps/desktop
+        run: npm run rebuild
+      - name: Build unsigned binary (for @release E2E)
+        working-directory: apps/desktop
+        run: npx electron-builder --dir
+      - name: Run @release E2E (Linux — full LocalStack)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run test:e2e:release
+        env:
+          CI: 'true'
+      - name: Run @release E2E (mac — demo-mode smoke)
+        if: runner.os == 'macOS'
+        run: npm run test:e2e:release:mac
+        env:
+          CI: 'true'
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-release-${{ matrix.platform }}
+          path: apps/desktop/tests/e2e/playwright-report
+          retention-days: 30
+      - name: LocalStack logs on failure
+        if: failure() && runner.os == 'Linux'
+        run: docker compose -f .localstack/compose.yml logs localstack | tail -200
+      # libfuse2 is required for electron-builder's AppImage target on
+      # ubuntu-latest (removed from default image; app-builder-bin needs it).
+      - name: Install libfuse2 for AppImage (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libfuse2
+      - name: Build signed and publish
+        working-directory: apps/desktop
+        run: npx electron-vite build && npx electron-builder --${{ matrix.platform }} --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
