@@ -613,7 +613,7 @@ function Row({
         <span style={{ wordBreak: 'break-all' }}>{v}</span>
         {copyable && (
           <button
-            onClick={() => void navigator.clipboard.writeText(copyable)}
+            onClick={() => void navigator.clipboard.writeText(redact(copyable))}
             title="Copy"
             className="btn btn-sm btn-ghost"
             style={{ padding: '0 4px', fontSize: 8, lineHeight: 1 }}
@@ -833,8 +833,8 @@ export function Inspector({
               }
 
               const copyMarkdown = (): void => {
-                const lines: string[] = [`# Blast Radius — ${node.label}`, '']
-                lines.push(`- Source: \`${node.label}\` (${node.type})`)
+                const lines: string[] = [`# Blast Radius — ${redact(node.label)}`, '']
+                lines.push(`- Source: \`${redact(node.label)}\` (${node.type})`)
                 lines.push(
                   `- Reach: ${result.upstreamCount} upstream · ${result.downstreamCount} downstream · max ${result.maxHops} hop${result.maxHops === 1 ? '' : 's'}`
                 )
@@ -846,7 +846,7 @@ export function Inspector({
                     const n = nodes.find((x) => x.id === m.id)
                     const edges = m.edgeTypes.length > 0 ? ` — ${m.edgeTypes.join(', ')}` : ''
                     lines.push(
-                      `- \`${n?.label ?? m.id}\` (${n?.type ?? '?'}) · hop ${m.hop}${edges}`
+                      `- \`${redact(n?.label ?? m.id)}\` (${n?.type ?? '?'}) · hop ${m.hop}${edges}`
                     )
                   }
                   lines.push('')
