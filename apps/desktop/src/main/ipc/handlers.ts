@@ -585,6 +585,7 @@ export function registerHandlers(win: BrowserWindow): void {
   // Input validation + error isolation live in history/store.ts so malformed
   // payloads never reach the DB layer.
   ipcMain.handle(IPC.SNAPSHOT_LIST, (_, filter?: unknown): VersionMeta[] => {
+    if (isDemoMode()) return []
     try {
       return listVersionsSafe(filter)
     } catch (err) {
@@ -594,6 +595,7 @@ export function registerHandlers(win: BrowserWindow): void {
   })
 
   ipcMain.handle(IPC.SNAPSHOT_READ, (_, versionId: unknown): Snapshot | null => {
+    if (isDemoMode()) return null
     try {
       return readSnapshotSafe(versionId)
     } catch (err) {
@@ -603,6 +605,7 @@ export function registerHandlers(win: BrowserWindow): void {
   })
 
   ipcMain.handle(IPC.SNAPSHOT_DELETE, (_, versionId: unknown): { ok: boolean } => {
+    if (isDemoMode()) return { ok: false }
     try {
       return deleteSnapshotSafe(versionId)
     } catch (err) {
