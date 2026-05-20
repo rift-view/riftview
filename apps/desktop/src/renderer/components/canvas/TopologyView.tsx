@@ -44,6 +44,7 @@ import UserEdge from './edges/UserEdge'
 import { edgeStyle } from './edges/edgeStyle'
 import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../utils/filterToHide'
 import IntegrationLegend from './IntegrationLegend'
+import { redact, redactRecord } from '../../utils/demoMode'
 import { buildBlastRadius } from '@riftview/shared'
 import {
   hopRingStyle,
@@ -205,12 +206,12 @@ function buildFlowNodes(
           y: GLOBAL_LABEL + row * (RES_H + RES_GAP_Y)
         },
         data: {
-          label: n.label,
+          label: redact(n.label),
           nodeType: n.type,
           status: n.status,
           driftStatus: n.driftStatus,
           dimmed: highlightedIds !== null && !highlightedIds.has(n.id),
-          metadata: n.metadata
+          metadata: redactRecord(n.metadata)
         },
         selected: n.id === selectedId,
         zIndex: 1
@@ -286,7 +287,7 @@ function buildFlowNodes(
       style: { width: vpcW, height: effectiveVpcH },
       dragHandle: '.cb-zone-drag-handle',
       data: {
-        label: vpc.label,
+        label: redact(vpc.label),
         cidr: vpc.metadata.cidr as string | undefined,
         collapsed: isCollapsed,
         childCount
@@ -307,7 +308,7 @@ function buildFlowNodes(
           style: { width: sw, height: sh },
           dragHandle: '.cb-zone-drag-handle',
           data: {
-            label: subnet.label,
+            label: redact(subnet.label),
             isPublic: subnet.metadata.mapPublicIp,
             az: subnet.metadata.availabilityZone as string | undefined,
             collapsed: isCollapsed
@@ -397,13 +398,13 @@ function buildFlowNodes(
                 extent: 'parent',
                 position: pos,
                 data: {
-                  label: r.label,
+                  label: redact(r.label),
                   nodeType: r.type,
                   status: r.status,
                   driftStatus: r.driftStatus,
                   dimmed: highlightedIds !== null && !highlightedIds.has(r.id),
                   regionColor,
-                  metadata: r.metadata
+                  metadata: redactRecord(r.metadata)
                 },
                 selected: r.id === selectedId,
                 zIndex: 1
@@ -433,13 +434,13 @@ function buildFlowNodes(
             y: subnetBottom + row * (RES_H + RES_GAP_Y)
           },
           data: {
-            label: r.label,
+            label: redact(r.label),
             nodeType: r.type,
             status: r.status,
             driftStatus: r.driftStatus,
             dimmed: highlightedIds !== null && !highlightedIds.has(r.id),
             regionColor,
-            metadata: r.metadata
+            metadata: redactRecord(r.metadata)
           },
           selected: r.id === selectedId
         })
@@ -482,8 +483,8 @@ function buildFlowNodes(
       position: { x: vpcX, y: vpcY },
       style: { width: apigwW, height: apigwHFinal },
       data: {
-        label: api.label,
-        endpoint: api.metadata.endpoint as string | undefined,
+        label: redact(api.label),
+        endpoint: redact((api.metadata.endpoint as string) ?? ''),
         collapsed: isCollapsed,
         dimmed: highlightedIds !== null && !highlightedIds.has(api.id)
       },
@@ -502,7 +503,7 @@ function buildFlowNodes(
         },
         style: { width: apigwW - APIGW_PAD * 2 },
         data: {
-          label: route.label,
+          label: redact(route.label),
           method: route.metadata.method as string | undefined,
           path: route.metadata.path as string | undefined,
           hasLambda: !!route.metadata.lambdaArn,
@@ -531,14 +532,14 @@ function buildFlowNodes(
         y: rootY + Math.floor(i / ROOT_COLS) * (RES_H + RES_GAP_Y + 20)
       },
       data: {
-        label: r.label,
+        label: redact(r.label),
         nodeType: r.type,
         status: r.status,
         driftStatus: r.driftStatus,
         region: r.region,
         dimmed: highlightedIds !== null && !highlightedIds.has(r.id),
         regionColor,
-        metadata: r.metadata
+        metadata: redactRecord(r.metadata)
       },
       selected: r.id === selectedId
     })
@@ -1038,11 +1039,11 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
           type: 'resource',
           position: topologyPositions[n.id] ?? { x: 50, y: 50 },
           data: {
-            label: n.label,
+            label: redact(n.label),
             nodeType: n.type,
             status: n.status,
             driftStatus: n.driftStatus,
-            metadata: n.metadata
+            metadata: redactRecord(n.metadata)
           },
           selected: n.id === selectedId
         }
@@ -1310,7 +1311,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
               >
                 BLAST RADIUS
                 {' · '}
-                {blastNode?.label ?? blastRadiusId}
+                {redact(blastNode?.label ?? blastRadiusId)}
                 {' · '}
                 {blastRadius.members.size} node{blastRadius.members.size !== 1 ? 's' : ''}
                 {' · '}
@@ -1326,7 +1327,7 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
                     .sort((a, b) => a[1].hopDistance - b[1].hopDistance)
                     .map(([id, info]) => {
                       const node = allNodes.find((n) => n.id === id)
-                      return `${directionSymbol(info.direction)} [${info.hopDistance}] ${node?.label ?? id} (${node?.type ?? ''})`
+                      return `${directionSymbol(info.direction)} [${info.hopDistance}] ${redact(node?.label ?? id)} (${node?.type ?? ''})`
                     })
                   void navigator.clipboard.writeText(
                     `Blast radius: ${blastRadiusId}\n\n${lines.join('\n')}`
@@ -1343,7 +1344,8 @@ export function TopologyView({ onNodeContextMenu }: TopologyViewProps): React.JS
               onClick={() => setPathTraceId(null)}
               title="Clear path trace"
             >
-              PATH · {pathSourceNode?.label ?? '?'} → {pathTargetNode?.label ?? pathTraceId} ✕
+              PATH · {redact(pathSourceNode?.label ?? '?')} →{' '}
+              {redact(pathTargetNode?.label ?? pathTraceId)} ✕
             </span>
           )}
         </div>

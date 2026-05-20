@@ -40,6 +40,7 @@ import IntegrationLegend from './IntegrationLegend'
 import { resolveIntegrationTargetId } from '@riftview/shared'
 import { applyNodeFilters, filterEdgesByVisibleNodes } from '../../utils/filterToHide'
 import { buildBlastRadius } from '@riftview/shared'
+import { redact, redactRecord } from '../../utils/demoMode'
 import {
   hopRingStyle,
   directionSymbol,
@@ -499,14 +500,14 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
         zIndex: isLocked ? -1 : 0,
         style: multiSelectStyle,
         data: {
-          label: n.label,
+          label: redact(n.label),
           nodeType: n.type,
           status: n.status,
           driftStatus: n.driftStatus,
           vpcLabel: n.type !== 'aws:vpc' && n.type !== 'aws:subnet' ? vpcLabel : undefined,
           vpcColor: n.type !== 'aws:vpc' && n.type !== 'aws:subnet' ? vpcColor : undefined,
           region: n.region,
-          metadata: n.metadata,
+          metadata: redactRecord(n.metadata),
           // API Gateway route extra fields
           method:
             n.type === 'aws:apigw-route' ? (n.metadata.method as string | undefined) : undefined,
@@ -514,7 +515,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
           hasLambda: n.type === 'aws:apigw-route' ? !!n.metadata.lambdaArn : undefined,
           // API Gateway container extra fields
           endpoint:
-            n.type === 'aws:apigw' ? (n.metadata.endpoint as string | undefined) : undefined,
+            n.type === 'aws:apigw' ? redact((n.metadata.endpoint as string) ?? '') : undefined,
           // Focus mode
           dimmed: highlightedIds !== null && !highlightedIds.has(n.id),
           // Lock mode
@@ -528,7 +529,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
                   .filter((i) => i.edgeType === 'subscription')
                   .map((i) => {
                     const resolved = resolveIntegrationTargetId(visibleNodes, i.targetId)
-                    return byId.get(resolved)?.label ?? resolved
+                    return redact(byId.get(resolved)?.label ?? resolved)
                   })
               : undefined
         },
@@ -545,12 +546,12 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
         type: 'resource' as const,
         position: livePositions[n.id] ?? graphPositions[n.id] ?? { x: (i % 5) * 175 + 40, y: 50 },
         data: {
-          label: n.label,
+          label: redact(n.label),
           nodeType: n.type,
           status: n.status,
           region: n.region,
           driftStatus: n.driftStatus,
-          metadata: n.metadata
+          metadata: redactRecord(n.metadata)
         },
         selected: n.id === selectedId
       }))
@@ -727,7 +728,7 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
               >
                 BLAST RADIUS
                 {' · '}
-                {blastNode?.label ?? blastRadiusId}
+                {redact(blastNode?.label ?? blastRadiusId)}
                 {' · '}
                 {blastRadius.members.size} node{blastRadius.members.size !== 1 ? 's' : ''}
                 {' · '}
@@ -743,10 +744,10 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
                     .sort((a, b) => a[1].hopDistance - b[1].hopDistance)
                     .map(([id, info]) => {
                       const node = allNodes.find((n) => n.id === id)
-                      return `${directionSymbol(info.direction)} [${info.hopDistance}] ${node?.label ?? id} (${node?.type ?? ''})`
+                      return `${directionSymbol(info.direction)} [${info.hopDistance}] ${redact(node?.label ?? id)} (${node?.type ?? ''})`
                     })
                   void navigator.clipboard.writeText(
-                    `Blast radius: ${blastRadiusId}\n\n${lines.join('\n')}`
+                    `Blast radius: ${redact(blastRadiusId)}\n\n${lines.join('\n')}`
                   )
                 }}
               >
@@ -760,7 +761,8 @@ export function GraphView({ onNodeContextMenu }: GraphViewProps): React.JSX.Elem
               onClick={() => setPathTraceId(null)}
               title="Clear path trace"
             >
-              PATH · {pathSourceNode?.label ?? '?'} → {pathTargetNode?.label ?? pathTraceId} ✕
+              PATH · {redact(pathSourceNode?.label ?? '?')} →{' '}
+              {redact(pathTargetNode?.label ?? pathTraceId)} ✕
             </span>
           )}
         </div>
