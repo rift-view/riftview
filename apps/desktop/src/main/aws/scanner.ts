@@ -19,12 +19,18 @@ interface HistoryEntry {
   changes: FieldChange[]
 }
 
+function historyRoot(): string {
+  return path.join(app.getPath('userData'), 'history')
+}
+
 export function historyFilePath(nodeId: string): string {
-  return path.join(
-    app.getPath('userData'),
-    'history',
-    `${nodeId.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`
-  )
+  const sanitized = nodeId.replace(/[^a-zA-Z0-9_:-]/g, '_')
+  const resolved = path.resolve(historyRoot(), `${sanitized}.json`)
+  const root = historyRoot() + path.sep
+  if (!resolved.startsWith(root)) {
+    throw new Error('historyFilePath: resolved path escapes history root')
+  }
+  return resolved
 }
 
 async function appendHistory(nodeId: string, entry: HistoryEntry): Promise<void> {

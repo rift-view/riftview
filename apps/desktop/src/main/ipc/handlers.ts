@@ -568,10 +568,11 @@ export function registerHandlers(win: BrowserWindow): void {
     IPC.HISTORY_GET,
     async (
       _,
-      nodeId: string
+      nodeId: unknown
     ): Promise<
       Array<{ timestamp: string; changes: Array<{ field: string; before: string; after: string }> }>
     > => {
+      if (typeof nodeId !== 'string' || nodeId.length === 0 || nodeId.length > 2048) return []
       try {
         const data = await fsp.readFile(historyFilePath(nodeId), 'utf8')
         return JSON.parse(data)
