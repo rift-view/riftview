@@ -51,6 +51,15 @@ export function redact(input: string): string {
  * identifier is also a lookup key (e.g. a node ID) — keeps the last 4 chars
  * so different resources still look different.
  */
+export function redactRecord(input: Record<string, unknown>): Record<string, unknown> {
+  if (!isDemoMode()) return input
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(input)) {
+    out[k] = typeof v === 'string' ? redact(v) : v
+  }
+  return out
+}
+
 export function redactKeepSuffix(input: string, tailLen = 4): string {
   if (!isDemoMode()) return input
   if (input.length <= tailLen) return '*'.repeat(input.length)
