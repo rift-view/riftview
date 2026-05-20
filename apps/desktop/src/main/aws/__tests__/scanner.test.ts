@@ -1,6 +1,11 @@
-import { describe, it, expect } from 'vitest'
-import { computeDelta } from '../scanner'
+import { describe, it, expect, vi } from 'vitest'
+import { computeDelta, historyFilePath } from '../scanner'
 import type { CloudNode } from '@riftview/shared'
+
+vi.mock('electron', () => ({
+  app: { getPath: () => '/tmp/riftview-test' },
+  BrowserWindow: { getAllWindows: vi.fn(() => []) }
+}))
 
 describe('computeDelta', () => {
   it('returns empty delta for identical snapshots', () => {
@@ -75,5 +80,37 @@ describe('computeDelta', () => {
     const delta = computeDelta(prev, next)
     expect(delta.changed).toHaveLength(1)
     expect(delta.changed[0].metadata).toEqual({ instanceType: 't3.large' })
+  })
+})
+
+describe('historyFilePath — path traversal defense (RIFT-128)', () => {
+  it('returns a path under the history root for a normal ARN', () => {
+    const p = historyFilePath('arn:aws:s3:::my-bucket')
+    expect(p).toContain('/tmp/riftview-test/history/')
+    expect(p).toMatch(/\.json$/)
+  })
+
+  it('sanitizes path-traversal segments', () => {
+    const p = historyFilePath('../../etc/passwd')
+    expect(p).toContain('/tmp/riftview-test/history/')
+    expect(p).not.toContain('..')
+  })
+
+  it('sanitizes null bytes', () => {
+    const p = historyFilePath('node\x00id')
+    expect(p).toContain('/tmp/riftview-test/history/')
+    expect(p).not.toContain('\x00')
+  })
+
+  it('handles colons in ARNs (keeps them)', () => {
+    const p = historyFilePath('arn:aws:ec2:us-east-1:123456789012:instance/i-abc')
+    expect(p).toContain('/tmp/riftview-test/history/')
+    expect(p).toMatch(/\.json$/)
+  })
+
+  it('produces unique filenames for distinct node IDs', () => {
+    const a = historyFilePath('arn:aws:s3:::bucket-a')
+    const b = historyFilePath('arn:aws:s3:::bucket-b')
+    expect(a).not.toBe(b)
   })
 })
