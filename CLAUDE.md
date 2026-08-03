@@ -101,9 +101,14 @@ Build pipeline (chained inside `apps/desktop` `build:unpack`,
 2. `pnpm --filter @riftview/desktop --prod deploy ./deploy` — copies
    the workspace's `package.json`, `out/`, `build/`, and (importantly)
    a flat `node_modules` with ALL transitive deps into
-   `apps/desktop/deploy/`. Requires `inject-workspace-packages=true`
-   in the root `.npmrc` so `@riftview/cloud-scan` and `@riftview/shared`
-   are bundled into the deploy as real packages instead of symlinks.
+   `apps/desktop/deploy/`. Runs in legacy deploy mode
+   (`force-legacy-deploy=true` in the root `.npmrc`), which bundles
+   `@riftview/cloud-scan` and `@riftview/shared` into the deploy as
+   real packages instead of symlinks. Do NOT switch to
+   `inject-workspace-packages=true`: that setting makes every lockfile
+   re-resolution record workspace deps as `file:` injected entries
+   instead of `link:` symlinks, which breaks workspace linking under
+   the hoisted layout and the CI phantom-dep guard (RIFT-130).
 3. `cd deploy && electron-builder install-app-deps` — replaces
    `deploy/node_modules/better-sqlite3/build/Release/better_sqlite3.node`
    with the Electron-ABI prebuild. The repo's main `node_modules/`
