@@ -47,7 +47,7 @@
     "@tailwindcss/vite": "^4.2.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
+    "@testing-library/user-event": "^14.6.3",
     "@types/better-sqlite3": "^7.6.13",
     "@types/ini": "^4.1.1",
     "@types/react": "^19.2.7",
