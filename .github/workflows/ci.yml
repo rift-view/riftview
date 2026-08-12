@@ -57,14 +57,15 @@ jobs:
             echo "pnpm-lock.yaml changed only in bot commits — OK"
             exit 0
           fi
-          LABELS=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name' || true)
-          if printf '%s\n' "$LABELS" | grep -qx 'lockfile-override-approved'; then
-            echo "pnpm-lock.yaml change approved via 'lockfile-override-approved' label"
+          GATE_CONCLUSION=$(gh api "/repos/${{ github.repository }}/commits/$PR_HEAD_SHA/check-runs" --jq '.check_runs[] | select(.name == "Lockfile override gate / gate") | .conclusion' 2>/dev/null || echo "")
+          if [ "$GATE_CONCLUSION" = "success" ]; then
+            echo "pnpm-lock.yaml override approved by lockfile-override-gate"
             exit 0
           fi
           echo "::error::This PR modifies pnpm-lock.yaml outside Renovate/Dependabot."
-          echo "To proceed: add the 'lockfile-override-approved' label and re-run this job."
-          echo "Or: revert pnpm-lock.yaml changes if unintended (the lockfile is maintained by Renovate by default — see CLAUDE.md § Supply chain)."
+          echo "The Lockfile override gate must pass first (requires non-author CODEOWNER approval)."
+          echo "Wait for the gate check to turn green, then re-run this job."
+          echo "Or: revert pnpm-lock.yaml changes if unintended (the lockfile is maintained by Renovate — see CLAUDE.md § Supply chain)."
           echo "Offending commits:"
           echo "$BAD"
           exit 1
