@@ -1,20 +1,18 @@
 name: Lockfile override gate
 
-# Why this exists (RIFT-110 supply-chain audit, item 4):
-# The `fast` CI job's "Lockfile change guard" honors the
-# `lockfile-override-approved` label as the escape hatch for an emergency
-# manual lockfile edit. Without this gate, any user with write access can
-# apply the label and bypass the guard with no review trail. This workflow
-# requires that the override label be backed by an approving review from a
-# non-author CODEOWNER of pnpm-lock.yaml. If the label is applied without
-# qualifying approval, the workflow removes the label, posts an explainer
-# comment, and fails — which both blocks the override and surfaces the
-# event in the PR audit timeline.
+# RIFT-134: gate enforces based on non-bot lockfile changes + qualifying
+# CODEOWNER approval. The `lockfile-override-approved` label is an audit
+# marker, not the enforcement trigger — gate fails whenever a PR has
+# non-bot lockfile changes without a qualifying approval, regardless of
+# label state. This closes the race where applying the label transiently
+# produced a green gate (removal fired unlabeled → label absent → gate
+# treated as no-op).
 #
 # `pull_request_target` is required so the workflow has `pull-requests: write`
 # on PRs from forks. Safety: we never check out PR head — only the base
 # CODEOWNERS file via sparse-checkout — so an attacker can't get script
-# execution from a malicious PR head.
+# execution from a malicious PR head. Lockfile change detection uses
+# the commits API with per-file filtering (safe read-only endpoint).
 
 on:
   pull_request_target:
@@ -39,6 +37,8 @@ jobs:
       REPO: ${{ github.repository }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
       PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
       - name: Checkout base CODEOWNERS (sparse, no PR head)
         uses: actions/checkout@v4
@@ -50,19 +50,64 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      - name: Verify non-self CODEOWNER approval
+      - name: Enforce lockfile override policy
         run: |
           set -euo pipefail
 
-          # 1. Is the override label currently present?
-          LABELS=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json labels --jq '.labels[].name')
-          if ! printf '%s\n' "$LABELS" | grep -qx "$OVERRIDE_LABEL"; then
-            echo "Override label '$OVERRIDE_LABEL' not present on PR #$PR_NUMBER — gate is a no-op."
+          echo "Checking pnpm-lock.yaml change status via commits API (base=${BASE_SHA:0:7}, head=${HEAD_SHA:0:7})"
+
+          # 1. Collect commits that touch pnpm-lock.yaml between base and head.
+          #    Uses the commits API with path filter — not the compare API, which
+          #    truncates .files[] at 300 entries (RIFT-134 review finding).
+          LOCKFILE_COMMITS=$(gh api --paginate "/repos/$REPO/commits?sha=${HEAD_SHA}&path=pnpm-lock.yaml" --jq '.[].sha' 2>/dev/null || echo "")
+
+          # Filter to commits in the PR range (between BASE_SHA exclusive and HEAD_SHA inclusive).
+          # The commits API returns all commits on the branch that touch the path,
+          # so we intersect with the PR's commit range via the compare API commit list.
+          PR_SHAS=$(gh api "/repos/$REPO/compare/${BASE_SHA}...${HEAD_SHA}" --jq '.commits[].sha' 2>/dev/null || echo "")
+
+          LOCKFILE_PR_COMMITS=""
+          while IFS= read -r sha; do
+            [ -z "$sha" ] && continue
+            if printf '%s\n' "$PR_SHAS" | grep -qx "$sha"; then
+              LOCKFILE_PR_COMMITS="${LOCKFILE_PR_COMMITS}${sha}"$'\n'
+            fi
+          done <<< "$LOCKFILE_COMMITS"
+          LOCKFILE_PR_COMMITS="${LOCKFILE_PR_COMMITS%$'\n'}"
+
+          if [ -z "$LOCKFILE_PR_COMMITS" ]; then
+            echo "pnpm-lock.yaml not changed in this PR — gate is a no-op."
             exit 0
           fi
-          echo "Override label '$OVERRIDE_LABEL' present. Verifying non-author CODEOWNER approval..."
 
-          # 2. Resolve owners-of(pnpm-lock.yaml) from base CODEOWNERS.
+          echo "pnpm-lock.yaml changed. Checking authors of lockfile-touching commits..."
+          # Bot-email pattern must match scripts/check-lockfile-author.sh (unit-tested).
+          BOT_PATTERN='^([0-9]+\+)?(renovate|dependabot|github-actions)\[bot\]@users\.noreply\.github\.com$'
+          NON_BOT_FOUND=""
+          while IFS= read -r sha; do
+            [ -z "$sha" ] && continue
+            EMAIL=$(gh api "/repos/$REPO/commits/$sha" --jq '.commit.author.email' 2>/dev/null || echo "")
+            if [ -n "$EMAIL" ] && ! echo "$EMAIL" | grep -qE "$BOT_PATTERN"; then
+              NON_BOT_FOUND="true"
+              echo "  non-bot commit $sha by: $EMAIL"
+              break
+            fi
+          done <<< "$LOCKFILE_PR_COMMITS"
+          if [ -z "$NON_BOT_FOUND" ]; then
+            echo "pnpm-lock.yaml changed only in bot commits — gate is a no-op."
+            exit 0
+          fi
+
+          echo "PR has non-bot changes to pnpm-lock.yaml. Enforcement active."
+
+          # 2. Current label state (audit only — does not gate enforcement).
+          LABELS=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json labels --jq '.labels[].name')
+          LABEL_PRESENT=""
+          if printf '%s\n' "$LABELS" | grep -qx "$OVERRIDE_LABEL"; then
+            LABEL_PRESENT="true"
+          fi
+
+          # 3. Resolve owners-of(pnpm-lock.yaml) from base CODEOWNERS.
           #    Last matching pattern wins (standard CODEOWNERS semantics).
           if [ ! -f .github/CODEOWNERS ]; then
             echo "::error::.github/CODEOWNERS not found at base ref — cannot determine owners"
@@ -87,7 +132,7 @@ jobs:
           fi
           echo "CODEOWNERS owners-of(pnpm-lock.yaml): $OWNERS"
 
-          # 3. Resolve owner tokens (@user or @org/team) into a flat login set.
+          # 4. Resolve owner tokens (@user or @org/team) into a flat login set.
           OWNER_LOGINS=()
           for tok in $OWNERS; do
             case "$tok" in
@@ -110,9 +155,8 @@ jobs:
           echo "Resolved CODEOWNER logins: ${OWNER_LOGINS[*]}"
           echo "PR author (excluded from self-approval): $PR_AUTHOR"
 
-          # 4. Latest review state per reviewer. A later "request changes"
-          #    or "dismissed" review supersedes an earlier APPROVED — same
-          #    semantics GitHub branch protection uses.
+          # 5. Latest review state per reviewer. A later "request changes"
+          #    or "dismissed" review supersedes an earlier APPROVED.
           REVIEWS=$(gh api --paginate "/repos/$REPO/pulls/$PR_NUMBER/reviews")
           APPROVED_REVIEWERS=$(printf '%s' "$REVIEWS" | jq -r '
             map(select(.user != null))
@@ -123,7 +167,7 @@ jobs:
           ')
           echo "Latest-state APPROVED reviewers: $APPROVED_REVIEWERS"
 
-          # 5. Intersect APPROVED reviewers ∩ owner logins, excluding PR_AUTHOR.
+          # 6. Intersect APPROVED reviewers ∩ owner logins, excluding PR_AUTHOR.
           QUALIFYING=""
           while IFS= read -r reviewer; do
             [ -z "$reviewer" ] && continue
@@ -140,29 +184,37 @@ jobs:
             if [ -n "$QUALIFYING" ]; then break; fi
           done <<< "$APPROVED_REVIEWERS"
 
+          # 7. Decision: label is audit marker, not enforcement trigger.
           if [ -n "$QUALIFYING" ]; then
+            if [ -z "$LABEL_PRESENT" ]; then
+              gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "$OVERRIDE_LABEL"
+              echo "Applied '$OVERRIDE_LABEL' (audit marker for qualifying approval by $QUALIFYING)"
+            fi
             echo "Override approved by non-author CODEOWNER: $QUALIFYING"
             exit 0
           fi
 
-          # 6. No qualifying approval. Remove label, comment, fail.
-          echo "::error::'$OVERRIDE_LABEL' applied without a non-author CODEOWNER approving review"
-          gh pr edit "$PR_NUMBER" --repo "$REPO" --remove-label "$OVERRIDE_LABEL"
-
-          BODY_FILE=$(mktemp)
-          {
-            echo "The \`$OVERRIDE_LABEL\` label was removed by the **Lockfile override gate** workflow."
-            echo
-            echo "This PR modifies \`pnpm-lock.yaml\` outside Renovate/Dependabot. The override path requires an approving review from a non-author owner listed in [\`.github/CODEOWNERS\`](.github/CODEOWNERS) for \`pnpm-lock.yaml\`."
-            echo
-            echo "Eligible CODEOWNER approvers (excluding the PR author \`$PR_AUTHOR\`):"
-            for owner in "${OWNER_LOGINS[@]}"; do
-              if [ "$owner" != "$PR_AUTHOR" ]; then
-                echo "- @$owner"
-              fi
-            done
-            echo
-            echo "Re-apply the label after a qualifying approval. Background: RIFT-110, \`.github/workflows/lockfile-override-gate.yml\`."
-          } > "$BODY_FILE"
-          gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file "$BODY_FILE"
+          # 8. No qualifying approval. Remove label if present (audit), fail.
+          if [ -n "$LABEL_PRESENT" ]; then
+            echo "::error::'$OVERRIDE_LABEL' applied without a non-author CODEOWNER approving review"
+            gh pr edit "$PR_NUMBER" --repo "$REPO" --remove-label "$OVERRIDE_LABEL"
+            BODY_FILE=$(mktemp)
+            {
+              echo "The \`$OVERRIDE_LABEL\` label was removed by the **Lockfile override gate** workflow."
+              echo
+              echo "This PR modifies \`pnpm-lock.yaml\` in non-bot commits. The override requires an approving review from a non-author owner listed in [\`.github/CODEOWNERS\`](.github/CODEOWNERS) for \`pnpm-lock.yaml\`."
+              echo
+              echo "Eligible CODEOWNER approvers (excluding the PR author \`$PR_AUTHOR\`):"
+              for owner in "${OWNER_LOGINS[@]}"; do
+                if [ "$owner" != "$PR_AUTHOR" ]; then
+                  echo "- @$owner"
+                fi
+              done
+              echo
+              echo "A qualifying approval will automatically apply the label. Background: RIFT-134, \`.github/workflows/lockfile-override-gate.yml\`."
+            } > "$BODY_FILE"
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file "$BODY_FILE"
+          else
+            echo "::error::Lockfile override not approved — requires non-author CODEOWNER approving review for pnpm-lock.yaml changes"
+          fi
           exit 1
