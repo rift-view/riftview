@@ -11,8 +11,8 @@ name: Lockfile override gate
 # `pull_request_target` is required so the workflow has `pull-requests: write`
 # on PRs from forks. Safety: we never check out PR head — only the base
 # CODEOWNERS file via sparse-checkout — so an attacker can't get script
-# execution from a malicious PR head. Author email detection uses the
-# compare API (safe read-only endpoint).
+# execution from a malicious PR head. Lockfile change detection uses
+# the commits API with per-file filtering (safe read-only endpoint).
 
 on:
   pull_request_target:
@@ -54,28 +54,45 @@ jobs:
         run: |
           set -euo pipefail
 
-          echo "Checking pnpm-lock.yaml change status using compare API (base=${BASE_SHA:0:7}, head=${HEAD_SHA:0:7})"
+          echo "Checking pnpm-lock.yaml change status via commits API (base=${BASE_SHA:0:7}, head=${HEAD_SHA:0:7})"
 
-          # 1. Has pnpm-lock.yaml changed? And is any commit author a non-bot?
-          COMPARE=$(gh api "/repos/$REPO/compare/${BASE_SHA}...${HEAD_SHA}")
-          LOCKFILE_CHANGED=$(printf '%s' "$COMPARE" | jq -r '.files[]? | select(.filename == "pnpm-lock.yaml") | .filename')
+          # 1. Collect commits that touch pnpm-lock.yaml between base and head.
+          #    Uses the commits API with path filter — not the compare API, which
+          #    truncates .files[] at 300 entries (RIFT-134 review finding).
+          LOCKFILE_COMMITS=$(gh api --paginate "/repos/$REPO/commits?sha=${HEAD_SHA}&path=pnpm-lock.yaml" --jq '.[].sha' 2>/dev/null || echo "")
 
-          if [ -z "$LOCKFILE_CHANGED" ]; then
+          # Filter to commits in the PR range (between BASE_SHA exclusive and HEAD_SHA inclusive).
+          # The commits API returns all commits on the branch that touch the path,
+          # so we intersect with the PR's commit range via the compare API commit list.
+          PR_SHAS=$(gh api "/repos/$REPO/compare/${BASE_SHA}...${HEAD_SHA}" --jq '.commits[].sha' 2>/dev/null || echo "")
+
+          LOCKFILE_PR_COMMITS=""
+          while IFS= read -r sha; do
+            [ -z "$sha" ] && continue
+            if printf '%s\n' "$PR_SHAS" | grep -qx "$sha"; then
+              LOCKFILE_PR_COMMITS="${LOCKFILE_PR_COMMITS}${sha}"$'\n'
+            fi
+          done <<< "$LOCKFILE_COMMITS"
+          LOCKFILE_PR_COMMITS="${LOCKFILE_PR_COMMITS%$'\n'}"
+
+          if [ -z "$LOCKFILE_PR_COMMITS" ]; then
             echo "pnpm-lock.yaml not changed in this PR — gate is a no-op."
             exit 0
           fi
 
-          echo "pnpm-lock.yaml changed. Checking commit authors for non-bot commits..."
+          echo "pnpm-lock.yaml changed. Checking authors of lockfile-touching commits..."
+          # Bot-email pattern must match scripts/check-lockfile-author.sh (unit-tested).
           BOT_PATTERN='^([0-9]+\+)?(renovate|dependabot|github-actions)\[bot\]@users\.noreply\.github\.com$'
           NON_BOT_FOUND=""
-          while IFS= read -r email; do
-            [ -z "$email" ] && continue
-            if ! echo "$email" | grep -qE "$BOT_PATTERN"; then
+          while IFS= read -r sha; do
+            [ -z "$sha" ] && continue
+            EMAIL=$(gh api "/repos/$REPO/commits/$sha" --jq '.commit.author.email' 2>/dev/null || echo "")
+            if [ -n "$EMAIL" ] && ! echo "$EMAIL" | grep -qE "$BOT_PATTERN"; then
               NON_BOT_FOUND="true"
-              echo "  non-bot commit by: $email"
+              echo "  non-bot commit $sha by: $EMAIL"
               break
             fi
-          done < <(printf '%s' "$COMPARE" | jq -r '.commits[]?.commit.author.email')
+          done <<< "$LOCKFILE_PR_COMMITS"
           if [ -z "$NON_BOT_FOUND" ]; then
             echo "pnpm-lock.yaml changed only in bot commits — gate is a no-op."
             exit 0

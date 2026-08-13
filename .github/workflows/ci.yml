@@ -31,8 +31,9 @@ jobs:
         # pnpm-lock.yaml regeneration is reserved for Renovate / Dependabot.
         # Local devs must NOT regenerate the lockfile (see RIFT-70). PRs that
         # touch the lockfile from a non-bot commit fail this step unless the
-        # PR carries the 'lockfile-override-approved' label (UI-reviewable
-        # escape hatch — labels only, NOT commit-message gating).
+        # Lockfile override gate workflow has passed (RIFT-134). The gate
+        # requires a non-author CODEOWNER approval and auto-applies the
+        # `lockfile-override-approved` label as an audit marker.
         if: github.event_name == 'pull_request'
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -57,7 +58,7 @@ jobs:
             echo "pnpm-lock.yaml changed only in bot commits — OK"
             exit 0
           fi
-          GATE_CONCLUSION=$(gh api "/repos/${{ github.repository }}/commits/$PR_HEAD_SHA/check-runs" --jq '.check_runs[] | select(.name == "Lockfile override gate / gate") | .conclusion' 2>/dev/null || echo "")
+          GATE_CONCLUSION=$(gh api "/repos/${{ github.repository }}/commits/$PR_HEAD_SHA/check-runs" --jq '[.check_runs[] | select(.name == "Lockfile override gate / gate")] | sort_by(.started_at) | last | .conclusion // ""' 2>/dev/null || echo "")
           if [ "$GATE_CONCLUSION" = "success" ]; then
             echo "pnpm-lock.yaml override approved by lockfile-override-gate"
             exit 0
