@@ -3,6 +3,20 @@ name: Release
 on:
   push:
     tags: ['v*']
+  # Rehearse the same packaging/tests without signing secrets or publication.
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/release.yml'
+      - 'apps/desktop/package.json'
+      - 'apps/desktop/electron-builder.yml'
+      - 'apps/desktop/tests/e2e/**'
+      - 'pnpm-lock.yaml'
+      - '.npmrc'
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow_ref }}-${{ github.ref }}
@@ -11,26 +25,44 @@ concurrency:
 jobs:
   verify-ci:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
     steps:
-      - name: Verify main CI green on this commit
+      - uses: actions/checkout@v4
+        if: github.event_name == 'push'
+      - name: Verify stable release tag matches application version
+        if: github.event_name == 'push'
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          sha="${{ github.sha }}"
-          fast_conclusion=$(gh api repos/${{ github.repository }}/commits/$sha/check-runs \
-            --jq '[.check_runs[] | select(.name == "fast")] | .[0].conclusion // "missing"')
-          e2e_conclusion=$(gh api repos/${{ github.repository }}/commits/$sha/check-runs \
-            --jq '[.check_runs[] | select(.name == "e2e")] | .[0].conclusion // "missing"')
-          echo "fast: $fast_conclusion, e2e: $e2e_conclusion"
-          if [[ "$fast_conclusion" != "success" || "$e2e_conclusion" != "success" ]]; then
-            echo "::error::CI not green on $sha (fast=$fast_conclusion, e2e=$e2e_conclusion). Push tag after main CI passes."
+          set -euo pipefail
+          expected=$(node -p "'v' + require('./apps/desktop/package.json').version")
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ || "$RELEASE_TAG" != "$expected" ]]; then
+            echo "::error::Expected stable release tag $expected, got $RELEASE_TAG. Prerelease channels are not configured."
+            exit 1
+          fi
+      - name: Verify main CI green on this commit
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          # Bind the gate to CI's main-branch push run at the exact release
+          # commit, rather than accepting unrelated checks with matching names.
+          conclusion=$(gh api --method GET "repos/$GH_REPO/actions/workflows/ci.yml/runs" \
+            -f head_sha="$RELEASE_SHA" -f branch=main -f event=push -f per_page=100 \
+            --jq '.workflow_runs | sort_by(.run_number) | last | .conclusion // "missing"')
+          echo "Main CI on $RELEASE_SHA: $conclusion"
+          if [[ "$conclusion" != "success" ]]; then
+            echo "::error::Main CI not green on $RELEASE_SHA ($conclusion). Push tag after main CI passes."
             exit 1
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_SHA: ${{ github.sha }}
 
   release:
     needs: [verify-ci]
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -54,12 +86,13 @@ jobs:
       AWS_ENDPOINT_URL: http://localhost:4566
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
       # --- Linux-only LocalStack prereqs ---
       - uses: hashicorp/setup-terraform@v3
         if: runner.os == 'Linux'
@@ -77,32 +110,93 @@ jobs:
         run: terraform init -input=false && terraform apply -auto-approve -input=false
       # --- Both platforms build the binary + run Playwright ---
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-      - name: Build desktop bundles (electron-vite)
-        working-directory: apps/desktop
-        run: npx electron-vite build
-      - name: Rebuild native modules against Electron ABI
-        # Installs Electron-targeted prebuilds for native deps (better-sqlite3).
-        # `npm ci` above fetched the Node-ABI prebuilds so the fast job's
-        # vitest unit tests can load them. Packaging for Electron requires the
-        # ABI matching Electron's bundled Node (v140 on Electron 39); without
-        # this step the packaged .node is silently unloadable at runtime and
-        # the snapshot history store no-ops (see CLAUDE.md § Native modules).
-        working-directory: apps/desktop
-        run: npm run rebuild
+        run: pnpm exec playwright install --with-deps chromium
       - name: Build unsigned binary (for @release E2E)
-        working-directory: apps/desktop
-        run: npx electron-builder --dir
+        # One shared pipeline: build → deploy → Electron-ABI rebuild → package.
+        run: pnpm --filter @riftview/desktop run build:unpack
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       - name: Run @release E2E (Linux — full LocalStack)
         if: runner.os == 'Linux'
-        run: xvfb-run -a npm run test:e2e:release
+        run: xvfb-run -a pnpm run test:e2e:release
         env:
           CI: 'true'
       - name: Run @release E2E (mac — demo-mode smoke)
         if: runner.os == 'macOS'
-        run: npm run test:e2e:release:mac
+        run: pnpm run test:e2e:release:mac
         env:
           CI: 'true'
+      # libfuse2 is required for electron-builder's AppImage target on
+      # ubuntu-latest (removed from default image; app-builder-bin needs it).
+      - name: Install libfuse2 for AppImage (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libfuse2
+      - name: Package rehearsal installers
+        if: github.event_name != 'push'
+        working-directory: apps/desktop/deploy
+        run: pnpm exec electron-builder --${{ matrix.platform }} --publish never -c.mac.notarize=false
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Package signed release installers
+        if: github.event_name == 'push'
+        working-directory: apps/desktop/deploy
+        # Reuse the tested deployment tree; never rebuild source after testing.
+        # Publishing is a separate job, after every platform finishes.
+        run: pnpm exec electron-builder --${{ matrix.platform }} --publish never
+        env:
+          CSC_FOR_PULL_REQUEST: 'false'
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Verify macOS signature and notarization
+        if: github.event_name == 'push' && runner.os == 'macOS'
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          apps=(apps/desktop/dist/mac*/RiftView.app)
+          [ "${#apps[@]}" -eq 1 ]
+          codesign --verify --deep --strict --verbose=2 "${apps[0]}"
+          spctl --assess --type execute --verbose=2 "${apps[0]}"
+          xcrun stapler validate "${apps[0]}"
+      - name: Test final packaged app (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm run test:e2e:release
+        env:
+          CI: 'true'
+      - name: Test final packaged app (macOS)
+        if: runner.os == 'macOS'
+        run: pnpm run test:e2e:release:mac
+        env:
+          CI: 'true'
+      - name: Stage distribution files
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          mkdir -p release-assets
+          if [ "$PLATFORM" = mac ]; then
+            dmg=(apps/desktop/dist/*.dmg)
+            zip=(apps/desktop/dist/*-mac.zip)
+            [ "${#dmg[@]}" -eq 1 ]
+            [ "${#zip[@]}" -eq 1 ]
+            cp "${dmg[@]}" "${zip[@]}" apps/desktop/dist/latest-mac.yml release-assets/
+          else
+            images=(apps/desktop/dist/*.AppImage)
+            [ "${#images[@]}" -eq 1 ]
+            cp "${images[@]}" apps/desktop/dist/latest-linux.yml release-assets/
+          fi
+          blockmaps=(apps/desktop/dist/*.blockmap)
+          if [ "${#blockmaps[@]}" -gt 0 ]; then cp "${blockmaps[@]}" release-assets/; fi
+      - name: Upload validated distribution files
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ matrix.platform }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -113,18 +207,28 @@ jobs:
       - name: LocalStack logs on failure
         if: failure() && runner.os == 'Linux'
         run: docker compose -f .localstack/compose.yml logs localstack | tail -200
-      # libfuse2 is required for electron-builder's AppImage target on
-      # ubuntu-latest (removed from default image; app-builder-bin needs it).
-      - name: Install libfuse2 for AppImage (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libfuse2
-      - name: Build signed and publish
-        working-directory: apps/desktop
-        run: npx electron-vite build && npx electron-builder --${{ matrix.platform }} --publish always
+
+  publish:
+    needs: [release]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-assets-*
+          path: release-assets
+          merge-multiple: true
+      - name: Publish validated assets after both platforms pass
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # A fresh draft keeps partial uploads invisible. Do not overwrite an
+          # existing release: a failed publication is inspected before retry.
+          gh release create "$RELEASE_TAG" --verify-tag --draft --generate-notes
+          gh release upload "$RELEASE_TAG" release-assets/*
+          gh release edit "$RELEASE_TAG" --draft=false
