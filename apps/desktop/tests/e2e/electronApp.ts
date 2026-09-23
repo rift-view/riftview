@@ -1,5 +1,5 @@
 import { _electron as electron, type ElectronApplication } from 'playwright'
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 export interface LaunchOptions {
@@ -65,22 +65,13 @@ function resolveBuiltBinary(repoRoot: string): string {
     )
   }
   if (platform === 'linux') {
-    const unpackedDir = resolve(repoRoot, 'apps', 'desktop', 'dist', 'linux-unpacked')
-    if (!existsSync(unpackedDir)) {
-      throw new Error(`RIFTVIEW_BUILT_APP=1 but no ${unpackedDir}. Ran \`electron-builder --dir\`?`)
+    // Match linux.executableName in electron-builder.yml. The unpacked
+    // directory also contains chrome-sandbox, which is not the app binary.
+    const binary = resolve(repoRoot, 'apps', 'desktop', 'dist', 'linux-unpacked', 'riftview')
+    if (!existsSync(binary)) {
+      throw new Error(`RIFTVIEW_BUILT_APP=1 but no ${binary}. Ran \`electron-builder --dir\`?`)
     }
-    // electron-builder picks the Linux executable name from
-    // `linux.executableName` in electron-builder.yml (or derives it from
-    // productName). Scan for an extensionless file rather than hardcoding
-    // so we survive config renames.
-    const entries = readdirSync(unpackedDir)
-    const candidates = entries.filter((n) => !n.includes('.'))
-    if (candidates.length === 0) {
-      throw new Error(
-        `No extensionless executable in ${unpackedDir}. Contents: ${entries.join(', ')}`
-      )
-    }
-    return resolve(unpackedDir, candidates[0])
+    return binary
   }
   throw new Error(`RIFTVIEW_BUILT_APP=1 is not supported on platform: ${platform}`)
 }
