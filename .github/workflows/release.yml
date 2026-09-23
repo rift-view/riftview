@@ -63,9 +63,13 @@ jobs:
 
   release:
     needs: [verify-ci]
-    environment: release
+    # Only tag builds may use the protected release environment and its secrets.
+    # PR/manual rehearsals use a separate environment so branch protection
+    # cannot reject them before they reach a runner.
+    environment:
+      name: ${{ github.event_name == 'push' && 'release' || 'release-rehearsal' }}
     permissions:
-      contents: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
