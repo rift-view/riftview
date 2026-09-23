@@ -29,6 +29,7 @@ jobs:
 
   release:
     needs: [verify-ci]
+    environment: release
     permissions:
       contents: write
     strategy:
