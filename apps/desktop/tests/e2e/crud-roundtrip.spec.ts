@@ -35,7 +35,7 @@ test.describe('@release CRUD roundtrip: create + edit + delete SQS', () => {
 
     const contextMenu = page.getByTestId('canvas-context-menu')
     await expect(contextMenu).toBeVisible()
-    await page.getByTestId('canvas-context-menu-item-sqs').click()
+    await page.getByTestId('canvas-context-menu-item-aws:sqs').click()
     await page.getByTestId('canvas-context-menu-view-topology').click()
 
     // CreateModal opens with SqsForm. Fill name, submit.
