@@ -12,6 +12,7 @@ on:
 jobs:
   publish:
     runs-on: windows-latest
+    environment: release
     steps:
       - uses: vedantmgoyal2009/winget-releaser@v2
         with:
