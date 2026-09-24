@@ -11,7 +11,7 @@ vi.mock('electron', () => ({
   }
 }))
 
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 
 describe('preload bridge', () => {
   beforeEach(() => {
@@ -31,8 +31,23 @@ describe('preload bridge', () => {
         startScan: expect.any(Function),
         onScanDelta: expect.any(Function),
         onScanStatus: expect.any(Function),
-        onConnStatus: expect.any(Function)
+        onConnStatus: expect.any(Function),
+        openExternal: expect.any(Function)
       })
+    )
+  })
+
+  it('openExternal invokes shell:open-external with the URL (RIFT-146)', async () => {
+    await import('../../src/preload/index')
+    const riftviewCall = vi
+      .mocked(contextBridge.exposeInMainWorld)
+      .mock.calls.find((c) => c[0] === 'riftview')
+    const api = riftviewCall?.[1] as { openExternal: (url: string) => Promise<boolean> }
+    vi.mocked(ipcRenderer.invoke).mockResolvedValueOnce(true)
+    await expect(api.openExternal('https://console.aws.amazon.com/')).resolves.toBe(true)
+    expect(ipcRenderer.invoke).toHaveBeenCalledWith(
+      'shell:open-external',
+      'https://console.aws.amazon.com/'
     )
   })
 

@@ -177,6 +177,12 @@ interface Window {
       metadata: Record<string, unknown>
     ): Promise<import('../renderer/types/iam').IamAnalysisResult>
     notifyDrift(count: number): Promise<void>
+    /**
+     * Open an https URL in the user's default browser. The main process
+     * allow-lists the host (AWS console only, RIFT-146) and resolves `false`
+     * when the URL is refused or the OS hand-off fails.
+     */
+    openExternal(url: string): Promise<boolean>
     onPluginMetadata(
       cb: (meta: Record<string, import('../renderer/types/plugin').NodeTypeMetadata>) => void
     ): () => void

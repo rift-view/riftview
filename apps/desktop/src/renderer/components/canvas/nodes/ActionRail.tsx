@@ -18,7 +18,7 @@ export function ActionRail({ node, onToast }: ActionRailProps): React.JSX.Elemen
 
   function handleOpenConsole(e: React.MouseEvent): void {
     e.stopPropagation()
-    if (consoleUrl) window.open(consoleUrl, '_blank', 'noopener')
+    if (consoleUrl) void window.riftview.openExternal(consoleUrl)
   }
 
   return (

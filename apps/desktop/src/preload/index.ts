@@ -152,6 +152,10 @@ contextBridge.exposeInMainWorld('riftview', {
   // OS drift notification
   notifyDrift: (count: number): Promise<void> => ipcRenderer.invoke(IPC.NOTIFY_DRIFT, count),
 
+  // Open an allow-listed https URL (AWS console) in the default browser.
+  // Main validates the host (RIFT-146); resolves false when refused.
+  openExternal: (url: string): Promise<boolean> => ipcRenderer.invoke(IPC.SHELL_OPEN_EXTERNAL, url),
+
   // Plugin metadata — push: main → renderer
   onPluginMetadata: (cb: (meta: Record<string, NodeTypeMetadata>) => void): (() => void) => {
     const handler = (

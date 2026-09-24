@@ -42,6 +42,7 @@ beforeEach(() => {
     clearTfState: vi.fn().mockResolvedValue({ ok: true }),
     analyzeIam: vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 }),
     notifyDrift: vi.fn().mockResolvedValue(undefined),
+    openExternal: vi.fn().mockResolvedValue(true),
     onPluginMetadata: vi.fn().mockReturnValue(vi.fn()),
     terraformDeploy: vi.fn().mockResolvedValue({ status: 'not_found' }),
     loadCustomEdges: vi.fn().mockResolvedValue([]),

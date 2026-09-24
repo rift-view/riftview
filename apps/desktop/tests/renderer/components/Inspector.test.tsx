@@ -9,9 +9,14 @@ import type { CloudNode } from '@riftview/shared'
 
 const saveAnnotationsMock = vi.fn().mockResolvedValue(undefined)
 const analyzeIamMock = vi.fn().mockResolvedValue({ nodeId: '', findings: [], fetchedAt: 0 })
+const openExternalMock = vi.fn().mockResolvedValue(true)
 
 Object.defineProperty(window, 'riftview', {
-  value: { saveAnnotations: saveAnnotationsMock, analyzeIam: analyzeIamMock },
+  value: {
+    saveAnnotations: saveAnnotationsMock,
+    analyzeIam: analyzeIamMock,
+    openExternal: openExternalMock
+  },
   writable: true
 })
 
@@ -83,5 +88,30 @@ describe('Inspector — Notes section', () => {
     useUIStore.setState({ selectedNodeId: null })
     renderInspector()
     expect(screen.queryByPlaceholderText(/add a note/i)).toBeNull()
+  })
+})
+
+describe('Inspector — AWS Console action (RIFT-146)', () => {
+  beforeEach(() => {
+    openExternalMock.mockClear()
+    useCloudStore.setState({ nodes: [EC2_NODE], importedNodes: [] })
+    useUIStore.setState({
+      selectedNodeId: 'i-001',
+      annotations: {},
+      selectedEdgeId: null,
+      selectedEdgeInfo: null
+    })
+  })
+
+  it('hands the console URL to the main-process bridge instead of window.open', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    renderInspector()
+    fireEvent.click(screen.getByRole('button', { name: /AWS Console/ }))
+    expect(openExternalMock).toHaveBeenCalledTimes(1)
+    expect(openExternalMock).toHaveBeenCalledWith(
+      'https://console.aws.amazon.com/ec2/v2/home?region=us-east-1#Instances:instanceId=i-001'
+    )
+    expect(openSpy).not.toHaveBeenCalled()
+    openSpy.mockRestore()
   })
 })
