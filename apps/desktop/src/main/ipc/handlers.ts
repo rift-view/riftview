@@ -2,7 +2,7 @@ import fs from 'fs'
 import fsp from 'fs/promises'
 import path from 'path'
 import os from 'os'
-import { ipcMain, BrowserWindow, app, dialog, Notification, safeStorage } from 'electron'
+import { ipcMain, BrowserWindow, app, dialog, Notification, safeStorage, shell } from 'electron'
 import { IPC } from './channels'
 import { listProfiles, getDefaultRegion } from '@riftview/shared'
 import { createClients, type AwsClients } from '@riftview/cloud-scan'
@@ -58,6 +58,8 @@ import { fetchEc2IamData, fetchLambdaIamData, fetchS3IamData } from '@riftview/c
 import type { IamAnalysisResult } from '../../renderer/types/iam'
 import type { NodeType } from '@riftview/shared'
 import { isDemoMode } from '../capability'
+import { isAllowedExternalUrl } from '../security/externalUrl'
+import { resolveBaselinePath } from '../security/baselinePath'
 import { signPlanProjection, verifyPlanProjection } from '../restore/hmac'
 import { mintPlanToken, lookupPlanToken, consumePlanToken } from '../restore/planStore'
 import { computeCostDelta } from '../cost/compute'
@@ -404,7 +406,10 @@ export function registerHandlers(win: BrowserWindow): void {
     }
   })
 
-  // Save baseline — persist current cloud nodes as drift reference
+  // Save baseline — persist current cloud nodes as drift reference.
+  // profileName and region are renderer-controlled, so they are bounded to a
+  // single filename under userData/baselines (RIFT-146; same guard as the
+  // RIFT-128 historyFilePath in aws/scanner.ts).
   ipcMain.handle(
     IPC.TFSTATE_SAVE_BASELINE,
     (
@@ -413,8 +418,12 @@ export function registerHandlers(win: BrowserWindow): void {
     ): { ok: boolean } => {
       try {
         const dir = path.join(app.getPath('userData'), 'baselines')
+        const file = resolveBaselinePath(dir, profileName, region)
+        if (!file) {
+          console.warn('TFSTATE_SAVE_BASELINE: unsafe profileName/region rejected')
+          return { ok: false }
+        }
         fs.mkdirSync(dir, { recursive: true })
-        const file = path.join(dir, `${profileName}-${region}.json`)
         fs.writeFileSync(file, JSON.stringify(nodes, null, 2), 'utf-8')
         return { ok: true }
       } catch (err) {
@@ -423,6 +432,24 @@ export function registerHandlers(win: BrowserWindow): void {
       }
     }
   )
+
+  // Open an allow-listed https URL in the OS browser. window.open() is denied
+  // in main (setWindowOpenHandler), so this bridge is the renderer's only way
+  // to reach the AWS console — and main, not the renderer, decides which hosts
+  // qualify (RIFT-146).
+  ipcMain.handle(IPC.SHELL_OPEN_EXTERNAL, async (_event, url: unknown): Promise<boolean> => {
+    if (typeof url !== 'string' || !isAllowedExternalUrl(url)) {
+      console.warn('SHELL_OPEN_EXTERNAL: refused URL outside the allow-list')
+      return false
+    }
+    try {
+      await shell.openExternal(url)
+      return true
+    } catch (err) {
+      console.error('SHELL_OPEN_EXTERNAL error:', err)
+      return false
+    }
+  })
 
   // List AWS credential profiles from ~/.aws/credentials
   ipcMain.handle(IPC.AWS_LIST_PROFILES, (): string[] => {

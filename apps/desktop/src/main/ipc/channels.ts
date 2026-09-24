@@ -30,6 +30,7 @@ export const IPC = {
   TFSTATE_CLEAR: 'tfstate:clear', // invoke → { ok: boolean }
   IAM_ANALYZE: 'iam:analyze', // invoke → IamAnalysisResult
   NOTIFY_DRIFT: 'notify:drift', // invoke → void (count: number)
+  SHELL_OPEN_EXTERNAL: 'shell:open-external', // invoke(url: string) → boolean — main allow-lists the host (RIFT-146)
   PLUGIN_METADATA: 'plugin:metadata', // push: main → renderer
   CUSTOM_EDGES_SAVE: 'custom-edges:save', // invoke → void
   CUSTOM_EDGES_LOAD: 'custom-edges:load', // invoke → CustomEdge[]

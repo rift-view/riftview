@@ -34,6 +34,12 @@ describe('ActionRail', () => {
       writable: true,
       configurable: true
     })
+    // Preload bridge — the console link goes through main (RIFT-146)
+    Object.defineProperty(window, 'riftview', {
+      value: { openExternal: vi.fn().mockResolvedValue(true) },
+      writable: true,
+      configurable: true
+    })
   })
 
   afterEach(() => {
@@ -66,6 +72,31 @@ describe('ActionRail', () => {
     mockBuildConsoleUrl.mockReturnValue('https://console.aws.amazon.com/lambda')
     render(<ActionRail node={baseNode} onToast={vi.fn()} />)
     expect(screen.getByTitle('Open in AWS Console')).toBeTruthy()
+  })
+
+  it('Open Console button routes the URL through the main-process bridge, not window.open', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    mockBuildConsoleUrl.mockReturnValue('https://console.aws.amazon.com/lambda')
+    render(<ActionRail node={baseNode} onToast={vi.fn()} />)
+    fireEvent.click(screen.getByTitle('Open in AWS Console'))
+    expect(window.riftview.openExternal).toHaveBeenCalledTimes(1)
+    expect(window.riftview.openExternal).toHaveBeenCalledWith(
+      'https://console.aws.amazon.com/lambda'
+    )
+    expect(openSpy).not.toHaveBeenCalled()
+    openSpy.mockRestore()
+  })
+
+  it('Open Console click stops propagation', () => {
+    mockBuildConsoleUrl.mockReturnValue('https://console.aws.amazon.com/lambda')
+    const parentHandler = vi.fn()
+    const { container } = render(
+      <div onClick={parentHandler}>
+        <ActionRail node={baseNode} onToast={vi.fn()} />
+      </div>
+    )
+    fireEvent.click(container.querySelector('[title="Open in AWS Console"]')!)
+    expect(parentHandler).not.toHaveBeenCalled()
   })
 
   it('does not show Open Console button when buildConsoleUrl returns null', () => {

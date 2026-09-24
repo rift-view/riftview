@@ -1257,7 +1257,7 @@ export function Inspector({
                 if (!consoleUrl) return null
                 return (
                   <button
-                    onClick={() => window.open(consoleUrl, '_blank')}
+                    onClick={() => void window.riftview.openExternal(consoleUrl)}
                     className="btn btn-sm btn-ghost"
                   >
                     ⎋ AWS Console ↗
