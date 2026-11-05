@@ -27,7 +27,7 @@
   },
   "pnpm": {
     "overrides": {
-      "vite": "^7.3.5"
+      "vite": "^7.3.7"
     },
     "onlyBuiltDependencies": [
       "@swc/core",
